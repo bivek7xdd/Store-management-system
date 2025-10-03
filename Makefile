@@ -1,3 +1,4 @@
+# database setup is sequential
 postgres:
 	docker run --name store-management-system -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=password -d postgres:16.10-alpine
 
