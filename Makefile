@@ -20,4 +20,7 @@ sqlc:
 test:
 	go test -v -cover ./...
 
-.PHONY: createdb dropdb migrateup migratedown sqlc test
+server:
+	CompileDaemon -command="./storemanagement"
+
+.PHONY: createdb dropdb migrateup migratedown sqlc test server
