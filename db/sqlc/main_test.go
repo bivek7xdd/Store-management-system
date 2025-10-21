@@ -11,7 +11,7 @@ import (
 var testQueries *Queries
 
 const (
-	dbSource = "postgres://root:password@localhost:5432/store-management-system?sslmode=disable"
+	dbSource = "postgresql://postgres:Bivek@981841@db.dqzsdkgtcydvkbeymtjg.supabase.co:5432/postgres"
 )
 
 func TestMain(m *testing.M) {

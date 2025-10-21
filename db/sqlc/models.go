@@ -5,8 +5,95 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type ProductStatus string
+
+const (
+	ProductStatusActive       ProductStatus = "active"
+	ProductStatusDiscontinued ProductStatus = "discontinued"
+	ProductStatusOutOfStock   ProductStatus = "out_of_stock"
+)
+
+func (e *ProductStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductStatus(s)
+	case string:
+		*e = ProductStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductStatus: %T", src)
+	}
+	return nil
+}
+
+type NullProductStatus struct {
+	ProductStatus ProductStatus `json:"product_status"`
+	Valid         bool          `json:"valid"` // Valid is true if ProductStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductStatus), nil
+}
+
+type Category struct {
+	ID          pgtype.UUID        `db:"id" json:"id"`
+	Name        string             `db:"name" json:"name"`
+	Description pgtype.Text        `db:"description" json:"description"`
+	IsActive    bool               `db:"is_active" json:"is_active"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	Slug        string             `db:"slug" json:"slug"`
+}
+
+type Product struct {
+	ID                pgtype.UUID        `db:"id" json:"id"`
+	Name              string             `db:"name" json:"name"`
+	Code              string             `db:"code" json:"code"`
+	CategoryID        pgtype.UUID        `db:"category_id" json:"category_id"`
+	SupplierID        pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	Price             pgtype.Numeric     `db:"price" json:"price"`
+	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
+	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
+	LowStockThreshold int32              `db:"low_stock_threshold" json:"low_stock_threshold"`
+	IsPerishable      bool               `db:"is_perishable" json:"is_perishable"`
+	UnitOfMeasure     string             `db:"unit_of_measure" json:"unit_of_measure"`
+	Status            ProductStatus      `db:"status" json:"status"`
+	IsActive          bool               `db:"is_active" json:"is_active"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	Slug              string             `db:"slug" json:"slug"`
+}
+
+type Supplier struct {
+	ID           pgtype.UUID        `db:"id" json:"id"`
+	Name         string             `db:"name" json:"name"`
+	ContactPhone pgtype.Text        `db:"contact_phone" json:"contact_phone"`
+	ContactEmail pgtype.Text        `db:"contact_email" json:"contact_email"`
+	Address      pgtype.Text        `db:"address" json:"address"`
+	IsActive     bool               `db:"is_active" json:"is_active"`
+	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	Slug         string             `db:"slug" json:"slug"`
+}
 
 type User struct {
 	ID                  pgtype.UUID        `db:"id" json:"id"`

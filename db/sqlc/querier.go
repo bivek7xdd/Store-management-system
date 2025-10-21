@@ -11,11 +11,17 @@ import (
 )
 
 type Querier interface {
+	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteCategory(ctx context.Context, id pgtype.UUID) (Category, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	GetCategories(ctx context.Context, isActive bool) ([]Category, error)
+	GetCategoryById(ctx context.Context, id pgtype.UUID) (Category, error)
+	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
 	GetUser(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateLoginAttempts(ctx context.Context, arg UpdateLoginAttemptsParams) (User, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
