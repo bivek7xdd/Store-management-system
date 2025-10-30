@@ -49,8 +49,9 @@ func CreateCustomerHandler(c *gin.Context) {
 		return
 	}
 
+	storeUUID, _ := uuid.Parse(storeID)
 	customer, err := utils.Queries.CreateCustomer(context.Background(), db.CreateCustomerParams{
-		StoreID:           uuid.MustParse(storeID),
+		StoreID:           pgtype.UUID{Bytes: storeUUID, Valid: true},
 		Name:              req.Name,
 		Phone:             pgtype.Text{String: req.Phone, Valid: true},
 		Email:             pgtype.Text{String: req.Email, Valid: req.Email != ""},
@@ -79,9 +80,10 @@ func GetCustomerHandler(c *gin.Context) {
 		return
 	}
 
+	storeUUID, _ := uuid.Parse(storeID)
 	customer, err := utils.Queries.GetCustomerById(context.Background(), db.GetCustomerByIdParams{
-		ID:      id,
-		StoreID: uuid.MustParse(storeID),
+		ID:      pgtype.UUID{Bytes: id, Valid: true},
+		StoreID: pgtype.UUID{Bytes: storeUUID, Valid: true},
 	})
 
 	if err != nil {
@@ -102,8 +104,9 @@ func ListCustomersHandler(c *gin.Context) {
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
 
+	storeUUID, _ := uuid.Parse(storeID)
 	customers, err := utils.Queries.ListCustomers(context.Background(), db.ListCustomersParams{
-		StoreID: uuid.MustParse(storeID),
+		StoreID: pgtype.UUID{Bytes: storeUUID, Valid: true},
 		Limit:   int32(limit),
 		Offset:  int32(offset),
 	})
@@ -134,8 +137,9 @@ func SearchCustomersHandler(c *gin.Context) {
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
 
+	storeUUID, _ := uuid.Parse(storeID)
 	customers, err := utils.Queries.SearchCustomers(context.Background(), db.SearchCustomersParams{
-		StoreID: uuid.MustParse(storeID),
+		StoreID: pgtype.UUID{Bytes: storeUUID, Valid: true},
 		Lower:   "%" + strings.ToLower(query) + "%",
 		Limit:   int32(limit),
 		Offset:  int32(offset),
@@ -161,8 +165,9 @@ func GetCustomersWithDebtHandler(c *gin.Context) {
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
 
+	storeUUID, _ := uuid.Parse(storeID)
 	customers, err := utils.Queries.GetCustomersWithDebt(context.Background(), db.GetCustomersWithDebtParams{
-		StoreID: uuid.MustParse(storeID),
+		StoreID: pgtype.UUID{Bytes: storeUUID, Valid: true},
 		Limit:   int32(limit),
 		Offset:  int32(offset),
 	})
@@ -201,9 +206,10 @@ func UpdateCustomerHandler(c *gin.Context) {
 		return
 	}
 
+	storeUUID, _ := uuid.Parse(storeID)
 	params := db.UpdateCustomerParams{
-		ID:      id,
-		StoreID: uuid.MustParse(storeID),
+		ID:      pgtype.UUID{Bytes: id, Valid: true},
+		StoreID: pgtype.UUID{Bytes: storeUUID, Valid: true},
 	}
 
 	if req.Name != nil {
@@ -241,9 +247,10 @@ func DeleteCustomerHandler(c *gin.Context) {
 		return
 	}
 
+	storeUUID, _ := uuid.Parse(storeID)
 	customer, err := utils.Queries.DeleteCustomer(context.Background(), db.DeleteCustomerParams{
-		ID:      id,
-		StoreID: uuid.MustParse(storeID),
+		ID:      pgtype.UUID{Bytes: id, Valid: true},
+		StoreID: pgtype.UUID{Bytes: storeUUID, Valid: true},
 	})
 
 	if err != nil {
