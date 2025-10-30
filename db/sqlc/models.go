@@ -62,6 +62,46 @@ type Category struct {
 	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 	Slug        string             `db:"slug" json:"slug"`
+	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
+}
+
+type Customer struct {
+	ID                pgtype.UUID        `db:"id" json:"id"`
+	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
+	Name              string             `db:"name" json:"name"`
+	Phone             pgtype.Text        `db:"phone" json:"phone"`
+	Email             pgtype.Text        `db:"email" json:"email"`
+	Address           pgtype.Text        `db:"address" json:"address"`
+	NotificationToken pgtype.Text        `db:"notification_token" json:"notification_token"`
+	TotalPurchases    pgtype.Numeric     `db:"total_purchases" json:"total_purchases"`
+	TotalDebt         pgtype.Numeric     `db:"total_debt" json:"total_debt"`
+	IsActive          bool               `db:"is_active" json:"is_active"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Debt struct {
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleID          pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	AmountOwed      pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid      pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	AmountRemaining pgtype.Numeric     `db:"amount_remaining" json:"amount_remaining"`
+	DueDate         pgtype.Date        `db:"due_date" json:"due_date"`
+	Status          pgtype.Text        `db:"status" json:"status"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type DebtPayment struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	DebtID        pgtype.UUID        `db:"debt_id" json:"debt_id"`
+	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	PaymentMethod pgtype.Text        `db:"payment_method" json:"payment_method"`
+	PaymentDate   pgtype.Timestamptz `db:"payment_date" json:"payment_date"`
+	ReceivedBy    pgtype.UUID        `db:"received_by" json:"received_by"`
+	Notes         pgtype.Text        `db:"notes" json:"notes"`
 }
 
 type Product struct {
@@ -81,6 +121,87 @@ type Product struct {
 	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 	Slug              string             `db:"slug" json:"slug"`
+	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
+}
+
+type ProductExpiration struct {
+	ID             pgtype.UUID        `db:"id" json:"id"`
+	ProductID      pgtype.UUID        `db:"product_id" json:"product_id"`
+	BatchNumber    pgtype.Text        `db:"batch_number" json:"batch_number"`
+	ExpirationDate pgtype.Date        `db:"expiration_date" json:"expiration_date"`
+	Quantity       int32              `db:"quantity" json:"quantity"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
+}
+
+type Sale struct {
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	UserID          pgtype.UUID        `db:"user_id" json:"user_id"`
+	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleType        string             `db:"sale_type" json:"sale_type"`
+	TotalAmount     pgtype.Numeric     `db:"total_amount" json:"total_amount"`
+	DiscountApplied pgtype.Numeric     `db:"discount_applied" json:"discount_applied"`
+	TaxAmount       pgtype.Numeric     `db:"tax_amount" json:"tax_amount"`
+	FinalAmount     pgtype.Numeric     `db:"final_amount" json:"final_amount"`
+	SaleDate        pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	ReceiptNumber   pgtype.Text        `db:"receipt_number" json:"receipt_number"`
+	ReceiptUrl      pgtype.Text        `db:"receipt_url" json:"receipt_url"`
+	Notes           pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+}
+
+type SaleItem struct {
+	ID          pgtype.UUID    `db:"id" json:"id"`
+	SaleID      pgtype.UUID    `db:"sale_id" json:"sale_id"`
+	ProductID   pgtype.UUID    `db:"product_id" json:"product_id"`
+	ProductName string         `db:"product_name" json:"product_name"`
+	Quantity    int32          `db:"quantity" json:"quantity"`
+	UnitPrice   pgtype.Numeric `db:"unit_price" json:"unit_price"`
+	Subtotal    pgtype.Numeric `db:"subtotal" json:"subtotal"`
+	Discount    pgtype.Numeric `db:"discount" json:"discount"`
+}
+
+type StockChange struct {
+	ID               pgtype.UUID        `db:"id" json:"id"`
+	ProductID        pgtype.UUID        `db:"product_id" json:"product_id"`
+	UserID           pgtype.UUID        `db:"user_id" json:"user_id"`
+	ChangeType       string             `db:"change_type" json:"change_type"`
+	Quantity         int32              `db:"quantity" json:"quantity"`
+	PreviousQuantity int32              `db:"previous_quantity" json:"previous_quantity"`
+	NewQuantity      int32              `db:"new_quantity" json:"new_quantity"`
+	ChangeDate       pgtype.Timestamptz `db:"change_date" json:"change_date"`
+	Notes            pgtype.Text        `db:"notes" json:"notes"`
+}
+
+type Store struct {
+	ID                    pgtype.UUID        `db:"id" json:"id"`
+	OwnerID               pgtype.UUID        `db:"owner_id" json:"owner_id"`
+	Name                  string             `db:"name" json:"name"`
+	Slug                  string             `db:"slug" json:"slug"`
+	BusinessType          pgtype.Text        `db:"business_type" json:"business_type"`
+	Description           pgtype.Text        `db:"description" json:"description"`
+	Address               pgtype.Text        `db:"address" json:"address"`
+	Phone                 pgtype.Text        `db:"phone" json:"phone"`
+	Email                 pgtype.Text        `db:"email" json:"email"`
+	TaxID                 pgtype.Text        `db:"tax_id" json:"tax_id"`
+	LogoUrl               pgtype.Text        `db:"logo_url" json:"logo_url"`
+	Currency              pgtype.Text        `db:"currency" json:"currency"`
+	Timezone              pgtype.Text        `db:"timezone" json:"timezone"`
+	IsActive              bool               `db:"is_active" json:"is_active"`
+	SubscriptionPlan      pgtype.Text        `db:"subscription_plan" json:"subscription_plan"`
+	SubscriptionExpiresAt pgtype.Timestamptz `db:"subscription_expires_at" json:"subscription_expires_at"`
+	CreatedAt             pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt             pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type StoreUser struct {
+	ID          pgtype.UUID        `db:"id" json:"id"`
+	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
+	UserID      pgtype.UUID        `db:"user_id" json:"user_id"`
+	Role        string             `db:"role" json:"role"`
+	Permissions []byte             `db:"permissions" json:"permissions"`
+	IsActive    bool               `db:"is_active" json:"is_active"`
+	JoinedAt    pgtype.Timestamptz `db:"joined_at" json:"joined_at"`
 }
 
 type Supplier struct {
@@ -93,6 +214,7 @@ type Supplier struct {
 	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 	Slug         string             `db:"slug" json:"slug"`
+	StoreID      pgtype.UUID        `db:"store_id" json:"store_id"`
 }
 
 type User struct {

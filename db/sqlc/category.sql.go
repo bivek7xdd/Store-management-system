@@ -18,7 +18,7 @@ INSERT INTO categories (
     slug
 ) VALUES (
     $1, $2, $3
-) RETURNING id, name, description, is_active, created_at, updated_at, slug
+) RETURNING id, name, description, is_active, created_at, updated_at, slug, store_id
 `
 
 type CreateCategoryParams struct {
@@ -38,12 +38,13 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Slug,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const deleteCategory = `-- name: DeleteCategory :one
-DELETE FROM categories WHERE id = $1 RETURNING id, name, description, is_active, created_at, updated_at, slug
+DELETE FROM categories WHERE id = $1 RETURNING id, name, description, is_active, created_at, updated_at, slug, store_id
 `
 
 func (q *Queries) DeleteCategory(ctx context.Context, id pgtype.UUID) (Category, error) {
@@ -57,12 +58,13 @@ func (q *Queries) DeleteCategory(ctx context.Context, id pgtype.UUID) (Category,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Slug,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const getCategories = `-- name: GetCategories :many
-SELECT id, name, description, is_active, created_at, updated_at, slug FROM categories WHERE is_active = $1
+SELECT id, name, description, is_active, created_at, updated_at, slug, store_id FROM categories WHERE is_active = $1
 `
 
 func (q *Queries) GetCategories(ctx context.Context, isActive bool) ([]Category, error) {
@@ -82,6 +84,7 @@ func (q *Queries) GetCategories(ctx context.Context, isActive bool) ([]Category,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Slug,
+			&i.StoreID,
 		); err != nil {
 			return nil, err
 		}
@@ -94,7 +97,7 @@ func (q *Queries) GetCategories(ctx context.Context, isActive bool) ([]Category,
 }
 
 const getCategoryById = `-- name: GetCategoryById :one
-SELECT id, name, description, is_active, created_at, updated_at, slug FROM categories WHERE id = $1
+SELECT id, name, description, is_active, created_at, updated_at, slug, store_id FROM categories WHERE id = $1
 `
 
 func (q *Queries) GetCategoryById(ctx context.Context, id pgtype.UUID) (Category, error) {
@@ -108,12 +111,13 @@ func (q *Queries) GetCategoryById(ctx context.Context, id pgtype.UUID) (Category
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Slug,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const getCategoryBySlug = `-- name: GetCategoryBySlug :one
-SELECT id, name, description, is_active, created_at, updated_at, slug FROM categories WHERE slug = $1
+SELECT id, name, description, is_active, created_at, updated_at, slug, store_id FROM categories WHERE slug = $1
 `
 
 func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category, error) {
@@ -127,6 +131,7 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Slug,
+		&i.StoreID,
 	)
 	return i, err
 }
@@ -139,7 +144,7 @@ SET
     is_active = COALESCE($4, is_active),
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, name, description, is_active, created_at, updated_at, slug
+RETURNING id, name, description, is_active, created_at, updated_at, slug, store_id
 `
 
 type UpdateCategoryParams struct {
@@ -165,6 +170,7 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Slug,
+		&i.StoreID,
 	)
 	return i, err
 }
