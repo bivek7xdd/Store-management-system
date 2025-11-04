@@ -9,10 +9,10 @@ dropdb:
 	docker exec -it store-management-system dropdb  store-management-system
 
 migrateup:
-	migrate -path db/migration -database "postgresql://postgres:Bivek@981841@db.dqzsdkgtcydvkbeymtjg.supabase.co:5432/postgres" -verbose up
+	migrate -path db/migration -database "postgres://root:password@localhost:5432/store-management-system?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://postgres:Bivek@981841@db.dqzsdkgtcydvkbeymtjg.supabase.co:5432/postgres" -verbose down
+	migrate -path db/migration -database "postgres://root:password@localhost:5432/store-management-system?sslmode=disable" -verbose down
 
 sqlc:
 	sqlc generate

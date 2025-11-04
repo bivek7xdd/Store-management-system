@@ -16,17 +16,19 @@ INSERT INTO users (
   name,
   email,
   password,
+  store_name,
   phone
 ) VALUES (
-  $1, $2, $3, $4
-) RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at
+  $1, $2, $3, $4, $5
+) RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email
 `
 
 type CreateUserParams struct {
-	Name     string      `db:"name" json:"name"`
-	Email    string      `db:"email" json:"email"`
-	Password string      `db:"password" json:"password"`
-	Phone    pgtype.Text `db:"phone" json:"phone"`
+	Name      string      `db:"name" json:"name"`
+	Email     string      `db:"email" json:"email"`
+	Password  string      `db:"password" json:"password"`
+	StoreName pgtype.Text `db:"store_name" json:"store_name"`
+	Phone     pgtype.Text `db:"phone" json:"phone"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -34,6 +36,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Name,
 		arg.Email,
 		arg.Password,
+		arg.StoreName,
 		arg.Phone,
 	)
 	var i User
@@ -50,6 +53,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }
@@ -65,7 +70,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at FROM users
+SELECT id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -85,12 +90,14 @@ func (q *Queries) GetUser(ctx context.Context, id pgtype.UUID) (User, error) {
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at FROM users
+SELECT id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -110,12 +117,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at FROM users
+SELECT id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email FROM users
 ORDER BY created_at
 LIMIT $1
 OFFSET $2
@@ -148,6 +157,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.LockedUntil,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.StoreName,
+			&i.ConfirmedEmail,
 		); err != nil {
 			return nil, err
 		}
@@ -167,7 +178,7 @@ SET
   last_login = $3,
   updated_at = now()
 WHERE id = $4
-RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at
+RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email
 `
 
 type UpdateLoginAttemptsParams struct {
@@ -198,6 +209,8 @@ func (q *Queries) UpdateLoginAttempts(ctx context.Context, arg UpdateLoginAttemp
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }
@@ -208,7 +221,7 @@ SET
   password = $1,
   updated_at = now()
 WHERE id = $2
-RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at
+RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email
 `
 
 type UpdatePasswordParams struct {
@@ -232,6 +245,8 @@ func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) 
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }
@@ -250,7 +265,7 @@ SET
   locked_until = COALESCE($9, locked_until),
   updated_at = now()
 WHERE id = $10
-RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at
+RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email
 `
 
 type UpdateUserParams struct {
@@ -293,6 +308,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }
@@ -303,7 +320,7 @@ SET
   email_verified = true,
   updated_at = now()
 WHERE id = $1
-RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at
+RETURNING id, name, email, password, phone, status, email_verified, last_login, failed_login_attempts, locked_until, created_at, updated_at, store_name, confirmed_email
 `
 
 func (q *Queries) VerifyEmail(ctx context.Context, id pgtype.UUID) (User, error) {
@@ -322,6 +339,8 @@ func (q *Queries) VerifyEmail(ctx context.Context, id pgtype.UUID) (User, error)
 		&i.LockedUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreName,
+		&i.ConfirmedEmail,
 	)
 	return i, err
 }

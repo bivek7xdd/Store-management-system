@@ -3,9 +3,10 @@ INSERT INTO users (
   name,
   email,
   password,
+  store_name,
   phone
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5
 ) RETURNING *;
 
 -- name: GetUser :one

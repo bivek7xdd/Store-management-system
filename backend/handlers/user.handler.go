@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	db "storemanagement/db/sqlc"
 	"storemanagement/utils"
@@ -17,21 +20,29 @@ import (
 * * * ---------------------------------------------------- Handler for user registration * * * ----------------------------------------
  */
 type RegisterUserRequest struct {
-	Name     string `json:"name" binding:"required,min=3,max=50"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
-	Phone    string `json:"phone" binding:"required,min=10,max=15"`
+	Name      string `json:"name" binding:"required,min=3,max=50"`
+	Email     string `json:"email" binding:"required,email"`
+	Password  string `json:"password" binding:"required,min=8"`
+	Phone     string `json:"phone" binding:"required,min=10,max=20"`
+	StoreName string `json:"store_name" binding:"required"`
 }
 
 func RegisterUserHandler(c *gin.Context) {
 	var req RegisterUserRequest
 
+	// Log the raw request body for debugging
+	body, _ := c.GetRawData()
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+	fmt.Printf("Received registration request: %s\n", string(body))
+
 	// Bind and validate the request
 	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("Validation error: %v\n", err)
 		// Handle validation errors
 		if errs, ok := err.(validator.ValidationErrors); ok {
 			// Convert validation errors to a single error message
 			for _, fieldErr := range errs {
+				fmt.Printf("Field error - Field: %s, Tag: %s, Value: %v\n", fieldErr.Field(), fieldErr.Tag(), fieldErr.Value())
 				var errMsg string
 				switch fieldErr.Field() {
 				case "Name":
@@ -41,11 +52,14 @@ func RegisterUserHandler(c *gin.Context) {
 				case "Password":
 					errMsg = "Password must be at least 8 characters"
 				case "Phone":
-					errMsg = "Phone number must be 10-15 digits"
+					errMsg = "Phone number must be 10-20 characters"
+				case "StoreName":
+					errMsg = "Store name is required"
 				default:
 					errMsg = fieldErr.Error()
 				}
 				utils.ErrorResponse(c, http.StatusBadRequest, "Validation failed", errors.New(errMsg))
+				return // Return after first error
 			}
 		}
 
@@ -67,10 +81,11 @@ func RegisterUserHandler(c *gin.Context) {
 	}
 
 	user, err := utils.Queries.CreateUser(context.Background(), db.CreateUserParams{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: string(hashedPassword),
-		Phone:    pgtype.Text{String: req.Phone, Valid: true},
+		Name:      req.Name,
+		Email:     req.Email,
+		Password:  string(hashedPassword),
+		StoreName: pgtype.Text{String: req.StoreName, Valid: true},
+		Phone:     pgtype.Text{String: req.Phone, Valid: true},
 	})
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user", err)

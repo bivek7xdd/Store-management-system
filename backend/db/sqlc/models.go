@@ -230,4 +230,6 @@ type User struct {
 	LockedUntil         pgtype.Timestamptz `db:"locked_until" json:"locked_until"`
 	CreatedAt           pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt           pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	StoreName           pgtype.Text        `db:"store_name" json:"store_name"`
+	ConfirmedEmail      pgtype.Bool        `db:"confirmed_email" json:"confirmed_email"`
 }
