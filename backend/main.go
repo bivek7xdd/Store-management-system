@@ -34,6 +34,14 @@ func main() {
 	{
 		userRoutes.POST("/register", handlers.RegisterUserHandler)
 		userRoutes.POST("/login", handlers.LoginUserHandler)
+		
+		// Protected routes (require JWT token)
+		protected := userRoutes.Group("/")
+		protected.Use(utils.JWTMiddleware())
+		{
+			protected.GET("/profile", handlers.GetUserProfileHandler)
+			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
+		}
 	}
 
 	// Category routes

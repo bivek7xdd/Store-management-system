@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Link, useNavigate } from "react-router-dom";
 import { Store } from "lucide-react";
 import { useState } from "react";
-import axios from "axios";
+import api from "@/services/api";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -41,7 +41,7 @@ const Register = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post("http://localhost:8000/api/users/register", {
+            const response = await api.post("/users/register", {
                 name: formData.name,
                 email: formData.email,
                 store_name: formData.store_name,

@@ -147,10 +147,87 @@ func LoginUserHandler(c *gin.Context) {
 		return
 	}
 
-	//TODO: Add JWT token generation
+	// Generate JWT token
+	storeName := ""
+	if user.StoreName.Valid {
+		storeName = user.StoreName.String
+	}
+	
+	token, err := utils.GenerateJWT(user.ID, user.Email, storeName)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate token", err)
+		return
+	}
 
 	c.JSON(200, gin.H{
 		"message": "Login successful",
-		"user":    user,
+		"token":   token,
+		"user": gin.H{
+			"id":         user.ID,
+			"name":       user.Name,
+			"email":      user.Email,
+			"store_name": storeName,
+		},
+	})
+}
+
+/*
+* * * ---------------------------------------------------- Handler for getting user profile (protected route) * * * ----------------------------------------
+ */
+func GetUserProfileHandler(c *gin.Context) {
+	// Get user information from JWT token (set by middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
+	userEmail, _ := c.Get("user_email")
+	storeName, _ := c.Get("store_name")
+
+	// Get full user details from database
+	user, err := utils.Queries.GetUser(context.Background(), userID.(pgtype.UUID))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "User not found", err)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Profile retrieved successfully",
+		"user": gin.H{
+			"id":         user.ID,
+			"name":       user.Name,
+			"email":      userEmail,
+			"store_name": storeName,
+			"phone":      user.Phone.String,
+			"created_at": user.CreatedAt,
+		},
+	})
+}
+
+/*
+* * * ---------------------------------------------------- Handler for refreshing JWT token * * * ----------------------------------------
+ */
+func RefreshTokenHandler(c *gin.Context) {
+	// Get user information from JWT token (set by middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
+	userEmail, _ := c.Get("user_email")
+	storeName, _ := c.Get("store_name")
+
+	// Generate new JWT token
+	token, err := utils.GenerateJWT(userID.(pgtype.UUID), userEmail.(string), storeName.(string))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate token", err)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Token refreshed successfully",
+		"token":   token,
 	})
 }
