@@ -5,231 +5,27 @@
 package db
 
 import (
-	"database/sql/driver"
-	"fmt"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type ProductStatus string
-
-const (
-	ProductStatusActive       ProductStatus = "active"
-	ProductStatusDiscontinued ProductStatus = "discontinued"
-	ProductStatusOutOfStock   ProductStatus = "out_of_stock"
-)
-
-func (e *ProductStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = ProductStatus(s)
-	case string:
-		*e = ProductStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for ProductStatus: %T", src)
-	}
-	return nil
-}
-
-type NullProductStatus struct {
-	ProductStatus ProductStatus `json:"product_status"`
-	Valid         bool          `json:"valid"` // Valid is true if ProductStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullProductStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.ProductStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.ProductStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullProductStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.ProductStatus), nil
-}
-
-type Category struct {
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Description pgtype.Text        `db:"description" json:"description"`
-	IsActive    bool               `db:"is_active" json:"is_active"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	Slug        string             `db:"slug" json:"slug"`
-	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
-}
-
-type Customer struct {
-	ID                pgtype.UUID        `db:"id" json:"id"`
-	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
-	Name              string             `db:"name" json:"name"`
-	Phone             pgtype.Text        `db:"phone" json:"phone"`
-	Email             pgtype.Text        `db:"email" json:"email"`
-	Address           pgtype.Text        `db:"address" json:"address"`
-	NotificationToken pgtype.Text        `db:"notification_token" json:"notification_token"`
-	TotalPurchases    pgtype.Numeric     `db:"total_purchases" json:"total_purchases"`
-	TotalDebt         pgtype.Numeric     `db:"total_debt" json:"total_debt"`
-	IsActive          bool               `db:"is_active" json:"is_active"`
-	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
-type Debt struct {
-	ID              pgtype.UUID        `db:"id" json:"id"`
-	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
-	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
-	SaleID          pgtype.UUID        `db:"sale_id" json:"sale_id"`
-	AmountOwed      pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
-	AmountPaid      pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
-	AmountRemaining pgtype.Numeric     `db:"amount_remaining" json:"amount_remaining"`
-	DueDate         pgtype.Date        `db:"due_date" json:"due_date"`
-	Status          pgtype.Text        `db:"status" json:"status"`
-	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
-type DebtPayment struct {
-	ID            pgtype.UUID        `db:"id" json:"id"`
-	DebtID        pgtype.UUID        `db:"debt_id" json:"debt_id"`
-	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
-	PaymentMethod pgtype.Text        `db:"payment_method" json:"payment_method"`
-	PaymentDate   pgtype.Timestamptz `db:"payment_date" json:"payment_date"`
-	ReceivedBy    pgtype.UUID        `db:"received_by" json:"received_by"`
-	Notes         pgtype.Text        `db:"notes" json:"notes"`
-}
-
-type Product struct {
-	ID                pgtype.UUID        `db:"id" json:"id"`
-	Name              string             `db:"name" json:"name"`
-	Code              string             `db:"code" json:"code"`
-	CategoryID        pgtype.UUID        `db:"category_id" json:"category_id"`
-	SupplierID        pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
-	Price             pgtype.Numeric     `db:"price" json:"price"`
-	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
-	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
-	LowStockThreshold int32              `db:"low_stock_threshold" json:"low_stock_threshold"`
-	IsPerishable      bool               `db:"is_perishable" json:"is_perishable"`
-	UnitOfMeasure     string             `db:"unit_of_measure" json:"unit_of_measure"`
-	Status            ProductStatus      `db:"status" json:"status"`
-	IsActive          bool               `db:"is_active" json:"is_active"`
-	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	Slug              string             `db:"slug" json:"slug"`
-	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
-}
-
-type ProductExpiration struct {
-	ID             pgtype.UUID        `db:"id" json:"id"`
-	ProductID      pgtype.UUID        `db:"product_id" json:"product_id"`
-	BatchNumber    pgtype.Text        `db:"batch_number" json:"batch_number"`
-	ExpirationDate pgtype.Date        `db:"expiration_date" json:"expiration_date"`
-	Quantity       int32              `db:"quantity" json:"quantity"`
-	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
-}
-
-type Sale struct {
-	ID              pgtype.UUID        `db:"id" json:"id"`
-	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
-	UserID          pgtype.UUID        `db:"user_id" json:"user_id"`
-	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
-	SaleType        string             `db:"sale_type" json:"sale_type"`
-	TotalAmount     pgtype.Numeric     `db:"total_amount" json:"total_amount"`
-	DiscountApplied pgtype.Numeric     `db:"discount_applied" json:"discount_applied"`
-	TaxAmount       pgtype.Numeric     `db:"tax_amount" json:"tax_amount"`
-	FinalAmount     pgtype.Numeric     `db:"final_amount" json:"final_amount"`
-	SaleDate        pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
-	ReceiptNumber   pgtype.Text        `db:"receipt_number" json:"receipt_number"`
-	ReceiptUrl      pgtype.Text        `db:"receipt_url" json:"receipt_url"`
-	Notes           pgtype.Text        `db:"notes" json:"notes"`
-	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
-}
-
-type SaleItem struct {
-	ID          pgtype.UUID    `db:"id" json:"id"`
-	SaleID      pgtype.UUID    `db:"sale_id" json:"sale_id"`
-	ProductID   pgtype.UUID    `db:"product_id" json:"product_id"`
-	ProductName string         `db:"product_name" json:"product_name"`
-	Quantity    int32          `db:"quantity" json:"quantity"`
-	UnitPrice   pgtype.Numeric `db:"unit_price" json:"unit_price"`
-	Subtotal    pgtype.Numeric `db:"subtotal" json:"subtotal"`
-	Discount    pgtype.Numeric `db:"discount" json:"discount"`
-}
-
-type StockChange struct {
-	ID               pgtype.UUID        `db:"id" json:"id"`
-	ProductID        pgtype.UUID        `db:"product_id" json:"product_id"`
-	UserID           pgtype.UUID        `db:"user_id" json:"user_id"`
-	ChangeType       string             `db:"change_type" json:"change_type"`
-	Quantity         int32              `db:"quantity" json:"quantity"`
-	PreviousQuantity int32              `db:"previous_quantity" json:"previous_quantity"`
-	NewQuantity      int32              `db:"new_quantity" json:"new_quantity"`
-	ChangeDate       pgtype.Timestamptz `db:"change_date" json:"change_date"`
-	Notes            pgtype.Text        `db:"notes" json:"notes"`
-}
-
-type Store struct {
-	ID                    pgtype.UUID        `db:"id" json:"id"`
-	OwnerID               pgtype.UUID        `db:"owner_id" json:"owner_id"`
-	Name                  string             `db:"name" json:"name"`
-	Slug                  string             `db:"slug" json:"slug"`
-	BusinessType          pgtype.Text        `db:"business_type" json:"business_type"`
-	Description           pgtype.Text        `db:"description" json:"description"`
-	Address               pgtype.Text        `db:"address" json:"address"`
-	Phone                 pgtype.Text        `db:"phone" json:"phone"`
-	Email                 pgtype.Text        `db:"email" json:"email"`
-	TaxID                 pgtype.Text        `db:"tax_id" json:"tax_id"`
-	LogoUrl               pgtype.Text        `db:"logo_url" json:"logo_url"`
-	Currency              pgtype.Text        `db:"currency" json:"currency"`
-	Timezone              pgtype.Text        `db:"timezone" json:"timezone"`
-	IsActive              bool               `db:"is_active" json:"is_active"`
-	SubscriptionPlan      pgtype.Text        `db:"subscription_plan" json:"subscription_plan"`
-	SubscriptionExpiresAt pgtype.Timestamptz `db:"subscription_expires_at" json:"subscription_expires_at"`
-	CreatedAt             pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt             pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-}
-
-type StoreUser struct {
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
-	UserID      pgtype.UUID        `db:"user_id" json:"user_id"`
-	Role        string             `db:"role" json:"role"`
-	Permissions []byte             `db:"permissions" json:"permissions"`
-	IsActive    bool               `db:"is_active" json:"is_active"`
-	JoinedAt    pgtype.Timestamptz `db:"joined_at" json:"joined_at"`
-}
-
-type Supplier struct {
+type StoreInfo struct {
 	ID           pgtype.UUID        `db:"id" json:"id"`
 	Name         string             `db:"name" json:"name"`
-	ContactPhone pgtype.Text        `db:"contact_phone" json:"contact_phone"`
-	ContactEmail pgtype.Text        `db:"contact_email" json:"contact_email"`
-	Address      pgtype.Text        `db:"address" json:"address"`
-	IsActive     bool               `db:"is_active" json:"is_active"`
+	Address      string             `db:"address" json:"address"`
+	CurrencyCode string             `db:"currency_code" json:"currency_code"`
+	OwnerID      pgtype.UUID        `db:"owner_id" json:"owner_id"`
 	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	Slug         string             `db:"slug" json:"slug"`
-	StoreID      pgtype.UUID        `db:"store_id" json:"store_id"`
 }
 
-type User struct {
-	ID                  pgtype.UUID        `db:"id" json:"id"`
-	Name                string             `db:"name" json:"name"`
-	Email               string             `db:"email" json:"email"`
-	Password            string             `db:"password" json:"password"`
-	Phone               pgtype.Text        `db:"phone" json:"phone"`
-	Status              string             `db:"status" json:"status"`
-	EmailVerified       bool               `db:"email_verified" json:"email_verified"`
-	LastLogin           pgtype.Timestamptz `db:"last_login" json:"last_login"`
-	FailedLoginAttempts int32              `db:"failed_login_attempts" json:"failed_login_attempts"`
-	LockedUntil         pgtype.Timestamptz `db:"locked_until" json:"locked_until"`
-	CreatedAt           pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt           pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	StoreName           pgtype.Text        `db:"store_name" json:"store_name"`
-	ConfirmedEmail      pgtype.Bool        `db:"confirmed_email" json:"confirmed_email"`
+type StoreOwner struct {
+	ID             pgtype.UUID        `db:"id" json:"id"`
+	Name           string             `db:"name" json:"name"`
+	Email          string             `db:"email" json:"email"`
+	Password       string             `db:"password" json:"password"`
+	Phone          string             `db:"phone" json:"phone"`
+	Role           string             `db:"role" json:"role"`
+	ProfilePicture string             `db:"profile_picture" json:"profile_picture"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
