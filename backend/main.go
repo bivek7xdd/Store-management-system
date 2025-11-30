@@ -33,19 +33,17 @@ func main() {
 	userRoutes := router.Group("/api/users")
 	{
 		userRoutes.POST("/register", handlers.RegisterUserHandler)
-		userRoutes.POST("/login", handlers.LoginUserHandler)
-		
+		userRoutes.POST("/login", handlers.LoginHandler)
+
 		// Protected routes (require JWT token)
 		protected := userRoutes.Group("/")
 		protected.Use(utils.JWTMiddleware())
 		{
-			protected.GET("/profile", handlers.GetUserProfileHandler)
 			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
 		}
 	}
 
 	// Category routes
-	
 
 	router.Run(":8000")
 }

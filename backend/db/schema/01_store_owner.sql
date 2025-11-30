@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS store_owner (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    emailVerified BOOLEAN NOT NULL DEFAULT false,
     phone VARCHAR(20) NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'owner',
     profile_picture VARCHAR(255) NOT NULL DEFAULT '',

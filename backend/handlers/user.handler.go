@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,48 +18,28 @@ import (
 /*
 * * * ---------------------------------------------------- Handler for user registration * * * ----------------------------------------
  */
-type RegisterUserRequest struct {
-	Name      string `json:"name" binding:"required,min=3,max=50"`
-	Email     string `json:"email" binding:"required,email"`
-	Password  string `json:"password" binding:"required,min=8"`
-	Phone     string `json:"phone" binding:"required,min=10,max=20"`
-	StoreName string `json:"store_name" binding:"required"`
+
+type RegisterStoreOwnerParams struct {
+	Name           string `json:"name" binding:"required"`
+	Email          string `json:"email" binding:"required"`
+	Password       string `json:"password" binding:"required"`
+	Phone          string `json:"phone"`
+	ProfilePicture string `db:"profile_picture" json:"profile_picture"`
 }
 
 func RegisterUserHandler(c *gin.Context) {
-	var req RegisterUserRequest
+	var req RegisterStoreOwnerParams
 
 	// Log the raw request body for debugging
 	body, _ := c.GetRawData()
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
-	fmt.Printf("Received registration request: %s\n", string(body))
 
 	// Bind and validate the request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Printf("Validation error: %v\n", err)
 		// Handle validation errors
 		if errs, ok := err.(validator.ValidationErrors); ok {
-			// Convert validation errors to a single error message
-			for _, fieldErr := range errs {
-				fmt.Printf("Field error - Field: %s, Tag: %s, Value: %v\n", fieldErr.Field(), fieldErr.Tag(), fieldErr.Value())
-				var errMsg string
-				switch fieldErr.Field() {
-				case "Name":
-					errMsg = "Name must be 3-50 characters"
-				case "Email":
-					errMsg = "Please provide a valid email"
-				case "Password":
-					errMsg = "Password must be at least 8 characters"
-				case "Phone":
-					errMsg = "Phone number must be 10-20 characters"
-				case "StoreName":
-					errMsg = "Store name is required"
-				default:
-					errMsg = fieldErr.Error()
-				}
-				utils.ErrorResponse(c, http.StatusBadRequest, "Validation failed", errors.New(errMsg))
-				return // Return after first error
-			}
+			utils.ErrorResponse(c, 500, "validation error", errs)
 		}
 
 		// Handle other errors (e.g., invalid JSON)
@@ -68,7 +47,7 @@ func RegisterUserHandler(c *gin.Context) {
 		return
 	}
 	//check if user already exists
-	_, err := utils.Queries.GetUserByEmail(context.Background(), req.Email)
+	_, err := utils.Queries.GetStoreOwnerByEmail(context.Background(), req.Email)
 	if err == nil {
 		utils.ErrorResponse(c, http.StatusConflict, "User already exists", err)
 		return
@@ -80,129 +59,52 @@ func RegisterUserHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := utils.Queries.CreateUser(context.Background(), db.CreateUserParams{
-		Name:      req.Name,
-		Email:     req.Email,
-		Password:  string(hashedPassword),
-		StoreName: pgtype.Text{String: req.StoreName, Valid: true},
-		Phone:     pgtype.Text{String: req.Phone, Valid: true},
+	user, err := utils.Queries.CreateStoreOwner(context.Background(), db.CreateStoreOwnerParams{
+		Name:           req.Name,
+		Email:          req.Email,
+		Password:       string(hashedPassword),
+		Phone:          req.Phone,
+		ProfilePicture: req.ProfilePicture,
 	})
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user", err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "User registered successfully",
-		"user":    user,
-	})
+	utils.SuccessResponse(c, "User created successfully", user)
 }
 
-/*
-* * * ---------------------------------------------------- Handler for user login * * * ----------------------------------------
- */
-type LoginUserRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+type LoginStoreOwnerParams struct {
+	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-func LoginUserHandler(c *gin.Context) {
-	var req LoginUserRequest
-
-	// Bind and validate the request
+func LoginHandler(c *gin.Context) {
+	var req LoginStoreOwnerParams
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// Handle validation errors
-		if errs, ok := err.(validator.ValidationErrors); ok {
-			// Convert validation errors to a single error message
-			for _, fieldErr := range errs {
-				var errMsg string
-				switch fieldErr.Field() {
-				case "Email":
-					errMsg = "Please provide a valid email"
-				case "Password":
-					errMsg = "Password is required"
-				default:
-					errMsg = fieldErr.Error()
-				}
-				utils.ErrorResponse(c, http.StatusBadRequest, "Validation failed", errors.New(errMsg))
-			}
-		}
-
-		// Handle other errors (e.g., invalid JSON)
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
 		return
 	}
 
-	// Check if user exists
-	user, err := utils.Queries.GetUserByEmail(context.Background(), req.Email)
+	user, err := utils.Queries.GetStoreOwnerByEmail(context.Background(), req.Email)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, "Invalid credentials", err)
 		return
 	}
 
-	// Verify password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, "Invalid credentials", err)
 		return
 	}
 
-	// Generate JWT token
-	storeName := ""
-	if user.StoreName.Valid {
-		storeName = user.StoreName.String
-	}
-	
-	token, err := utils.GenerateJWT(user.ID, user.Email, storeName)
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": "Login successful",
-		"token":   token,
-		"user": gin.H{
-			"id":         user.ID,
-			"name":       user.Name,
-			"email":      user.Email,
-			"store_name": storeName,
-		},
-	})
-}
-
-/*
-* * * ---------------------------------------------------- Handler for getting user profile (protected route) * * * ----------------------------------------
- */
-func GetUserProfileHandler(c *gin.Context) {
-	// Get user information from JWT token (set by middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated", nil)
-		return
-	}
-
-	userEmail, _ := c.Get("user_email")
-	storeName, _ := c.Get("store_name")
-
-	// Get full user details from database
-	user, err := utils.Queries.GetUser(context.Background(), userID.(pgtype.UUID))
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "User not found", err)
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"message": "Profile retrieved successfully",
-		"user": gin.H{
-			"id":         user.ID,
-			"name":       user.Name,
-			"email":      userEmail,
-			"store_name": storeName,
-			"phone":      user.Phone.String,
-			"created_at": user.CreatedAt,
-		},
-	})
+	utils.SuccessResponse(c, "Login successful", gin.H{"token": token})
 }
 
 /*
