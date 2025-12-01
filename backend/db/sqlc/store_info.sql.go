@@ -102,7 +102,7 @@ func (q *Queries) GetStoreInfoByOwner(ctx context.Context, ownerID pgtype.UUID) 
 const getStoreWithOwner = `-- name: GetStoreWithOwner :one
 SELECT 
   store_info.id, store_info.name, store_info.address, store_info.currency_code, store_info.owner_id, store_info.created_at, store_info.updated_at,
-  store_owner.id, store_owner.name, store_owner.email, store_owner.password, store_owner.phone, store_owner.role, store_owner.profile_picture, store_owner.created_at, store_owner.updated_at
+  store_owner.id, store_owner.name, store_owner.email, store_owner.password, store_owner.emailverified, store_owner.phone, store_owner.role, store_owner.profile_picture, store_owner.created_at, store_owner.updated_at
 FROM store_info
 INNER JOIN store_owner ON store_info.owner_id = store_owner.id
 WHERE store_info.id = $1
@@ -128,6 +128,7 @@ func (q *Queries) GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetSto
 		&i.StoreOwner.Name,
 		&i.StoreOwner.Email,
 		&i.StoreOwner.Password,
+		&i.StoreOwner.Emailverified,
 		&i.StoreOwner.Phone,
 		&i.StoreOwner.Role,
 		&i.StoreOwner.ProfilePicture,

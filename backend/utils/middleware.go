@@ -50,7 +50,7 @@ func JWTMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		userUUID := pgtype.UUID{
 			Bytes: googleUUID,
 			Valid: true,
@@ -59,7 +59,6 @@ func JWTMiddleware() gin.HandlerFunc {
 		// Set user information in context for use in handlers
 		c.Set("user_id", userUUID)
 		c.Set("user_email", claims.Email)
-		c.Set("store_name", claims.StoreName)
 
 		// Continue to next handler
 		c.Next()

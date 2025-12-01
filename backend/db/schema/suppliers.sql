@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS suppliers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50),
+    address VARCHAR(100),
+    phone_number VARCHAR(20),
+    email VARCHAR(50),
+    store_id UUID NOT NULL REFERENCES store_info(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

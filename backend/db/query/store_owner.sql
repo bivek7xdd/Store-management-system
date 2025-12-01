@@ -40,3 +40,8 @@ RETURNING *;
 -- name: DeleteStoreOwner :exec
 DELETE FROM store_owner
 WHERE id = $1;
+
+
+-- name: GetStoreOwnerById :one
+SELECT * FROM store_owner
+WHERE id = $1 LIMIT 1;

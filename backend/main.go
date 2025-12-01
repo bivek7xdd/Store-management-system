@@ -40,6 +40,7 @@ func main() {
 		protected.Use(utils.JWTMiddleware())
 		{
 			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
+			protected.POST("/store-info", handlers.CreateStoreInfoHandler)
 		}
 	}
 

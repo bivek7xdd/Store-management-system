@@ -8,6 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Category struct {
+	ID          pgtype.UUID        `db:"id" json:"id"`
+	Name        string             `db:"name" json:"name"`
+	Description pgtype.Text        `db:"description" json:"description"`
+	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
 type StoreInfo struct {
 	ID           pgtype.UUID        `db:"id" json:"id"`
 	Name         string             `db:"name" json:"name"`
@@ -23,9 +32,21 @@ type StoreOwner struct {
 	Name           string             `db:"name" json:"name"`
 	Email          string             `db:"email" json:"email"`
 	Password       string             `db:"password" json:"password"`
+	Emailverified  bool               `db:"emailverified" json:"emailverified"`
 	Phone          string             `db:"phone" json:"phone"`
 	Role           string             `db:"role" json:"role"`
 	ProfilePicture string             `db:"profile_picture" json:"profile_picture"`
 	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Supplier struct {
+	ID          pgtype.UUID        `db:"id" json:"id"`
+	Name        pgtype.Text        `db:"name" json:"name"`
+	Address     pgtype.Text        `db:"address" json:"address"`
+	PhoneNumber pgtype.Text        `db:"phone_number" json:"phone_number"`
+	Email       pgtype.Text        `db:"email" json:"email"`
+	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }

@@ -11,14 +11,17 @@ import (
 )
 
 type Querier interface {
+	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
 	CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error)
 	CreateStoreOwner(ctx context.Context, arg CreateStoreOwnerParams) (StoreOwner, error)
+	CreateSuppliers(ctx context.Context, arg CreateSuppliersParams) (Supplier, error)
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	GetStoreInfo(ctx context.Context, id pgtype.UUID) (StoreInfo, error)
 	GetStoreInfoByOwner(ctx context.Context, ownerID pgtype.UUID) (StoreInfo, error)
 	GetStoreOwner(ctx context.Context, id pgtype.UUID) (StoreOwner, error)
 	GetStoreOwnerByEmail(ctx context.Context, email string) (StoreOwner, error)
+	GetStoreOwnerById(ctx context.Context, id pgtype.UUID) (StoreOwner, error)
 	GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetStoreWithOwnerRow, error)
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)

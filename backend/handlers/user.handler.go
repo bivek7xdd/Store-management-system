@@ -107,6 +107,51 @@ func LoginHandler(c *gin.Context) {
 	utils.SuccessResponse(c, "Login successful", gin.H{"token": token})
 }
 
+type StoreInfoParams struct {
+	Name         string `json:"name" binding:"required"`
+	Address      string `json:"address" binding:"required"`
+	CurrencyCode string `json:"currency_code" binding:"required"`
+}
+
+func CreateStoreInfoHandler(c *gin.Context) {
+	//gent user id from token
+	userId, _ := c.Get("user_id")
+	// Type assert userId to pgtype.UUID
+	userUUID, ok := userId.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID format", nil)
+		return
+	}
+	var req StoreInfoParams
+
+	//check if user exists
+	_, err := utils.Queries.GetStoreOwnerById(context.Background(), userUUID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not found", err)
+		return
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	info, err := utils.Queries.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
+		OwnerID:      userUUID,
+		Name:         req.Name,
+		Address:      req.Address,
+		CurrencyCode: req.CurrencyCode,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create store info", err)
+		return
+	}
+
+	//create store info
+	utils.SuccessResponse(c, "Store info created successfully", info)
+
+}
+
 /*
 * * * ---------------------------------------------------- Handler for refreshing JWT token * * * ----------------------------------------
  */

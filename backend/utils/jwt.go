@@ -34,11 +34,10 @@ func GenerateJWT(userID pgtype.UUID, email, storeName string) (string, error) {
 		}
 		userIDStr = googleUUID.String()
 	}
-	
+
 	claims := Claims{
-		UserID:    userIDStr,
-		Email:     email,
-		StoreName: storeName,
+		UserID: userIDStr,
+		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

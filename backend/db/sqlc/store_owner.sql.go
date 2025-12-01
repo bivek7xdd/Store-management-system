@@ -21,7 +21,7 @@ INSERT INTO store_owner (
   profile_picture
 ) VALUES (
   $1, $2, $3, $4, $5, $6
-) RETURNING id, name, email, password, phone, role, profile_picture, created_at, updated_at
+) RETURNING id, name, email, password, emailverified, phone, role, profile_picture, created_at, updated_at
 `
 
 type CreateStoreOwnerParams struct {
@@ -48,6 +48,7 @@ func (q *Queries) CreateStoreOwner(ctx context.Context, arg CreateStoreOwnerPara
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.Emailverified,
 		&i.Phone,
 		&i.Role,
 		&i.ProfilePicture,
@@ -68,7 +69,7 @@ func (q *Queries) DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getStoreOwner = `-- name: GetStoreOwner :one
-SELECT id, name, email, password, phone, role, profile_picture, created_at, updated_at FROM store_owner
+SELECT id, name, email, password, emailverified, phone, role, profile_picture, created_at, updated_at FROM store_owner
 WHERE id = $1 LIMIT 1
 `
 
@@ -80,6 +81,7 @@ func (q *Queries) GetStoreOwner(ctx context.Context, id pgtype.UUID) (StoreOwner
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.Emailverified,
 		&i.Phone,
 		&i.Role,
 		&i.ProfilePicture,
@@ -90,7 +92,7 @@ func (q *Queries) GetStoreOwner(ctx context.Context, id pgtype.UUID) (StoreOwner
 }
 
 const getStoreOwnerByEmail = `-- name: GetStoreOwnerByEmail :one
-SELECT id, name, email, password, phone, role, profile_picture, created_at, updated_at FROM store_owner
+SELECT id, name, email, password, emailverified, phone, role, profile_picture, created_at, updated_at FROM store_owner
 WHERE email = $1 LIMIT 1
 `
 
@@ -102,6 +104,30 @@ func (q *Queries) GetStoreOwnerByEmail(ctx context.Context, email string) (Store
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.Emailverified,
+		&i.Phone,
+		&i.Role,
+		&i.ProfilePicture,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getStoreOwnerById = `-- name: GetStoreOwnerById :one
+SELECT id, name, email, password, emailverified, phone, role, profile_picture, created_at, updated_at FROM store_owner
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetStoreOwnerById(ctx context.Context, id pgtype.UUID) (StoreOwner, error) {
+	row := q.db.QueryRow(ctx, getStoreOwnerById, id)
+	var i StoreOwner
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Emailverified,
 		&i.Phone,
 		&i.Role,
 		&i.ProfilePicture,
@@ -112,7 +138,7 @@ func (q *Queries) GetStoreOwnerByEmail(ctx context.Context, email string) (Store
 }
 
 const listStoreOwners = `-- name: ListStoreOwners :many
-SELECT id, name, email, password, phone, role, profile_picture, created_at, updated_at FROM store_owner
+SELECT id, name, email, password, emailverified, phone, role, profile_picture, created_at, updated_at FROM store_owner
 ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2
@@ -137,6 +163,7 @@ func (q *Queries) ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams
 			&i.Name,
 			&i.Email,
 			&i.Password,
+			&i.Emailverified,
 			&i.Phone,
 			&i.Role,
 			&i.ProfilePicture,
@@ -164,7 +191,7 @@ SET
   profile_picture = COALESCE($6, profile_picture),
   updated_at = CURRENT_TIMESTAMP
 WHERE id = $7
-RETURNING id, name, email, password, phone, role, profile_picture, created_at, updated_at
+RETURNING id, name, email, password, emailverified, phone, role, profile_picture, created_at, updated_at
 `
 
 type UpdateStoreOwnerParams struct {
@@ -193,6 +220,7 @@ func (q *Queries) UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerPara
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.Emailverified,
 		&i.Phone,
 		&i.Role,
 		&i.ProfilePicture,
