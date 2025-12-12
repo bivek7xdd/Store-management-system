@@ -58,6 +58,10 @@ func RegisterUserHandler(c *gin.Context) {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to hash password", err)
 		return
 	}
+	otp, err := utils.GenerateOTP()
+	if err != nil {
+		println("error:", err)
+	}
 
 	user, err := utils.Queries.CreateStoreOwner(context.Background(), db.CreateStoreOwnerParams{
 		Name:           req.Name,
@@ -71,7 +75,19 @@ func RegisterUserHandler(c *gin.Context) {
 		return
 	}
 
+	//set the otp
+	utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+		UserID:  user.ID,
+		Otp:     otp,
+		Purpose: "email_verification",
+	})
+	//TODO: Fix the bug of creating user even though the email is not sent
+	err = utils.SendOTPEmail(user.Email, otp)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Error sending mail", err)
+	}
 	utils.SuccessResponse(c, "User created successfully", user)
+
 }
 
 type LoginStoreOwnerParams struct {
@@ -176,5 +192,66 @@ func RefreshTokenHandler(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Token refreshed successfully",
 		"token":   token,
+	})
+}
+
+type VerifyOTPParams struct {
+	Otp     string `json:"otp" binding:"required"`
+	Purpose string `json:"purpose" binding:"required"` // "email_verification" or "password_reset"
+}
+
+func VerifyOTP(c *gin.Context) {
+	var req VerifyOTPParams
+
+	// Bind and validate request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request: otp and purpose are required", err)
+		return
+	}
+
+	// Validate OTP format (should be 6 digits)
+	if len(req.Otp) != 6 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid OTP format: must be 6 digits", nil)
+		return
+	}
+
+	// Get user ID from JWT token (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
+	// Type assert userID to pgtype.UUID
+	userUUID, ok := userID.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID format", nil)
+		return
+	}
+
+	// Verify the OTP exists and is not expired
+	otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
+		UserID:  userUUID,
+		Otp:     req.Otp,
+		Purpose: req.Purpose,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
+		return
+	}
+
+	// Delete the OTP after successful verification (one-time use)
+	err = utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID)
+	if err != nil {
+		// Log the error but don't fail the request - OTP was valid
+		fmt.Printf("Warning: failed to delete used OTP: %v\n", err)
+	}
+
+	// TODO: If purpose is "email_verification", update user's email_verified status
+	// utils.Queries.UpdateEmailVerified(context.Background(), userUUID)
+
+	utils.SuccessResponse(c, "OTP verified successfully", gin.H{
+		"verified": true,
+		"purpose":  req.Purpose,
 	})
 }

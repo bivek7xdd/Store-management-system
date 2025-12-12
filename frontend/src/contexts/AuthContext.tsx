@@ -44,11 +44,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      
+
       // Set default authorization header for api
       api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
     }
-    
+
     setLoading(false);
   }, []);
 
@@ -60,18 +60,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       const { token: newToken, user: userData } = response.data;
-      
+
       // Store in state
       setToken(newToken);
       setUser(userData);
-      
+
       // Store in localStorage
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       // Set default authorization header for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      
+
     } catch (error) {
       throw error; // Re-throw to handle in component
     }
@@ -81,11 +81,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear state
     setUser(null);
     setToken(null);
-    
+
     // Clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     // Remove authorization header
     delete api.defaults.headers.common['Authorization'];
   };

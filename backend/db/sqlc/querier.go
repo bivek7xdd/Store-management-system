@@ -12,9 +12,12 @@ import (
 
 type Querier interface {
 	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
+	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
 	CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error)
 	CreateStoreOwner(ctx context.Context, arg CreateStoreOwnerParams) (StoreOwner, error)
 	CreateSuppliers(ctx context.Context, arg CreateSuppliersParams) (Supplier, error)
+	DeleteExpiredOTPs(ctx context.Context) error
+	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	GetStoreInfo(ctx context.Context, id pgtype.UUID) (StoreInfo, error)
@@ -27,6 +30,7 @@ type Querier interface {
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)
 	UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerParams) (StoreOwner, error)
+	VerifyOTP(ctx context.Context, arg VerifyOTPParams) (OtpToken, error)
 }
 
 var _ Querier = (*Queries)(nil)

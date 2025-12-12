@@ -41,6 +41,7 @@ func main() {
 		{
 			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
 			protected.POST("/store-info", handlers.CreateStoreInfoHandler)
+			protected.POST("/verify-otp", handlers.VerifyOTP)
 		}
 	}
 

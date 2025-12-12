@@ -2,10 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MessageCircle, Phone } from "lucide-react";
+import { Search, MessageCircle, Phone, Users, Wallet } from "lucide-react";
 import { mockDebtors } from "@/lib/mockData";
 import { useState } from "react";
 import { toast } from "sonner";
+
+const colors = {
+  primary: "#0d9488",
+  primaryDark: "#115e59",
+};
 
 export default function Debtors() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,21 +32,30 @@ export default function Debtors() {
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Debtors / Credit Management</h1>
-        <p className="text-muted-foreground mt-1">Track outstanding payments from customers</p>
+        <h1 className="text-3xl font-bold text-gray-900">Debtors / Credit Management</h1>
+        <p className="text-gray-500 mt-1">Track outstanding payments from customers</p>
       </div>
 
       {/* Summary Card */}
-      <Card className="bg-primary text-primary-foreground">
+      <Card className="border-0 shadow-sm" style={{ background: colors.primaryDark }}>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm opacity-90">Total Outstanding</p>
-              <p className="text-3xl font-bold mt-1">रू {totalOutstanding.toLocaleString()}</p>
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Wallet className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm text-white/80">Total Outstanding</p>
+                <p className="text-3xl font-bold mt-1">रू {totalOutstanding.toLocaleString()}</p>
+              </div>
             </div>
             <div className="text-right">
-              <p className="text-sm opacity-90">Total Debtors</p>
+              <div className="flex items-center gap-2 justify-end">
+                <Users className="h-5 w-5 text-white/80" />
+                <p className="text-sm text-white/80">Total Debtors</p>
+              </div>
               <p className="text-3xl font-bold mt-1">{mockDebtors.length}</p>
             </div>
           </div>
@@ -49,15 +63,15 @@ export default function Debtors() {
       </Card>
 
       {/* Search */}
-      <Card>
+      <Card className="border-0 shadow-sm">
         <CardContent className="pt-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search by name or phone number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
+              className="pl-10 h-11 rounded-xl border-gray-200"
             />
           </div>
         </CardContent>
@@ -66,38 +80,46 @@ export default function Debtors() {
       {/* Debtors List */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredDebtors.map((debtor) => (
-          <Card key={debtor.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
+          <Card key={debtor.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg">{debtor.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {debtor.phone}
-                  </p>
+                <div className="flex items-start gap-3">
+                  <div
+                    className="h-11 w-11 rounded-full flex items-center justify-center text-white font-semibold"
+                    style={{ background: colors.primary }}
+                  >
+                    {debtor.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold text-gray-900">{debtor.name}</CardTitle>
+                    <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {debtor.phone}
+                    </p>
+                  </div>
                 </div>
-                <Badge variant="outline" className="bg-warning/10 text-warning border-warning">
+                <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">
                   Pending
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Outstanding Amount:</span>
-                  <span className="font-bold text-destructive">
+                <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                  <span className="text-gray-500">Outstanding Amount</span>
+                  <span className="font-bold text-red-600">
                     रू {debtor.outstandingAmount.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Last Transaction:</span>
-                  <span className="font-medium">
+                <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                  <span className="text-gray-500">Last Transaction</span>
+                  <span className="font-medium text-gray-700">
                     {new Date(debtor.lastTransaction).toLocaleDateString("en-NP")}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Sales:</span>
-                  <span className="font-medium">{debtor.sales.length}</span>
+                <div className="flex justify-between py-2 text-sm">
+                  <span className="text-gray-500">Total Sales</span>
+                  <span className="font-medium text-gray-700">{debtor.sales.length}</span>
                 </div>
               </div>
 
@@ -105,16 +127,16 @@ export default function Debtors() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 rounded-lg border-gray-200 hover:bg-gray-50"
                   onClick={() => handleSendReminder(debtor)}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Remind
                 </Button>
                 <Button
-                  variant="default"
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 rounded-lg"
+                  style={{ background: colors.primaryDark }}
                   onClick={() => toast.success("Payment received! (Demo)")}
                 >
                   Mark Paid
@@ -126,9 +148,10 @@ export default function Debtors() {
       </div>
 
       {filteredDebtors.length === 0 && (
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No debtors found matching your search</p>
+            <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500">No debtors found matching your search</p>
           </CardContent>
         </Card>
       )}

@@ -17,6 +17,15 @@ type Category struct {
 	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type OtpToken struct {
+	ID        pgtype.UUID        `db:"id" json:"id"`
+	UserID    pgtype.UUID        `db:"user_id" json:"user_id"`
+	Otp       string             `db:"otp" json:"otp"`
+	Purpose   string             `db:"purpose" json:"purpose"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expires_at"`
+}
+
 type StoreInfo struct {
 	ID           pgtype.UUID        `db:"id" json:"id"`
 	Name         string             `db:"name" json:"name"`
