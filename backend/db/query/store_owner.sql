@@ -45,3 +45,9 @@ WHERE id = $1;
 -- name: GetStoreOwnerById :one
 SELECT * FROM store_owner
 WHERE id = $1 LIMIT 1;
+
+-- name: UpdateEmailVerification :exec
+UPDATE store_owner
+SET
+  emailVerified = true
+WHERE email = $1;

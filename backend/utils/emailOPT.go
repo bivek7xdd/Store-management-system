@@ -46,3 +46,6 @@ func SendOTPEmail(to, otp string) error {
 	fmt.Println(response.Headers)
 	return nil
 }
+
+//TODO: need add function to delete the table row of the verified users
+//TODO: need to add a limit for user to generate too much OTPs

@@ -28,6 +28,7 @@ type Querier interface {
 	GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetStoreWithOwnerRow, error)
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
+	UpdateEmailVerification(ctx context.Context, email string) error
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)
 	UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerParams) (StoreOwner, error)
 	VerifyOTP(ctx context.Context, arg VerifyOTPParams) (OtpToken, error)

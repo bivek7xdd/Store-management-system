@@ -34,6 +34,7 @@ func main() {
 	{
 		userRoutes.POST("/register", handlers.RegisterUserHandler)
 		userRoutes.POST("/login", handlers.LoginHandler)
+		userRoutes.POST("/verify-otp", handlers.VerifyOTP)
 
 		// Protected routes (require JWT token)
 		protected := userRoutes.Group("/")
@@ -41,7 +42,7 @@ func main() {
 		{
 			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
 			protected.POST("/store-info", handlers.CreateStoreInfoHandler)
-			protected.POST("/verify-otp", handlers.VerifyOTP)
+
 		}
 	}
 

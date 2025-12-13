@@ -15,6 +15,7 @@ import Market from "./pages/Market";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import OTP from "./pages/OTP";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +30,8 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+            <Route path="/otp" element={<OTP />} />
+
             {/* Protected routes */}
             <Route path="*" element={
               <ProtectedRoute>

@@ -19,7 +19,7 @@ type Category struct {
 
 type OtpToken struct {
 	ID        pgtype.UUID        `db:"id" json:"id"`
-	UserID    pgtype.UUID        `db:"user_id" json:"user_id"`
+	UserEmail string             `db:"user_email" json:"user_email"`
 	Otp       string             `db:"otp" json:"otp"`
 	Purpose   string             `db:"purpose" json:"purpose"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`

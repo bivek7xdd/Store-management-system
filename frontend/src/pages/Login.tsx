@@ -2,9 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Store, AlertCircle, Mail, Lock, Eye, EyeOff, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Store, AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import gsap from "gsap";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,7 +18,68 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const formRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const from = location.state?.from?.pathname || "/";
+
+  useEffect(() => {
+    // Grid Animation
+    if (gridRef.current) {
+      const gridLines = Array.from(gridRef.current.children);
+
+      gsap.to(gridLines, {
+        opacity: "random(0.1, 0.4)",
+        scaleY: "random(0.8, 1.2)",
+        duration: "random(2, 4)",
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: 0.1
+      });
+    }
+
+    // Left Panel Animations
+    if (imageRef.current) {
+      gsap.to(imageRef.current, {
+        scale: 1.1,
+        duration: 20,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+    }
+
+    if (contentRef.current) {
+      gsap.from(contentRef.current.children, {
+        y: 20,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.1,
+        delay: 0.5,
+        ease: "power2.out"
+      });
+    }
+
+    // Form Entry Animation
+    const tl = gsap.timeline();
+    tl.fromTo(formRef.current,
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" }
+    );
+
+    // Stagger inputs
+    const inputs = formRef.current?.querySelectorAll(".animate-item");
+    if (inputs) {
+      tl.fromTo(inputs,
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "power2.out" },
+        "-=0.4"
+      );
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +109,7 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gray-900">
         {/* Background Image */}
         <img
+          ref={imageRef}
           src="/store-hero.png"
           alt="Store Management"
           className="absolute inset-0 w-full h-full object-cover"
@@ -61,7 +124,7 @@ const Login = () => {
         />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+        <div ref={contentRef} className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-10">
             <div
               className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md"
@@ -99,12 +162,29 @@ const Login = () => {
 
       {/* Right Panel - Login Form */}
       <div
-        className="flex-1 flex items-center justify-center p-8"
+        className="flex-1 flex items-center justify-center p-8 relative overflow-hidden"
         style={{ background: "linear-gradient(180deg, #fffcf5 0%, #fef9f0 50%, #fdf6e8 100%)" }}
       >
-        <div className="w-full max-w-md">
+        {/* Digital Grid Background */}
+        <div ref={gridRef} className="absolute inset-0 pointer-events-none flex justify-around opacity-20">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-px h-full bg-teal-500/20"
+              style={{ transform: `scaleY(${Math.random()})` }}
+            />
+          ))}
+          {/* Horizontal Lines for Grid effect */}
+          <div className="absolute inset-0 flex flex-col justify-around pointer-events-none">
+            {Array.from({ length: 15 }).map((_, i) => (
+              <div key={i} className="w-full h-px bg-teal-500/10" />
+            ))}
+          </div>
+        </div>
+
+        <div ref={formRef} className="w-full max-w-md relative z-10">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8 animate-item">
             <div
               className="h-12 w-12 rounded-xl flex items-center justify-center"
               style={{ background: `linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary})` }}
@@ -116,7 +196,7 @@ const Login = () => {
 
           {/* Card */}
           <div
-            className="rounded-3xl p-8 shadow-xl border"
+            className="rounded-3xl p-8 shadow-xl border animate-item"
             style={{
               background: "rgba(255, 255, 255, 0.95)",
               borderColor: "rgba(13, 148, 136, 0.08)"
@@ -124,20 +204,20 @@ const Login = () => {
           >
             <div className="text-center mb-8">
               <div
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 animate-item"
                 style={{ background: "rgba(13, 148, 136, 0.08)" }}
               >
                 <Store className="w-4 h-4" style={{ color: colors.primary }} />
                 <span className="text-sm font-medium" style={{ color: colors.primaryDark }}>Welcome back</span>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign in to your account</h2>
-              <p className="text-gray-500">Enter your credentials to access your dashboard</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2 animate-item">Sign in to your account</h2>
+              <p className="text-gray-500 animate-item">Enter your credentials to access your dashboard</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div
-                  className="flex items-center gap-3 p-4 rounded-xl text-sm"
+                  className="flex items-center gap-3 p-4 rounded-xl text-sm animate-item"
                   style={{ background: "rgba(239, 68, 68, 0.08)", color: "#dc2626" }}
                 >
                   <AlertCircle className="h-5 w-5 flex-shrink-0" />
@@ -145,7 +225,7 @@ const Login = () => {
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-2 animate-item">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Mail className="w-4 h-4" style={{ color: colors.primary }} />
                   Email Address
@@ -163,7 +243,7 @@ const Login = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 animate-item">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <Lock className="w-4 h-4" style={{ color: colors.primary }} />
@@ -201,7 +281,7 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-0"
+                className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-0 animate-item"
                 style={{
                   background: `linear-gradient(135deg, ${colors.primaryDark} 0%, ${colors.primary} 100%)`,
                   boxShadow: `0 10px 40px -12px ${colors.primary}`
@@ -219,7 +299,7 @@ const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <div className="mt-8 pt-6 border-t border-gray-100 text-center animate-item">
               <p className="text-gray-500">
                 Don't have an account?{" "}
                 <Link
@@ -233,7 +313,7 @@ const Login = () => {
             </div>
           </div>
 
-          <p className="text-center text-sm text-gray-400 mt-8">
+          <p className="text-center text-sm text-gray-400 mt-8 animate-item">
             © 2024 StoreHub. All rights reserved.
           </p>
         </div>

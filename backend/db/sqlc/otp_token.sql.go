@@ -12,23 +12,23 @@ import (
 )
 
 const createOTPToken = `-- name: CreateOTPToken :one
-INSERT INTO otp_tokens (user_id, otp, purpose, expires_at)
+INSERT INTO otp_tokens (user_email, otp, purpose, expires_at)
 VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes')
-RETURNING id, user_id, otp, purpose, created_at, expires_at
+RETURNING id, user_email, otp, purpose, created_at, expires_at
 `
 
 type CreateOTPTokenParams struct {
-	UserID  pgtype.UUID `db:"user_id" json:"user_id"`
-	Otp     string      `db:"otp" json:"otp"`
-	Purpose string      `db:"purpose" json:"purpose"`
+	UserEmail string `db:"user_email" json:"user_email"`
+	Otp       string `db:"otp" json:"otp"`
+	Purpose   string `db:"purpose" json:"purpose"`
 }
 
 func (q *Queries) CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error) {
-	row := q.db.QueryRow(ctx, createOTPToken, arg.UserID, arg.Otp, arg.Purpose)
+	row := q.db.QueryRow(ctx, createOTPToken, arg.UserEmail, arg.Otp, arg.Purpose)
 	var i OtpToken
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.UserEmail,
 		&i.Otp,
 		&i.Purpose,
 		&i.CreatedAt,
@@ -56,22 +56,22 @@ func (q *Queries) DeleteOTPToken(ctx context.Context, id pgtype.UUID) error {
 }
 
 const verifyOTP = `-- name: VerifyOTP :one
-SELECT id, user_id, otp, purpose, created_at, expires_at FROM otp_tokens 
-WHERE user_id = $1 AND otp = $2 AND purpose = $3 AND expires_at > NOW()
+SELECT id, user_email, otp, purpose, created_at, expires_at FROM otp_tokens 
+WHERE user_email = $1 AND otp = $2 AND purpose = $3 AND expires_at > NOW()
 `
 
 type VerifyOTPParams struct {
-	UserID  pgtype.UUID `db:"user_id" json:"user_id"`
-	Otp     string      `db:"otp" json:"otp"`
-	Purpose string      `db:"purpose" json:"purpose"`
+	UserEmail string `db:"user_email" json:"user_email"`
+	Otp       string `db:"otp" json:"otp"`
+	Purpose   string `db:"purpose" json:"purpose"`
 }
 
 func (q *Queries) VerifyOTP(ctx context.Context, arg VerifyOTPParams) (OtpToken, error) {
-	row := q.db.QueryRow(ctx, verifyOTP, arg.UserID, arg.Otp, arg.Purpose)
+	row := q.db.QueryRow(ctx, verifyOTP, arg.UserEmail, arg.Otp, arg.Purpose)
 	var i OtpToken
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.UserEmail,
 		&i.Otp,
 		&i.Purpose,
 		&i.CreatedAt,

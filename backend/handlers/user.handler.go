@@ -77,9 +77,9 @@ func RegisterUserHandler(c *gin.Context) {
 
 	//set the otp
 	utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
-		UserID:  user.ID,
-		Otp:     otp,
-		Purpose: "email_verification",
+		UserEmail: user.Email,
+		Otp:       otp,
+		Purpose:   "email_verification",
 	})
 	//TODO: Fix the bug of creating user even though the email is not sent
 	err = utils.SendOTPEmail(user.Email, otp)
@@ -196,8 +196,9 @@ func RefreshTokenHandler(c *gin.Context) {
 }
 
 type VerifyOTPParams struct {
-	Otp     string `json:"otp" binding:"required"`
-	Purpose string `json:"purpose" binding:"required"` // "email_verification" or "password_reset"
+	UserEmail string `json:"userEmail" binding:"required"`
+	Otp       string `json:"otp" binding:"required"`
+	Purpose   string `json:"purpose" binding:"required"` // "email_verification" or "password_reset"
 }
 
 func VerifyOTP(c *gin.Context) {
@@ -215,25 +216,11 @@ func VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from JWT token (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "User not authenticated", nil)
-		return
-	}
-
-	// Type assert userID to pgtype.UUID
-	userUUID, ok := userID.(pgtype.UUID)
-	if !ok {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID format", nil)
-		return
-	}
-
 	// Verify the OTP exists and is not expired
 	otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
-		UserID:  userUUID,
-		Otp:     req.Otp,
-		Purpose: req.Purpose,
+		UserEmail: req.UserEmail,
+		Otp:       req.Otp,
+		Purpose:   req.Purpose,
 	})
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
@@ -247,8 +234,11 @@ func VerifyOTP(c *gin.Context) {
 		fmt.Printf("Warning: failed to delete used OTP: %v\n", err)
 	}
 
-	// TODO: If purpose is "email_verification", update user's email_verified status
-	// utils.Queries.UpdateEmailVerified(context.Background(), userUUID)
+	err = utils.Queries.UpdateEmailVerification(context.Background(), req.UserEmail)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
+		return
+	}
 
 	utils.SuccessResponse(c, "OTP verified successfully", gin.H{
 		"verified": true,

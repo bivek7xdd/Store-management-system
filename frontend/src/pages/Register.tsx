@@ -3,8 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
-import { Store, User, MapPin, Check, ArrowRight, ArrowLeft, Eye, EyeOff, Mail, Phone, Lock, Building2, DollarSign, Sparkles, Shield, Zap, BarChart3 } from "lucide-react";
-import { useState } from "react";
+import { Store, User, MapPin, Check, ArrowRight, ArrowLeft, Eye, EyeOff, Mail, Phone, Lock, Building2, DollarSign, BarChart3, Shield, Zap } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import gsap from "gsap";
 
 interface FormData {
     name: string;
@@ -58,6 +59,71 @@ const Register = () => {
     const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const particlesRef = useRef<HTMLDivElement>(null);
+    const imageRef = useRef<HTMLImageElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Form Entry Animation
+        gsap.fromTo(containerRef.current,
+            { opacity: 0, x: 50 },
+            { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }
+        );
+
+        // Left Panel Animations
+        if (imageRef.current) {
+            gsap.to(imageRef.current, {
+                scale: 1.1,
+                duration: 20,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+        }
+
+        if (contentRef.current) {
+            gsap.from(contentRef.current.children, {
+                y: 20,
+                opacity: 0,
+                duration: 1,
+                stagger: 0.1,
+                delay: 0.5,
+                ease: "power2.out"
+            });
+        }
+
+        // Rising Particles Animation
+        if (particlesRef.current) {
+            const particles = Array.from(particlesRef.current.children);
+
+            particles.forEach((particle) => {
+                gsap.to(particle, {
+                    y: `-${window.innerHeight + 100}`, // Move up off screen
+                    duration: "random(10, 20)",
+                    repeat: -1,
+                    ease: "none",
+                    delay: "random(0, 10)",
+                });
+            });
+        }
+    }, [currentStep]); // Re-run subtle effects on step change if needed, but mostly entry is once
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!particlesRef.current) return;
+
+        // Simple Parallax
+        const mouseX = e.clientX / window.innerWidth;
+        const mouseY = e.clientY / window.innerHeight;
+
+        gsap.to(particlesRef.current, {
+            x: (mouseX - 0.5) * 20,
+            y: (mouseY - 0.5) * 20,
+            duration: 1,
+            ease: "power2.out"
+        });
+    };
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -105,11 +171,34 @@ const Register = () => {
 
     const nextStep = () => {
         if (validateStep(currentStep)) {
-            setCurrentStep(prev => Math.min(prev + 1, 3));
+            // Animate exit current step
+            const container = document.querySelector(".step-container");
+            if (container) {
+                gsap.to(container, {
+                    x: -20,
+                    opacity: 0,
+                    duration: 0.3,
+                    onComplete: () => setCurrentStep(prev => Math.min(prev + 1, 3))
+                });
+            } else {
+                setCurrentStep(prev => Math.min(prev + 1, 3));
+            }
         }
     };
 
-    const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+    const prevStep = () => {
+        const container = document.querySelector(".step-container");
+        if (container) {
+            gsap.to(container, {
+                x: 20,
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => setCurrentStep(prev => Math.max(prev - 1, 1))
+            });
+        } else {
+            setCurrentStep(prev => Math.max(prev - 1, 1))
+        }
+    };
 
     const handleSubmit = async () => {
         if (!validateStep(1) || !validateStep(2)) return;
@@ -123,7 +212,7 @@ const Register = () => {
         });
 
         setIsSubmitting(false);
-        navigate("/login", { state: { message: "Registration successful! Please log in." } });
+        navigate("/otp", { state: { email: formData.email } });
     };
 
     const renderStepIndicator = () => (
@@ -187,8 +276,9 @@ const Register = () => {
         ${hasError ? "border-red-400 focus:border-red-500 focus:ring-red-500" : ""}
     `;
 
+    // Wrapped in step-container for animation targeting
     const renderStep1 = () => (
-        <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+        <div className="step-container space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <User className="w-4 h-4" style={{ color: colors.primary }} />
@@ -296,7 +386,7 @@ const Register = () => {
     );
 
     const renderStep2 = () => (
-        <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+        <div className="step-container space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <Building2 className="w-4 h-4" style={{ color: colors.primary }} />
@@ -371,7 +461,7 @@ const Register = () => {
         const currency = CURRENCIES.find(c => c.code === formData.currency_code);
 
         return (
-            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="step-container space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="text-center">
                     <div
                         className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-3"
@@ -440,6 +530,7 @@ const Register = () => {
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gray-900">
                 {/* Background Image */}
                 <img
+                    ref={imageRef}
                     src="/store-hero.png"
                     alt="Store Management"
                     className="absolute inset-0 w-full h-full object-cover"
@@ -454,7 +545,7 @@ const Register = () => {
                 />
 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+                <div ref={contentRef} className="relative z-10 flex flex-col justify-center px-16 text-white">
                     <div className="flex items-center gap-3 mb-10">
                         <div
                             className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md"
@@ -497,10 +588,27 @@ const Register = () => {
 
             {/* Right Panel - Form */}
             <div
-                className="flex-1 flex items-center justify-center p-6 overflow-y-auto"
+                className="flex-1 flex items-center justify-center p-6 overflow-hidden relative"
                 style={{ background: "linear-gradient(180deg, #fffcf5 0%, #fef9f0 50%, #fdf6e8 100%)" }}
+                onMouseMove={handleMouseMove}
             >
-                <div className="w-full max-w-lg">
+                {/* Rising Particles Background */}
+                <div ref={particlesRef} className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {Array.from({ length: 15 }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute rounded-full bg-teal-500/10 blur-sm"
+                            style={{
+                                width: Math.random() * 20 + 10 + "px",
+                                height: Math.random() * 20 + 10 + "px",
+                                left: Math.random() * 100 + "%",
+                                top: "110%", // Start below the screen
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <div className="w-full max-w-lg relative z-10" ref={containerRef}>
                     {/* Mobile logo */}
                     <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
                         <div className="h-12 w-12 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary})` }}>
@@ -528,7 +636,7 @@ const Register = () => {
 
                         {renderStepIndicator()}
 
-                        <div className="min-h-[320px]">
+                        <div className="min-h-[320px] relative">
                             {currentStep === 1 && renderStep1()}
                             {currentStep === 2 && renderStep2()}
                             {currentStep === 3 && renderStep3()}

@@ -180,6 +180,18 @@ func (q *Queries) ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams
 	return items, nil
 }
 
+const updateEmailVerification = `-- name: UpdateEmailVerification :exec
+UPDATE store_owner
+SET
+  emailVerified = true
+WHERE email = $1
+`
+
+func (q *Queries) UpdateEmailVerification(ctx context.Context, email string) error {
+	_, err := q.db.Exec(ctx, updateEmailVerification, email)
+	return err
+}
+
 const updateStoreOwner = `-- name: UpdateStoreOwner :one
 UPDATE store_owner
 SET
