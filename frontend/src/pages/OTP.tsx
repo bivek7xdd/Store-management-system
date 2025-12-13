@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Check, Shield, RotateCcw } from "lucide-react";
 import gsap from "gsap";
+import api from "@/services/api";
+import { useToast } from "@/components/ui/use-toast";
 
 const OTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { toast } = useToast();
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -108,13 +111,39 @@ const OTP = () => {
 
         setIsSubmitting(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            await api.post("/users/verify-otp", {
+                userEmail: email,
+                otp: otpValue,
+                purpose: "email_verification"
+            });
 
-        console.log("Verifying OTP:", otpValue);
+            setIsSubmitting(false);
 
-        setIsSubmitting(false);
-        navigate("/login", { state: { message: "Account verified successfully! Please log in." } });
+            toast({
+                title: "Success",
+                description: "Account verified successfully! Please log in.",
+            });
+
+            navigate("/login", { state: { message: "Account verified successfully! Please log in." } });
+
+        } catch (error: any) {
+            setIsSubmitting(false);
+            console.error("OTP Verification failed:", error);
+
+            const errorMessage = error.response?.data?.error || "Verification failed. Invalid or expired OTP.";
+
+            toast({
+                variant: "destructive",
+                title: "Verification Failed",
+                description: errorMessage,
+            });
+
+            // Optional: Shake animation for error
+            if (formRef.current) {
+                gsap.from(formRef.current, { x: 5, duration: 0.1, repeat: 3, yoyo: true });
+            }
+        }
     };
 
     return (

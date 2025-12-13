@@ -41,12 +41,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (storedToken && storedUser && storedUser !== "undefined") {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
 
-      // Set default authorization header for api
-      api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        // Set default authorization header for api
+        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      } catch (e) {
+        console.error("Failed to parse stored user:", e);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
 
     setLoading(false);
@@ -59,15 +68,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password
       });
 
-      const { token: newToken, user: userData } = response.data;
+      const { newToken } = response.data.data;
+
+      if (!newToken) {
+        throw new Error("Invalid response from server");
+      }
 
       // Store in state
       setToken(newToken);
-      setUser(userData);
 
       // Store in localStorage
       localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(userData));
 
       // Set default authorization header for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

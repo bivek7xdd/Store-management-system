@@ -25,6 +25,9 @@ type RegisterStoreOwnerParams struct {
 	Password       string `json:"password" binding:"required"`
 	Phone          string `json:"phone"`
 	ProfilePicture string `db:"profile_picture" json:"profile_picture"`
+	StoreName      string `json:"store_name" binding:"required"`
+	StoreAddress   string `json:"store_address" binding:"required"`
+	CurrencyCode   string `json:"currency_code" binding:"required"`
 }
 
 func RegisterUserHandler(c *gin.Context) {
@@ -63,6 +66,7 @@ func RegisterUserHandler(c *gin.Context) {
 		println("error:", err)
 	}
 
+	// Create User
 	user, err := utils.Queries.CreateStoreOwner(context.Background(), db.CreateStoreOwnerParams{
 		Name:           req.Name,
 		Email:          req.Email,
@@ -72,6 +76,20 @@ func RegisterUserHandler(c *gin.Context) {
 	})
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user", err)
+		return
+	}
+
+	// Create Store Info
+	_, err = utils.Queries.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
+		OwnerID:      user.ID,
+		Name:         req.StoreName,
+		Address:      req.StoreAddress,
+		CurrencyCode: req.CurrencyCode,
+	})
+	if err != nil {
+		// Note: Ideally we should rollback user creation here, but keeping it simple for now
+		fmt.Printf("Failed to create store info: %v\n", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create store info", err)
 		return
 	}
 
@@ -86,7 +104,7 @@ func RegisterUserHandler(c *gin.Context) {
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Error sending mail", err)
 	}
-	utils.SuccessResponse(c, "User created successfully", user)
+	utils.SuccessResponse(c, "User and Store created successfully", user)
 
 }
 
@@ -120,7 +138,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Login successful", gin.H{"token": token})
+	utils.SuccessResponse(c, "Login successful", gin.H{"userData": user, "newToken": token})
 }
 
 type StoreInfoParams struct {

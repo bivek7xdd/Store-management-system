@@ -6,6 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Store, User, MapPin, Check, ArrowRight, ArrowLeft, Eye, EyeOff, Mail, Phone, Lock, Building2, DollarSign, BarChart3, Shield, Zap } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
+import api from "@/services/api";
+import { useToast } from "@/components/ui/use-toast";
 
 interface FormData {
     name: string;
@@ -43,6 +45,7 @@ const colors = {
 
 const Register = () => {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(1);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -204,15 +207,36 @@ const Register = () => {
         if (!validateStep(1) || !validateStep(2)) return;
 
         setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        console.log("Registration data:", {
-            owner: { name: formData.name, email: formData.email, phone: formData.phone, password: formData.password },
-            store: { name: formData.store_name, address: formData.store_address, currency_code: formData.currency_code }
-        });
+        try {
+            const payload = {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password,
+                profile_picture: "", // Optional or handle upload later
+                store_name: formData.store_name,
+                store_address: formData.store_address,
+                currency_code: formData.currency_code
+            };
 
-        setIsSubmitting(false);
-        navigate("/otp", { state: { email: formData.email } });
+            await api.post("/users/register", payload);
+
+            setIsSubmitting(false);
+            navigate("/otp", { state: { email: formData.email } });
+
+        } catch (error: any) {
+            setIsSubmitting(false);
+            console.error("Registration failed:", error);
+
+            const errorMessage = error.response?.data?.error || "Registration failed. Please try again.";
+
+            toast({
+                variant: "destructive",
+                title: "Registration Error",
+                description: errorMessage,
+            });
+        }
     };
 
     const renderStepIndicator = () => (
