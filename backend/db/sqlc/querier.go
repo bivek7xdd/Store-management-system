@@ -13,22 +13,28 @@ import (
 type Querier interface {
 	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
 	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error)
 	CreateStoreOwner(ctx context.Context, arg CreateStoreOwnerParams) (StoreOwner, error)
 	CreateSuppliers(ctx context.Context, arg CreateSuppliersParams) (Supplier, error)
 	DeleteExpiredOTPs(ctx context.Context) error
 	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
+	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
+	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
 	GetStoreInfo(ctx context.Context, id pgtype.UUID) (StoreInfo, error)
 	GetStoreInfoByOwner(ctx context.Context, ownerID pgtype.UUID) (StoreInfo, error)
 	GetStoreOwner(ctx context.Context, id pgtype.UUID) (StoreOwner, error)
 	GetStoreOwnerByEmail(ctx context.Context, email string) (StoreOwner, error)
 	GetStoreOwnerById(ctx context.Context, id pgtype.UUID) (StoreOwner, error)
 	GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetStoreWithOwnerRow, error)
+	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
+	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	UpdateEmailVerification(ctx context.Context, email string) error
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)
 	UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerParams) (StoreOwner, error)
 	VerifyOTP(ctx context.Context, arg VerifyOTPParams) (OtpToken, error)

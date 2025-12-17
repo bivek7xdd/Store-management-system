@@ -5,8 +5,54 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type ProductStatus string
+
+const (
+	ProductStatusActive       ProductStatus = "active"
+	ProductStatusOutOfStock   ProductStatus = "out_of_stock"
+	ProductStatusDiscontinued ProductStatus = "discontinued"
+)
+
+func (e *ProductStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductStatus(s)
+	case string:
+		*e = ProductStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductStatus: %T", src)
+	}
+	return nil
+}
+
+type NullProductStatus struct {
+	ProductStatus ProductStatus `json:"product_status"`
+	Valid         bool          `json:"valid"` // Valid is true if ProductStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductStatus), nil
+}
 
 type Category struct {
 	ID          pgtype.UUID        `db:"id" json:"id"`
@@ -24,6 +70,24 @@ type OtpToken struct {
 	Purpose   string             `db:"purpose" json:"purpose"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expires_at"`
+}
+
+type Product struct {
+	ID                pgtype.UUID        `db:"id" json:"id"`
+	Name              string             `db:"name" json:"name"`
+	Barcode           pgtype.Text        `db:"barcode" json:"barcode"`
+	Price             pgtype.Numeric     `db:"price" json:"price"`
+	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
+	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
+	LowStockThreshold pgtype.Int4        `db:"low_stock_threshold" json:"low_stock_threshold"`
+	ExpiresAt         pgtype.Timestamptz `db:"expires_at" json:"expires_at"`
+	Status            NullProductStatus  `db:"status" json:"status"`
+	CategoryID        pgtype.UUID        `db:"category_id" json:"category_id"`
+	SupplierID        pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
+	ImageUrl          pgtype.Text        `db:"image_url" json:"image_url"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type StoreInfo struct {
