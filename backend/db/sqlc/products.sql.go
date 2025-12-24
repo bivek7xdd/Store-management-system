@@ -296,3 +296,41 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 	)
 	return i, err
 }
+
+const updateProductStock = `-- name: UpdateProductStock :one
+UPDATE products
+SET 
+    stock_quantity = stock_quantity - $2,
+    updated_at = NOW()
+WHERE id = $1 AND store_id = $3
+RETURNING id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, created_at, updated_at
+`
+
+type UpdateProductStockParams struct {
+	ID            pgtype.UUID `db:"id" json:"id"`
+	StockQuantity int32       `db:"stock_quantity" json:"stock_quantity"`
+	StoreID       pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProductStock, arg.ID, arg.StockQuantity, arg.StoreID)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Barcode,
+		&i.Price,
+		&i.MarketPrice,
+		&i.StockQuantity,
+		&i.LowStockThreshold,
+		&i.ExpiresAt,
+		&i.Status,
+		&i.CategoryID,
+		&i.SupplierID,
+		&i.StoreID,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

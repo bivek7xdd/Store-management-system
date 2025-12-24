@@ -74,5 +74,21 @@ func main() {
 		productRoutes.DELETE("/:id", handlers.DeleteProduct)
 	}
 
+	// Sales routes
+	salesRoutes := router.Group("/api/sales")
+	salesRoutes.Use(utils.JWTMiddleware())
+	{
+		salesRoutes.POST("/create", handlers.CreateSale)
+		salesRoutes.GET("", handlers.ListSales)
+		salesRoutes.GET("/:id", handlers.GetSaleDetails)
+	}
+
+	// Customer routes
+	customerRoutes := router.Group("/api/customers")
+	customerRoutes.Use(utils.JWTMiddleware())
+	{
+		customerRoutes.GET("", handlers.ListCustomers)
+	}
+
 	router.Run(":8000")
 }

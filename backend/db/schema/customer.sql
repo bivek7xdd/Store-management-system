@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS customers(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    store_id UUID REFERENCES store_info(id) ON DELETE CASCADE
+)

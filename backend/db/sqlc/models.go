@@ -54,6 +54,49 @@ func (ns NullProductStatus) Value() (driver.Value, error) {
 	return string(ns.ProductStatus), nil
 }
 
+type SalesTypes string
+
+const (
+	SalesTypesCash   SalesTypes = "cash"
+	SalesTypesCredit SalesTypes = "credit"
+	SalesTypesOnline SalesTypes = "online"
+)
+
+func (e *SalesTypes) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SalesTypes(s)
+	case string:
+		*e = SalesTypes(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SalesTypes: %T", src)
+	}
+	return nil
+}
+
+type NullSalesTypes struct {
+	SalesTypes SalesTypes `json:"sales_types"`
+	Valid      bool       `json:"valid"` // Valid is true if SalesTypes is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSalesTypes) Scan(value interface{}) error {
+	if value == nil {
+		ns.SalesTypes, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SalesTypes.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSalesTypes) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SalesTypes), nil
+}
+
 type Category struct {
 	ID          pgtype.UUID        `db:"id" json:"id"`
 	Name        string             `db:"name" json:"name"`
@@ -61,6 +104,14 @@ type Category struct {
 	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
 	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Customer struct {
+	ID        pgtype.UUID        `db:"id" json:"id"`
+	Name      string             `db:"name" json:"name"`
+	Phone     string             `db:"phone" json:"phone"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	StoreID   pgtype.UUID        `db:"store_id" json:"store_id"`
 }
 
 type OtpToken struct {
@@ -88,6 +139,26 @@ type Product struct {
 	ImageUrl          pgtype.Text        `db:"image_url" json:"image_url"`
 	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Sale struct {
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	SalesType       SalesTypes         `db:"sales_type" json:"sales_type"`
+	TotalAmount     pgtype.Numeric     `db:"total_amount" json:"total_amount"`
+	DiscountApplied pgtype.Numeric     `db:"discount_applied" json:"discount_applied"`
+	ReceiptUrl      pgtype.Text        `db:"receipt_url" json:"receipt_url"`
+	SaleDate        pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
+}
+
+type SaleItem struct {
+	ID         pgtype.UUID    `db:"id" json:"id"`
+	SaleID     pgtype.UUID    `db:"sale_id" json:"sale_id"`
+	ProductID  pgtype.UUID    `db:"product_id" json:"product_id"`
+	Quantity   int32          `db:"quantity" json:"quantity"`
+	UnitPrice  pgtype.Numeric `db:"unit_price" json:"unit_price"`
+	TotalPrice pgtype.Numeric `db:"total_price" json:"total_price"`
 }
 
 type StoreInfo struct {

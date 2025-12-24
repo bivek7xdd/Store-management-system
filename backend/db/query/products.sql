@@ -57,3 +57,11 @@ WHERE
     )
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4;
+
+-- name: UpdateProductStock :one
+UPDATE products
+SET 
+    stock_quantity = stock_quantity - $2,
+    updated_at = NOW()
+WHERE id = $1 AND store_id = $3
+RETURNING *;

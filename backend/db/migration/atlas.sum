@@ -1,4 +1,4 @@
-h1:mVAkipzwvHILvBdKaW2IvpFGCO3yL4Br7FX7s7H8pGc=
+h1:v2leNjzfnihOtOo5jf0OAUYl8F5yei/yJi+TiCHvqbM=
 20251127012722_init_schema.sql h1:F+/xJANfbMuPkgImXg+0DTUG42JkL62JjrtejS0tJfM=
 20251127013943_test.sql h1:/io4P/AvY2AtaZsYeg90AYTxnrXF/YKu0WC4fXKn9gM=
 20251127014057_removed-test.sql h1:Xl8UqALtYI0c2DbtagoZHGEjdvq2t7wU/MzS75U5who=
@@ -9,3 +9,6 @@ h1:mVAkipzwvHILvBdKaW2IvpFGCO3yL4Br7FX7s7H8pGc=
 20251213065425_otp_tokens_id_to_email.sql h1:Q22iK7wwp3he21dsXhhIf18Lhv5MjVNU3Ak/3vsPIiQ=
 20251217030249.sql h1:gMWHWGJQ5ZUkpkTe+TUgmMYChElo5xGh5MA/FLC4XVk=
 20251217031437_products_image.sql h1:zCfxkai1L8afBSQHrsgQCy+bZt7WHAsjJOtmk0eJ6yo=
+20251224230952_sales.sql h1:KEmhIueau5pivauVv1h1G2RAZ1o0ouMz3sgXw17GSlI=
+20251224232322_customer.sql h1:N0cbcoLtaAx9BE6N82t4DYJcXnQ9fy8pHLCyn7D66Ss=
+20251224232820_sales_items.sql h1:hoeWPPaTFcsuPD5MqYyOoy1MvVh1n/qmdQB4tyYBJcE=

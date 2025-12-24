@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote } from "lucide-react";
-import { mockProducts } from "@/lib/mockData";
+import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2 } from "lucide-react";
+import { inventoryService } from "@/services/inventory";
+import { salesService, CreateSaleData, Customer } from "@/services/sales";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Product } from "@/types";
 
 interface CartItem {
   productId: string;
   name: string;
   price: number;
   quantity: number;
+  stock: number;
 }
 
 const colors = {
@@ -22,21 +26,50 @@ const colors = {
 };
 
 export default function Sales() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentType, setPaymentType] = useState<"cash" | "credit">("cash");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [amountReceived, setAmountReceived] = useState<string>("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const change = amountReceived ? parseFloat(amountReceived) - total : 0;
 
-  const filteredProducts = mockProducts.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.barcode?.includes(searchTerm)
-  );
+  // Search products when searchTerm changes
+  useEffect(() => {
+    const search = async () => {
+      if (!searchTerm) {
+        setProducts([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const results = await inventoryService.searchProducts(searchTerm);
+        setProducts(results || []);
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
 
-  const addToCart = (product: typeof mockProducts[0]) => {
+    const timer = setTimeout(search, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const addToCart = (product: Product) => {
     const existing = cart.find((item) => item.productId === product.id);
+    const price = typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0;
+
     if (existing) {
+      if (existing.quantity >= product.stock_quantity) {
+        toast.error("Not enough stock");
+        return;
+      }
       setCart(
         cart.map((item) =>
           item.productId === product.id
@@ -45,25 +78,34 @@ export default function Sales() {
         )
       );
     } else {
+      if (product.stock_quantity <= 0) {
+        toast.error("Product out of stock");
+        return;
+      }
       setCart([
         ...cart,
         {
           productId: product.id,
           name: product.name,
-          price: product.sellingPrice,
+          price: price,
           quantity: 1,
+          stock: product.stock_quantity
         },
       ]);
     }
     toast.success(`${product.name} added to cart`);
   };
 
-  const updateQuantity = (productId: string, change: number) => {
+  const updateQuantity = (productId: string, changeVal: number) => {
     setCart(
       cart
         .map((item) => {
           if (item.productId === productId) {
-            const newQuantity = item.quantity + change;
+            const newQuantity = item.quantity + changeVal;
+            if (newQuantity > item.stock) {
+              toast.error("Not enough stock");
+              return item;
+            }
             return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
           }
           return item;
@@ -76,9 +118,7 @@ export default function Sales() {
     setCart(cart.filter((item) => item.productId !== productId));
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       toast.error("Cart is empty");
       return;
@@ -89,12 +129,42 @@ export default function Sales() {
       return;
     }
 
-    toast.success("Sale completed successfully!");
-    setCart([]);
-    setCustomerName("");
-    setCustomerPhone("");
-    setPaymentType("cash");
+    if (paymentType === "cash" && amountReceived && parseFloat(amountReceived) < total) {
+      toast.error("Amount received is less than total");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const saleData: CreateSaleData = {
+        sales_type: paymentType as any,
+        discount_applied: 0,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: cart.map(item => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.price
+        }))
+      };
+
+      await salesService.createSale(saleData);
+      toast.success("Sale completed successfully!");
+      setCart([]);
+      setCustomerName("");
+      setCustomerPhone("");
+      setAmountReceived("");
+      setPaymentType("cash");
+      setSearchTerm("");
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      toast.error(error.response?.data?.message || "Failed to complete sale");
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  if (authLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
@@ -120,6 +190,11 @@ export default function Sales() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-12 h-12 rounded-xl border-gray-200"
                 />
+                {isSearching && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -135,21 +210,22 @@ export default function Sales() {
             <Card className="border-0 shadow-sm">
               <CardContent className="pt-4">
                 <div className="grid gap-2 max-h-96 overflow-y-auto">
-                  {filteredProducts.length === 0 ? (
+                  {products.length === 0 && !isSearching ? (
                     <p className="text-sm text-gray-500 text-center py-8">
                       No products found
                     </p>
                   ) : (
-                    filteredProducts.map((product) => (
+                    products.map((product) => (
                       <button
                         key={product.id}
                         onClick={() => addToCart(product)}
-                        className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all text-left"
+                        disabled={product.stock_quantity <= 0}
+                        className={`flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all text-left ${product.stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <div>
                           <p className="font-medium text-gray-900">{product.name}</p>
                           <p className="text-sm text-gray-500">
-                            Stock: {product.stock} • रू {product.sellingPrice}
+                            Stock: {product.stock_quantity} • रू {typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0}
                           </p>
                         </div>
                         <div
@@ -265,10 +341,58 @@ export default function Sales() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="cash" className="mt-4">
-                  <p className="text-sm text-gray-500 p-3 rounded-lg bg-gray-50">
-                    Customer will pay <span className="font-semibold text-gray-900">रू {total.toLocaleString()}</span> in cash
-                  </p>
+                <TabsContent value="cash" className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="amountReceived" className="text-sm font-medium text-gray-700">Amount Received (रू)</Label>
+                    <div className="relative">
+                      <Input
+                        id="amountReceived"
+                        type="number"
+                        placeholder="Enter amount given by customer"
+                        value={amountReceived}
+                        onChange={(e) => setAmountReceived(e.target.value)}
+                        className="h-12 rounded-xl border-gray-200 pl-4 font-semibold text-lg"
+                      />
+                      {amountReceived && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400"
+                          onClick={() => setAmountReceived("")}
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {amountReceived && (
+                    <div className={`p-4 rounded-xl border flex justify-between items-center ${change >= 0 ? "bg-teal-50 border-teal-100" : "bg-red-50 border-red-100"}`}>
+                      <div>
+                        <p className="text-xs text-teal-600 font-medium uppercase tracking-wider">Change to Return</p>
+                        <p className={`text-xl font-bold ${change >= 0 ? "text-teal-700" : "text-red-700"}`}>
+                          रू {change.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${change >= 0 ? "bg-teal-100" : "bg-red-100"}`}>
+                        <Banknote className={`h-5 w-5 ${change >= 0 ? "text-teal-600" : "text-red-600"}`} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {[total, 50, 100, 500, 1000].map((denom) => (
+                      <Button
+                        key={denom}
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg border-gray-200 text-xs font-medium hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+                        onClick={() => setAmountReceived(denom.toString())}
+                      >
+                        {denom === total ? "Exact" : `रू ${denom}`}
+                      </Button>
+                    ))}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="credit" className="space-y-4 mt-4">
@@ -299,9 +423,16 @@ export default function Sales() {
                 className="w-full h-12 rounded-xl font-semibold text-base"
                 style={{ background: colors.primaryDark }}
                 onClick={handleCheckout}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || isProcessing}
               >
-                Complete Sale
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Complete Sale"
+                )}
               </Button>
             </CardContent>
           </Card>
