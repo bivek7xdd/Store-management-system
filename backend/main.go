@@ -20,15 +20,15 @@ func main() {
 	// utils.SomeFunction()
 
 	router := gin.Default()
-
-	// CORS middleware
+	// CORS Middleware (using library for robustness)
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60, // 12 hours - cache preflight requests
 	}))
-
 	// User routes
 	userRoutes := router.Group("/api/users")
 	{
@@ -44,9 +44,35 @@ func main() {
 			protected.POST("/store-info", handlers.CreateStoreInfoHandler)
 
 		}
+
+	}
+	// Category routes
+	categoryRoutes := router.Group("/api/categories")
+	categoryRoutes.Use(utils.JWTMiddleware())
+	{
+		categoryRoutes.POST("/create", handlers.CreateCategories)
+		categoryRoutes.GET("", handlers.GetAllCategories)
 	}
 
-	// Category routes
+	// Supplier routes
+	supplierRoutes := router.Group("/api/suppliers")
+	supplierRoutes.Use(utils.JWTMiddleware())
+	{
+		supplierRoutes.POST("/create", handlers.CreateSuppliers)
+		supplierRoutes.GET("", handlers.GetAllSuppliers)
+	}
+
+	// Product routes
+	productRoutes := router.Group("/api/products")
+	productRoutes.Use(utils.JWTMiddleware())
+	{
+		productRoutes.POST("/create", handlers.CreateProduct)
+		productRoutes.GET("", handlers.GetProducts)
+		productRoutes.GET("/search", handlers.SearchProducts)
+		productRoutes.GET("/:id", handlers.GetProduct)
+		productRoutes.PUT("/:id", handlers.UpdateProduct)
+		productRoutes.DELETE("/:id", handlers.DeleteProduct)
+	}
 
 	router.Run(":8000")
 }

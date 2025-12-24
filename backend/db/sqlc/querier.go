@@ -22,6 +22,8 @@ type Querier interface {
 	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
+	GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error)
+	GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
 	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
 	GetStoreInfo(ctx context.Context, id pgtype.UUID) (StoreInfo, error)
 	GetStoreInfoByOwner(ctx context.Context, ownerID pgtype.UUID) (StoreInfo, error)

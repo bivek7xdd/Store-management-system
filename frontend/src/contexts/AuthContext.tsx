@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password
       });
 
-      const { newToken } = response.data.data;
+      const { newToken, userData } = response.data.data;
 
       if (!newToken) {
         throw new Error("Invalid response from server");
@@ -76,9 +76,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Store in state
       setToken(newToken);
+      setUser(userData);
 
       // Store in localStorage
       localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
 
       // Set default authorization header for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

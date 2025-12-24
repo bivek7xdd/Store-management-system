@@ -8,3 +8,7 @@ INSERT INTO suppliers (
 ) VALUES (
   $1, $2, $3, $4, $5
 ) RETURNING *;
+
+
+-- name: GetAllSuppliers :many
+SELECT * FROM suppliers WHERE store_id = $1;

@@ -8,6 +8,8 @@ import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
+import Categories from "./pages/Categories";
+import Suppliers from "./pages/Suppliers";
 import Sales from "./pages/Sales";
 import Debtors from "./pages/Debtors";
 import Reports from "./pages/Reports";
@@ -16,6 +18,8 @@ import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import OTP from "./pages/OTP";
+import CategoryDetails from "./pages/CategoryDetails";
+import SupplierDetails from "./pages/SupplierDetails";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +43,10 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/inventory" element={<Inventory />} />
+                    <Route path="/inventory/categories" element={<Categories />} />
+                    <Route path="/inventory/suppliers" element={<Suppliers />} />
+                    <Route path="/inventory/category/:id" element={<CategoryDetails />} />
+                    <Route path="/inventory/supplier/:id" element={<SupplierDetails />} />
                     <Route path="/sales" element={<Sales />} />
                     <Route path="/debtors" element={<Debtors />} />
                     <Route path="/reports" element={<Reports />} />

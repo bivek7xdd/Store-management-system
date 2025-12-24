@@ -52,3 +52,36 @@ func (q *Queries) CreateSuppliers(ctx context.Context, arg CreateSuppliersParams
 	)
 	return i, err
 }
+
+const getAllSuppliers = `-- name: GetAllSuppliers :many
+SELECT id, name, address, phone_number, email, store_id, created_at, updated_at FROM suppliers WHERE store_id = $1
+`
+
+func (q *Queries) GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error) {
+	rows, err := q.db.Query(ctx, getAllSuppliers, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Supplier
+	for rows.Next() {
+		var i Supplier
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.PhoneNumber,
+			&i.Email,
+			&i.StoreID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

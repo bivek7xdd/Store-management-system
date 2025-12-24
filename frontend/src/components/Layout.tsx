@@ -24,7 +24,20 @@ import {
   LogOut,
   Store,
   ChevronRight,
+  Plus,
+  Box,
+  Truck,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useQuery } from "@tanstack/react-query";
+import { inventoryService } from "@/services/inventory";
+import { CreateCategoryDialog, CreateSupplierDialog } from "./CreateInventoryDialogs";
+import { InventorySidebarItem } from "./InventorySidebarItem";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -73,7 +86,7 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: "#fafaf9" }}>
+    <div className="min-h-screen bg-background">
       {/* Offline Status Banner */}
       <div
         className={cn(
@@ -89,76 +102,78 @@ export default function Layout({ children }: LayoutProps) {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col lg:pt-14">
         <div
-          className="flex grow flex-col overflow-y-auto border-r px-5 pb-4"
-          style={{ background: "#ffffff", borderColor: `${colors.primary}15` }}
+          className="flex grow flex-col overflow-y-auto border-r bg-background border-border px-5 pb-4"
         >
           {/* Logo */}
-          <div className="flex h-20 items-center gap-3 border-b" style={{ borderColor: `${colors.primary}15` }}>
+          <div className="flex h-20 items-center gap-3 border-b border-border">
             <div
-              className="h-11 w-11 rounded-xl flex items-center justify-center"
-              style={{ background: colors.primaryDark }}
+              className="h-11 w-11 rounded-xl flex items-center justify-center bg-primary text-primary-foreground"
             >
-              <Store className="h-6 w-6 text-white" />
+              <Store className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-lg font-bold" style={{ color: colors.primaryDark }}>StoreHub</h1>
-              <p className="text-xs text-gray-500">Management System</p>
+              <h1 className="text-lg font-bold text-foreground">StoreHub</h1>
+              <p className="text-xs text-muted-foreground">Management System</p>
             </div>
           </div>
 
           {/* Navigation */}
           <nav className="flex flex-1 flex-col mt-6">
-            <p className="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <p className="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Menu
             </p>
-            <ul role="list" className="flex flex-1 flex-col gap-1">
+            <div className="flex flex-1 flex-col gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
+
+                if (item.label === "Inventory") {
+                  return (
+                    <InventorySidebarItem key={item.path} isActive={isActive} />
+                  );
+                }
+
                 return (
-                  <li key={item.path}>
-                    <Link
-                      to={item.path}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                        isActive
-                          ? "text-white shadow-lg"
-                          : "text-gray-600 hover:bg-gray-50"
-                      )}
-                      style={isActive ? {
-                        background: colors.primaryDark,
-                        boxShadow: `0 4px 14px -3px ${colors.primary}50`
-                      } : {}}
-                    >
-                      <Icon className={cn(
-                        "h-5 w-5 shrink-0 transition-colors",
-                        isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"
-                      )} />
-                      {item.label}
-                      {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
-                    </Link>
-                  </li>
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-lg"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                    style={isActive ? {
+                      boxShadow: `0 4px 14px -3px rgba(0, 0, 0, 0.2)`
+                    } : {}}
+                  >
+                    <Icon className={cn(
+                      "h-5 w-5 shrink-0 transition-colors",
+                      isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
+                    )} />
+                    {item.label}
+                    {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
+                  </Link>
                 );
               })}
-            </ul>
+            </div>
 
             {/* User Menu */}
-            <div className="mt-auto pt-4 border-t" style={{ borderColor: `${colors.primary}15` }}>
+            <div className="mt-auto pt-4 border-t border-border flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start gap-3 px-4 py-6 rounded-xl hover:bg-gray-50"
+                    className="w-full justify-start gap-3 px-4 py-6 rounded-xl hover:bg-accent hover:text-accent-foreground"
                   >
                     <div
-                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold"
-                      style={{ background: colors.primary }}
+                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold bg-primary"
                     >
                       {user?.name?.charAt(0)?.toUpperCase() || "U"}
                     </div>
                     <div className="flex flex-col items-start">
-                      <span className="text-sm font-semibold text-gray-900">{user?.name}</span>
-                      <span className="text-xs text-gray-500">{user?.store_name}</span>
+                      <span className="text-sm font-semibold text-foreground">{user?.name}</span>
+                      <span className="text-xs text-muted-foreground">{user?.store_name}</span>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
@@ -181,25 +196,22 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Mobile Header */}
       <div
-        className="lg:hidden fixed top-14 left-0 right-0 z-40 flex items-center justify-between border-b px-4 py-3"
-        style={{ background: "#ffffff", borderColor: `${colors.primary}15` }}
+        className="lg:hidden fixed top-14 left-0 right-0 z-40 flex items-center justify-between border-b bg-background border-border px-4 py-3"
       >
         <div className="flex items-center gap-3">
           <div
-            className="h-9 w-9 rounded-lg flex items-center justify-center"
-            style={{ background: colors.primaryDark }}
+            className="h-9 w-9 rounded-lg flex items-center justify-center bg-primary text-primary-foreground"
           >
-            <Store className="h-5 w-5 text-white" />
+            <Store className="h-5 w-5" />
           </div>
-          <h1 className="text-lg font-bold" style={{ color: colors.primaryDark }}>StoreHub</h1>
+          <h1 className="text-lg font-bold text-foreground">StoreHub</h1>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="rounded-full">
                 <div
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                  style={{ background: colors.primary }}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold bg-primary"
                 >
                   {user?.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
@@ -208,7 +220,7 @@ export default function Layout({ children }: LayoutProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -216,45 +228,47 @@ export default function Layout({ children }: LayoutProps) {
           </DropdownMenu>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="h-6 w-6 text-gray-600" /> : <Menu className="h-6 w-6 text-gray-600" />}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
-      </div>
+      </div >
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 pt-28" style={{ background: "#ffffff" }}>
-          <nav className="px-4 py-4">
-            <ul className="space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <li key={item.path}>
-                    <Link
-                      to={item.path}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl p-4 text-base font-medium transition-all",
-                        isActive
-                          ? "text-white"
-                          : "text-gray-600 hover:bg-gray-50"
-                      )}
-                      style={isActive ? { background: colors.primaryDark } : {}}
-                    >
-                      <Icon className="h-5 w-5 shrink-0" />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-      )}
+      {
+        mobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-30 pt-28 bg-background">
+            <nav className="px-4 py-4">
+              <ul className="space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <li key={item.path}>
+                      <Link
+                        to={item.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl p-4 text-base font-medium transition-all",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                        style={isActive ? {} : {}}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
+        )
+      }
 
       {/* Main Content */}
       <main className="pt-14 lg:pl-72">
@@ -264,8 +278,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Mobile Bottom Navigation */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t"
-        style={{ background: "#ffffff", borderColor: `${colors.primary}15` }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t bg-background border-border"
       >
         <ul className="flex justify-around py-2">
           {navItems.slice(0, 5).map((item) => {
@@ -278,10 +291,9 @@ export default function Layout({ children }: LayoutProps) {
                   className={cn(
                     "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg",
                     isActive
-                      ? "text-teal-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
-                  style={isActive ? { color: colors.primary } : {}}
                 >
                   <Icon className="h-5 w-5" />
                   <span>{item.label}</span>
@@ -291,6 +303,6 @@ export default function Layout({ children }: LayoutProps) {
           })}
         </ul>
       </nav>
-    </div>
+    </div >
   );
 }

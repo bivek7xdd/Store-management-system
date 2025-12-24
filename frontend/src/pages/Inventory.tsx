@@ -19,35 +19,185 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package } from "lucide-react";
-import { mockProducts } from "@/lib/mockData";
+import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { inventoryService, CreateProductData, UpdateProductData } from "@/services/inventory";
+import { useAuth } from "@/contexts/AuthContext";
+import { Product, Category } from "@/types";
 
 const colors = {
   primary: "#0d9488",
   primaryDark: "#115e59",
 };
 
+// Helper function to extract numeric value from pgtype.Numeric
+const getNumericValue = (value: { Int64?: number; Valid?: boolean } | number | undefined): number => {
+  if (typeof value === 'number') return value;
+  if (value && typeof value === 'object' && 'Int64' in value) return value.Int64 || 0;
+  return 0;
+};
+
+// Helper function to extract int32 value
+const getInt32Value = (value: { Int32?: number; Valid?: boolean } | number | undefined): number => {
+  if (typeof value === 'number') return value;
+  if (value && typeof value === 'object' && 'Int32' in value) return value.Int32 || 0;
+  return 0;
+};
+
+// Helper function to extract string from pgtype.Text
+const getTextValue = (value: { String?: string; Valid?: boolean } | string | undefined): string => {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'Valid' in value && value.Valid) return value.String || '';
+  return '';
+};
+
+// Helper function to extract date from pgtype.Timestamptz
+const getDateValue = (value: { Time?: string; Valid?: boolean } | undefined): string | null => {
+  if (value && typeof value === 'object' && value.Valid && value.Time) {
+    return value.Time;
+  }
+  return null;
+};
+
+// Helper to format date for input value (YYYY-MM-DD)
+const formatDateForInput = (dateString: string | null) => {
+  if (!dateString) return '';
+  return new Date(dateString).toISOString().split('T')[0];
+};
+
 export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const categories = Array.from(new Set(mockProducts.map((p) => p.category)));
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
 
-  const filteredProducts = mockProducts.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.barcode?.includes(searchTerm);
-    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
+  // Fetch products
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => inventoryService.getProducts(),
+    enabled: isAuthenticated && !authLoading,
+  });
+
+  // Fetch categories for the dropdown
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: inventoryService.getCategories,
+    enabled: isAuthenticated && !authLoading,
+  });
+
+  // Create product mutation
+  const createProductMutation = useMutation({
+    mutationFn: (data: CreateProductData) => inventoryService.createProduct(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product added successfully!");
+      setAddDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error("Failed to create product:", error);
+      toast.error("Failed to add product");
+    },
+  });
+
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductData }) =>
+      inventoryService.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product updated successfully!");
+      setAddDialogOpen(false);
+      setEditingProduct(null);
+    },
+    onError: (error) => {
+      console.error("Failed to update product:", error);
+      toast.error("Failed to update product");
+    },
+  });
+
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: string) => inventoryService.deleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product deleted successfully!");
+    },
+    onError: (error) => {
+      console.error("Failed to delete product:", error);
+      toast.error("Failed to delete product");
+    },
+  });
+
+  // Get unique categories from products for filter (fallback to categories list)
+  const categoryNames = (categories || []).map((c: Category) => c.name);
+
+  // Filter products (ensure products is always an array)
+  const productsList = products || [];
+  const filteredProducts = productsList.filter((product: Product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getTextValue(product.barcode).includes(searchTerm);
+
+    // For category filter, we'd need to match category_id with category name
+    // For now, just skip category filter if categories not loaded
+    const matchesCategory = categoryFilter === "all";
+
+    const stockQuantity = product.stock_quantity;
+    const lowThreshold = getInt32Value(product.low_stock_threshold);
+    const expiryDate = getDateValue(product.expires_at);
+
     const matchesStock =
       stockFilter === "all" ||
-      (stockFilter === "low" && product.stock < product.lowStockThreshold) ||
+      (stockFilter === "low" && stockQuantity < lowThreshold) ||
       (stockFilter === "expiring" &&
-        product.expiryDate &&
-        Math.floor((new Date(product.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 30);
+        expiryDate &&
+        Math.floor((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 30);
 
     return matchesSearch && matchesCategory && matchesStock;
   });
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setAddDialogOpen(true);
+  };
+
+  const handleDeleteClick = (product: Product) => {
+    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+      deleteProductMutation.mutate(product.id);
+    }
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setAddDialogOpen(open);
+    if (!open) setEditingProduct(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    const data: CreateProductData = {
+      name: formData.get("name") as string,
+      barcode: formData.get("barcode") as string || undefined,
+      price: parseFloat(formData.get("price") as string),
+      market_price: formData.get("market_price") ? parseFloat(formData.get("market_price") as string) : undefined,
+      stock_quantity: parseInt(formData.get("stock_quantity") as string),
+      low_stock_threshold: formData.get("low_stock_threshold") ? parseInt(formData.get("low_stock_threshold") as string) : 10,
+      expires_at: formData.get("expires_at") ? new Date(formData.get("expires_at") as string).toISOString() : undefined,
+      category_id: formData.get("category_id") as string,
+    };
+
+    if (editingProduct) {
+      updateProductMutation.mutate({ id: editingProduct.id, data });
+    } else {
+      createProductMutation.mutate(data);
+    }
+  };
 
   const handleImport = () => {
     toast.success("CSV import feature ready (connect to backend to enable)");
@@ -56,6 +206,27 @@ export default function Inventory() {
   const handleExport = () => {
     toast.success("Exporting inventory data...");
   };
+
+  if (productsLoading || authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+      </div>
+    );
+  }
+
+  if (productsError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Failed to load products</p>
+          <p className="text-gray-500 text-sm">Please try again later</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isSubmitting = createProductMutation.isPending || updateProductMutation.isPending;
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
@@ -74,7 +245,7 @@ export default function Inventory() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Dialog>
+          <Dialog open={addDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size="sm" className="rounded-lg" style={{ background: colors.primaryDark }}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -83,32 +254,35 @@ export default function Inventory() {
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold">Add New Product</DialogTitle>
+                <DialogTitle className="text-xl font-bold">
+                  {editingProduct ? "Edit Product" : "Add New Product"}
+                </DialogTitle>
                 <DialogDescription>
-                  Enter product details to add to your inventory
+                  {editingProduct ? "Update product details" : "Enter product details to add to your inventory"}
                 </DialogDescription>
               </DialogHeader>
-              <form
-                className="space-y-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  toast.success("Product added successfully!");
-                }}
-              >
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-sm font-medium">Product Name*</Label>
-                  <Input id="name" placeholder="e.g., Basmati Rice" required className="rounded-lg" />
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={editingProduct?.name}
+                    placeholder="e.g., Basmati Rice"
+                    required
+                    className="rounded-lg"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category" className="text-sm font-medium">Category*</Label>
-                  <Select required>
+                  <Label htmlFor="category_id" className="text-sm font-medium">Category*</Label>
+                  <Select name="category_id" required defaultValue={editingProduct?.category_id}>
                     <SelectTrigger className="rounded-lg">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
+                      {categories.map((cat: Category) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -116,34 +290,83 @@ export default function Inventory() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="barcode" className="text-sm font-medium">Barcode (optional)</Label>
-                  <Input id="barcode" placeholder="8901234567890" className="rounded-lg" />
+                  <Input
+                    id="barcode"
+                    name="barcode"
+                    defaultValue={getTextValue(editingProduct?.barcode)}
+                    placeholder="8901234567890"
+                    className="rounded-lg"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="costPrice" className="text-sm font-medium">Cost Price (रू)*</Label>
-                    <Input id="costPrice" type="number" placeholder="100" required className="rounded-lg" />
+                    <Label htmlFor="price" className="text-sm font-medium">Price (रू)*</Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      defaultValue={editingProduct ? getNumericValue(editingProduct.price) : undefined}
+                      placeholder="100"
+                      required
+                      className="rounded-lg"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sellingPrice" className="text-sm font-medium">Selling Price (रू)*</Label>
-                    <Input id="sellingPrice" type="number" placeholder="120" required className="rounded-lg" />
+                    <Label htmlFor="market_price" className="text-sm font-medium">Market Price (रू)</Label>
+                    <Input
+                      id="market_price"
+                      name="market_price"
+                      type="number"
+                      step="0.01"
+                      defaultValue={editingProduct ? getNumericValue(editingProduct.market_price) : undefined}
+                      placeholder="120"
+                      className="rounded-lg"
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="stock" className="text-sm font-medium">Stock Quantity*</Label>
-                    <Input id="stock" type="number" placeholder="50" required className="rounded-lg" />
+                    <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
+                    <Input
+                      id="stock_quantity"
+                      name="stock_quantity"
+                      type="number"
+                      defaultValue={editingProduct?.stock_quantity}
+                      placeholder="50"
+                      required
+                      className="rounded-lg"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="threshold" className="text-sm font-medium">Low Stock Alert</Label>
-                    <Input id="threshold" type="number" placeholder="10" className="rounded-lg" />
+                    <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
+                    <Input
+                      id="low_stock_threshold"
+                      name="low_stock_threshold"
+                      type="number"
+                      defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
+                      placeholder="10"
+                      className="rounded-lg"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="expiryDate" className="text-sm font-medium">Expiry Date (optional)</Label>
-                  <Input id="expiryDate" type="date" className="rounded-lg" />
+                  <Label htmlFor="expires_at" className="text-sm font-medium">Expiry Date (optional)</Label>
+                  <Input
+                    id="expires_at"
+                    name="expires_at"
+                    type="date"
+                    defaultValue={formatDateForInput(getDateValue(editingProduct?.expires_at))}
+                    className="rounded-lg"
+                  />
                 </div>
-                <Button type="submit" className="w-full rounded-xl h-11 font-semibold" style={{ background: colors.primaryDark }}>
-                  Add Product
+                <Button
+                  type="submit"
+                  className="w-full rounded-xl h-11 font-semibold"
+                  style={{ background: colors.primaryDark }}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (editingProduct ? "Updating..." : "Adding...") : (editingProduct ? "Update Product" : "Add Product")}
                 </Button>
               </form>
             </DialogContent>
@@ -170,7 +393,7 @@ export default function Inventory() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
+                {categoryNames.map((cat: string) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}
                   </SelectItem>
@@ -193,12 +416,20 @@ export default function Inventory() {
 
       {/* Products Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.map((product) => {
-          const isLowStock = product.stock < product.lowStockThreshold;
-          const daysUntilExpiry = product.expiryDate
-            ? Math.floor((new Date(product.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        {filteredProducts.map((product: Product) => {
+          const stockQuantity = product.stock_quantity;
+          const lowThreshold = getInt32Value(product.low_stock_threshold);
+          const isLowStock = stockQuantity < lowThreshold;
+
+          const expiryDate = getDateValue(product.expires_at);
+          const daysUntilExpiry = expiryDate
+            ? Math.floor((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
             : null;
           const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+
+          const price = getNumericValue(product.price);
+          const marketPrice = getNumericValue(product.market_price);
+          const barcode = getTextValue(product.barcode);
 
           return (
             <Card key={product.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
@@ -213,7 +444,9 @@ export default function Inventory() {
                     </div>
                     <div>
                       <CardTitle className="text-base font-semibold text-gray-900">{product.name}</CardTitle>
-                      <p className="text-sm text-gray-500 mt-0.5">{product.category}</p>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {product.status?.product_status || 'active'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -236,34 +469,51 @@ export default function Inventory() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-2 border-b border-gray-100">
                     <span className="text-gray-500">Stock</span>
-                    <span className="font-semibold text-gray-900">{product.stock} units</span>
+                    <span className="font-semibold text-gray-900">{stockQuantity} units</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">Cost Price</span>
-                    <span className="font-medium text-gray-700">रू {product.costPrice}</span>
+                    <span className="text-gray-500">Price</span>
+                    <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">Selling Price</span>
-                    <span className="font-semibold" style={{ color: colors.primary }}>रू {product.sellingPrice}</span>
-                  </div>
-                  {product.expiryDate && (
+                  {marketPrice > 0 && (
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500">Market Price</span>
+                      <span className="font-medium text-gray-700">रू {marketPrice}</span>
+                    </div>
+                  )}
+                  {expiryDate && (
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-500">Expiry</span>
                       <span className="font-medium text-gray-700">
-                        {new Date(product.expiryDate).toLocaleDateString("en-NP")}
+                        {new Date(expiryDate).toLocaleDateString("en-NP")}
                       </span>
                     </div>
                   )}
-                  {product.barcode && (
+                  {barcode && (
                     <div className="flex justify-between py-2">
                       <span className="text-gray-500">Barcode</span>
-                      <span className="font-mono text-xs text-gray-600">{product.barcode}</span>
+                      <span className="font-mono text-xs text-gray-600">{barcode}</span>
                     </div>
                   )}
                 </div>
-                <Button variant="outline" className="w-full mt-4 rounded-lg border-gray-200 hover:bg-gray-50">
-                  Edit Product
-                </Button>
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                    onClick={() => handleEditClick(product)}
+                  >
+                    <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-lg border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
+                    onClick={() => handleDeleteClick(product)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
@@ -274,7 +524,11 @@ export default function Inventory() {
         <Card className="border-0 shadow-sm">
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No products found matching your filters</p>
+            <p className="text-gray-500">
+              {productsList.length === 0
+                ? "No products yet. Add your first product to get started!"
+                : "No products found matching your filters"}
+            </p>
           </CardContent>
         </Card>
       )}

@@ -1,13 +1,19 @@
 export interface Product {
   id: string;
   name: string;
-  category: string;
-  barcode?: string;
-  costPrice: number;
-  sellingPrice: number;
-  stock: number;
-  expiryDate?: string;
-  lowStockThreshold: number;
+  barcode?: { String: string; Valid: boolean };
+  price: { Int64: number; Valid: boolean } | number;
+  market_price?: { Int64: number; Valid: boolean } | number;
+  stock_quantity: number;
+  low_stock_threshold: { Int32: number; Valid: boolean } | number;
+  expires_at?: { Time: string; Valid: boolean };
+  status: { product_status: 'active' | 'out_of_stock' | 'discontinued'; valid: boolean };
+  category_id: string;
+  supplier_id?: string;
+  store_id: string;
+  image_url?: { String: string; Valid: boolean };
+  created_at: { Time: string; Valid: boolean };
+  updated_at: { Time: string; Valid: boolean };
 }
 
 export interface Sale {
@@ -44,4 +50,20 @@ export interface MarketInsight {
   description: string;
   date: string;
   category: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  store_id?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  address: string;
+  phone_number: string;
+  email: string;
+  store_id?: string;
 }

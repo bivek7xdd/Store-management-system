@@ -11,14 +11,15 @@ import (
 )
 
 type Claims struct {
-	UserID    string `json:"user_id"`
-	Email     string `json:"email"`
-	StoreName string `json:"store_name"`
+	UserID        string `json:"user_id"`
+	Name          string `json:"name"`
+	StoreId       string `json:"store_id"`
+	VerifiedEmail bool   `json:"verified_email"`
 	jwt.RegisteredClaims
 }
 
 // GenerateJWT generates a new JWT token for the user
-func GenerateJWT(userID pgtype.UUID, email, storeName string) (string, error) {
+func GenerateJWT(userID pgtype.UUID, name string, storeId pgtype.UUID, emailVerified bool) (string, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		return "", errors.New("JWT_SECRET not found in environment variables")
@@ -36,14 +37,16 @@ func GenerateJWT(userID pgtype.UUID, email, storeName string) (string, error) {
 	}
 
 	claims := Claims{
-		UserID: userIDStr,
-		Email:  email,
+		UserID:        userIDStr,
+		Name:          name,
+		StoreId:       storeId.String(),
+		VerifiedEmail: emailVerified,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "storemanagement",
-			Subject:   email,
+			Subject:   userIDStr,
 		},
 	}
 

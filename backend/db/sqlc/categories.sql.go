@@ -40,3 +40,34 @@ func (q *Queries) CreateCategories(ctx context.Context, arg CreateCategoriesPara
 	)
 	return i, err
 }
+
+const getCategories = `-- name: GetCategories :many
+SELECT id, name, description, store_id, created_at, updated_at FROM categories WHERE store_id = $1
+`
+
+func (q *Queries) GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error) {
+	rows, err := q.db.Query(ctx, getCategories, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.StoreID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

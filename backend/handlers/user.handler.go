@@ -126,13 +126,19 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	storeinfo, err := utils.Queries.GetStoreInfoByOwner(context.Background(), user.ID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Invalid credentials", err)
+		return
+	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, "Invalid credentials", err)
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name)
+	token, err := utils.GenerateJWT(user.ID, user.Name, storeinfo.ID, user.Emailverified)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return
@@ -197,11 +203,12 @@ func RefreshTokenHandler(c *gin.Context) {
 		return
 	}
 
-	userEmail, _ := c.Get("user_email")
-	storeName, _ := c.Get("store_name")
+	userName, _ := c.Get("user_name")
+	storeId, _ := c.Get("store_id")
+	verifiedEmail, _ := c.Get("verified_email")
 
 	// Generate new JWT token
-	token, err := utils.GenerateJWT(userID.(pgtype.UUID), userEmail.(string), storeName.(string))
+	token, err := utils.GenerateJWT(userID.(pgtype.UUID), userName.(string), storeId.(pgtype.UUID), verifiedEmail.(bool))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return

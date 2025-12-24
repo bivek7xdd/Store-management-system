@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"log"
 	"net/http"
+
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -50,15 +52,27 @@ func JWTMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
 		userUUID := pgtype.UUID{
 			Bytes: googleUUID,
 			Valid: true,
 		}
 
+		storeUUIDBytes, err := uuid.Parse(claims.StoreId)
+		if err != nil {
+			log.Println("error parsing storeid:", err)
+			ErrorResponse(c, http.StatusUnauthorized, "invalid store id token", err)
+			c.Abort()
+			return
+		}
+		storeUUID := pgtype.UUID{
+			Bytes: storeUUIDBytes,
+			Valid: true,
+		}
 		// Set user information in context for use in handlers
 		c.Set("user_id", userUUID)
-		c.Set("user_email", claims.Email)
+		c.Set("user_name", claims.Name)
+		c.Set("store_id", storeUUID)
+		c.Set("verified_email", claims.VerifiedEmail)
 
 		// Continue to next handler
 		c.Next()
