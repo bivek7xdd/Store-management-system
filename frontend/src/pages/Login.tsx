@@ -6,6 +6,7 @@ import { Store, AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import gsap from "gsap";
+import SpaceBackground from "@/components/SpaceBackground";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,64 +20,28 @@ const Login = () => {
   const location = useLocation();
 
   const formRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const from = location.state?.from?.pathname || "/";
 
   useEffect(() => {
-    // Grid Animation
-    if (gridRef.current) {
-      const gridLines = Array.from(gridRef.current.children);
-
-      gsap.to(gridLines, {
-        opacity: "random(0.1, 0.4)",
-        scaleY: "random(0.8, 1.2)",
-        duration: "random(2, 4)",
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        stagger: 0.1
-      });
-    }
-
-    // Left Panel Animations
-    if (imageRef.current) {
-      gsap.to(imageRef.current, {
-        scale: 1.1,
-        duration: 20,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-    }
-
+    // Left Content Animation
     if (contentRef.current) {
       gsap.from(contentRef.current.children, {
         y: 20,
         opacity: 0,
         duration: 1,
         stagger: 0.1,
-        delay: 0.5,
+        delay: 0.2,
         ease: "power2.out"
       });
     }
 
     // Form Entry Animation
-    const tl = gsap.timeline();
-    tl.fromTo(formRef.current,
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" }
-    );
-
-    // Stagger inputs
-    const inputs = formRef.current?.querySelectorAll(".animate-item");
-    if (inputs) {
-      tl.fromTo(inputs,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "power2.out" },
-        "-=0.4"
+    if (formRef.current) {
+      gsap.fromTo(formRef.current,
+        { x: 50, opacity: 0 },
+        { x: 0, opacity: 1, duration: 1, delay: 0.5, ease: "power3.out" }
       );
     }
   }, []);
@@ -97,50 +62,31 @@ const Login = () => {
   };
 
   const colors = {
-    primary: "#0d9488",
-    primaryDark: "#115e59",
-    primaryLight: "#14b8a6",
-    accent: "#134e4a",
+    primary: "#0d9488", // Teal 600
+    primaryGlow: "rgba(13, 148, 136, 0.5)",
   };
 
   return (
-    <div className="min-h-screen flex overflow-hidden">
-      {/* Left Panel - Hero Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gray-900">
-        {/* Background Image */}
-        <img
-          ref={imageRef}
-          src="/store-hero.png"
-          alt="Store Management"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-
-        {/* Gradient Overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, ${colors.accent}e6 0%, ${colors.primaryDark}cc 50%, ${colors.primary}99 100%)`
-          }}
-        />
-
-        {/* Content */}
-        <div ref={contentRef} className="relative z-10 flex flex-col justify-center px-16 text-white">
+    <SpaceBackground className="flex">
+      {/* Left Panel - Hero Content */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 relative z-10">
+        <div ref={contentRef} className="text-white">
           <div className="flex items-center gap-3 mb-10">
             <div
               className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md"
-              style={{ background: "rgba(255, 255, 255, 0.15)" }}
+              style={{ background: "rgba(255, 255, 255, 0.1)" }}
             >
-              <Store className="h-8 w-8" />
+              <Store className="h-8 w-8 text-teal-400" />
             </div>
             <span className="text-2xl font-bold tracking-tight">StoreHub</span>
           </div>
 
-          <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight">
+          <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight shadow-teal-500/20 drop-shadow-lg">
             Manage Your Store<br />
-            <span className="text-teal-200">Effortlessly</span>
+            <span className="text-teal-400">Effortlessly</span>
           </h1>
 
-          <p className="text-lg text-white/80 max-w-md leading-relaxed">
+          <p className="text-lg text-gray-300 max-w-md leading-relaxed">
             Streamline your inventory, track sales, and grow your business with our powerful store management platform.
           </p>
 
@@ -151,7 +97,7 @@ const Login = () => {
               { value: "50K+", label: "Products" },
               { value: "99.9%", label: "Uptime" },
             ].map((stat, i) => (
-              <div key={i} className="text-center">
+              <div key={i} className="text-center p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
                 <div className="text-2xl font-bold text-white">{stat.value}</div>
                 <div className="text-sm text-teal-200/80">{stat.label}</div>
               </div>
@@ -161,75 +107,41 @@ const Login = () => {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div
-        className="flex-1 flex items-center justify-center p-8 relative overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #fffcf5 0%, #fef9f0 50%, #fdf6e8 100%)" }}
-      >
-        {/* Digital Grid Background */}
-        <div ref={gridRef} className="absolute inset-0 pointer-events-none flex justify-around opacity-20">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-px h-full bg-teal-500/20"
-              style={{ transform: `scaleY(${Math.random()})` }}
-            />
-          ))}
-          {/* Horizontal Lines for Grid effect */}
-          <div className="absolute inset-0 flex flex-col justify-around pointer-events-none">
-            {Array.from({ length: 15 }).map((_, i) => (
-              <div key={i} className="w-full h-px bg-teal-500/10" />
-            ))}
-          </div>
-        </div>
-
-        <div ref={formRef} className="w-full max-w-md relative z-10">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8 animate-item">
-            <div
-              className="h-12 w-12 rounded-xl flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary})` }}
-            >
-              <Store className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold" style={{ color: colors.primaryDark }}>StoreHub</span>
-          </div>
-
-          {/* Card */}
-          <div
-            className="rounded-3xl p-8 shadow-xl border animate-item"
-            style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              borderColor: "rgba(13, 148, 136, 0.08)"
-            }}
-          >
-            <div className="text-center mb-8">
-              <div
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 animate-item"
-                style={{ background: "rgba(13, 148, 136, 0.08)" }}
-              >
-                <Store className="w-4 h-4" style={{ color: colors.primary }} />
-                <span className="text-sm font-medium" style={{ color: colors.primaryDark }}>Welcome back</span>
+      <div className="flex-1 flex items-center justify-center p-8 relative z-10 backdrop-blur-sm lg:backdrop-blur-none bg-black/30 lg:bg-transparent">
+        {/* Glass Panel only on Left edge if desired, or just centered form */}
+        <div
+          ref={formRef}
+          className="w-full max-w-md p-8 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl"
+          style={{
+            background: "rgba(15, 23, 42, 0.7)",
+          }}
+        >
+          <div className="text-center mb-8">
+            <div className="lg:hidden flex justify-center mb-4">
+              <div className="h-12 w-12 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                <Store className="h-6 w-6 text-teal-400" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2 animate-item">Sign in to your account</h2>
-              <p className="text-gray-500 animate-item">Enter your credentials to access your dashboard</p>
             </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 bg-teal-500/10 border border-teal-500/20">
+              <Store className="w-4 h-4 text-teal-400" />
+              <span className="text-sm font-medium text-teal-300">Welcome back</span>
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-2">Sign In</h2>
+            <p className="text-gray-400">Enter your credentials to access your dashboard</p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div
-                  className="flex items-center gap-3 p-4 rounded-xl text-sm animate-item"
-                  style={{ background: "rgba(239, 68, 68, 0.08)", color: "#dc2626" }}
-                >
-                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
+                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
-              <div className="space-y-2 animate-item">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Mail className="w-4 h-4" style={{ color: colors.primary }} />
-                  Email Address
-                </Label>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-300">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
@@ -238,87 +150,71 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
-                  className="h-12 rounded-xl bg-white/80 focus:bg-white transition-colors"
-                  style={{ borderColor: "rgba(13, 148, 136, 0.2)" }}
+                  className="h-12 pl-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:bg-white/10 transition-colors"
                 />
               </div>
-
-              <div className="space-y-2 animate-item">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Lock className="w-4 h-4" style={{ color: colors.primary }} />
-                    Password
-                  </Label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm font-medium hover:underline"
-                    style={{ color: colors.primary }}
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    className="h-12 rounded-xl pr-12 bg-white/80 focus:bg-white transition-colors"
-                    style={{ borderColor: "rgba(13, 148, 136, 0.2)" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-0 animate-item"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.primaryDark} 0%, ${colors.primary} 100%)`,
-                  boxShadow: `0 10px 40px -12px ${colors.primary}`
-                }}
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Signing in...
-                  </span>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-8 pt-6 border-t border-gray-100 text-center animate-item">
-              <p className="text-gray-500">
-                Don't have an account?{" "}
-                <Link
-                  to="/register"
-                  className="font-semibold hover:underline"
-                  style={{ color: colors.primary }}
-                >
-                  Create one for free
-                </Link>
-              </p>
             </div>
-          </div>
 
-          <p className="text-center text-sm text-gray-400 mt-8 animate-item">
-            © 2024 StoreHub. All rights reserved.
-          </p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-gray-300">Password</Label>
+                <Link to="/forgot-password" className="text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="h-12 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:bg-white/10 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: `linear-gradient(135deg, ${colors.primary} 0%, #059669 100%)`,
+                boxShadow: `0 0 20px ${colors.primaryGlow}`
+              }}
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-white/10 text-center">
+            <p className="text-gray-400">
+              Don't have an account?{" "}
+              <Link to="/register" className="font-semibold text-teal-400 hover:text-teal-300 hover:underline">
+                Create one for free
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </SpaceBackground>
   );
 };
 

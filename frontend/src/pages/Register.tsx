@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import api from "@/services/api";
 import { useToast } from "@/components/ui/use-toast";
+import SpaceBackground from "@/components/SpaceBackground";
 
 interface FormData {
     name: string;
@@ -46,11 +47,7 @@ const PASSWORD_REQUIREMENTS = [
 
 const colors = {
     primary: "#0d9488",
-    primaryDark: "#115e59",
-    primaryLight: "#14b8a6",
-    accent: "#134e4a",
     success: "#059669",
-    successDark: "#047857",
 };
 
 const Register = () => {
@@ -73,69 +70,29 @@ const Register = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
-    const particlesRef = useRef<HTMLDivElement>(null);
-    const imageRef = useRef<HTMLImageElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         // Form Entry Animation
-        gsap.fromTo(containerRef.current,
-            { opacity: 0, x: 50 },
-            { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }
-        );
-
-        // Left Panel Animations
-        if (imageRef.current) {
-            gsap.to(imageRef.current, {
-                scale: 1.1,
-                duration: 20,
-                repeat: -1,
-                yoyo: true,
-                ease: "sine.inOut"
-            });
+        if (containerRef.current) {
+            gsap.fromTo(containerRef.current,
+                { opacity: 0, x: 50 },
+                { opacity: 1, x: 0, duration: 0.8, delay: 0.5, ease: "power3.out" }
+            );
         }
 
+        // Left Panel Animations
         if (contentRef.current) {
             gsap.from(contentRef.current.children, {
                 y: 20,
                 opacity: 0,
                 duration: 1,
                 stagger: 0.1,
-                delay: 0.5,
+                delay: 0.2,
                 ease: "power2.out"
             });
         }
-
-        // Rising Particles Animation
-        if (particlesRef.current) {
-            const particles = Array.from(particlesRef.current.children);
-
-            particles.forEach((particle) => {
-                gsap.to(particle, {
-                    y: `-${window.innerHeight + 100}`, // Move up off screen
-                    duration: "random(10, 20)",
-                    repeat: -1,
-                    ease: "none",
-                    delay: "random(0, 10)",
-                });
-            });
-        }
-    }, [currentStep]); // Re-run subtle effects on step change if needed, but mostly entry is once
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!particlesRef.current) return;
-
-        // Simple Parallax
-        const mouseX = e.clientX / window.innerWidth;
-        const mouseY = e.clientY / window.innerHeight;
-
-        gsap.to(particlesRef.current, {
-            x: (mouseX - 0.5) * 20,
-            y: (mouseY - 0.5) * 20,
-            duration: 1,
-            ease: "power2.out"
-        });
-    };
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -184,7 +141,6 @@ const Register = () => {
 
     const nextStep = () => {
         if (validateStep(currentStep)) {
-            // Animate exit current step
             const container = document.querySelector(".step-container");
             if (container) {
                 gsap.to(container, {
@@ -224,7 +180,7 @@ const Register = () => {
                 email: formData.email,
                 phone: formData.phone,
                 password: formData.password,
-                profile_picture: "", // Optional or handle upload later
+                profile_picture: "",
                 store_name: formData.store_name,
                 store_address: formData.store_address,
                 currency_code: formData.currency_code
@@ -237,10 +193,7 @@ const Register = () => {
 
         } catch (error: any) {
             setIsSubmitting(false);
-            console.error("Registration failed:", error);
-
             const errorMessage = error.response?.data?.error || "Registration failed. Please try again.";
-
             toast({
                 variant: "destructive",
                 title: "Registration Error",
@@ -249,73 +202,16 @@ const Register = () => {
         }
     };
 
-    const renderStepIndicator = () => (
-        <div className="flex items-center justify-between mb-8 px-2">
-            {STEPS.map((step, index) => {
-                const StepIcon = step.icon;
-                const isActive = currentStep === step.id;
-                const isCompleted = currentStep > step.id;
-
-                return (
-                    <div key={step.id} className="flex items-center flex-1">
-                        <div className="flex flex-col items-center">
-                            <div
-                                className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500"
-                                style={{
-                                    background: isCompleted
-                                        ? `linear-gradient(135deg, ${colors.success}, ${colors.successDark})`
-                                        : isActive
-                                            ? `linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary})`
-                                            : "rgba(13, 148, 136, 0.1)",
-                                    boxShadow: isActive ? `0 8px 25px -5px ${colors.primary}60` : "none"
-                                }}
-                            >
-                                {isCompleted ? (
-                                    <Check className="w-5 h-5 text-white" />
-                                ) : (
-                                    <StepIcon className="w-5 h-5" style={{ color: isActive ? "white" : colors.primary }} />
-                                )}
-                                {isActive && (
-                                    <span
-                                        className="absolute -inset-1.5 rounded-full animate-pulse"
-                                        style={{ border: `2px solid ${colors.primary}40` }}
-                                    />
-                                )}
-                            </div>
-                            <span
-                                className="mt-2 text-xs font-semibold transition-colors"
-                                style={{ color: isActive ? colors.primaryDark : isCompleted ? colors.success : "#9ca3af" }}
-                            >
-                                {step.title}
-                            </span>
-                        </div>
-                        {index < STEPS.length - 1 && (
-                            <div
-                                className="flex-1 h-0.5 mx-3 rounded-full transition-all duration-500"
-                                style={{
-                                    background: currentStep > step.id
-                                        ? `linear-gradient(90deg, ${colors.success}, ${colors.successDark})`
-                                        : `${colors.primary}20`
-                                }}
-                            />
-                        )}
-                    </div>
-                );
-            })}
-        </div>
-    );
-
     const inputClassName = (hasError: boolean) => `
-        h-12 rounded-xl bg-white/80 focus:bg-white transition-all duration-200
-        ${hasError ? "border-red-400 focus:border-red-500 focus:ring-red-500" : ""}
+        h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:bg-white/10 transition-colors
+        ${hasError ? "border-red-500/50 focus:border-red-500" : ""}
     `;
 
-    // Wrapped in step-container for animation targeting
     const renderStep1 = () => (
         <div className="step-container space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <User className="w-4 h-4" style={{ color: colors.primary }} />
+                <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <User className="w-4 h-4 text-teal-400" />
                     Full Name
                 </Label>
                 <Input
@@ -324,14 +220,13 @@ const Register = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     className={inputClassName(!!errors.name)}
-                    style={{ borderColor: errors.name ? undefined : `${colors.primary}30` }}
                 />
-                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                {errors.name && <p className="text-xs text-red-400">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4" style={{ color: colors.primary }} />
+                <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-teal-400" />
                     Email Address
                 </Label>
                 <Input
@@ -341,14 +236,13 @@ const Register = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     className={inputClassName(!!errors.email)}
-                    style={{ borderColor: errors.email ? undefined : `${colors.primary}30` }}
                 />
-                {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+                {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Phone className="w-4 h-4" style={{ color: colors.primary }} />
+                <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-teal-400" />
                     Phone Number
                 </Label>
                 <Input
@@ -358,15 +252,14 @@ const Register = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className={inputClassName(!!errors.phone)}
-                    style={{ borderColor: errors.phone ? undefined : `${colors.primary}30` }}
                 />
-                {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+                {errors.phone && <p className="text-xs text-red-400">{errors.phone}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <Lock className="w-4 h-4" style={{ color: colors.primary }} />
+                    <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-teal-400" />
                         Password
                     </Label>
                     <div className="relative">
@@ -377,41 +270,21 @@ const Register = () => {
                             value={formData.password}
                             onChange={handleInputChange}
                             className={`${inputClassName(!!errors.password)} pr-10`}
-                            style={{ borderColor: errors.password ? undefined : `${colors.primary}30` }}
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                         >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                     </div>
-                    {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
-
-                    {/* Password Requirements Checklist */}
-                    <div className="mt-2 space-y-1">
-                        {PASSWORD_REQUIREMENTS.map((req) => {
-                            const isMet = req.check(formData.password);
-                            return (
-                                <div key={req.id} className="flex items-center gap-2">
-                                    <div
-                                        className={`w-3 h-3 rounded-full flex items-center justify-center transition-colors duration-200 ${isMet ? 'bg-green-500' : 'bg-gray-200'}`}
-                                    >
-                                        {isMet && <Check className="w-2 h-2 text-white" />}
-                                    </div>
-                                    <span className={`text-[10px] font-medium transition-colors duration-200 ${isMet ? 'text-green-600' : 'text-gray-400'}`}>
-                                        {req.label}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {errors.password && <p className="text-xs text-red-400">{errors.password}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <Lock className="w-4 h-4" style={{ color: colors.primary }} />
+                    <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-teal-400" />
                         Confirm
                     </Label>
                     <div className="relative">
@@ -422,17 +295,16 @@ const Register = () => {
                             value={formData.confirmPassword}
                             onChange={handleInputChange}
                             className={`${inputClassName(!!errors.confirmPassword)} pr-10`}
-                            style={{ borderColor: errors.confirmPassword ? undefined : `${colors.primary}30` }}
                         />
                         <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                         >
                             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                     </div>
-                    {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword}</p>}
+                    {errors.confirmPassword && <p className="text-xs text-red-400">{errors.confirmPassword}</p>}
                 </div>
             </div>
         </div>
@@ -441,8 +313,8 @@ const Register = () => {
     const renderStep2 = () => (
         <div className="step-container space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Building2 className="w-4 h-4" style={{ color: colors.primary }} />
+                <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-teal-400" />
                     Store Name
                 </Label>
                 <Input
@@ -451,14 +323,13 @@ const Register = () => {
                     value={formData.store_name}
                     onChange={handleInputChange}
                     className={inputClassName(!!errors.store_name)}
-                    style={{ borderColor: errors.store_name ? undefined : `${colors.primary}30` }}
                 />
-                {errors.store_name && <p className="text-xs text-red-500">{errors.store_name}</p>}
+                {errors.store_name && <p className="text-xs text-red-400">{errors.store_name}</p>}
             </div>
 
             <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" style={{ color: colors.primary }} />
+                <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-teal-400" />
                     Store Address
                 </Label>
                 <Input
@@ -467,45 +338,31 @@ const Register = () => {
                     value={formData.store_address}
                     onChange={handleInputChange}
                     className={inputClassName(!!errors.store_address)}
-                    style={{ borderColor: errors.store_address ? undefined : `${colors.primary}30` }}
                 />
-                {errors.store_address && <p className="text-xs text-red-500">{errors.store_address}</p>}
+                {errors.store_address && <p className="text-xs text-red-400">{errors.store_address}</p>}
             </div>
 
             <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" style={{ color: colors.primary }} />
+                <Label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-teal-400" />
                     Currency
                 </Label>
                 <Select value={formData.currency_code} onValueChange={(v) => handleSelectChange("currency_code", v)}>
-                    <SelectTrigger
-                        className="h-12 rounded-xl bg-white/80"
-                        style={{ borderColor: `${colors.primary}30` }}
-                    >
+                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-gray-900 border-gray-800 text-white">
                         {CURRENCIES.map((c) => (
-                            <SelectItem key={c.code} value={c.code}>
+                            <SelectItem key={c.code} value={c.code} className="focus:bg-white/10 focus:text-white">
                                 <span className="flex items-center gap-2">
-                                    <span className="font-medium">{c.symbol}</span>
+                                    <span className="font-medium text-teal-400">{c.symbol}</span>
                                     <span>{c.name}</span>
-                                    <span className="text-gray-400">({c.code})</span>
+                                    <span className="text-gray-500">({c.code})</span>
                                 </span>
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
-
-            <div
-                className="p-4 rounded-xl border border-dashed flex items-start gap-3"
-                style={{ background: `${colors.primary}08`, borderColor: `${colors.primary}30` }}
-            >
-                <span className="text-xl">💡</span>
-                <p className="text-sm text-gray-600">
-                    <span className="font-semibold" style={{ color: colors.primaryDark }}>Pro tip:</span> You can update your store details anytime from settings.
-                </p>
             </div>
         </div>
     );
@@ -516,109 +373,73 @@ const Register = () => {
         return (
             <div className="step-container space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="text-center">
-                    <div
-                        className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-3"
-                        style={{ background: `linear-gradient(135deg, ${colors.success}20, ${colors.successDark}20)` }}
-                    >
-                        <Check className="w-7 h-7" style={{ color: colors.success }} />
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-3 bg-teal-500/20">
+                        <Check className="w-7 h-7 text-teal-400" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Almost there!</h3>
-                    <p className="text-sm text-gray-500">Review your information</p>
+                    <h3 className="text-lg font-bold text-white">Almost there!</h3>
+                    <p className="text-sm text-gray-400">Review your information</p>
                 </div>
 
                 {/* Account Info Card */}
-                <div
-                    className="rounded-2xl p-4 border"
-                    style={{ background: "rgba(255, 255, 255, 0.8)", borderColor: `${colors.primary}15` }}
-                >
+                <div className="rounded-2xl p-4 border border-white/10 bg-white/5">
                     <div className="flex items-center gap-2 mb-3">
-                        <User className="w-4 h-4" style={{ color: colors.primary }} />
-                        <span className="text-sm font-bold" style={{ color: colors.primaryDark }}>Account</span>
+                        <User className="w-4 h-4 text-teal-400" />
+                        <span className="text-sm font-bold text-teal-200">Account</span>
                     </div>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span className="text-gray-500">Name</span><span className="font-medium">{formData.name}</span></div>
-                        <div className="h-px" style={{ background: `${colors.primary}10` }} />
-                        <div className="flex justify-between"><span className="text-gray-500">Email</span><span className="font-medium">{formData.email}</span></div>
-                        <div className="h-px" style={{ background: `${colors.primary}10` }} />
-                        <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium">{formData.phone}</span></div>
+                    <div className="space-y-2 text-sm text-gray-300">
+                        <div className="flex justify-between"><span className="text-gray-500">Name</span><span className="font-medium text-white">{formData.name}</span></div>
+                        <div className="h-px bg-white/5" />
+                        <div className="flex justify-between"><span className="text-gray-500">Email</span><span className="font-medium text-white">{formData.email}</span></div>
+                        <div className="h-px bg-white/5" />
+                        <div className="flex justify-between"><span className="text-gray-500">Phone</span><span className="font-medium text-white">{formData.phone}</span></div>
                     </div>
                 </div>
 
                 {/* Store Info Card */}
-                <div
-                    className="rounded-2xl p-4 border"
-                    style={{ background: "rgba(255, 255, 255, 0.8)", borderColor: `${colors.primary}15` }}
-                >
+                <div className="rounded-2xl p-4 border border-white/10 bg-white/5">
                     <div className="flex items-center gap-2 mb-3">
-                        <Store className="w-4 h-4" style={{ color: colors.primary }} />
-                        <span className="text-sm font-bold" style={{ color: colors.primaryDark }}>Store</span>
+                        <Store className="w-4 h-4 text-teal-400" />
+                        <span className="text-sm font-bold text-teal-200">Store</span>
                     </div>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span className="text-gray-500">Name</span><span className="font-medium">{formData.store_name}</span></div>
-                        <div className="h-px" style={{ background: `${colors.primary}10` }} />
+                    <div className="space-y-2 text-sm text-gray-300">
+                        <div className="flex justify-between"><span className="text-gray-500">Name</span><span className="font-medium text-white">{formData.store_name}</span></div>
+                        <div className="h-px bg-white/5" />
                         <div className="flex justify-between items-start">
                             <span className="text-gray-500">Address</span>
-                            <span className="font-medium text-right max-w-[55%]">{formData.store_address}</span>
+                            <span className="font-medium text-right max-w-[55%] text-white">{formData.store_address}</span>
                         </div>
-                        <div className="h-px" style={{ background: `${colors.primary}10` }} />
+                        <div className="h-px bg-white/5" />
                         <div className="flex justify-between">
                             <span className="text-gray-500">Currency</span>
-                            <span className="font-medium">{currency?.symbol} {currency?.code}</span>
+                            <span className="font-medium text-white">{currency?.symbol} {currency?.code}</span>
                         </div>
                     </div>
                 </div>
-
-                <p className="text-xs text-center text-gray-500 px-4">
-                    By clicking Create Account, you agree to our{" "}
-                    <Link to="/terms" className="font-medium hover:underline" style={{ color: colors.primary }}>Terms</Link> and{" "}
-                    <Link to="/privacy" className="font-medium hover:underline" style={{ color: colors.primary }}>Privacy Policy</Link>.
-                </p>
             </div>
         );
     };
 
     return (
-        <div className="min-h-screen flex overflow-hidden">
-            {/* Left Panel - Hero Image */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gray-900">
-                {/* Background Image */}
-                <img
-                    ref={imageRef}
-                    src="/store-hero.png"
-                    alt="Store Management"
-                    className="absolute inset-0 w-full h-full object-cover"
-                />
-
-                {/* Gradient Overlay */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${colors.accent}e6 0%, ${colors.primaryDark}cc 50%, ${colors.primary}99 100%)`
-                    }}
-                />
-
-                {/* Content */}
-                <div ref={contentRef} className="relative z-10 flex flex-col justify-center px-16 text-white">
+        <SpaceBackground className="flex">
+            {/* Left Panel - Hero Content */}
+            <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 relative z-10">
+                <div ref={contentRef} className="text-white">
                     <div className="flex items-center gap-3 mb-10">
-                        <div
-                            className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md"
-                            style={{ background: "rgba(255, 255, 255, 0.15)" }}
-                        >
-                            <Store className="h-8 w-8" />
+                        <div className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md bg-white/10">
+                            <Store className="h-8 w-8 text-teal-400" />
                         </div>
                         <span className="text-2xl font-bold tracking-tight">StoreHub</span>
                     </div>
 
-                    <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight">
+                    <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight shadow-teal-500/20 drop-shadow-lg">
                         Start Your<br />
-                        <span className="text-teal-200">Business Journey</span>
+                        <span className="text-teal-400">Business Journey</span>
                     </h1>
 
-                    <p className="text-lg text-white/80 max-w-md leading-relaxed mb-12">
+                    <p className="text-lg text-gray-300 max-w-md leading-relaxed mb-12">
                         Join thousands of store owners who trust StoreHub to manage their inventory and grow their business.
                     </p>
 
-                    {/* Feature list */}
                     <div className="space-y-4">
                         {[
                             { icon: Shield, text: "Bank-level Security" },
@@ -626,13 +447,10 @@ const Register = () => {
                             { icon: BarChart3, text: "Real-time Analytics" },
                         ].map((item, i) => (
                             <div key={i} className="flex items-center gap-3">
-                                <div
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md"
-                                    style={{ background: "rgba(255, 255, 255, 0.15)" }}
-                                >
-                                    <item.icon className="w-5 h-5" />
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md bg-white/10">
+                                    <item.icon className="w-5 h-5 text-teal-300" />
                                 </div>
-                                <span className="font-medium">{item.text}</span>
+                                <span className="font-medium text-gray-200">{item.text}</span>
                             </div>
                         ))}
                     </div>
@@ -640,54 +458,62 @@ const Register = () => {
             </div>
 
             {/* Right Panel - Form */}
-            <div
-                className="flex-1 flex items-center justify-center p-6 overflow-hidden relative"
-                style={{ background: "linear-gradient(180deg, #fffcf5 0%, #fef9f0 50%, #fdf6e8 100%)" }}
-                onMouseMove={handleMouseMove}
-            >
-                {/* Rising Particles Background */}
-                <div ref={particlesRef} className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {Array.from({ length: 15 }).map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute rounded-full bg-teal-500/10 blur-sm"
-                            style={{
-                                width: Math.random() * 20 + 10 + "px",
-                                height: Math.random() * 20 + 10 + "px",
-                                left: Math.random() * 100 + "%",
-                                top: "110%", // Start below the screen
-                            }}
-                        />
-                    ))}
-                </div>
-
+            <div className="flex-1 flex items-center justify-center p-6 overflow-hidden relative z-10 backdrop-blur-sm lg:backdrop-blur-none bg-black/30 lg:bg-transparent">
                 <div className="w-full max-w-lg relative z-10" ref={containerRef}>
-                    {/* Mobile logo */}
                     <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
-                        <div className="h-12 w-12 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary})` }}>
-                            <Store className="h-6 w-6 text-white" />
+                        <div className="h-12 w-12 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                            <Store className="h-6 w-6 text-teal-400" />
                         </div>
-                        <span className="text-xl font-bold" style={{ color: colors.primaryDark }}>StoreHub</span>
+                        <span className="text-xl font-bold text-white">StoreHub</span>
                     </div>
 
-                    {/* Card */}
                     <div
-                        className="rounded-3xl p-8 shadow-xl border"
-                        style={{ background: "rgba(255, 255, 255, 0.95)", borderColor: `${colors.primary}10` }}
+                        className="rounded-3xl p-8 shadow-2xl border border-white/10 backdrop-blur-xl"
+                        style={{ background: "rgba(15, 23, 42, 0.7)" }}
                     >
                         <div className="text-center mb-6">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4" style={{ background: `${colors.primary}10` }}>
-                                <Store className="w-4 h-4" style={{ color: colors.primary }} />
-                                <span className="text-sm font-medium" style={{ color: colors.primaryDark }}>Create Account</span>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 bg-teal-500/10 border border-teal-500/20">
+                                <Store className="w-4 h-4 text-teal-400" />
+                                <span className="text-sm font-medium text-teal-300">Create Account</span>
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900">
+                            <h2 className="text-2xl font-bold text-white">
                                 {currentStep === 1 && "Personal Details"}
                                 {currentStep === 2 && "Store Information"}
                                 {currentStep === 3 && "Review & Confirm"}
                             </h2>
                         </div>
 
-                        {renderStepIndicator()}
+                        {/* Step Indicator */}
+                        <div className="flex items-center justify-between mb-8 px-2">
+                            {STEPS.map((step, index) => {
+                                const StepIcon = step.icon;
+                                const isActive = currentStep === step.id;
+                                const isCompleted = currentStep > step.id;
+
+                                return (
+                                    <div key={step.id} className="flex items-center flex-1">
+                                        <div className="flex flex-col items-center">
+                                            <div
+                                                className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? "bg-teal-500" : isActive ? "bg-teal-600" : "bg-white/10"
+                                                    }`}
+                                            >
+                                                {isCompleted ? (
+                                                    <Check className="w-5 h-5 text-white" />
+                                                ) : (
+                                                    <StepIcon className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400"}`} />
+                                                )}
+                                            </div>
+                                        </div>
+                                        {index < STEPS.length - 1 && (
+                                            <div
+                                                className={`flex-1 h-0.5 mx-3 rounded-full transition-all duration-500 ${currentStep > step.id ? "bg-teal-500" : "bg-white/10"
+                                                    }`}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
 
                         <div className="min-h-[320px] relative">
                             {currentStep === 1 && renderStep1()}
@@ -695,15 +521,13 @@ const Register = () => {
                             {currentStep === 3 && renderStep3()}
                         </div>
 
-                        {/* Navigation */}
                         <div className="flex gap-3 mt-8">
                             {currentStep > 1 && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={prevStep}
-                                    className="flex-1 h-12 rounded-xl border-2 font-semibold hover:bg-gray-50"
-                                    style={{ borderColor: `${colors.primary}40`, color: colors.primaryDark }}
+                                    className="flex-1 h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white font-semibold"
                                 >
                                     <ArrowLeft className="w-4 h-4 mr-2" />
                                     Back
@@ -713,8 +537,7 @@ const Register = () => {
                                 <Button
                                     type="button"
                                     onClick={nextStep}
-                                    className="flex-1 h-12 rounded-xl text-base font-semibold shadow-lg transition-all hover:translate-y-[-1px] active:translate-y-0"
-                                    style={{ background: `linear-gradient(135deg, ${colors.primaryDark}, ${colors.primary})`, boxShadow: `0 10px 40px -12px ${colors.primary}` }}
+                                    className="flex-1 h-12 rounded-xl text-base font-semibold shadow-lg bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white border-0"
                                 >
                                     Continue
                                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -724,8 +547,7 @@ const Register = () => {
                                     type="button"
                                     onClick={handleSubmit}
                                     disabled={isSubmitting}
-                                    className="flex-1 h-12 rounded-xl text-base font-semibold shadow-lg transition-all hover:translate-y-[-1px] active:translate-y-0"
-                                    style={{ background: `linear-gradient(135deg, ${colors.success}, ${colors.successDark})`, boxShadow: `0 10px 40px -12px ${colors.success}` }}
+                                    className="flex-1 h-12 rounded-xl text-base font-semibold shadow-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white border-0"
                                 >
                                     {isSubmitting ? (
                                         <span className="flex items-center gap-2">
@@ -742,10 +564,12 @@ const Register = () => {
                             )}
                         </div>
 
-                        <div className="text-center mt-6 pt-6 border-t border-gray-100">
-                            <p className="text-gray-500">
+                        <div className="text-center mt-6 pt-6 border-t border-white/10">
+                            <p className="text-gray-400">
                                 Already have an account?{" "}
-                                <Link to="/login" className="font-semibold hover:underline" style={{ color: colors.primary }}>Sign in</Link>
+                                <Link to="/login" className="font-semibold text-teal-400 hover:text-teal-300 hover:underline">
+                                    Sign in
+                                </Link>
                             </p>
                         </div>
                     </div>
@@ -753,7 +577,7 @@ const Register = () => {
                     <p className="text-center text-sm text-gray-400 mt-6">© 2024 StoreHub. All rights reserved.</p>
                 </div>
             </div>
-        </div>
+        </SpaceBackground>
     );
 };
 

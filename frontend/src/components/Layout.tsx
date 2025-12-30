@@ -52,14 +52,6 @@ const navItems = [
   { icon: TrendingUp, label: "Market", path: "/market" },
 ];
 
-// Teal color palette
-const colors = {
-  primary: "#0d9488",
-  primaryDark: "#115e59",
-  primaryLight: "#14b8a6",
-  accent: "#134e4a",
-};
-
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
