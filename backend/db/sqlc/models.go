@@ -11,6 +11,50 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DebtStatus string
+
+const (
+	DebtStatusPaid       DebtStatus = "paid"
+	DebtStatusPending    DebtStatus = "pending"
+	DebtStatusPartial    DebtStatus = "partial"
+	DebtStatusWrittenOff DebtStatus = "written-off"
+)
+
+func (e *DebtStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DebtStatus(s)
+	case string:
+		*e = DebtStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DebtStatus: %T", src)
+	}
+	return nil
+}
+
+type NullDebtStatus struct {
+	DebtStatus DebtStatus `json:"debt_status"`
+	Valid      bool       `json:"valid"` // Valid is true if DebtStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDebtStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.DebtStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DebtStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDebtStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DebtStatus), nil
+}
+
 type ProductStatus string
 
 const (
@@ -112,6 +156,20 @@ type Customer struct {
 	Phone     string             `db:"phone" json:"phone"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	StoreID   pgtype.UUID        `db:"store_id" json:"store_id"`
+}
+
+type Debt struct {
+	ID         pgtype.UUID        `db:"id" json:"id"`
+	StoreID    pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleID     pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	AmountOwed pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate    pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status     DebtStatus         `db:"status" json:"status"`
+	Notes      pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type OtpToken struct {

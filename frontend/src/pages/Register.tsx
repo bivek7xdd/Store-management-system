@@ -34,6 +34,16 @@ const CURRENCIES = [
     { code: "INR", name: "Indian Rupee", symbol: "₹" },
 ];
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const PASSWORD_REQUIREMENTS = [
+    { id: "length", label: "Min 8 characters", check: (p: string) => p.length >= 8 },
+    { id: "upper", label: "One uppercase letter", check: (p: string) => /[A-Z]/.test(p) },
+    { id: "lower", label: "One lowercase letter", check: (p: string) => /[a-z]/.test(p) },
+    { id: "number", label: "One number", check: (p: string) => /\d/.test(p) },
+    { id: "special", label: "One special character (@$!%*?&)", check: (p: string) => /[@$!%*?&]/.test(p) },
+];
+
 const colors = {
     primary: "#0d9488",
     primaryDark: "#115e59",
@@ -152,8 +162,8 @@ const Register = () => {
             if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
             if (!formData.password) {
                 newErrors.password = "Password is required";
-            } else if (formData.password.length < 8) {
-                newErrors.password = "Min 8 characters";
+            } else if (!PASSWORD_REGEX.test(formData.password)) {
+                newErrors.password = "Password is too weak";
             }
             if (!formData.confirmPassword) {
                 newErrors.confirmPassword = "Confirm password";
@@ -378,6 +388,25 @@ const Register = () => {
                         </button>
                     </div>
                     {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+
+                    {/* Password Requirements Checklist */}
+                    <div className="mt-2 space-y-1">
+                        {PASSWORD_REQUIREMENTS.map((req) => {
+                            const isMet = req.check(formData.password);
+                            return (
+                                <div key={req.id} className="flex items-center gap-2">
+                                    <div
+                                        className={`w-3 h-3 rounded-full flex items-center justify-center transition-colors duration-200 ${isMet ? 'bg-green-500' : 'bg-gray-200'}`}
+                                    >
+                                        {isMet && <Check className="w-2 h-2 text-white" />}
+                                    </div>
+                                    <span className={`text-[10px] font-medium transition-colors duration-200 ${isMet ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {req.label}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <div className="space-y-2">

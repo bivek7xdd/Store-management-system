@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Plus, Truck, ChevronRight, Loader2, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateSupplierDialog } from "@/components/CreateInventoryDialogs";
+import { SupplierSkeleton } from "@/components/SupplierSkeleton";
 
 export default function Suppliers() {
     const { isAuthenticated, loading: authLoading } = useAuth();
@@ -17,8 +18,21 @@ export default function Suppliers() {
 
     if (isLoading || authLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+            <div className="space-y-6">
+                {/* Header Mockup */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Suppliers</h1>
+                        <p className="text-gray-500 mt-1">Manage your product suppliers</p>
+                    </div>
+                </div>
+
+                {/* Suppliers Grid Skeleton */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                        <SupplierSkeleton key={i} />
+                    ))}
+                </div>
             </div>
         );
     }

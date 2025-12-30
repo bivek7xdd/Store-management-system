@@ -16,18 +16,15 @@ func init() {
 
 func main() {
 	fmt.Println("Hello World")
-	// Now you can use functions from the utils package like:
-	// utils.SomeFunction()
 
 	router := gin.Default()
-	// CORS Middleware (using library for robustness)
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		MaxAge:           12 * 60 * 60, // 12 hours - cache preflight requests
+		MaxAge:           12 * 60 * 60,
 	}))
 	// User routes
 	userRoutes := router.Group("/api/users")

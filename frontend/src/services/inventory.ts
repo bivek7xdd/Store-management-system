@@ -21,7 +21,7 @@ export const inventoryService = {
     // Categories
     getCategories: async () => {
         const response = await api.get<{ data: Category[] }>('categories');
-        return response.data.data;
+        return response.data.data || [];
     },
 
     createCategory: async (data: Omit<Category, 'id' | 'store_id'>) => {
@@ -37,7 +37,7 @@ export const inventoryService = {
     // Suppliers
     getSuppliers: async () => {
         const response = await api.get<{ data: Supplier[] }>('suppliers');
-        return response.data.data;
+        return response.data.data || [];
     },
 
     createSupplier: async (data: Omit<Supplier, 'id' | 'store_id'>) => {
@@ -53,7 +53,7 @@ export const inventoryService = {
     // Products
     getProducts: async (limit = 50, offset = 0) => {
         const response = await api.get<{ data: Product[] }>(`products?limit=${limit}&offset=${offset}`);
-        return response.data.data;
+        return response.data.data || [];
     },
 
     getProduct: async (id: string) => {
@@ -77,6 +77,6 @@ export const inventoryService = {
 
     searchProducts: async (query: string, limit = 50, offset = 0) => {
         const response = await api.get<{ data: Product[] }>(`products/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
-        return response.data.data;
+        return response.data.data || [];
     },
 };

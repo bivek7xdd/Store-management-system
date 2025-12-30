@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
+	CreateDebt(ctx context.Context, arg CreateDebtParams) (Debt, error)
 	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error)

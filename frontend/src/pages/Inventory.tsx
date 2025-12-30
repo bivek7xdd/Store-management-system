@@ -25,6 +25,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, CreateProductData, UpdateProductData } from "@/services/inventory";
 import { useAuth } from "@/contexts/AuthContext";
 import { Product, Category } from "@/types";
+import { ProductSkeleton } from "@/components/ProductSkeleton";
 
 const colors = {
   primary: "#0d9488",
@@ -209,8 +210,35 @@ export default function Inventory() {
 
   if (productsLoading || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+      <div className="space-y-6 pb-20 lg:pb-6">
+        {/* Header Mockup */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
+            <p className="text-gray-500 mt-1">Manage your products and stock levels</p>
+          </div>
+          <div className="flex gap-2">
+            {/* No need to mock buttons exactly, just keeping layout consistent */}
+          </div>
+        </div>
+
+        {/* Filters Mockup */}
+        <Card className="border-0 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Products Grid Skeleton */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <ProductSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -280,7 +308,7 @@ export default function Inventory() {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat: Category) => (
+                      {categories?.map((cat: Category) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           {cat.name}
                         </SelectItem>

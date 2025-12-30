@@ -13,6 +13,7 @@ import (
 var (
 	DBPool  *pgxpool.Pool
 	Queries *db.Queries
+	Store   *db.Store
 )
 
 func ConnectToDB() {
@@ -32,4 +33,5 @@ func ConnectToDB() {
 
 	DBPool = conn
 	Queries = db.New(conn)
+	Store = db.NewStore(conn)
 }

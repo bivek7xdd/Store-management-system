@@ -22,6 +22,8 @@ type saleItemReq struct {
 
 type createSaleReq struct {
 	SalesType       string        `json:"sales_type" binding:"required"`
+	AmountPaid      float64       `json:"amount_paid"`
+	Note            string        `json:"note"`
 	DiscountApplied float64       `json:"discount_applied"`
 	CustomerID      string        `json:"customer_id"`
 	CustomerName    string        `json:"customer_name"`
@@ -41,16 +43,34 @@ func CreateSale(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	// Start Transaction (using utils.Queries as it's a wrapper for *db.Queries)
-	// Note: In a real app, you might want to use a formal DB transaction,
-	// but here we follow the existing pattern if possible.
-	// Since the current 'utils.Queries' doesn't seem to expose Begin,
-	// we'll implement it as best as we can within the current structure.
+	// Calculate total amount
+	var totalAmount float64
+	for _, item := range req.Items {
+		totalAmount += float64(item.Quantity) * item.UnitPrice
+	}
+	totalAmount -= req.DiscountApplied
+
+	// Validate AmountPaid
+	if req.AmountPaid < 0 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Amount paid cannot be negative", nil)
+		return
+	}
+
+	// Determine effective sales type and debt status
+	isDebt := false
+	if req.AmountPaid < totalAmount {
+		isDebt = true
+		req.SalesType = "credit" // Force credit if partial payment
+		if req.CustomerName == "" && req.CustomerPhone == "" && req.CustomerID == "" {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Customer details required for partial payment/credit", nil)
+			return
+		}
+	}
 
 	var customerID pgtype.UUID
 
-	// Handle Customer
-	if req.SalesType == "credit" || req.CustomerPhone != "" {
+	// Handle Customer Creation/Lookup if needed
+	if req.SalesType == "credit" || req.CustomerPhone != "" || req.CustomerID != "" {
 		if req.CustomerID != "" {
 			custUUID, _ := uuid.Parse(req.CustomerID)
 			customerID = pgtype.UUID{Bytes: custUUID, Valid: true}
@@ -78,34 +98,22 @@ func CreateSale(c *gin.Context) {
 		}
 	}
 
-	// Calculate total amount
-	var totalAmount float64
-	for _, item := range req.Items {
-		totalAmount += float64(item.Quantity) * item.UnitPrice
-	}
-	totalAmount -= req.DiscountApplied
-
 	var totalAmountNum pgtype.Numeric
 	totalAmountNum.Scan(fmt.Sprintf("%f", totalAmount))
 
 	var discountNum pgtype.Numeric
 	discountNum.Scan(fmt.Sprintf("%f", req.DiscountApplied))
 
-	// Create Sale
-	sale, err := utils.Queries.CreateSale(ctx, db.CreateSaleParams{
+	// Prepare Transaction Arguments
+	createSaleParams := db.CreateSaleParams{
 		SalesType:       db.SalesTypes(req.SalesType),
 		TotalAmount:     totalAmountNum,
 		DiscountApplied: discountNum,
 		StoreID:         storeID,
 		CustomerID:      customerID,
-	})
-	if err != nil {
-		log.Printf("error creating sale: %v", err)
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create sale", err)
-		return
 	}
 
-	// Create Sale Items and Update Stock
+	var saleItems []db.CreateSaleItemParams
 	for _, item := range req.Items {
 		prodUUID, err := uuid.Parse(item.ProductID)
 		if err != nil {
@@ -118,30 +126,57 @@ func CreateSale(c *gin.Context) {
 		var totalPriceNum pgtype.Numeric
 		totalPriceNum.Scan(fmt.Sprintf("%f", float64(item.Quantity)*item.UnitPrice))
 
-		_, err = utils.Queries.CreateSaleItem(ctx, db.CreateSaleItemParams{
-			SaleID:     sale.ID,
+		saleItems = append(saleItems, db.CreateSaleItemParams{
 			ProductID:  pgtype.UUID{Bytes: prodUUID, Valid: true},
 			Quantity:   item.Quantity,
 			UnitPrice:  unitPriceNum,
 			TotalPrice: totalPriceNum,
 		})
-		if err != nil {
-			log.Printf("error creating sale item: %v", err)
-			// In a real transactional environment, we would rollback here
+	}
+
+	var createDebtParams *db.CreateDebtParams
+	if isDebt {
+		amountOwed := totalAmount - req.AmountPaid
+
+		var amountOwedNum pgtype.Numeric
+		amountOwedNum.Scan(fmt.Sprintf("%f", amountOwed))
+
+		var amountPaidNum pgtype.Numeric
+		amountPaidNum.Scan(fmt.Sprintf("%f", req.AmountPaid))
+
+		// Default due date to 30 days from now
+		// TODO: Allow frontend to pass due date
+		dueDate := pgtype.Timestamptz{
+			Time:  time.Now().AddDate(0, 0, 30),
+			Valid: true,
 		}
 
-		// Update Stock
-		_, err = utils.Queries.UpdateProductStock(ctx, db.UpdateProductStockParams{
-			ID:            pgtype.UUID{Bytes: prodUUID, Valid: true},
-			StockQuantity: item.Quantity,
-			StoreID:       storeID,
-		})
-		if err != nil {
-			log.Printf("error updating stock: %v", err)
+		createDebtParams = &db.CreateDebtParams{
+			StoreID:    storeID,
+			CustomerID: customerID,
+			// SaleID will be linked in CreateSaleTx
+			AmountOwed: amountOwedNum,
+			AmountPaid: amountPaidNum,
+			DueDate:    dueDate,
+			Status:     db.DebtStatusPartial,
+			Notes:      pgtype.Text{String: req.Note, Valid: req.Note != ""},
 		}
 	}
 
-	utils.SuccessResponse(c, "Sale completed successfully", sale)
+	// Execute Transaction
+	result, err := utils.Store.CreateSaleTx(c.Request.Context(), db.CreateSaleTxParams{
+		CreateSaleParams: createSaleParams,
+		Items:            saleItems,
+		CreateDebtParams: createDebtParams,
+	})
+
+	if err != nil {
+		log.Printf("error process sale transaction: %v", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to complete sale transaction", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Sale completed successfully", result.Sale)
 }
 
 func ListSales(c *gin.Context) {

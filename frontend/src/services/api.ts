@@ -27,7 +27,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Check if the error is 401 and we are not already on the login page
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
       // Token expired or invalid
       localStorage.removeItem('token');
       localStorage.removeItem('user');

@@ -8,6 +8,8 @@ export interface SaleItemReq {
 
 export interface CreateSaleData {
     sales_type: 'cash' | 'credit' | 'online';
+    amount_paid: number;
+    note?: string;
     discount_applied: number;
     customer_id?: string;
     customer_name?: string;

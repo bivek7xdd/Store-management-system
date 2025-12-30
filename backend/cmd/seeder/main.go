@@ -22,14 +22,6 @@ func main() {
 	queries := utils.Queries
 	conn := utils.DBPool
 
-	// 2. Get a Store ID
-	// We need a store to associate data with. We'll pick the first one we find.
-	// Since there isn't a "ListStores" easily available in Queries without params (implied from previous exploring),
-	// let's try a raw query or check if there's a handy function.
-	// Actually, looking at the file list, there is `store_info.sql.go`. Let's assume we can query it.
-	// But `store_info` usually requires an owner or id.
-	// Let's just query the table directly using the pool for simplicity to find ANY store.
-
 	var storeID pgtype.UUID
 	var storeName string
 

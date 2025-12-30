@@ -30,10 +30,10 @@ export default function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [paymentType, setPaymentType] = useState<"cash" | "credit">("cash");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [amountReceived, setAmountReceived] = useState<string>("");
+  const [debtNote, setDebtNote] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -124,20 +124,18 @@ export default function Sales() {
       return;
     }
 
-    if (paymentType === "credit" && (!customerName || !customerPhone)) {
-      toast.error("Please enter customer details for credit sales");
-      return;
-    }
-
-    if (paymentType === "cash" && amountReceived && parseFloat(amountReceived) < total) {
-      toast.error("Amount received is less than total");
+    // Check if partial payment (credit) but no customer details
+    if (change < 0 && (!customerName || !customerPhone)) {
+      toast.error("Please enter customer details for partial payment / credit sales");
       return;
     }
 
     setIsProcessing(true);
     try {
       const saleData: CreateSaleData = {
-        sales_type: paymentType as any,
+        sales_type: change < 0 ? "credit" : "cash", // Logic handled by backend mostly, but good for intent
+        amount_paid: amountReceived ? parseFloat(amountReceived) : 0,
+        note: debtNote,
         discount_applied: 0,
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -153,8 +151,8 @@ export default function Sales() {
       setCart([]);
       setCustomerName("");
       setCustomerPhone("");
+      setDebtNote("");
       setAmountReceived("");
-      setPaymentType("cash");
       setSearchTerm("");
     } catch (error: any) {
       console.error("Checkout error:", error);
@@ -329,73 +327,54 @@ export default function Sales() {
               <CardTitle className="text-lg font-semibold text-gray-900">Payment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as "cash" | "credit")}>
-                <TabsList className="grid w-full grid-cols-2 rounded-xl bg-gray-100 p-1">
-                  <TabsTrigger value="cash" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                    <Banknote className="h-4 w-4" />
-                    Cash
-                  </TabsTrigger>
-                  <TabsTrigger value="credit" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                    <CreditCard className="h-4 w-4" />
-                    Credit
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="cash" className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amountReceived" className="text-sm font-medium text-gray-700">Amount Received (रू)</Label>
-                    <div className="relative">
-                      <Input
-                        id="amountReceived"
-                        type="number"
-                        placeholder="Enter amount given by customer"
-                        value={amountReceived}
-                        onChange={(e) => setAmountReceived(e.target.value)}
-                        className="h-12 rounded-xl border-gray-200 pl-4 font-semibold text-lg"
-                      />
-                      {amountReceived && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400"
-                          onClick={() => setAmountReceived("")}
-                        >
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="amountReceived" className="text-sm font-medium text-gray-700">Amount Received (रू)</Label>
+                <div className="relative">
+                  <Input
+                    id="amountReceived"
+                    type="number"
+                    placeholder="Enter amount given by customer"
+                    value={amountReceived}
+                    onChange={(e) => setAmountReceived(e.target.value)}
+                    className="h-12 rounded-xl border-gray-200 pl-4 font-semibold text-lg"
+                  />
                   {amountReceived && (
-                    <div className={`p-4 rounded-xl border flex justify-between items-center ${change >= 0 ? "bg-teal-50 border-teal-100" : "bg-red-50 border-red-100"}`}>
-                      <div>
-                        <p className="text-xs text-teal-600 font-medium uppercase tracking-wider">Change to Return</p>
-                        <p className={`text-xl font-bold ${change >= 0 ? "text-teal-700" : "text-red-700"}`}>
-                          रू {change.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${change >= 0 ? "bg-teal-100" : "bg-red-100"}`}>
-                        <Banknote className={`h-5 w-5 ${change >= 0 ? "text-teal-600" : "text-red-600"}`} />
-                      </div>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400"
+                      onClick={() => setAmountReceived("")}
+                    >
+                      Clear
+                    </Button>
                   )}
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    {[total, 50, 100, 500, 1000].map((denom) => (
-                      <Button
-                        key={denom}
-                        variant="outline"
-                        size="sm"
-                        className="rounded-lg border-gray-200 text-xs font-medium hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
-                        onClick={() => setAmountReceived(denom.toString())}
-                      >
-                        {denom === total ? "Exact" : `रू ${denom}`}
-                      </Button>
-                    ))}
+              {amountReceived && (
+                <div className={`p-4 rounded-xl border flex justify-between items-center ${change >= 0 ? "bg-teal-50 border-teal-100" : "bg-orange-50 border-orange-100"}`}>
+                  <div>
+                    <p className={`text-xs font-medium uppercase tracking-wider ${change >= 0 ? "text-teal-600" : "text-orange-600"}`}>
+                      {change >= 0 ? "Change to Return" : "Remaining Due / Debt"}
+                    </p>
+                    <p className={`text-xl font-bold ${change >= 0 ? "text-teal-700" : "text-orange-700"}`}>
+                      रू {Math.abs(change).toLocaleString()}
+                    </p>
                   </div>
-                </TabsContent>
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${change >= 0 ? "bg-teal-100" : "bg-orange-100"}`}>
+                    <Banknote className={`h-5 w-5 ${change >= 0 ? "text-teal-600" : "text-orange-600"}`} />
+                  </div>
+                </div>
+              )}
 
-                <TabsContent value="credit" className="space-y-4 mt-4">
+              {/* Dynamic Customer Form for Credit/Debt */}
+              {change < 0 && (
+                <div className="space-y-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2 text-orange-600 bg-orange-50 p-3 rounded-lg text-sm">
+                    <CreditCard className="h-4 w-4" />
+                    <span>Partial payment detected. Please enter debtor details.</span>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="customerName" className="text-sm font-medium">Customer Name*</Label>
                     <Input
@@ -416,11 +395,35 @@ export default function Sales() {
                       className="rounded-lg"
                     />
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div className="space-y-2">
+                    <Label htmlFor="debtNote" className="text-sm font-medium">Note (Optional)</Label>
+                    <Input
+                      id="debtNote"
+                      placeholder="e.g. Promised to pay next week..."
+                      value={debtNote}
+                      onChange={(e) => setDebtNote(e.target.value)}
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-2">
+                {[total, 50, 100, 500, 1000].map((denom, i) => (
+                  <Button
+                    key={`${denom}-${i}`}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg border-gray-200 text-xs font-medium hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+                    onClick={() => setAmountReceived(denom.toString())}
+                  >
+                    {denom === total ? "Exact" : `रू ${denom}`}
+                  </Button>
+                ))}
+              </div>
 
               <Button
-                className="w-full h-12 rounded-xl font-semibold text-base"
+                className="w-full h-12 rounded-xl font-semibold text-base mt-4"
                 style={{ background: colors.primaryDark }}
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || isProcessing}
@@ -431,7 +434,7 @@ export default function Sales() {
                     Processing...
                   </>
                 ) : (
-                  "Complete Sale"
+                  change < 0 ? "Confirm Credit Sale" : "Complete Sale"
                 )}
               </Button>
             </CardContent>
