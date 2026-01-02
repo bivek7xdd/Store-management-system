@@ -23,7 +23,6 @@ func ConnectToDB() {
 		log.Fatal("failed to parse db config: ", err)
 	}
 
-	// Fix for "prepared statement already exists" error (Supabase/PgBouncer compatibility)
 	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 	conn, err := pgxpool.NewWithConfig(context.Background(), config)
