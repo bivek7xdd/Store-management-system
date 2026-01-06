@@ -87,5 +87,14 @@ func main() {
 		customerRoutes.GET("", handlers.ListCustomers)
 	}
 
+	// Debt routes
+	debtRoutes := router.Group("/api/debts")
+	debtRoutes.Use(utils.JWTMiddleware())
+	{
+		debtRoutes.GET("", handlers.GetDebts)
+		debtRoutes.PUT("/:id", handlers.UpdateDebt)
+		debtRoutes.DELETE("/:id", handlers.DeleteDebt)
+	}
+
 	router.Run(":8000")
 }

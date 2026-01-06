@@ -11,3 +11,36 @@ INSERT INTO debts (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
+
+-- name: GetDebts :many
+SELECT 
+    d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM debts d
+LEFT JOIN customers c ON d.customer_id = c.id
+WHERE d.store_id = $1
+ORDER BY d.created_at DESC;
+
+-- name: GetDebt :one
+SELECT 
+    d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM debts d
+LEFT JOIN customers c ON d.customer_id = c.id
+WHERE d.id = $1 AND d.store_id = $2;
+
+-- name: UpdateDebt :one
+UPDATE debts
+SET 
+    amount_paid = COALESCE(sqlc.narg('amount_paid'), amount_paid),
+    status = COALESCE(sqlc.narg('status'), status),
+    notes = COALESCE(sqlc.narg('notes'), notes),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND store_id = $2
+RETURNING *;
+
+-- name: DeleteDebt :exec
+DELETE FROM debts
+WHERE id = $1 AND store_id = $2;

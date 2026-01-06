@@ -11,6 +11,7 @@ import Inventory from "./pages/Inventory";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
 import Sales from "./pages/Sales";
+import SalesHistory from "./pages/SalesHistory";
 import Debtors from "./pages/Debtors";
 import Reports from "./pages/Reports";
 import Market from "./pages/Market";
@@ -29,7 +30,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
@@ -48,6 +49,7 @@ const App = () => (
                     <Route path="/inventory/category/:id" element={<CategoryDetails />} />
                     <Route path="/inventory/supplier/:id" element={<SupplierDetails />} />
                     <Route path="/sales" element={<Sales />} />
+                    <Route path="/sales/history" element={<SalesHistory />} />
                     <Route path="/debtors" element={<Debtors />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/market" element={<Market />} />

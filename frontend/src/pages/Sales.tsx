@@ -32,12 +32,21 @@ export default function Sales() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
+  const [discountValue, setDiscountValue] = useState("");
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [debtNote, setDebtNote] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const change = amountReceived ? parseFloat(amountReceived) - total : 0;
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const discountAmount = discountType === "percent"
+    ? (subtotal * (parseFloat(discountValue) || 0)) / 100
+    : (parseFloat(discountValue) || 0);
+
+  const finalTotal = Math.max(0, subtotal - discountAmount);
+  const change = amountReceived ? parseFloat(amountReceived) - finalTotal : 0;
 
   // Search products when searchTerm changes
   useEffect(() => {
@@ -136,7 +145,7 @@ export default function Sales() {
         sales_type: change < 0 ? "credit" : "cash", // Logic handled by backend mostly, but good for intent
         amount_paid: amountReceived ? parseFloat(amountReceived) : 0,
         note: debtNote,
-        discount_applied: 0,
+        discount_applied: discountAmount,
         customer_name: customerName,
         customer_phone: customerPhone,
         items: cart.map(item => ({
@@ -153,6 +162,7 @@ export default function Sales() {
       setCustomerPhone("");
       setDebtNote("");
       setAmountReceived("");
+      setDiscountValue("");
       setSearchTerm("");
     } catch (error: any) {
       console.error("Checkout error:", error);
@@ -311,11 +321,21 @@ export default function Sales() {
                 </div>
               )}
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>Subtotal:</span>
+                  <span>रू {subtotal.toLocaleString()}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-red-500">
+                    <span>Discount:</span>
+                    <span>- रू {discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-gray-700">Total:</span>
                   <span className="text-2xl font-bold" style={{ color: colors.primaryDark }}>
-                    रू {total.toLocaleString()}
+                    रू {finalTotal.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -327,6 +347,34 @@ export default function Sales() {
               <CardTitle className="text-lg font-semibold text-gray-900">Payment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Discount Section */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">Discount</Label>
+                <div className="flex gap-2">
+                  <div className="flex bg-gray-100 rounded-lg p-1 h-12 w-32 shrink-0">
+                    <button
+                      className={`flex-1 rounded-md text-xs font-medium transition-all ${discountType === 'percent' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                      onClick={() => setDiscountType('percent')}
+                    >
+                      %
+                    </button>
+                    <button
+                      className={`flex-1 rounded-md text-xs font-medium transition-all ${discountType === 'amount' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                      onClick={() => setDiscountType('amount')}
+                    >
+                      Fixed
+                    </button>
+                  </div>
+                  <Input
+                    type="number"
+                    placeholder={discountType === 'percent' ? "e.g. 10" : "e.g. 500"}
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    className="h-12 rounded-xl border-gray-200"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="amountReceived" className="text-sm font-medium text-gray-700">Amount Received (रू)</Label>
                 <div className="relative">
@@ -409,7 +457,7 @@ export default function Sales() {
               )}
 
               <div className="grid grid-cols-3 gap-2">
-                {[total, 50, 100, 500, 1000].map((denom, i) => (
+                {[finalTotal, 50, 100, 500, 1000].map((denom, i) => (
                   <Button
                     key={`${denom}-${i}`}
                     variant="outline"
@@ -417,7 +465,7 @@ export default function Sales() {
                     className="rounded-lg border-gray-200 text-xs font-medium hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
                     onClick={() => setAmountReceived(denom.toString())}
                   >
-                    {denom === total ? "Exact" : `रू ${denom}`}
+                    {denom === finalTotal ? "Exact" : `रू ${denom}`}
                   </Button>
                 ))}
               </div>

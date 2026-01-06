@@ -38,6 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
 import { CreateCategoryDialog, CreateSupplierDialog } from "./CreateInventoryDialogs";
 import { InventorySidebarItem } from "./InventorySidebarItem";
+import { SalesSidebarItem } from "./SalesSidebarItem";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -117,11 +118,17 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex flex-1 flex-col gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === item.path || location.pathname.startsWith(item.path);
 
                 if (item.label === "Inventory") {
                   return (
                     <InventorySidebarItem key={item.path} isActive={isActive} />
+                  );
+                }
+
+                if (item.label === "Sales") {
+                  return (
+                    <SalesSidebarItem key={item.path} isActive={isActive} />
                   );
                 }
 

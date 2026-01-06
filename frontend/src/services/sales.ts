@@ -25,6 +25,28 @@ export interface Customer {
     created_at: string;
 }
 
+export interface SaleItem {
+    id: string;
+    sale_id: string;
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    product_name: string;
+}
+
+export interface Sale {
+    id: string;
+    sales_type: string;
+    total_amount: number;
+    discount_applied: number;
+    receipt_url?: string;
+    sale_date: string;
+    customer_id?: string;
+    customer_name?: string;
+    customer_phone?: string;
+}
+
 export const salesService = {
     createSale: async (data: CreateSaleData) => {
         const response = await api.post('sales/create', data);

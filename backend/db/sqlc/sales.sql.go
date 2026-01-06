@@ -99,8 +99,13 @@ func (q *Queries) CreateSaleItem(ctx context.Context, arg CreateSaleItemParams) 
 }
 
 const getSale = `-- name: GetSale :one
-SELECT id, sales_type, total_amount, discount_applied, receipt_url, sale_date, store_id, customer_id FROM sales
-WHERE id = $1 AND store_id = $2
+SELECT 
+    s.id, s.sales_type, s.total_amount::float as total_amount, s.discount_applied::float as discount_applied, s.receipt_url, s.sale_date, s.store_id, s.customer_id,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM sales s
+LEFT JOIN customers c ON s.customer_id = c.id
+WHERE s.id = $1 AND s.store_id = $2
 `
 
 type GetSaleParams struct {
@@ -108,9 +113,22 @@ type GetSaleParams struct {
 	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
 }
 
-func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (Sale, error) {
+type GetSaleRow struct {
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	SalesType       SalesTypes         `db:"sales_type" json:"sales_type"`
+	TotalAmount     float64            `db:"total_amount" json:"total_amount"`
+	DiscountApplied float64            `db:"discount_applied" json:"discount_applied"`
+	ReceiptUrl      pgtype.Text        `db:"receipt_url" json:"receipt_url"`
+	SaleDate        pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	CustomerName    pgtype.Text        `db:"customer_name" json:"customer_name"`
+	CustomerPhone   pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+}
+
+func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, error) {
 	row := q.db.QueryRow(ctx, getSale, arg.ID, arg.StoreID)
-	var i Sale
+	var i GetSaleRow
 	err := row.Scan(
 		&i.ID,
 		&i.SalesType,
@@ -120,25 +138,27 @@ func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (Sale, error) 
 		&i.SaleDate,
 		&i.StoreID,
 		&i.CustomerID,
+		&i.CustomerName,
+		&i.CustomerPhone,
 	)
 	return i, err
 }
 
 const getSaleItems = `-- name: GetSaleItems :many
-SELECT si.id, si.sale_id, si.product_id, si.quantity, si.unit_price, si.total_price, p.name as product_name
+SELECT si.id, si.sale_id, si.product_id, si.quantity, si.unit_price::float as unit_price, si.total_price::float as total_price, p.name as product_name
 FROM sale_items si
 JOIN products p ON si.product_id = p.id
 WHERE si.sale_id = $1
 `
 
 type GetSaleItemsRow struct {
-	ID          pgtype.UUID    `db:"id" json:"id"`
-	SaleID      pgtype.UUID    `db:"sale_id" json:"sale_id"`
-	ProductID   pgtype.UUID    `db:"product_id" json:"product_id"`
-	Quantity    int32          `db:"quantity" json:"quantity"`
-	UnitPrice   pgtype.Numeric `db:"unit_price" json:"unit_price"`
-	TotalPrice  pgtype.Numeric `db:"total_price" json:"total_price"`
-	ProductName string         `db:"product_name" json:"product_name"`
+	ID          pgtype.UUID `db:"id" json:"id"`
+	SaleID      pgtype.UUID `db:"sale_id" json:"sale_id"`
+	ProductID   pgtype.UUID `db:"product_id" json:"product_id"`
+	Quantity    int32       `db:"quantity" json:"quantity"`
+	UnitPrice   float64     `db:"unit_price" json:"unit_price"`
+	TotalPrice  float64     `db:"total_price" json:"total_price"`
+	ProductName string      `db:"product_name" json:"product_name"`
 }
 
 func (q *Queries) GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSaleItemsRow, error) {
@@ -170,20 +190,38 @@ func (q *Queries) GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSa
 }
 
 const listSales = `-- name: ListSales :many
-SELECT id, sales_type, total_amount, discount_applied, receipt_url, sale_date, store_id, customer_id FROM sales
-WHERE store_id = $1
-ORDER BY sale_date DESC
+SELECT 
+    s.id, s.sales_type, s.total_amount::float as total_amount, s.discount_applied::float as discount_applied, s.receipt_url, s.sale_date, s.store_id, s.customer_id,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM sales s
+LEFT JOIN customers c ON s.customer_id = c.id
+WHERE s.store_id = $1
+ORDER BY s.sale_date DESC
 `
 
-func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]Sale, error) {
+type ListSalesRow struct {
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	SalesType       SalesTypes         `db:"sales_type" json:"sales_type"`
+	TotalAmount     float64            `db:"total_amount" json:"total_amount"`
+	DiscountApplied float64            `db:"discount_applied" json:"discount_applied"`
+	ReceiptUrl      pgtype.Text        `db:"receipt_url" json:"receipt_url"`
+	SaleDate        pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	CustomerName    pgtype.Text        `db:"customer_name" json:"customer_name"`
+	CustomerPhone   pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+}
+
+func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSalesRow, error) {
 	rows, err := q.db.Query(ctx, listSales, storeID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Sale
+	var items []ListSalesRow
 	for rows.Next() {
-		var i Sale
+		var i ListSalesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.SalesType,
@@ -193,6 +231,8 @@ func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]Sale, e
 			&i.SaleDate,
 			&i.StoreID,
 			&i.CustomerID,
+			&i.CustomerName,
+			&i.CustomerPhone,
 		); err != nil {
 			return nil, err
 		}

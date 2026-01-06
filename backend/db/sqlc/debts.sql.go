@@ -64,3 +64,175 @@ func (q *Queries) CreateDebt(ctx context.Context, arg CreateDebtParams) (Debt, e
 	)
 	return i, err
 }
+
+const deleteDebt = `-- name: DeleteDebt :exec
+DELETE FROM debts
+WHERE id = $1 AND store_id = $2
+`
+
+type DeleteDebtParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) DeleteDebt(ctx context.Context, arg DeleteDebtParams) error {
+	_, err := q.db.Exec(ctx, deleteDebt, arg.ID, arg.StoreID)
+	return err
+}
+
+const getDebt = `-- name: GetDebt :one
+SELECT 
+    d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM debts d
+LEFT JOIN customers c ON d.customer_id = c.id
+WHERE d.id = $1 AND d.store_id = $2
+`
+
+type GetDebtParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+type GetDebtRow struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID    pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleID        pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	AmountOwed    pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate       pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status        DebtStatus         `db:"status" json:"status"`
+	Notes         pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	CustomerName  pgtype.Text        `db:"customer_name" json:"customer_name"`
+	CustomerPhone pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+}
+
+func (q *Queries) GetDebt(ctx context.Context, arg GetDebtParams) (GetDebtRow, error) {
+	row := q.db.QueryRow(ctx, getDebt, arg.ID, arg.StoreID)
+	var i GetDebtRow
+	err := row.Scan(
+		&i.ID,
+		&i.StoreID,
+		&i.CustomerID,
+		&i.SaleID,
+		&i.AmountOwed,
+		&i.AmountPaid,
+		&i.DueDate,
+		&i.Status,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CustomerName,
+		&i.CustomerPhone,
+	)
+	return i, err
+}
+
+const getDebts = `-- name: GetDebts :many
+SELECT 
+    d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM debts d
+LEFT JOIN customers c ON d.customer_id = c.id
+WHERE d.store_id = $1
+ORDER BY d.created_at DESC
+`
+
+type GetDebtsRow struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID    pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleID        pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	AmountOwed    pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate       pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status        DebtStatus         `db:"status" json:"status"`
+	Notes         pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	CustomerName  pgtype.Text        `db:"customer_name" json:"customer_name"`
+	CustomerPhone pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+}
+
+func (q *Queries) GetDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDebtsRow, error) {
+	rows, err := q.db.Query(ctx, getDebts, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDebtsRow
+	for rows.Next() {
+		var i GetDebtsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.StoreID,
+			&i.CustomerID,
+			&i.SaleID,
+			&i.AmountOwed,
+			&i.AmountPaid,
+			&i.DueDate,
+			&i.Status,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CustomerName,
+			&i.CustomerPhone,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateDebt = `-- name: UpdateDebt :one
+UPDATE debts
+SET 
+    amount_paid = COALESCE($3, amount_paid),
+    status = COALESCE($4, status),
+    notes = COALESCE($5, notes),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND store_id = $2
+RETURNING id, store_id, customer_id, sale_id, amount_owed, amount_paid, due_date, status, notes, created_at, updated_at
+`
+
+type UpdateDebtParams struct {
+	ID         pgtype.UUID    `db:"id" json:"id"`
+	StoreID    pgtype.UUID    `db:"store_id" json:"store_id"`
+	AmountPaid pgtype.Numeric `db:"amount_paid" json:"amount_paid"`
+	Status     NullDebtStatus `db:"status" json:"status"`
+	Notes      pgtype.Text    `db:"notes" json:"notes"`
+}
+
+func (q *Queries) UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error) {
+	row := q.db.QueryRow(ctx, updateDebt,
+		arg.ID,
+		arg.StoreID,
+		arg.AmountPaid,
+		arg.Status,
+		arg.Notes,
+	)
+	var i Debt
+	err := row.Scan(
+		&i.ID,
+		&i.StoreID,
+		&i.CustomerID,
+		&i.SaleID,
+		&i.AmountOwed,
+		&i.AmountPaid,
+		&i.DueDate,
+		&i.Status,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
