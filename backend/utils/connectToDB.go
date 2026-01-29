@@ -18,7 +18,14 @@ var (
 )
 
 func ConnectToDB() {
+	log.Println("Initializing Database Connection...")
 	dbSource := os.Getenv("DB_URL_SUPABASE")
+	if dbSource == "" {
+		log.Println("WARNING: DB_URL_SUPABASE environment variable is empty!")
+	} else {
+		log.Printf("DB_URL_SUPABASE found (length: %d)", len(dbSource))
+	}
+
 	config, err := pgxpool.ParseConfig(dbSource)
 	if err != nil {
 		log.Fatal("failed to parse db config: ", err)
@@ -30,10 +37,23 @@ func ConnectToDB() {
 	config.MaxConnLifetime = time.Hour
 	config.MaxConnIdleTime = 30 * time.Minute
 
+	log.Println("Creating PGX Pool...")
 	conn, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		log.Fatal("failed to connect to database: ", err)
 	}
+
+	log.Println("Determining database connectivity...")
+	// Add a timeout to the ping so it doesn't hang forever if the firewall blocks it
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = conn.Ping(ctx)
+	if err != nil {
+		log.Fatal("Database Ping failed (check firewall/IP whitelist): ", err)
+	}
+
+	log.Println("Database Connection Established Successfully.")
 
 	DBPool = conn
 	Queries = db.New(conn)
