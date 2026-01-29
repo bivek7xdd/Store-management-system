@@ -20,7 +20,7 @@ func main() {
 
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:4173", "https://store-management-system-liart.vercel.app"},
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:4173", "https://store-management-system-liart.vercel.app", "https://store-management-system-bca8g5aaz.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
