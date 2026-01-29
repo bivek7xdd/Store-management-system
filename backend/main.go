@@ -105,5 +105,8 @@ func main() {
 		reportRoutes.GET("/stats", handlers.GetReportStats)
 	}
 	PORT := os.Getenv("PORT")
+	if PORT == "" {
+		PORT = "8000"
+	}
 	router.Run(":" + PORT)
 }
