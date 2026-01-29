@@ -45,7 +45,8 @@ WHERE id = $1
 RETURNING *;
 
 -- name: DeleteProduct :exec
-DELETE FROM products
+UPDATE products
+SET status = 'discontinued'
 WHERE id = $1;
 
 -- name: SearchProducts :many

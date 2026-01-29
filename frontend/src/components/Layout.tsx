@@ -132,16 +132,20 @@ export default function Layout({ children }: LayoutProps) {
                   );
                 }
 
+                const isOfflineDisabled = !isOnline && item.label === "Reports";
+
                 return (
                   <Link
                     key={item.path}
-                    to={item.path}
+                    to={isOfflineDisabled ? "#" : item.path}
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-lg"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                      isOfflineDisabled && "opacity-50 cursor-not-allowed pointer-events-none"
                     )}
+                    aria-disabled={isOfflineDisabled}
                     style={isActive ? {
                       boxShadow: `0 4px 14px -3px rgba(0, 0, 0, 0.2)`
                     } : {}}
@@ -151,7 +155,8 @@ export default function Layout({ children }: LayoutProps) {
                       isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
                     )} />
                     {item.label}
-                    {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
+                    {isOfflineDisabled && <span className="ml-auto text-[10px] uppercase font-bold text-red-500">Offline</span>}
+                    {isActive && !isOfflineDisabled && <ChevronRight className="ml-auto h-4 w-4" />}
                   </Link>
                 );
               })}

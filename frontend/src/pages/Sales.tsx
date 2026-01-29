@@ -5,12 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2 } from "lucide-react";
+import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2, WifiOff, Database } from "lucide-react";
 import { inventoryService } from "@/services/inventory";
-import { salesService, CreateSaleData, Customer } from "@/services/sales";
+import { salesService, CreateSaleData } from "@/services/sales";
+import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Product } from "@/types";
+import { Product, OfflineStatus } from "@/types";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { db } from "@/db/db";
 
 interface CartItem {
   productId: string;
@@ -38,6 +41,8 @@ export default function Sales() {
   const [debtNote, setDebtNote] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
+  const [cachedProductsCount, setCachedProductsCount] = useState(0);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -48,6 +53,33 @@ export default function Sales() {
   const finalTotal = Math.max(0, subtotal - discountAmount);
   const change = amountReceived ? parseFloat(amountReceived) - finalTotal : 0;
 
+  // Initialize sync service and listen for status changes
+  useEffect(() => {
+    const cleanup = syncService.init();
+    const unsubscribe = syncService.onStatusChange((status) => {
+      setOfflineStatus(status);
+    });
+
+    return () => {
+      cleanup();
+      unsubscribe();
+    };
+  }, []);
+
+  // Get cached products count for offline indicator
+  useEffect(() => {
+    const getCachedProductsCount = async () => {
+      try {
+        const count = await db.products.count();
+        setCachedProductsCount(count);
+      } catch (error) {
+        console.error('Failed to get cached products count:', error);
+      }
+    };
+
+    getCachedProductsCount();
+  }, []);
+
   // Search products when searchTerm changes
   useEffect(() => {
     const search = async () => {
@@ -57,10 +89,37 @@ export default function Sales() {
       }
       setIsSearching(true);
       try {
-        const results = await inventoryService.searchProducts(searchTerm);
+        let results;
+        if (offlineStatus.isOnline) {
+          // Online: Use inventory service
+          results = await inventoryService.searchProducts(searchTerm);
+        } else {
+          // Offline: Search cached products
+          const cachedProducts = await db.products
+            .where('name')
+            .startsWithIgnoreCase(searchTerm)
+            .limit(20)
+            .toArray();
+          results = cachedProducts;
+        }
         setProducts(results || []);
       } catch (error) {
         console.error("Search error:", error);
+        // Fallback to cached products if online search fails
+        if (offlineStatus.isOnline) {
+          try {
+            const cachedProducts = await db.products
+              .where('name')
+              .startsWithIgnoreCase(searchTerm)
+              .limit(20)
+              .toArray();
+            setProducts(cachedProducts || []);
+            toast.info("Showing cached products (network error)");
+          } catch (fallbackError) {
+            console.error("Fallback search error:", fallbackError);
+            setProducts([]);
+          }
+        }
       } finally {
         setIsSearching(false);
       }
@@ -68,7 +127,7 @@ export default function Sales() {
 
     const timer = setTimeout(search, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, offlineStatus.isOnline]);
 
   const addToCart = (product: Product) => {
     const existing = cart.find((item) => item.productId === product.id);
@@ -144,6 +203,7 @@ export default function Sales() {
       const saleData: CreateSaleData = {
         sales_type: change < 0 ? "credit" : "cash", // Logic handled by backend mostly, but good for intent
         amount_paid: amountReceived ? parseFloat(amountReceived) : 0,
+        total_amount: finalTotal, // Added total_amount
         note: debtNote,
         discount_applied: discountAmount,
         customer_name: customerName,
@@ -151,12 +211,21 @@ export default function Sales() {
         items: cart.map(item => ({
           product_id: item.productId,
           quantity: item.quantity,
-          unit_price: item.price
+          unit_price: item.price,
+          total_price: item.price * item.quantity,
+          product_name: item.name
         }))
       };
 
       await salesService.createSale(saleData);
-      toast.success("Sale completed successfully!");
+      
+      // Show appropriate success message based on online status
+      if (offlineStatus.isOnline) {
+        toast.success("Sale completed successfully!");
+      } else {
+        toast.success("Sale saved offline! Will sync when connection is restored.");
+      }
+      
       setCart([]);
       setCustomerName("");
       setCustomerPhone("");
@@ -164,6 +233,19 @@ export default function Sales() {
       setAmountReceived("");
       setDiscountValue("");
       setSearchTerm("");
+
+      // Trigger search/refresh to update UI stock
+      // Since searchTerm is cleared, we might want to just reset products or refetch default
+      // But if we clear search, products list might clear too.
+      // Ideally user wants to see the updated stock if they search again.
+      // If we cleared the search, the list is empty. 
+      // Let's just clear products for now, or if we want to keep them, we need to refetch.
+      setProducts([]);
+      
+      // Update pending sales count after offline sale
+      if (!offlineStatus.isOnline) {
+        syncService.updatePendingSalesCount();
+      }
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast.error(error.response?.data?.message || "Failed to complete sale");
@@ -177,17 +259,75 @@ export default function Sales() {
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sales / POS</h1>
-        <p className="text-gray-500 mt-1">Create new sales and manage transactions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Sales / POS</h1>
+          <p className="text-gray-500 mt-1">Create new sales and manage transactions</p>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Offline Status Indicator */}
+          <OfflineIndicator
+            isOnline={offlineStatus.isOnline}
+            pendingSales={offlineStatus.pendingSales}
+            isSyncing={offlineStatus.isSyncing}
+            syncError={offlineStatus.syncError}
+            lastSyncTime={offlineStatus.lastSyncTime}
+          />
+        </div>
       </div>
+
+      {/* Offline Mode Banner */}
+      {!offlineStatus.isOnline && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
+          <WifiOff className="h-5 w-5 text-orange-600" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-800">
+              Working offline
+            </p>
+            <p className="text-xs text-orange-600">
+              {cachedProductsCount > 0 
+                ? `${cachedProductsCount} products available from cache. Sales will sync when connection is restored.`
+                : "No cached products available. Connect to internet to load product data."
+              }
+            </p>
+          </div>
+          {offlineStatus.pendingSales > 0 && (
+            <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+              {offlineStatus.pendingSales} pending
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Sync Progress Banner */}
+      {offlineStatus.isSyncing && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-800">
+              Syncing sales data...
+            </p>
+            <p className="text-xs text-blue-600">
+              Uploading offline sales to server
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Product Search */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-gray-900">Product Search</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold text-gray-900">Product Search</CardTitle>
+                {!offlineStatus.isOnline && cachedProductsCount > 0 && (
+                  <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                    <Database className="h-3 w-3" />
+                    Cached data
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="relative">
@@ -219,9 +359,19 @@ export default function Sales() {
               <CardContent className="pt-4">
                 <div className="grid gap-2 max-h-96 overflow-y-auto">
                   {products.length === 0 && !isSearching ? (
-                    <p className="text-sm text-gray-500 text-center py-8">
-                      No products found
-                    </p>
+                    <div className="text-center py-8">
+                      <p className="text-sm text-gray-500">
+                        {!offlineStatus.isOnline && cachedProductsCount === 0
+                          ? "No cached products available. Connect to internet to load products."
+                          : "No products found"
+                        }
+                      </p>
+                      {!offlineStatus.isOnline && cachedProductsCount > 0 && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Searching in {cachedProductsCount} cached products
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     products.map((product) => (
                       <button
@@ -231,7 +381,14 @@ export default function Sales() {
                         className={`flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all text-left ${product.stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <div>
-                          <p className="font-medium text-gray-900">{product.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">{product.name}</p>
+                            {!offlineStatus.isOnline && (
+                              <Badge variant="outline" className="text-xs px-1 py-0">
+                                Cached
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500">
                             Stock: {product.stock_quantity} • रू {typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0}
                           </p>
@@ -482,7 +639,12 @@ export default function Sales() {
                     Processing...
                   </>
                 ) : (
-                  change < 0 ? "Confirm Credit Sale" : "Complete Sale"
+                  <>
+                    {change < 0 ? "Confirm Credit Sale" : "Complete Sale"}
+                    {!offlineStatus.isOnline && (
+                      <span className="ml-2 text-xs opacity-75">(Offline)</span>
+                    )}
+                  </>
                 )}
               </Button>
             </CardContent>

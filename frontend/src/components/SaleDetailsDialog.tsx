@@ -65,7 +65,7 @@ export function SaleDetailsDialog({ open, onOpenChange, saleId }: SaleDetailsDia
                                 <p className="text-sm text-gray-500">VAT/PAN: 123456789</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm font-medium">Receipt #{sale.id.slice(0, 8)}</p>
+                                <p className="text-sm font-medium">Receipt #{sale.id?.toString().slice(0, 8)}</p>
                                 <p className="text-sm text-gray-500">
                                     {new Date(sale.sale_date).toLocaleDateString()} {new Date(sale.sale_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
@@ -94,7 +94,7 @@ export function SaleDetailsDialog({ open, onOpenChange, saleId }: SaleDetailsDia
                             </TableHeader>
                             <TableBody>
                                 {items.map((item) => (
-                                    <TableRow key={item.id}>
+                                    <TableRow key={item.product_id}>
                                         <TableCell className="font-medium">{item.product_name}</TableCell>
                                         <TableCell className="text-right">{item.quantity}</TableCell>
                                         <TableCell className="text-right">

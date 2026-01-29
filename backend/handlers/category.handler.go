@@ -25,6 +25,7 @@ func CreateCategories(c *gin.Context) {
 	if err != nil {
 		log.Printf("error binding json: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "error binding json", err)
+		return
 	}
 
 	//create context
@@ -63,6 +64,7 @@ func GetAllCategories(c *gin.Context) {
 	if err != nil {
 		log.Println("error geting categories", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error getting categories", err)
+		return
 	}
 
 	utils.SuccessResponse(c, "Categories fetched successfully", categories)

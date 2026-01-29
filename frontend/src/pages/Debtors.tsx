@@ -2,25 +2,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MessageCircle, Phone, Users, Wallet, RefreshCw } from "lucide-react";
+import { Search, MessageCircle, Phone, Users, Wallet, RefreshCw, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { debtService, Debt } from "@/services/debts";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const colors = {
   primary: "#0d9488",
   primaryDark: "#115e59",
 };
 
+const ITEMS_PER_PAGE = 9;
+
 export default function Debtors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchDebts();
   }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const fetchDebts = async () => {
     try {
@@ -36,24 +52,26 @@ export default function Debtors() {
   };
 
   const filteredDebtors = debts.filter(
-    (debtor) =>
-      (debtor.customer_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (debtor.customer_phone || "").includes(searchTerm)
+    (debtor) => {
+      const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
+      const matchesSearch = (debtor.customer_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (debtor.customer_phone || "").includes(searchTerm);
+
+      const matchesStatus =
+        statusFilter === "all" ? true :
+          statusFilter === "pending" ? outstanding > 0 :
+            outstanding <= 0; // paid
+
+      return matchesSearch && matchesStatus;
+    }
   );
 
   const totalOutstanding = debts.reduce((sum, d) => sum + (parseFloat(d.amount_owed) - parseFloat(d.amount_paid)), 0);
 
-  const handleSendReminder = (debtor: Debt) => {
-    if (!debtor.customer_phone) {
-      toast.error("No phone number for this customer");
-      return;
-    }
-    const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
-    const message = `नमस्ते ${debtor.customer_name || 'Customer'}, तपाईंको बाँकी रकम रू ${outstanding.toLocaleString()} छ। कृपया यथाशीघ्र भुक्तान गर्नुहोस्। धन्यवाद!`;
-    const whatsappUrl = `https://wa.me/977${debtor.customer_phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
-    toast.success("Opening WhatsApp...");
-  };
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredDebtors.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedDebtors = filteredDebtors.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleMarkPaid = async (debtor: Debt) => {
     const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
@@ -72,6 +90,24 @@ export default function Debtors() {
       }
     }
   }
+
+  const handleSendSMSReminder = async (debtor: Debt) => {
+    if (!debtor.customer_phone) {
+      toast.error("No phone number for this customer");
+      return;
+    }
+    const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
+    if (outstanding <= 0) return;
+
+    try {
+      toast.message(`Sending SMS to ${debtor.customer_phone}...`);
+      await debtService.sendReminder(debtor.id);
+      toast.success("SMS sent successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to send SMS. Please check your Twilio configuration.");
+    }
+  };
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
@@ -121,17 +157,34 @@ export default function Debtors() {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Filters & Search */}
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by name or phone number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 rounded-xl border-gray-200"
-            />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by name or phone number..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 rounded-xl border-gray-200"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={(v: "all" | "pending" | "paid") => setStatusFilter(v)}>
+                <SelectTrigger className="w-[180px] h-11 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <SelectValue placeholder="Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -173,7 +226,7 @@ export default function Debtors() {
             </Card>
           ))
         ) : (
-          filteredDebtors.map((debtor) => {
+          paginatedDebtors.map((debtor) => {
             const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
             return (
               <Card key={debtor.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
@@ -194,7 +247,7 @@ export default function Debtors() {
                         </p>
                       </div>
                     </div>
-                    <Badge variant={outstanding > 0 ? "outline" : "default"} className={`${outstanding > 0 ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-green-100 text-green-700"}`}>
+                    <Badge variant={outstanding > 0 ? "secondary" : "default"} className={`${outstanding > 0 ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-green-100 text-green-700"}`}>
                       {outstanding > 0 ? "Pending" : "Paid"}
                     </Badge>
                   </div>
@@ -220,11 +273,11 @@ export default function Debtors() {
                       variant="outline"
                       size="sm"
                       className="flex-1 rounded-lg border-gray-200 hover:bg-gray-50 text-gray-900 hover:text-gray-900"
-                      onClick={() => handleSendReminder(debtor)}
+                      onClick={() => handleSendSMSReminder(debtor)}
                       disabled={outstanding <= 0}
                     >
                       <MessageCircle className="h-4 w-4 mr-2" />
-                      Remind
+                      SMS
                     </Button>
                     <Button
                       size="sm"
@@ -247,9 +300,34 @@ export default function Debtors() {
         <Card className="border-0 shadow-sm">
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No debtors found matching your search</p>
+            <p className="text-gray-500">No debtors found matching your criteria</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       )}
     </div>
   );

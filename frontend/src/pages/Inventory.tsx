@@ -54,7 +54,8 @@ const getTextValue = (value: { String?: string; Valid?: boolean } | string | und
 };
 
 // Helper function to extract date from pgtype.Timestamptz
-const getDateValue = (value: { Time?: string; Valid?: boolean } | undefined): string | null => {
+const getDateValue = (value: { Time?: string; Valid?: boolean } | string | undefined): string | null => {
+  if (typeof value === 'string') return value;
   if (value && typeof value === 'object' && value.Valid && value.Time) {
     return value.Time;
   }
@@ -91,46 +92,154 @@ export default function Inventory() {
     enabled: isAuthenticated && !authLoading,
   });
 
-  // Create product mutation
+  // Create product mutation with optimistic updates
   const createProductMutation = useMutation({
-    mutationFn: (data: CreateProductData) => inventoryService.createProduct(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    mutationFn: (data: CreateProductData) => {
+      console.log('[Component] createProductMutation starting...');
+      return inventoryService.createProduct(data);
+    },
+    onMutate: async (newProduct) => {
+      console.log('[Component] createProduct onMutate - doing optimistic update');
+
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+
+      // Snapshot the previous value
+      const previousProducts = queryClient.getQueryData(["products"]);
+
+      // Optimistically update to the new value
+      const optimisticProduct = {
+        id: `temp-${Date.now()}`,
+        ...newProduct,
+        store_id: 'temp',
+        stock_quantity: newProduct.stock_quantity,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as unknown as Product;
+
+      queryClient.setQueryData(["products"], (old: Product[] = []) => {
+        return [...old, optimisticProduct];
+      });
+
+      return { previousProducts };
+    },
+    onError: (error, newProduct, context) => {
+      console.error('[Component] createProduct onError:', error);
+
+      // Rollback to previous state
+      if (context?.previousProducts) {
+        queryClient.setQueryData(["products"], context.previousProducts);
+      }
+
+      // Reset UI state
+      setAddDialogOpen(false);
+
+      toast.error("Failed to add product");
+    },
+    onSuccess: (data) => {
+      console.log('[Component] createProduct onSuccess');
       toast.success("Product added successfully!");
       setAddDialogOpen(false);
     },
-    onError: (error) => {
-      console.error("Failed to create product:", error);
-      toast.error("Failed to add product");
+    onSettled: () => {
+      console.log('[Component] createProduct onSettled - refetching');
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
-  // Update product mutation
+  // Update product mutation with optimistic updates
   const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateProductData }) =>
-      inventoryService.updateProduct(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductData }) => {
+      console.log('[Component] updateProductMutation starting...');
+      return inventoryService.updateProduct(id, data);
+    },
+    onMutate: async ({ id, data }) => {
+      console.log('[Mutation] updateProduct onMutate - doing optimistic update');
+
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+
+      // Snapshot the previous value
+      const previousProducts = queryClient.getQueryData(["products"]);
+
+      // Optimistically update
+      queryClient.setQueryData(["products"], (old: Product[] = []) => {
+        return old.map(product =>
+          product.id === id
+            ? ({ ...product, ...data, updated_at: new Date().toISOString() } as unknown as Product)
+            : product
+        );
+      });
+
+      return { previousProducts };
+    },
+    onError: (error, variables, context) => {
+      console.error('[Mutation] updateProduct onError:', error);
+
+      // Rollback to previous state
+      if (context?.previousProducts) {
+        queryClient.setQueryData(["products"], context.previousProducts);
+      }
+
+      // Reset UI state
+      setAddDialogOpen(false);
+      setEditingProduct(null);
+
+      toast.error("Failed to update product");
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      console.log('[Mutation] updateProduct onSuccess');
       toast.success("Product updated successfully!");
       setAddDialogOpen(false);
       setEditingProduct(null);
     },
-    onError: (error) => {
-      console.error("Failed to update product:", error);
-      toast.error("Failed to update product");
+    onSettled: () => {
+      console.log('[Mutation] updateProduct onSettled');
+      // Refetch to ensure we have latest data
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
-  // Delete product mutation
+  // Delete product mutation with optimistic updates
   const deleteProductMutation = useMutation({
-    mutationFn: (id: string) => inventoryService.deleteProduct(id),
+    mutationFn: (id: string) => {
+      console.log('[Component] deleteProductMutation starting...');
+      return inventoryService.deleteProduct(id);
+    },
+    onMutate: async (id) => {
+      console.log('[Mutation] deleteProduct onMutate - doing optimistic update');
+
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+
+      // Snapshot the previous value
+      const previousProducts = queryClient.getQueryData(["products"]);
+
+      // Optimistically remove from list
+      queryClient.setQueryData(["products"], (old: Product[] = []) => {
+        return old.filter(product => product.id !== id);
+      });
+
+      return { previousProducts };
+    },
+    onError: (error, id, context) => {
+      console.error('[Mutation] deleteProduct onError:', error);
+
+      // Rollback to previous state
+      if (context?.previousProducts) {
+        queryClient.setQueryData(["products"], context.previousProducts);
+      }
+
+      toast.error("Failed to delete product");
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      console.log('[Mutation] deleteProduct onSuccess');
       toast.success("Product deleted successfully!");
     },
-    onError: (error) => {
-      console.error("Failed to delete product:", error);
-      toast.error("Failed to delete product");
+    onSettled: () => {
+      console.log('[Mutation] deleteProduct onSettled');
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
@@ -178,7 +287,7 @@ export default function Inventory() {
     if (!open) setEditingProduct(null);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
@@ -193,10 +302,15 @@ export default function Inventory() {
       category_id: formData.get("category_id") as string,
     };
 
-    if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
-    } else {
-      createProductMutation.mutate(data);
+    try {
+      if (editingProduct) {
+        await updateProductMutation.mutateAsync({ id: editingProduct.id, data });
+      } else {
+        await createProductMutation.mutateAsync(data);
+      }
+    } catch (error) {
+      // Error is already handled in onError
+      console.log('[Component] Mutation error caught:', error);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,9 @@ export function CreateCategoryDialog({ onSuccess, children }: CreateCategoryDial
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Add Category</DialogTitle>
+                    <DialogDescription>
+                        Create a new category for your products.
+                    </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -118,6 +121,9 @@ export function CreateSupplierDialog({ onSuccess, children }: CreateSupplierDial
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Add Supplier</DialogTitle>
+                    <DialogDescription>
+                        Add a new supplier to your list.
+                    </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">

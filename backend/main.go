@@ -19,7 +19,7 @@ func main() {
 
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:4173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -92,8 +92,16 @@ func main() {
 	debtRoutes.Use(utils.JWTMiddleware())
 	{
 		debtRoutes.GET("", handlers.GetDebts)
+		debtRoutes.POST("/:id/remind", handlers.SendDebtReminder)
 		debtRoutes.PUT("/:id", handlers.UpdateDebt)
 		debtRoutes.DELETE("/:id", handlers.DeleteDebt)
+	}
+
+	// Report routes
+	reportRoutes := router.Group("/api/reports")
+	reportRoutes.Use(utils.JWTMiddleware())
+	{
+		reportRoutes.GET("/stats", handlers.GetReportStats)
 	}
 
 	router.Run(":8000")

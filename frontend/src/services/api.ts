@@ -1,12 +1,24 @@
 import axios from 'axios';
 
+// Determine the correct base URL based on environment
+const getBaseURL = () => {
+  // In development, use relative URL to leverage Vite proxy
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  
+  // In production/preview, use the actual backend URL
+  // You can set this via environment variable or use a default
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+};
+
 // Create axios instance with base configuration
-// Using relative URL so requests go through Vite proxy (avoids CORS issues in development)
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
 });
 
 // Request interceptor to add auth token

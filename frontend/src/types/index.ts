@@ -67,3 +67,17 @@ export interface Supplier {
   email: string;
   store_id?: string;
 }
+
+export interface OfflineStatus {
+  isOnline: boolean;
+  pendingSales: number;
+  lastSyncTime: Date | null;
+  isSyncing: boolean;
+  syncError: string | null;
+}
+
+export interface SyncProgress {
+  total: number;
+  completed: number;
+  current?: string;
+}

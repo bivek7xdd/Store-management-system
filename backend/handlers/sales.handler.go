@@ -136,10 +136,10 @@ func CreateSale(c *gin.Context) {
 
 	var createDebtParams *db.CreateDebtParams
 	if isDebt {
-		amountOwed := totalAmount - req.AmountPaid
-
+		// AmountOwed should be the TOTAL amount, not the remaining amount
+		// Outstanding is calculated as: amount_owed - amount_paid
 		var amountOwedNum pgtype.Numeric
-		amountOwedNum.Scan(fmt.Sprintf("%f", amountOwed))
+		amountOwedNum.Scan(fmt.Sprintf("%f", totalAmount))
 
 		var amountPaidNum pgtype.Numeric
 		amountPaidNum.Scan(fmt.Sprintf("%f", req.AmountPaid))

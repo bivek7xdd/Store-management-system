@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	db "storemanagement/db/sqlc"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,6 +25,10 @@ func ConnectToDB() {
 	}
 
 	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	config.MaxConns = 25
+	config.MinConns = 2
+	config.MaxConnLifetime = time.Hour
+	config.MaxConnIdleTime = 30 * time.Minute
 
 	conn, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {

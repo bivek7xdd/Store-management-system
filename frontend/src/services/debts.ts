@@ -30,5 +30,10 @@ export const debtService = {
     deleteDebt: async (id: string) => {
         const response = await api.delete(`/debts/${id}`);
         return response.data;
+    },
+
+    sendReminder: async (id: string, message?: string) => {
+        const response = await api.post(`/debts/${id}/remind`, { message });
+        return response.data;
     }
 };

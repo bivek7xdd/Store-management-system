@@ -82,7 +82,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 }
 
 const deleteProduct = `-- name: DeleteProduct :exec
-DELETE FROM products
+UPDATE products
+SET status = 'discontinued'
 WHERE id = $1
 `
 
