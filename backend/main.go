@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"storemanagement/handlers"
 	"storemanagement/utils"
 
@@ -19,7 +20,7 @@ func main() {
 
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:4173"},
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:4173", "https://store-management-system-liart.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -103,6 +104,6 @@ func main() {
 	{
 		reportRoutes.GET("/stats", handlers.GetReportStats)
 	}
-
-	router.Run(":8000")
+	PORT := os.Getenv("PORT")
+	router.Run(":" + PORT)
 }
