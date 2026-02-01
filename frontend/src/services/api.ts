@@ -6,7 +6,7 @@ const getBaseURL = () => {
   if (import.meta.env.DEV) {
     return '/api';
   }
-  
+
   // In production/preview, use the actual backend URL
   // You can set this via environment variable or use a default
   return import.meta.env.VITE_API_URL || 'http://localhost:8000/api';

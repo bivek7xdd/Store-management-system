@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => ({
           /\.map$/,
         ],
         // Only cache in production, or minimal caching in dev
-        globPatterns: mode === "development" 
+        globPatterns: mode === "development"
           ? ["offline.html"] // Only cache offline fallback in dev
           : ["**/*.{js,css,html,ico,png,svg,woff,woff2}"], // Full caching in prod
         runtimeCaching: [

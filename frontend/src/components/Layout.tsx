@@ -39,6 +39,7 @@ import { inventoryService } from "@/services/inventory";
 import { CreateCategoryDialog, CreateSupplierDialog } from "./CreateInventoryDialogs";
 import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
+import { MarketSidebarItem } from "./MarketSidebarItem";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -129,6 +130,12 @@ export default function Layout({ children }: LayoutProps) {
                 if (item.label === "Sales") {
                   return (
                     <SalesSidebarItem key={item.path} isActive={isActive} />
+                  );
+                }
+
+                if (item.label === "Market") {
+                  return (
+                    <MarketSidebarItem key={item.path} isActive={isActive} />
                   );
                 }
 

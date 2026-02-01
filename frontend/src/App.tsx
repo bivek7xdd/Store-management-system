@@ -15,6 +15,7 @@ import SalesHistory from "./pages/SalesHistory";
 import Debtors from "./pages/Debtors";
 import Reports from "./pages/Reports";
 import Market from "./pages/Market";
+import MarketDiscovery from "./pages/MarketDiscovery";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -52,7 +53,7 @@ class ErrorBoundary extends React.Component<
             <p className="text-gray-600 mb-4">
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
@@ -103,6 +104,7 @@ const App = () => {
                           <Route path="/debtors" element={<Debtors />} />
                           <Route path="/reports" element={<Reports />} />
                           <Route path="/market" element={<Market />} />
+                          <Route path="/market/discovery" element={<MarketDiscovery />} />
                           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                           <Route path="*" element={<NotFound />} />
                         </Routes>
