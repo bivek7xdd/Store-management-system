@@ -17,7 +17,7 @@ import Reports from "./pages/Reports";
 import Market from "./pages/Market";
 import MarketDiscovery from "./pages/MarketDiscovery";
 import NotFound from "./pages/NotFound";
-import Register from "./pages/Register";
+import EnhancedSignup from "./components/EnhancedSignup";
 import Login from "./pages/Login";
 import OTP from "./pages/OTP";
 import CategoryDetails from "./pages/CategoryDetails";
@@ -85,32 +85,97 @@ const App = () => {
                 <Routes>
                   {/* Public routes */}
                   <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+                  <Route path="/register" element={<EnhancedSignup />} />
                   <Route path="/otp" element={<OTP />} />
 
                   {/* Protected routes */}
-                  <Route path="*" element={
+                  <Route path="/" element={
                     <ProtectedRoute>
                       <Layout>
-                        <Routes>
-                          <Route path="/" element={<Dashboard />} />
-                          <Route path="/inventory" element={<Inventory />} />
-                          <Route path="/inventory/categories" element={<Categories />} />
-                          <Route path="/inventory/suppliers" element={<Suppliers />} />
-                          <Route path="/inventory/category/:id" element={<CategoryDetails />} />
-                          <Route path="/inventory/supplier/:id" element={<SupplierDetails />} />
-                          <Route path="/sales" element={<Sales />} />
-                          <Route path="/sales/history" element={<SalesHistory />} />
-                          <Route path="/debtors" element={<Debtors />} />
-                          <Route path="/reports" element={<Reports />} />
-                          <Route path="/market" element={<Market />} />
-                          <Route path="/market/discovery" element={<MarketDiscovery />} />
-                          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
+                        <Dashboard />
                       </Layout>
                     </ProtectedRoute>
                   } />
+                  <Route path="/inventory" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Inventory />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/inventory/categories" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Categories />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/inventory/suppliers" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Suppliers />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/inventory/category/:id" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <CategoryDetails />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/inventory/supplier/:id" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <SupplierDetails />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Sales />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/history" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <SalesHistory />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/debtors" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Debtors />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/reports" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Reports />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/market" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Market />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/market/discovery" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <MarketDiscovery />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Catch-all route for 404 */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>

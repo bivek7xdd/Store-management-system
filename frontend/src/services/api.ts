@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { EnhancedSignupFormData, RegistrationPayload } from '@/types/enhanced-signup';
 
 // Determine the correct base URL based on environment
 const getBaseURL = () => {
@@ -49,5 +50,30 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Enhanced signup API functions
+export const enhancedSignupAPI = {
+  /**
+   * Register a new user with enhanced signup data
+   * Maps enhanced form data to backend-compatible format
+   */
+  register: async (formData: EnhancedSignupFormData): Promise<any> => {
+    // Map enhanced form data to existing backend format
+    const registrationPayload: RegistrationPayload = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      profile_picture: formData.profile_picture || '', // Default to empty string
+      store_name: formData.store_name,
+      store_address: formData.store_address,
+      currency_code: formData.currency_code,
+    };
+
+    // Make API call to existing registration endpoint
+    const response = await api.post('/users/register', registrationPayload);
+    return response.data;
+  },
+};
 
 export default api;
