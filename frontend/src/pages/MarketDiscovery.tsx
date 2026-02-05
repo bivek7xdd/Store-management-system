@@ -25,6 +25,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
 import categoryPreferencesService from "@/services/categoryPreferences";
+import { inventoryService } from "@/services/inventory";
 
 // Fix for default Leaflet marker icons in React/Vite
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -131,6 +132,13 @@ export default function MarketDiscovery() {
 
     // New state for suggested searches based on user preferences
     const [suggestedSearchTerms, setSuggestedSearchTerms] = useState<string[]>([]);
+    // State for store categories from actual inventory
+    const [storeCategories, setStoreCategories] = useState<string[]>([]);
+    const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+
+    /**
+     * Get user's current location ...
+     */
 
     /**
      * Get user's current location using browser geolocation API
@@ -371,6 +379,7 @@ export default function MarketDiscovery() {
 
     /**
      * Calculate relevance score based on name matching and categories
+     * OPTIMIZED: Heavily prioritizes wholesale/B2B suppliers over retail
      */
     const calculateRelevanceScore = useCallback((place: any, searchTerm: string): number => {
         let score = 0;
@@ -379,21 +388,48 @@ export default function MarketDiscovery() {
         const categories = (place.properties.categories || []).join(' ').toLowerCase();
         const address = (place.properties.formatted || '').toLowerCase();
 
-        // Exact product match in name gets highest score
+        // =============================================================================
+        // WHOLESALE/B2B PRIORITY SCORING - These get the highest scores
+        // =============================================================================
+        const wholesaleKeywords = [
+            'wholesale', 'wholesaler', 'distributor', 'supplier', 'trading', 'trader',
+            'import', 'importer', 'export', 'exporter', 'b2b', 'bulk', 'enterprise',
+            'industries', 'industrial', 'manufacturers', 'manufacturing', 'factory',
+            'warehouse', 'depot', 'stockist', 'agency', 'enterprises', 'corporation'
+        ];
+
+        wholesaleKeywords.forEach(keyword => {
+            if (placeName.includes(keyword)) {
+                score += 300; // Massive bonus for wholesale-related names
+            }
+            if (categories.includes(keyword)) {
+                score += 150;
+            }
+        });
+
+        // Extra bonus for combined wholesale + product match
+        if (wholesaleKeywords.some(kw => placeName.includes(kw)) && placeName.includes(lowerSearchTerm)) {
+            score += 200; // Bonus for wholesale + product match
+        }
+
+        // =============================================================================
+        // PRODUCT MATCHING
+        // =============================================================================
+        // Exact product match in name
         if (placeName.includes(lowerSearchTerm)) {
-            score += 200;
+            score += 150;
         }
 
         // Partial product match in name
         const searchWords = lowerSearchTerm.split(' ');
         searchWords.forEach(word => {
             if (word.length > 2 && placeName.includes(word)) {
-                score += 60;
+                score += 50;
             }
         });
 
-        // Product-specific business type matching - STRICT matching
-        const productBusinessTypes = {
+        // Product-specific business type matching
+        const productBusinessTypes: { [key: string]: string[] } = {
             'heater': ['solar', 'heating', 'water heater', 'electric heater', 'gas heater', 'boiler'],
             'paint': ['paint', 'color', 'coating', 'varnish', 'primer'],
             'cement': ['cement', 'concrete', 'mortar', 'building material'],
@@ -403,8 +439,63 @@ export default function MarketDiscovery() {
             'plumbing': ['plumbing', 'pipe', 'faucet', 'toilet', 'sink'],
         };
 
-        // Strict product-specific penalties - penalize unrelated product dealers
-        const productSpecificPenalties = {
+        Object.entries(productBusinessTypes).forEach(([product, types]) => {
+            if (lowerSearchTerm.includes(product)) {
+                types.forEach(type => {
+                    if (placeName.includes(type) || categories.includes(type)) {
+                        score += 80;
+                    }
+                });
+            }
+        });
+
+        // =============================================================================
+        // RETAIL/CONSUMER PENALTIES - Heavily penalize non-wholesale
+        // =============================================================================
+        const retailPenaltyKeywords = [
+            'boutique', 'retail', 'consumer', 'personal', 'fashion', 'clothing store',
+            'grocery store', 'supermarket', 'mart', 'minimart', 'convenience',
+            'outlet', 'showroom'
+        ];
+
+        retailPenaltyKeywords.forEach(keyword => {
+            if (placeName.includes(keyword) || categories.includes(keyword)) {
+                score -= 100; // Penalty for retail-focused businesses
+            }
+        });
+
+        // =============================================================================
+        // UNRELATED BUSINESS PENALTIES
+        // =============================================================================
+        const unrelatedKeywords = [
+            'restaurant', 'hotel', 'hospital', 'school', 'bank', 'atm',
+            'pharmacy', 'medical', 'clinic', 'beauty', 'salon', 'spa',
+            'travel', 'tour', 'insurance', 'real estate', 'lawyer', 'gym', 'fitness',
+            'cafe', 'bakery', 'bar', 'pub', 'cinema', 'theater', 'museum'
+        ];
+
+        unrelatedKeywords.forEach(keyword => {
+            if (placeName.includes(keyword) || categories.includes(keyword)) {
+                score -= 200; // Heavy penalty for unrelated businesses
+            }
+        });
+
+        // Penalize car dealers unless searching for automotive products
+        if (!lowerSearchTerm.includes('car') && !lowerSearchTerm.includes('auto') && !lowerSearchTerm.includes('vehicle')) {
+            if (placeName.includes('dealer') && (placeName.includes('car') || placeName.includes('auto') || placeName.includes('honda') || placeName.includes('toyota') || placeName.includes('subaru'))) {
+                score -= 300;
+            }
+        }
+
+        // Penalize telecom/mobile distributors unless searching for electronics
+        if (!lowerSearchTerm.includes('mobile') && !lowerSearchTerm.includes('phone') && !lowerSearchTerm.includes('telecom')) {
+            if (placeName.includes('ncell') || placeName.includes('ntc') || placeName.includes('mobile') || placeName.includes('telecom')) {
+                score -= 200;
+            }
+        }
+
+        // Product-specific penalties for unrelated products
+        const productSpecificPenalties: { [key: string]: string[] } = {
             'heater': ['paint', 'cement', 'rice', 'grain', 'food', 'grocery', 'textile', 'clothing', 'furniture'],
             'paint': ['heater', 'heating', 'rice', 'grain', 'food', 'grocery', 'textile', 'clothing'],
             'cement': ['heater', 'heating', 'paint', 'rice', 'grain', 'food', 'grocery', 'textile'],
@@ -413,88 +504,15 @@ export default function MarketDiscovery() {
             'electrical': ['rice', 'grain', 'food', 'grocery', 'textile', 'clothing', 'paint'],
         };
 
-        // Apply product-specific matching
-        Object.entries(productBusinessTypes).forEach(([product, types]) => {
-            if (lowerSearchTerm.includes(product)) {
-                types.forEach(type => {
-                    if (placeName.includes(type) || categories.includes(type)) {
-                        score += 100;
-                    }
-                });
-            }
-        });
-
-        // Apply product-specific penalties
         Object.entries(productSpecificPenalties).forEach(([product, penaltyTerms]) => {
             if (lowerSearchTerm.includes(product)) {
                 penaltyTerms.forEach(term => {
                     if (placeName.includes(term) || categories.includes(term)) {
-                        score -= 150; // Heavy penalty for unrelated products
+                        score -= 150;
                     }
                 });
             }
         });
-
-        // Only give points for general business terms if they're combined with relevant product terms
-        const hasRelevantProductTerm = Object.entries(productBusinessTypes).some(([product, types]) => {
-            if (lowerSearchTerm.includes(product)) {
-                return types.some(type => placeName.includes(type) || categories.includes(type));
-            }
-            return false;
-        });
-
-        // General business type relevance - only if product-relevant
-        if (hasRelevantProductTerm) {
-            const relevantCategories = [
-                'wholesale', 'distributor', 'supplier', 'trader', 'dealer',
-                'merchant', 'vendor', 'store', 'shop', 'market'
-            ];
-
-            relevantCategories.forEach(category => {
-                if (placeName.includes(category) || categories.includes(category)) {
-                    score += 40;
-                }
-            });
-        } else {
-            // Give minimal points for general business terms without product relevance
-            const relevantCategories = [
-                'wholesale', 'distributor', 'supplier', 'trader', 'dealer',
-                'merchant', 'vendor', 'store', 'shop', 'market'
-            ];
-
-            relevantCategories.forEach(category => {
-                if (placeName.includes(category) || categories.includes(category)) {
-                    score += 10; // Much lower score
-                }
-            });
-        }
-
-        // Penalize obviously unrelated businesses
-        const unrelatedKeywords = [
-            'restaurant', 'hotel', 'hospital', 'school', 'bank', 'atm',
-            'pharmacy', 'medical', 'clinic', 'beauty', 'salon', 'spa',
-            'travel', 'tour', 'insurance', 'real estate', 'lawyer', 'gym', 'fitness'
-        ];
-
-        unrelatedKeywords.forEach(keyword => {
-            if (placeName.includes(keyword) || categories.includes(keyword)) {
-                score -= 100;
-            }
-        });
-
-        // Penalize car dealers unless searching for automotive products
-        if (!lowerSearchTerm.includes('car') && !lowerSearchTerm.includes('auto') && !lowerSearchTerm.includes('vehicle')) {
-            if (placeName.includes('dealer') && (placeName.includes('car') || placeName.includes('auto') || placeName.includes('honda') || placeName.includes('toyota') || placeName.includes('subaru'))) {
-                score -= 200;
-            }
-        }
-
-        // Penalize telecom/mobile distributors unless searching for electronics
-        if (!lowerSearchTerm.includes('mobile') && !lowerSearchTerm.includes('phone') && !lowerSearchTerm.includes('telecom')) {
-            if (placeName.includes('ncell') || placeName.includes('ntc') || placeName.includes('mobile') || placeName.includes('telecom')) {
-                score -= 150;
-            }
-        }
 
         return Math.max(0, score); // Ensure score doesn't go negative
     }, []);
@@ -630,8 +648,6 @@ export default function MarketDiscovery() {
             'hardware': ['commercial.shopping_mall', 'commercial.marketplace'],
             'electrical': ['commercial.shopping_mall', 'commercial.department_store'],
             'rice': ['commercial.supermarket', 'commercial.marketplace'],
-            'beverage': ['commercial.supermarket', 'commercial.marketplace'],
-            'drink': ['commercial.supermarket', 'commercial.marketplace'],
             'clothes': ['commercial.shopping_mall', 'commercial.department_store'],
             'book': ['commercial.shopping_mall', 'commercial.department_store'],
         };
@@ -707,24 +723,24 @@ export default function MarketDiscovery() {
 
     /**
      * Search using text-based queries with expanded radius
+     * OPTIMIZED: Prioritizes wholesale/B2B search terms
      */
     const searchWithExpandedRadius = useCallback(async (): Promise<any[]> => {
         const results: any[] = [];
 
-        // Generic broad search terms - we rely on the API's location bias rather than hardcoding city names
-        // This ensures the search works correctly regardless of where the user is located
+        // WHOLESALE-FOCUSED search terms - prioritize B2B suppliers
         const expandedSearchTerms = [
-            `${searchQuery}`,
-            `${searchQuery} supplier`,
-            `${searchQuery} dealer`,
             `${searchQuery} wholesale`,
+            `${searchQuery} wholesaler`,
             `${searchQuery} distributor`,
-            `${searchQuery} store`,
-            `${searchQuery} shop`,
-            `${searchQuery} market`,
-            `${searchQuery} trading`,
+            `${searchQuery} supplier`,
             `wholesale ${searchQuery}`,
-            `buy ${searchQuery}`,
+            `${searchQuery} trading`,
+            `${searchQuery} trader`,
+            `${searchQuery} importer`,
+            `${searchQuery} industries`,
+            `${searchQuery} enterprise`,
+            `bulk ${searchQuery}`,
         ];
 
         const allTerms = expandedSearchTerms;
@@ -790,24 +806,24 @@ export default function MarketDiscovery() {
             const expandedResults = await searchWithExpandedRadius();
             allResults.push(...expandedResults);
 
-            // STRATEGY 3: Original targeted search strategies
+            // STRATEGY 3: Original targeted search strategies - WHOLESALE FOCUSED
             const baseSearchStrategies = [
-                `${searchQuery} supplier`,
-                `${searchQuery} dealer`,
-                `${searchQuery} distributor`,
                 `${searchQuery} wholesale`,
-                `${searchQuery} store`,
-                `${searchQuery} shop`,
+                `${searchQuery} wholesaler`,
+                `${searchQuery} distributor`,
+                `${searchQuery} supplier`,
+                `${searchQuery} trading`,
+                `${searchQuery} importer`,
             ];
 
-            // Add product-specific search terms
+            // Add product-specific WHOLESALE search terms
             const productSpecificTerms: { [key: string]: string[] } = {
-                'heater': ['solar heater dealer Nepal', 'water heater supplier Kathmandu', 'heating equipment store', 'electrical appliances Nepal'],
-                'paint': ['paint shop Nepal', 'color center Kathmandu', 'coating supplier', 'paint dealer Nepal'],
-                'cement': ['cement supplier Nepal', 'building materials Kathmandu', 'construction materials dealer', 'cement store Nepal'],
-                'rice': ['rice wholesale Nepal', 'grain supplier Kathmandu', 'food distributor Nepal', 'rice mill Nepal'],
-                'hardware': ['hardware store Nepal', 'tools supplier Kathmandu', 'building supplies Nepal', 'hardware dealer Nepal'],
-                'electrical': ['electrical supplies Nepal', 'electronics dealer Kathmandu', 'appliance store Nepal', 'electrical equipment Nepal'],
+                'heater': ['solar heater wholesale Nepal', 'water heater distributor Kathmandu', 'heating equipment supplier', 'electrical appliances wholesale'],
+                'paint': ['paint wholesale Nepal', 'paint distributor Kathmandu', 'coating supplier', 'paint trading Nepal'],
+                'cement': ['cement wholesale Nepal', 'building materials distributor Kathmandu', 'construction materials supplier', 'cement trading Nepal'],
+                'rice': ['rice wholesale Nepal', 'grain supplier Kathmandu', 'food distributor Nepal', 'rice trading Nepal', 'rice mill wholesale'],
+                'hardware': ['hardware wholesale Nepal', 'tools distributor Kathmandu', 'building supplies wholesale', 'hardware supplier Nepal'],
+                'electrical': ['electrical supplies wholesale Nepal', 'electronics distributor Kathmandu', 'electrical equipment supplier', 'electronics trading Nepal'],
             };
 
             let searchStrategies = [...baseSearchStrategies];
@@ -883,12 +899,14 @@ export default function MarketDiscovery() {
                         relevanceScore,
                     };
                 })
-                // Filter out results with very low relevance scores
-                .filter(place => (place.relevanceScore || 0) > 20) // Lowered threshold for more results
-                // Sort by relevance score first, then by distance
+                // Filter out results with low relevance scores - stricter filtering for wholesale
+                .filter(place => (place.relevanceScore || 0) > 50)
+                // Sort by relevance score first (prioritize wholesale/B2B), then by distance
                 .sort((a, b) => {
-                    if (Math.abs((a.relevanceScore || 0) - (b.relevanceScore || 0)) > 15) {
-                        return (b.relevanceScore || 0) - (a.relevanceScore || 0);
+                    // Give much more weight to relevance score for wholesale search
+                    const relevanceDiff = (b.relevanceScore || 0) - (a.relevanceScore || 0);
+                    if (relevanceDiff !== 0) {
+                        return relevanceDiff;
                     }
                     return (a.distance || 0) - (b.distance || 0);
                 })
@@ -900,12 +918,12 @@ export default function MarketDiscovery() {
                 console.log("No results found, trying fallback search...");
 
                 const fallbackTerms = [
-                    `store ${searchQuery}`,
-                    `shop ${searchQuery}`,
-                    `${searchQuery}`,
+                    `${searchQuery} wholesale`,
+                    `${searchQuery} supplier`,
+                    `${searchQuery} distributor`,
+                    `${searchQuery} trading`,
                     `wholesale`,
                     `market`,
-                    `trading`,
                 ];
 
                 for (const term of fallbackTerms) {
@@ -972,8 +990,8 @@ export default function MarketDiscovery() {
                                 relevanceScore,
                             };
                         })
-                        .filter(place => (place.relevanceScore || 0) > 5) // Very low threshold for fallback
-                        .sort((a, b) => (a.distance || 0) - (b.distance || 0)) // Sort by distance for fallback
+                        .filter(place => (place.relevanceScore || 0) > 20) // Moderate threshold for fallback
+                        .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0)) // Sort by relevance first even for fallback
                         .slice(0, 10);
 
                     if (fallbackResults.length > 0) {
@@ -1038,7 +1056,24 @@ export default function MarketDiscovery() {
     }, [userLocation, currentMapCenter]);
 
     /**
-     * Load user category preferences for suggestions
+     * Load user's store categories from inventory
+     */
+    useEffect(() => {
+        const fetchStoreCategories = async () => {
+            try {
+                const categories = await inventoryService.getCategories();
+                if (categories && categories.length > 0) {
+                    setStoreCategories(categories.map(c => c.name));
+                }
+            } catch (error) {
+                console.error("Failed to fetch store categories:", error);
+            }
+        };
+        fetchStoreCategories();
+    }, []);
+
+    /**
+     * Load user category preferences for suggestions (fallback)
      */
     useEffect(() => {
         const prefs = categoryPreferencesService.retrieve();
@@ -1210,20 +1245,28 @@ export default function MarketDiscovery() {
                             💡 Tip: We search for suppliers, wholesalers, and distributors near you. Results are sorted by relevance and distance.
                         </p>
 
-                        {/* API Diagnostics (Development Only) */}
-                        {import.meta.env.DEV && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={testAPICapabilities}
-                                className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-xs"
-                            >
-                                Test API Capabilities
-                            </Button>
-                        )}
+                        {/* API Diagnostics (Development Only) - Removed as per request */}
                     </form>
-                    {suggestedSearchTerms.length > 0 && (
+                    {/* Store Product Categories - Primary */}
+                    {storeCategories.length > 0 && (
+                        <div className="pt-2 border-t border-white/10">
+                            <p className="text-xs text-white/70 mb-2">Search by your product categories:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {storeCategories.map((category, index) => (
+                                    <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="bg-teal-500/30 hover:bg-teal-500/50 text-white border-0 cursor-pointer transition-colors"
+                                        onClick={() => triggerSearch(category)}
+                                    >
+                                        {category}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {/* Suggested Search Terms - Secondary fallback */}
+                    {storeCategories.length === 0 && suggestedSearchTerms.length > 0 && (
                         <div className="pt-2 border-t border-white/10">
                             <p className="text-xs text-white/70 mb-2">Suggested based on your business:</p>
                             <div className="flex flex-wrap gap-2">
@@ -1275,8 +1318,8 @@ export default function MarketDiscovery() {
                             style={{ height: "100%", width: "100%" }}
                         >
                             <TileLayer
-                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                             />
 
                             <MapController

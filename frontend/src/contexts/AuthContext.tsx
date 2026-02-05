@@ -1,18 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '@/services/api';
+import { db } from '@/db/db';
 
 interface User {
   id: string;
   name: string;
   email: string;
   store_name: string;
+  business_category?: string;
+  product_subcategories?: string[];
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -90,7 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     // Clear state
     setUser(null);
     setToken(null);
@@ -98,6 +101,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+
+    // Clear Dexie database to prevent cross-account data leakage
+    try {
+      await Promise.all([
+        db.products.clear(),
+        db.categories.clear(),
+        db.suppliers.clear(),
+        db.sales.clear(),
+        db.customers.clear(),
+      ]);
+      console.log('Local database cleared on logout');
+    } catch (error) {
+      console.error('Failed to clear local database:', error);
+    }
 
     // Remove authorization header
     delete api.defaults.headers.common['Authorization'];
