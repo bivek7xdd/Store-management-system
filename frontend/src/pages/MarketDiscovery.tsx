@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
+import categoryPreferencesService from "@/services/categoryPreferences";
 
 // Fix for default Leaflet marker icons in React/Vite
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -126,6 +128,9 @@ export default function MarketDiscovery() {
     const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
     const [routeCoordinates, setRouteCoordinates] = useState<[number, number][] | null>(null);
     const [loadingRoute, setLoadingRoute] = useState(false);
+
+    // New state for suggested searches based on user preferences
+    const [suggestedSearchTerms, setSuggestedSearchTerms] = useState<string[]>([]);
 
     /**
      * Get user's current location using browser geolocation API
@@ -526,7 +531,7 @@ export default function MarketDiscovery() {
         // Test Places API v2
         try {
             const placesParams = new URLSearchParams({
-                categories: "building.retail",
+                categories: "commercial.shopping_mall",
                 filter: "circle:85.3240,27.7172,1000",
                 limit: "1",
                 apiKey: GEOAPIFY_API_KEY,
@@ -571,12 +576,13 @@ export default function MarketDiscovery() {
         const results: any[] = [];
 
         try {
-            // Use only well-known, valid categories
+            // Use only well-known, valid categories supported by Geoapify
+            // We stick to the most common/reliable ones to avoid 400 errors
             const validCategories = [
                 'commercial.shopping_mall',
                 'commercial.marketplace',
-                'building.retail',
-                'commercial.supermarket'
+                'commercial.supermarket',
+                'commercial.department_store'
             ];
 
             const params = new URLSearchParams({
@@ -599,25 +605,11 @@ export default function MarketDiscovery() {
                     console.log("⚠️ Places API v2 returned no results");
                 }
             } else {
-                const errorText = await response.text();
-                console.log("❌ Places API v2 failed:", response.status, response.statusText);
-                console.log("Error details:", errorText);
-
-                // Provide specific guidance based on error
-                if (response.status === 401) {
-                    console.log("🔑 API Key issue: Invalid or missing API key");
-                } else if (response.status === 403) {
-                    console.log("🚫 Permission issue: Places API v2 might not be enabled for your API key");
-                    console.log("💡 Solution: Check your Geoapify dashboard and ensure Places API is enabled");
-                } else if (response.status === 400) {
-                    console.log("📝 Parameter issue: Invalid request parameters");
-                    console.log("💡 Check: categories, filter format, or other parameters");
-                } else if (response.status === 429) {
-                    console.log("⏰ Rate limit: Too many requests");
-                }
+                // Silently fail or log briefly to avoid cluttering console for user
+                console.log("Places API v2 fallback needed (Status " + response.status + ")");
             }
         } catch (error) {
-            console.log("🌐 Places API v2 network error:", error);
+            console.log("Places API v2 network error");
         }
 
         return results;
@@ -629,17 +621,23 @@ export default function MarketDiscovery() {
     const searchWithPlacesAPI = useCallback(async (): Promise<any[]> => {
         const results: any[] = [];
 
+        // Map product types to supported Geoapify Place Categories
+        // We only use highly reliable categories that won't trigger 400 errors
         const productCategories: { [key: string]: string[] } = {
-            'heater': ['commercial.shopping_mall', 'commercial.marketplace', 'building.retail', 'commercial.hardware_store'],
-            'paint': ['commercial.hardware_store', 'building.retail', 'commercial.marketplace'],
-            'cement': ['commercial.hardware_store', 'building.retail', 'commercial.marketplace'],
-            'hardware': ['commercial.hardware_store', 'building.retail', 'commercial.marketplace'],
-            'electrical': ['commercial.electronics', 'building.retail', 'commercial.marketplace'],
-            'rice': ['commercial.food', 'commercial.marketplace', 'building.retail'],
+            'heater': ['commercial.shopping_mall', 'commercial.department_store'],
+            'paint': ['commercial.shopping_mall', 'commercial.marketplace'],
+            'cement': ['commercial.shopping_mall', 'commercial.marketplace'],
+            'hardware': ['commercial.shopping_mall', 'commercial.marketplace'],
+            'electrical': ['commercial.shopping_mall', 'commercial.department_store'],
+            'rice': ['commercial.supermarket', 'commercial.marketplace'],
+            'beverage': ['commercial.supermarket', 'commercial.marketplace'],
+            'drink': ['commercial.supermarket', 'commercial.marketplace'],
+            'clothes': ['commercial.shopping_mall', 'commercial.department_store'],
+            'book': ['commercial.shopping_mall', 'commercial.department_store'],
         };
 
         const searchProduct = searchQuery.toLowerCase();
-        let categories = ['building.retail', 'commercial.marketplace']; // Default categories
+        let categories: string[] = [];
 
         // Find specific categories for the product
         Object.entries(productCategories).forEach(([product, cats]) => {
@@ -647,6 +645,18 @@ export default function MarketDiscovery() {
                 categories = [...categories, ...cats];
             }
         });
+
+        // OPTIMIZATION: If no specific category matched, DO NOT default to Shopping Mall.
+        // Instead, skip the Places API strategy and rely on the Text Search (Strategy 2).
+        // This ensures "Beverages" or other unknown terms don't get irrelevant "Shopping Mall" results.
+        if (categories.length === 0) {
+            console.log("No specific category match for Places API, skipping to Text Search for better relevance.");
+            return [];
+        }
+
+        // Deduplicate categories
+        categories = [...new Set(categories)];
+
 
         try {
             // STRATEGY 1: Try Places API v2 first (with detailed debugging)
@@ -701,28 +711,23 @@ export default function MarketDiscovery() {
     const searchWithExpandedRadius = useCallback(async (): Promise<any[]> => {
         const results: any[] = [];
 
-        // More comprehensive search terms
+        // Generic broad search terms - we rely on the API's location bias rather than hardcoding city names
+        // This ensures the search works correctly regardless of where the user is located
         const expandedSearchTerms = [
-            `${searchQuery} supplier Nepal`,
-            `${searchQuery} dealer Kathmandu`,
-            `${searchQuery} wholesale Nepal`,
+            `${searchQuery}`,
+            `${searchQuery} supplier`,
+            `${searchQuery} dealer`,
+            `${searchQuery} wholesale`,
             `${searchQuery} distributor`,
             `${searchQuery} store`,
             `${searchQuery} shop`,
             `${searchQuery} market`,
-            `wholesale ${searchQuery}`,
             `${searchQuery} trading`,
+            `wholesale ${searchQuery}`,
+            `buy ${searchQuery}`,
         ];
 
-        // Add location-specific terms
-        const locationTerms = [
-            `${searchQuery} Kathmandu`,
-            `${searchQuery} Nepal`,
-            `${searchQuery} Lalitpur`,
-            `${searchQuery} Bhaktapur`,
-        ];
-
-        const allTerms = [...expandedSearchTerms, ...locationTerms];
+        const allTerms = expandedSearchTerms;
 
         for (const searchText of allTerms.slice(0, 12)) {
             try {
@@ -1005,6 +1010,19 @@ export default function MarketDiscovery() {
         }
     }, []);
 
+    const openGoogleMaps = () => {
+        if (!userLocation && !searchQuery) return;
+
+        const query = encodeURIComponent(searchQuery || "suppliers");
+        let url = `https://www.google.com/maps/search/${query}`;
+
+        if (userLocation) {
+            url += `/@${userLocation.lat},${userLocation.lng},13z`;
+        }
+
+        window.open(url, '_blank');
+    };
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         searchWholesaleSuppliers();
@@ -1018,6 +1036,64 @@ export default function MarketDiscovery() {
             setCurrentMapCenter({ lat: 27.7172, lng: 85.324 });
         }
     }, [userLocation, currentMapCenter]);
+
+    /**
+     * Load user category preferences for suggestions
+     */
+    useEffect(() => {
+        const prefs = categoryPreferencesService.retrieve();
+        if (prefs) {
+            const terms: string[] = [];
+
+            // Add main business category name if available
+            if (prefs.business_category) {
+                const mainCat = BUSINESS_CATEGORIES.find(c => c.id === prefs.business_category);
+                if (mainCat) {
+                    terms.push(mainCat.name);
+                } else if (prefs.business_category === 'other' && (prefs as any).custom_category) {
+                    terms.push((prefs as any).custom_category);
+                }
+            }
+
+            // Add selected subcategories
+            if (prefs.product_subcategories && prefs.product_subcategories.length > 0) {
+                const allSubs = BUSINESS_CATEGORIES.flatMap(cat => cat.subcategories);
+                const selectedSubs = allSubs.filter(sub => prefs.product_subcategories.includes(sub.id));
+                terms.push(...selectedSubs.map(s => s.name));
+            }
+
+            // Limit to reasonable number of suggestions
+            setSuggestedSearchTerms([...new Set(terms)].slice(0, 8));
+        }
+    }, []);
+
+    const handleSuggestionClick = (term: string) => {
+        setSearchQuery(term);
+        // We can't immediately call searchWholesaleSuppliers here because searchQuery state update is async.
+        // But since we can't easily change searchWholesaleSuppliers to accept an argument without prop drilling issues in useCallback dependencies,
+        // we'll just set the query. The user can click search, or we could add a purely functional useEffect to trigger search on query change?
+        // Better: update searchWholesaleSuppliers to optionally take a query string.
+
+        // Actually, let's just trigger a search with the term directly passed to a helper, or wait for next render?
+        // Simplest: Just set query, user clicks Search. Or use a timeout.
+        // Let's try to update searchWholesaleSuppliers signature in next step if needed, but for now simple set is okay.
+        // Wait, better UX is to search immediately.
+        // I will implement a separate trigger or modify searchWholesaleSuppliers in a moment.
+        // For now, let's just set the search query and let the user click, OR use a small timeout hack which is common in React for this pattern without massive refactor.
+        // Actually, I'll modify searchWholesaleSuppliers to be more flexible in a subsequent edit if needed.
+        // For now, let's just set the input value.
+    };
+
+    // Helper to trigger search with specific term
+    const triggerSearch = (term: string) => {
+        setSearchQuery(term);
+        // Use a timeout to allow state to update, then trigger search
+        // This is a bit hacky but avoids deep refactoring of the complex search function right now
+        setTimeout(() => {
+            const searchButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+            if (searchButton) searchButton.click();
+        }, 100);
+    };
 
     // If no API key is configured, show setup instructions
     if (!hasApiKey) {
@@ -1147,6 +1223,23 @@ export default function MarketDiscovery() {
                             </Button>
                         )}
                     </form>
+                    {suggestedSearchTerms.length > 0 && (
+                        <div className="pt-2 border-t border-white/10">
+                            <p className="text-xs text-white/70 mb-2">Suggested based on your business:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {suggestedSearchTerms.map((term, index) => (
+                                    <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="bg-white/10 hover:bg-white/20 text-white border-0 cursor-pointer transition-colors"
+                                        onClick={() => triggerSearch(term)}
+                                    >
+                                        {term}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -1342,12 +1435,26 @@ export default function MarketDiscovery() {
                         ) : places.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 <Search className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-                                <p className="text-sm">
-                                    Search for a product to find suppliers near you
+                                <p className="text-sm font-medium text-gray-900 mb-1">
+                                    {searchQuery ? "No suppliers found" : "Search for suppliers"}
                                 </p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    Try: "Paint", "Hardware", "Cement", "Rice", etc.
+                                <p className="text-xs text-gray-400 mb-4">
+                                    {searchQuery
+                                        ? `We couldn't find any "${searchQuery}" suppliers nearby.`
+                                        : 'Enter a product name like "Paint", "Hardware", or "Rice" details.'}
                                 </p>
+
+                                {searchQuery && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={openGoogleMaps}
+                                        className="text-teal-600 border-teal-200 hover:bg-teal-50"
+                                    >
+                                        <ExternalLink className="h-3 w-3 mr-2" />
+                                        Search on Google Maps
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -1455,6 +1562,17 @@ export default function MarketDiscovery() {
                                         )}
                                     </div>
                                 ))}
+                                <div className="pt-4 border-t border-gray-100 flex justify-center">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={openGoogleMaps}
+                                        className="text-gray-500 hover:text-teal-600 text-xs"
+                                    >
+                                        <ExternalLink className="h-3 w-3 mr-1" />
+                                        Don't see what you're looking for? Search Google Maps
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </CardContent>

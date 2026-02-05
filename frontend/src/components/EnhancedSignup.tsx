@@ -188,6 +188,10 @@ const EnhancedSignup: React.FC = () => {
     handleInputChange('business_category', categoryId);
     // Reset subcategories when changing primary category
     handleInputChange('product_subcategories', []);
+    // Reset custom fields when changing category
+    if (categoryId !== 'other') {
+      handleInputChange('custom_category', '');
+    }
   };
 
   const handleSubcategoryToggle = (subcategoryId: string) => {
@@ -211,6 +215,25 @@ const EnhancedSignup: React.FC = () => {
     handleInputChange('skip_categories', true);
     handleInputChange('business_category', '');
     handleInputChange('product_subcategories', []);
+    handleInputChange('custom_category', '');
+    handleInputChange('custom_subcategories', []);
+  };
+
+  // Custom category/subcategory handlers
+  const handleCustomCategoryChange = (value: string) => {
+    handleInputChange('custom_category', value);
+  };
+
+  const handleAddCustomSubcategory = (value: string) => {
+    const currentCustomSubs = state.formData.custom_subcategories || [];
+    if (!currentCustomSubs.includes(value)) {
+      handleInputChange('custom_subcategories', [...currentCustomSubs, value]);
+    }
+  };
+
+  const handleRemoveCustomSubcategory = (value: string) => {
+    const currentCustomSubs = state.formData.custom_subcategories || [];
+    handleInputChange('custom_subcategories', currentCustomSubs.filter(sub => sub !== value));
   };
 
   // Get current step title
@@ -262,6 +285,9 @@ const EnhancedSignup: React.FC = () => {
             onSubcategoryToggle={handleSubcategoryToggle}
             onSelectAllSubcategories={handleSelectAllSubcategories}
             onSkipCategories={handleSkipCategories}
+            onCustomCategoryChange={handleCustomCategoryChange}
+            onAddCustomSubcategory={handleAddCustomSubcategory}
+            onRemoveCustomSubcategory={handleRemoveCustomSubcategory}
           />
         );
 

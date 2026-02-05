@@ -28,14 +28,14 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
   // Get business category details
   const getBusinessCategoryDetails = () => {
     if (!formData.business_category) return null;
-    
+
     const category = BUSINESS_CATEGORIES.find(cat => cat.id === formData.business_category);
     if (!category) return null;
-    
-    const selectedSubcategories = category.subcategories.filter(sub => 
+
+    const selectedSubcategories = category.subcategories.filter(sub =>
       formData.product_subcategories.includes(sub.id)
     );
-    
+
     return {
       category,
       selectedSubcategories,
@@ -77,7 +77,7 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               Edit
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-gray-400">Full Name</span>
@@ -116,7 +116,7 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               Edit
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-gray-400">Store Name</span>
@@ -151,11 +151,36 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               Edit
             </Button>
           </div>
-          
+
           {formData.skip_categories ? (
             <div className="text-sm">
               <span className="text-gray-400">Configuration</span>
               <p className="text-white font-medium">Skipped - can be configured later</p>
+            </div>
+          ) : formData.business_category === 'other' ? (
+            // Custom "Other" category display
+            <div className="space-y-3 text-sm">
+              <div>
+                <span className="text-gray-400">Primary Category</span>
+                <p className="text-white font-medium">
+                  {formData.custom_category || 'Custom Category (not specified)'}
+                </p>
+              </div>
+              {formData.custom_subcategories && formData.custom_subcategories.length > 0 && (
+                <div>
+                  <span className="text-gray-400">Product Types</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {formData.custom_subcategories.map((sub, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                      >
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : categoryDetails ? (
             <div className="space-y-3 text-sm">
@@ -163,7 +188,7 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
                 <span className="text-gray-400">Primary Category</span>
                 <p className="text-white font-medium">{categoryDetails.category.name}</p>
               </div>
-              {categoryDetails.selectedSubcategories.length > 0 && (
+              {(categoryDetails.selectedSubcategories.length > 0 || (formData.custom_subcategories && formData.custom_subcategories.length > 0)) && (
                 <div>
                   <span className="text-gray-400">Product Types</span>
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -173,6 +198,15 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
                         className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-500/20 text-teal-300 border border-teal-500/30"
                       >
                         {sub.name}
+                      </span>
+                    ))}
+                    {/* Show custom subcategories */}
+                    {formData.custom_subcategories && formData.custom_subcategories.map((sub, index) => (
+                      <span
+                        key={`custom-${index}`}
+                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                      >
+                        {sub}
                       </span>
                     ))}
                   </div>
@@ -196,7 +230,7 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
             Please confirm your password to complete account creation
           </p>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="final-password-confirm" className="text-sm font-medium text-gray-300">
             Confirm Password

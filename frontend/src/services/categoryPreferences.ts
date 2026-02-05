@@ -36,7 +36,7 @@ export const categoryPreferencesService = {
       }
 
       const preferences = JSON.parse(stored) as CategoryPreferences;
-      
+
       // Validate the structure
       if (!preferences.business_category || !Array.isArray(preferences.product_subcategories)) {
         console.warn('Invalid category preferences structure, removing from storage');
@@ -99,7 +99,7 @@ export const categoryPreferencesService = {
    */
   getWithDefaults: (): CategoryPreferences => {
     const preferences = categoryPreferencesService.retrieve();
-    
+
     if (preferences) {
       return preferences;
     }

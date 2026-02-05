@@ -39,8 +39,18 @@ export const inventoryService = {
 
     createCategory: async (data: Omit<Category, 'id' | 'store_id'>) => {
         const response = await api.post<{ data: Category }>('categories/create', data);
-        await db.categories.put(response.data.data);
-        return response.data.data;
+
+        // Handle both standard response structure (data) and potential non-standard ones
+        // @ts-ignore - Handle fallback for different response structures
+        const createdCategory = response.data.data || response.data.category || response.data;
+
+        if (!createdCategory || !createdCategory.id) {
+            console.error('[Inventory] Invalid category response:', response.data);
+            throw new Error('Created category invalid or missing ID');
+        }
+
+        await db.categories.put(createdCategory);
+        return createdCategory;
     },
 
     getCategory: async (id: string) => {

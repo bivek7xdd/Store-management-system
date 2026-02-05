@@ -38,18 +38,20 @@ export interface EnhancedSignupFormData {
   phone: string;
   password: string;
   confirmPassword: string;
-  
+
   // Store Info (Step 2)
   store_name: string;
   store_address: string;
   currency_code: string;
   profile_picture: string;
-  
+
   // Business Categories (Step 3)
   business_category: string;
   product_subcategories: string[];
   skip_categories: boolean;
-  
+  custom_category: string; // For "Other" category input
+  custom_subcategories: string[]; // For custom subcategory inputs
+
   // UI-only fields
   password_strength: 'weak' | 'medium' | 'strong';
   terms_accepted: boolean;
@@ -117,6 +119,8 @@ export const INITIAL_FORM_DATA: EnhancedSignupFormData = {
   business_category: '',
   product_subcategories: [],
   skip_categories: false,
+  custom_category: '',
+  custom_subcategories: [],
   password_strength: 'weak',
   terms_accepted: false,
 };

@@ -48,7 +48,11 @@ func CreateCategories(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"category": category})
+	c.JSON(http.StatusCreated, utils.Response{
+		Success: true,
+		Message: "Category created successfully",
+		Data:    category,
+	})
 }
 
 func GetAllCategories(c *gin.Context) {
