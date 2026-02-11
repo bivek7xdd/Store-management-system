@@ -58,6 +58,7 @@ type Querier interface {
 	ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSalesRow, error)
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
+	ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error)
 	UpdateEmailVerification(ctx context.Context, email string) error

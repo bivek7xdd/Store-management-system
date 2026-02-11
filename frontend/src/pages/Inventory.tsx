@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -147,6 +148,23 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
+
+  const trackProductMutation = useMutation({
+    mutationFn: ({ id, is_tracked }: { id: string; is_tracked: boolean }) =>
+      inventoryService.updateProduct(id, { is_tracked }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Tracking status updated");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error || "Failed to update tracking status";
+      toast.error(message);
+    },
+  });
+
+  const handleTrackToggle = (id: string, is_tracked: boolean) => {
+    trackProductMutation.mutate({ id, is_tracked });
+  };
 
   // Update product mutation with optimistic updates
   const updateProductMutation = useMutation({
@@ -604,6 +622,19 @@ export default function Inventory() {
                         {daysUntilExpiry}d
                       </Badge>
                     )}
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id={`track-${product.id}`}
+                      checked={product.is_tracked || false}
+                      onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
+                      className="data-[state=checked]:bg-teal-600"
+                    />
+                    <Label htmlFor={`track-${product.id}`} className="text-xs text-gray-500 cursor-pointer">
+                      Track Online Price
+                    </Label>
                   </div>
                 </div>
               </CardHeader>

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS products (
     supplier_id UUID REFERENCES suppliers(id),
     store_id UUID NOT NULL REFERENCES store_info(id) ON DELETE CASCADE,
     image_url VARCHAR(255),
+    is_tracked BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     

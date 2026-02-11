@@ -11,9 +11,10 @@ INSERT INTO products (
     category_id,
     supplier_id,
     store_id,
-    image_url
+    image_url,
+    is_tracked
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
 ) RETURNING *;
 
 -- name: GetProduct :one
@@ -40,6 +41,7 @@ SET
     category_id = COALESCE($10, category_id),
     supplier_id = COALESCE($11, supplier_id),
     image_url = COALESCE($12, image_url),
+    is_tracked = COALESCE($13, is_tracked),
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;
@@ -66,3 +68,9 @@ SET
     updated_at = NOW()
 WHERE id = $1 AND store_id = $3
 RETURNING *;
+
+-- name: ListTrackedProducts :many
+SELECT * FROM products
+WHERE store_id = $1 AND is_tracked = TRUE
+ORDER BY updated_at DESC
+LIMIT 6;

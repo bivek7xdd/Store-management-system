@@ -27,6 +27,7 @@ type createProductReq struct {
 	CategoryID        string  `json:"category_id" binding:"required"`
 	SupplierID        string  `json:"supplier_id"`
 	ImageUrl          string  `json:"image_url"`
+	IsTracked         bool    `json:"is_tracked"`
 }
 
 func CreateProduct(c *gin.Context) {
@@ -118,6 +119,7 @@ func CreateProduct(c *gin.Context) {
 		SupplierID:        supplierID,
 		StoreID:           storeID,
 		ImageUrl:          imageUrl,
+		IsTracked:         pgtype.Bool{Bool: req.IsTracked, Valid: true},
 	})
 
 	if err != nil {
@@ -197,6 +199,7 @@ type updateProductReq struct {
 	CategoryID        string  `json:"category_id"`
 	SupplierID        string  `json:"supplier_id"`
 	ImageUrl          string  `json:"image_url"`
+	IsTracked         *bool   `json:"is_tracked"`
 }
 
 func UpdateProduct(c *gin.Context) {
@@ -295,6 +298,20 @@ func UpdateProduct(c *gin.Context) {
 		imageUrl = pgtype.Text{String: req.ImageUrl, Valid: true}
 	}
 
+	isTracked := existingProduct.IsTracked
+	if req.IsTracked != nil {
+		// If trying to enable tracking, check the limit
+		if *req.IsTracked && !existingProduct.IsTracked.Bool {
+			storeID := c.MustGet("store_id").(pgtype.UUID)
+			trackedProducts, err := utils.Queries.ListTrackedProducts(ctx, storeID)
+			if err == nil && len(trackedProducts) >= 6 {
+				utils.ErrorResponse(c, http.StatusBadRequest, "Tracking limit reached. Max 6 products allowed.", fmt.Errorf("tracking limit reached"))
+				return
+			}
+		}
+		isTracked = pgtype.Bool{Bool: *req.IsTracked, Valid: true}
+	}
+
 	product, err := utils.Queries.UpdateProduct(ctx, db.UpdateProductParams{
 		ID:                pgtype.UUID{Bytes: productUUID, Valid: true},
 		Name:              name,
@@ -308,6 +325,7 @@ func UpdateProduct(c *gin.Context) {
 		CategoryID:        categoryID,
 		SupplierID:        supplierID,
 		ImageUrl:          imageUrl,
+		IsTracked:         isTracked,
 	})
 
 	if err != nil {
@@ -374,4 +392,20 @@ func SearchProducts(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, "Products found", products)
+}
+
+func GetTrackedProducts(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	products, err := utils.Queries.ListTrackedProducts(ctx, storeID)
+	if err != nil {
+		log.Printf("error getting tracked products: %v", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to get tracked products", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Tracked products fetched successfully", products)
 }

@@ -12,6 +12,7 @@ export interface Product {
   supplier_id?: string;
   store_id: string;
   image_url?: { String: string; Valid: boolean };
+  is_tracked?: boolean;
   created_at: { Time: string; Valid: boolean };
   updated_at: { Time: string; Valid: boolean };
 }

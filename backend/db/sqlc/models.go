@@ -195,6 +195,7 @@ type Product struct {
 	SupplierID        pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
 	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
 	ImageUrl          pgtype.Text        `db:"image_url" json:"image_url"`
+	IsTracked         pgtype.Bool        `db:"is_tracked" json:"is_tracked"`
 	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }

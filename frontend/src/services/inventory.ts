@@ -14,6 +14,7 @@ export interface CreateProductData {
     category_id: string;
     supplier_id?: string;
     image_url?: string;
+    is_tracked?: boolean;
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> { }
@@ -158,6 +159,18 @@ export const inventoryService = {
         console.log('[Inventory] deleteProduct called, id:', id);
         await api.delete(`products/${id}`);
         await db.products.delete(id);
+    },
+
+    getTrackedProducts: async () => {
+        if (isOnline()) {
+            const response = await api.get<{ data: Product[] }>('products/tracked');
+            const products = response.data.data || [];
+            if (products.length > 0) {
+                await db.products.bulkPut(products);
+            }
+            return products;
+        }
+        return await db.products.where('is_tracked').equals(1).toArray();
     },
 
     searchProducts: async (query: string, limit = 50, offset = 0) => {

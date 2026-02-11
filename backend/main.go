@@ -67,6 +67,7 @@ func main() {
 		productRoutes.POST("/create", handlers.CreateProduct)
 		productRoutes.GET("", handlers.GetProducts)
 		productRoutes.GET("/search", handlers.SearchProducts)
+		productRoutes.GET("/tracked", handlers.GetTrackedProducts)
 		productRoutes.GET("/:id", handlers.GetProduct)
 		productRoutes.PUT("/:id", handlers.UpdateProduct)
 		productRoutes.DELETE("/:id", handlers.DeleteProduct)
@@ -103,6 +104,13 @@ func main() {
 	reportRoutes.Use(utils.JWTMiddleware())
 	{
 		reportRoutes.GET("/stats", handlers.GetReportStats)
+	}
+
+	// Market routes
+	marketRoutes := router.Group("/api/market")
+	marketRoutes.Use(utils.JWTMiddleware())
+	{
+		marketRoutes.GET("/prices", handlers.GetMarketPrices)
 	}
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
