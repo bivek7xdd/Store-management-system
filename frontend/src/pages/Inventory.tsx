@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan } from "lucide-react";
 import { toast } from "sonner";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, CreateProductData, UpdateProductData } from "@/services/inventory";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,6 +76,9 @@ export default function Inventory() {
   const [stockFilter, setStockFilter] = useState("all");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchScannerOpen, setSearchScannerOpen] = useState(false);
+  const [formScannerOpen, setFormScannerOpen] = useState(false);
+  const [barcodeValue, setBarcodeValue] = useState("");
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -300,9 +304,24 @@ export default function Inventory() {
     }
   };
 
+  const handleSearchScanSuccess = (barcode: string) => {
+    setSearchTerm(barcode);
+    toast.success(`Searching for barcode: ${barcode}`);
+  };
+
+  const handleFormScanSuccess = (barcode: string) => {
+    setBarcodeValue(barcode);
+    toast.success(`Barcode scanned: ${barcode}`);
+  };
+
   const handleDialogChange = (open: boolean) => {
     setAddDialogOpen(open);
-    if (!open) setEditingProduct(null);
+    if (!open) {
+      setEditingProduct(null);
+      setBarcodeValue("");
+    } else if (editingProduct) {
+      setBarcodeValue(getTextValue(editingProduct.barcode));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -450,13 +469,25 @@ export default function Inventory() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="barcode" className="text-sm font-medium">Barcode (optional)</Label>
-                  <Input
-                    id="barcode"
-                    name="barcode"
-                    defaultValue={getTextValue(editingProduct?.barcode)}
-                    placeholder="8901234567890"
-                    className="rounded-lg"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="barcode"
+                      name="barcode"
+                      value={barcodeValue}
+                      onChange={(e) => setBarcodeValue(e.target.value)}
+                      placeholder="8901234567890"
+                      className="rounded-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 rounded-lg"
+                      onClick={() => setFormScannerOpen(true)}
+                    >
+                      <Scan className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -544,8 +575,15 @@ export default function Inventory() {
                 placeholder="Search products or barcode..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 rounded-lg border-gray-200"
+                className="pl-10 pr-10 rounded-lg border-gray-200"
               />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setSearchScannerOpen(true)}
+              >
+                <Scan className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+              </button>
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="rounded-lg border-gray-200">

@@ -357,7 +357,7 @@ export default function Market() {
                         </div>
                         <div>
                           <CardTitle className="text-base font-bold text-gray-900">{product.name}</CardTitle>
-                          <p className="text-xs text-gray-500">Your Price: रू {storePrice}</p>
+                          <p className="text-xs text-gray-500">Your Price: रू {storePrice.toLocaleString()}</p>
                         </div>
                       </div>
                       <Badge className="bg-white text-teal-700 border-teal-100 text-[10px]">Tracking Active</Badge>
@@ -377,8 +377,12 @@ export default function Market() {
                     ) : (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
                         {prices.slice(0, 2).map((item, idx) => {
-                          const marketNum = parseFloat(item.price.replace(/[^\d.]/g, '')) || 0;
+                          // Remove currency text first to avoid keeping the dot in "Rs."
+                          // Then remove non-digits (keeping decimal point for cents if any)
+                          const cleanPrice = item.price.replace(/Rs\.?|NPR\.?|रू|₨/gi, '').replace(/[^\d.]/g, '');
+                          const marketNum = parseFloat(cleanPrice) || 0;
                           const diff = storePrice - marketNum;
+
                           return (
                             <div key={idx} className="p-3 rounded-xl border border-gray-100 bg-white hover:border-teal-100 transition-colors">
                               <div className="flex items-start justify-between gap-2 mb-3">

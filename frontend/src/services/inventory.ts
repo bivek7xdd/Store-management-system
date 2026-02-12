@@ -95,20 +95,21 @@ export const inventoryService = {
 
     // Products
     getProducts: async (limit = 50, offset = 0) => {
-        // Offline-First: Always return local data to ensure immediate UI updates (e.g. stock changes)
-        // If online, trigger a background refresh to keep cache in sync.
-
+        // Server-First: Try to fetch from server if online to ensure latest data
         if (isOnline()) {
-            // Background fetch - don't await to keep UI snappy
-            api.get<{ data: Product[] }>(`products?limit=${limit}&offset=${offset}`)
-                .then(async (response) => {
-                    const products = response.data.data || [];
-                    if (products.length > 0) {
-                        await db.products.bulkPut(products);
-                        console.log('[Inventory] Background synced products');
-                    }
-                })
-                .catch(err => console.warn('[Inventory] Background sync failed', err));
+            try {
+                const response = await api.get<{ data: Product[] }>(`products?limit=${limit}&offset=${offset}`);
+                const products = response.data.data || [];
+
+                if (products.length > 0) {
+                    // Update cache for offline use
+                    await db.products.bulkPut(products);
+                }
+                return products;
+            } catch (error) {
+                console.warn('[Inventory] Fetching products failed, falling back to cache', error);
+                // Fall through to local return
+            }
         }
 
         // Return local data as the source of truth for the UI

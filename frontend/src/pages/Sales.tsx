@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Product, OfflineStatus } from "@/types";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { db } from "@/db/db";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 interface CartItem {
   productId: string;
@@ -43,6 +44,7 @@ export default function Sales() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
   const [cachedProductsCount, setCachedProductsCount] = useState(0);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -164,6 +166,43 @@ export default function Sales() {
     toast.success(`${product.name} added to cart`);
   };
 
+  const handleScanSuccess = async (barcode: string) => {
+    setIsSearching(true);
+    try {
+      let results: Product[] = [];
+      if (offlineStatus.isOnline) {
+        results = await inventoryService.searchProducts(barcode);
+      } else {
+        // Offline: Search cached products
+        const allProducts = await db.products.toArray();
+        results = allProducts.filter(p => {
+          const barcodeStr = typeof p.barcode === 'string'
+            ? p.barcode
+            : (p.barcode && 'Valid' in p.barcode && p.barcode.Valid ? p.barcode.String : '');
+          return barcodeStr === barcode;
+        });
+      }
+
+      if (results && results.length > 0) {
+        // If multiple matches (rare for barcodes), add the first one or show list
+        if (results.length === 1) {
+          addToCart(results[0]);
+          setSearchTerm("");
+        } else {
+          setSearchTerm(barcode);
+          toast.info(`Found ${results.length} products with this barcode`);
+        }
+      } else {
+        toast.error(`Product with barcode ${barcode} not found`);
+      }
+    } catch (error) {
+      console.error("Scan search error:", error);
+      toast.error("Failed to search product by barcode");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const updateQuantity = (productId: string, changeVal: number) => {
     setCart(
       cart
@@ -218,14 +257,14 @@ export default function Sales() {
       };
 
       await salesService.createSale(saleData);
-      
+
       // Show appropriate success message based on online status
       if (offlineStatus.isOnline) {
         toast.success("Sale completed successfully!");
       } else {
         toast.success("Sale saved offline! Will sync when connection is restored.");
       }
-      
+
       setCart([]);
       setCustomerName("");
       setCustomerPhone("");
@@ -241,7 +280,7 @@ export default function Sales() {
       // If we cleared the search, the list is empty. 
       // Let's just clear products for now, or if we want to keep them, we need to refetch.
       setProducts([]);
-      
+
       // Update pending sales count after offline sale
       if (!offlineStatus.isOnline) {
         syncService.updatePendingSalesCount();
@@ -273,8 +312,22 @@ export default function Sales() {
             syncError={offlineStatus.syncError}
             lastSyncTime={offlineStatus.lastSyncTime}
           />
+          <Button
+            onClick={() => setScannerOpen(true)}
+            className="rounded-lg gap-2"
+            style={{ background: colors.primaryDark }}
+          >
+            <Scan className="h-4 w-4" />
+            <span className="hidden sm:inline">Scan Barcode</span>
+          </Button>
         </div>
       </div>
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScanSuccess={handleScanSuccess}
+      />
 
       {/* Offline Mode Banner */}
       {!offlineStatus.isOnline && (
@@ -285,7 +338,7 @@ export default function Sales() {
               Working offline
             </p>
             <p className="text-xs text-orange-600">
-              {cachedProductsCount > 0 
+              {cachedProductsCount > 0
                 ? `${cachedProductsCount} products available from cache. Sales will sync when connection is restored.`
                 : "No cached products available. Connect to internet to load product data."
               }
@@ -347,6 +400,7 @@ export default function Sales() {
                   size="sm"
                   variant="ghost"
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
+                  onClick={() => setScannerOpen(true)}
                 >
                   <Scan className="h-4 w-4 text-gray-400" />
                 </Button>

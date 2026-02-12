@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"storemanagement/utils"
 	"strings"
 
@@ -46,7 +47,8 @@ func GetMarketPrices(c *gin.Context) {
 	}
 
 	// Construct search query for specific sites
-	searchQuery := fmt.Sprintf("%s site:daraz.com.np OR site:hamrobazar.com OR site:okdam.com", query)
+	// Add "price" keyword to encourage snippets with pricing info
+	searchQuery := fmt.Sprintf("%s price site:daraz.com.np OR site:hamrobazar.com OR site:okdam.com", query)
 
 	payload := map[string]interface{}{
 		"q": searchQuery,
@@ -80,6 +82,17 @@ func GetMarketPrices(c *gin.Context) {
 
 	var results []MarketPriceItem
 	for _, item := range serperResp.Organic {
+		// Filter out accessories
+		lowerTitle := strings.ToLower(item.Title)
+		if strings.Contains(lowerTitle, "case") ||
+			strings.Contains(lowerTitle, "cover") ||
+			strings.Contains(lowerTitle, "glass") ||
+			strings.Contains(lowerTitle, "protector") ||
+			strings.Contains(lowerTitle, "holder") ||
+			strings.Contains(lowerTitle, "guard") {
+			continue
+		}
+
 		source := "Unknown"
 		if strings.Contains(item.Link, "daraz.com.np") {
 			source = "Daraz"
@@ -105,6 +118,21 @@ func GetMarketPrices(c *gin.Context) {
 		})
 	}
 
+	// Sort results: Valid prices first, then "Check Link"
+	// This ensures that if any result has a price, it shows up at the top
+	sort.SliceStable(results, func(i, j int) bool {
+		// If i has a price and j doesn't, i comes first
+		if results[i].Price != "Check Link" && results[j].Price == "Check Link" {
+			return true
+		}
+		// If j has a price and i doesn't, j comes first
+		if results[i].Price == "Check Link" && results[j].Price != "Check Link" {
+			return false
+		}
+		// Otherwise maintain original order (relevance)
+		return i < j
+	})
+
 	utils.SuccessResponse(c, "Market prices fetched successfully", results)
 }
 
@@ -129,15 +157,20 @@ func extractSerperPrice(title string, snippet string, attributes map[string]stri
 		re    *regexp.Regexp
 		index int
 	}{
-		{regexp.MustCompile(`(?i)(?:Rs\.?|रू|₨|NPR)\s*(\d+(?:\.\d+)?)`), 1},
+		// Updated to allow optional dot after NPR, Rs, etc.
+		{regexp.MustCompile(`(?i)(?:Rs\.?|रू|₨|NPR\.?)\s*(\d+(?:\.\d+)?)`), 1},
 		{regexp.MustCompile(`(?i)Price[:\s]*(\d+(?:\.\d+)?)`), 1},
+		{regexp.MustCompile(`(?i)Price[\.:\s]*(\d+(?:\.\d+)?)`), 1},
 		{regexp.MustCompile(`\b(\d{3,10})\s*(?:/-|NPR|Rs\.?)`), 1},
 	}
 
 	for _, p := range patterns {
 		matches := p.re.FindStringSubmatch(combined)
 		if len(matches) > p.index {
-			return "Rs. " + matches[p.index]
+			// Format the price to remove trailing .00
+			rawPrice := matches[p.index]
+			rawPrice = strings.TrimSuffix(rawPrice, ".00")
+			return "Rs. " + rawPrice
 		}
 	}
 
