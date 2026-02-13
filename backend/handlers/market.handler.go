@@ -48,7 +48,7 @@ func GetMarketPrices(c *gin.Context) {
 
 	// Construct search query for specific sites
 	// Add "price" keyword to encourage snippets with pricing info
-	searchQuery := fmt.Sprintf("%s price site:daraz.com.np OR site:hamrobazar.com OR site:okdam.com", query)
+	searchQuery := fmt.Sprintf("%s price site:daraz.com.np", query)
 
 	payload := map[string]interface{}{
 		"q": searchQuery,
@@ -104,7 +104,7 @@ func GetMarketPrices(c *gin.Context) {
 			// If it's not from our primary sites, skip it to keep results clean
 			continue
 		}
-
+		fmt.Println(item)
 		price := extractSerperPrice(item.Title, item.Snippet, item.Attributes)
 		cleanedTitle := cleanMarketTitle(item.Title, source)
 
