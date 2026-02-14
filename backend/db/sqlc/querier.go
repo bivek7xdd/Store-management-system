@@ -21,6 +21,7 @@ type Querier interface {
 	CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error)
 	CreateStoreOwner(ctx context.Context, arg CreateStoreOwnerParams) (StoreOwner, error)
 	CreateSuppliers(ctx context.Context, arg CreateSuppliersParams) (Supplier, error)
+	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
 	DeleteDebt(ctx context.Context, arg DeleteDebtParams) error
 	DeleteExpiredOTPs(ctx context.Context) error
 	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
@@ -29,6 +30,9 @@ type Querier interface {
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error)
 	GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
+	GetCategory(ctx context.Context, arg GetCategoryParams) (Category, error)
+	GetCategoryByStore(ctx context.Context, arg GetCategoryByStoreParams) (Category, error)
+	GetCategoryStats(ctx context.Context, arg GetCategoryStatsParams) (GetCategoryStatsRow, error)
 	GetCustomerByPhone(ctx context.Context, arg GetCustomerByPhoneParams) (Customer, error)
 	GetDailySales(ctx context.Context, arg GetDailySalesParams) ([]GetDailySalesRow, error)
 	GetDebt(ctx context.Context, arg GetDebtParams) (GetDebtRow, error)
@@ -55,11 +59,13 @@ type Querier interface {
 	GetTotalSales(ctx context.Context, arg GetTotalSalesParams) (GetTotalSalesRow, error)
 	ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Customer, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
+	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
 	ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSalesRow, error)
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
 	ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error)
 	UpdateEmailVerification(ctx context.Context, email string) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)

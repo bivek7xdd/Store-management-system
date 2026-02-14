@@ -50,6 +50,11 @@ func main() {
 	{
 		categoryRoutes.POST("/create", handlers.CreateCategories)
 		categoryRoutes.GET("", handlers.GetAllCategories)
+		categoryRoutes.GET("/:id", handlers.GetCategory)           // Get single category
+		categoryRoutes.GET("/:id/stats", handlers.GetCategoryStats) // Get category stats
+		categoryRoutes.GET("/:id/products", handlers.GetCategoryProducts) // Get products in category
+		categoryRoutes.PUT("/:id", handlers.UpdateCategory)       // Update category
+		categoryRoutes.DELETE("", handlers.DeleteCategory)
 	}
 
 	// Supplier routes

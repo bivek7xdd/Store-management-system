@@ -96,6 +96,33 @@ func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const getCategoryStats = `-- name: GetCategoryStats :one
+SELECT 
+    COUNT(*) as product_count,
+    COALESCE(SUM(stock_quantity), 0)::int as total_stock,
+    COALESCE(SUM(price * stock_quantity), 0)::numeric as total_value
+FROM products
+WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued'
+`
+
+type GetCategoryStatsParams struct {
+	StoreID    pgtype.UUID `db:"store_id" json:"store_id"`
+	CategoryID pgtype.UUID `db:"category_id" json:"category_id"`
+}
+
+type GetCategoryStatsRow struct {
+	ProductCount int64          `db:"product_count" json:"product_count"`
+	TotalStock   int32          `db:"total_stock" json:"total_stock"`
+	TotalValue   pgtype.Numeric `db:"total_value" json:"total_value"`
+}
+
+func (q *Queries) GetCategoryStats(ctx context.Context, arg GetCategoryStatsParams) (GetCategoryStatsRow, error) {
+	row := q.db.QueryRow(ctx, getCategoryStats, arg.StoreID, arg.CategoryID)
+	var i GetCategoryStatsRow
+	err := row.Scan(&i.ProductCount, &i.TotalStock, &i.TotalValue)
+	return i, err
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE id = $1 LIMIT 1
@@ -140,6 +167,54 @@ type ListProductsParams struct {
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
 	rows, err := q.db.Query(ctx, listProducts, arg.StoreID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Barcode,
+			&i.Price,
+			&i.MarketPrice,
+			&i.StockQuantity,
+			&i.LowStockThreshold,
+			&i.ExpiresAt,
+			&i.Status,
+			&i.CategoryID,
+			&i.SupplierID,
+			&i.StoreID,
+			&i.ImageUrl,
+			&i.IsTracked,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProductsByCategory = `-- name: ListProductsByCategory :many
+SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+WHERE store_id = $1 AND category_id = $2
+ORDER BY created_at DESC
+`
+
+type ListProductsByCategoryParams struct {
+	StoreID    pgtype.UUID `db:"store_id" json:"store_id"`
+	CategoryID pgtype.UUID `db:"category_id" json:"category_id"`
+}
+
+func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error) {
+	rows, err := q.db.Query(ctx, listProductsByCategory, arg.StoreID, arg.CategoryID)
 	if err != nil {
 		return nil, err
 	}

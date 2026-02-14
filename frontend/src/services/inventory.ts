@@ -59,8 +59,55 @@ export const inventoryService = {
         const cached = await db.categories.get(id);
         if (cached) return cached;
 
+        // Fetch from API if not in cache (or force refresh if needed)
+        if (isOnline()) {
+            const response = await api.get<{ data: Category }>(`categories/${id}`);
+            return response.data.data;
+        }
+
         const categories = await inventoryService.getCategories();
         return categories.find(c => c.id === id);
+    },
+
+    getCategoryStats: async (id: string) => {
+        if (isOnline()) {
+            const response = await api.get<{ data: { product_count: number, total_stock: number, total_value: number } }>(`categories/${id}/stats`);
+            return response.data.data;
+        }
+        // Offline calculation could be done here if needed, but for now returned mocked or calculated from local products
+        const products = await db.products.where('category_id').equals(id).toArray();
+        return {
+            product_count: products.length,
+            total_stock: products.reduce((acc, p) => acc + p.stock_quantity, 0),
+            total_value: products.reduce((acc, p) => {
+                const price = typeof p.price === 'number' ? p.price : (p.price.Valid ? Number(p.price.Int64) : 0);
+                return acc + (price * p.stock_quantity);
+            }, 0)
+        };
+    },
+
+    getCategoryProducts: async (id: string) => {
+        if (isOnline()) {
+            const response = await api.get<{ data: Product[] }>(`categories/${id}/products`);
+            const products = response.data.data || [];
+            if (products.length > 0) {
+                await db.products.bulkPut(products);
+            }
+            return products;
+        }
+        return await db.products.where('category_id').equals(id).reverse().sortBy('created_at');
+    },
+
+    updateCategory: async (id: string, data: Partial<Omit<Category, 'id' | 'store_id'>>) => {
+        const response = await api.put<{ data: Category }>(`categories/${id}`, data);
+        const updatedCategory = response.data.data;
+        await db.categories.put(updatedCategory);
+        return updatedCategory;
+    },
+
+    deleteCategory: async (id: string) => {
+        await api.delete(`categories?category_id=${id}`);
+        await db.categories.delete(id);
     },
 
     // Suppliers

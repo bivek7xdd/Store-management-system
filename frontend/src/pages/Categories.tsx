@@ -3,10 +3,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Plus, FolderOpen, ChevronRight, Loader2, Sparkles, PlusCircle } from "lucide-react";
+import { Plus, FolderOpen, ChevronRight, Loader2, Sparkles, PlusCircle, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CreateCategoryDialog } from "@/components/CreateInventoryDialogs";
+import { CategoryDialog } from "@/components/CreateInventoryDialogs";
 import { CategorySkeleton } from "@/components/CategorySkeleton";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
 import categoryPreferencesService from "@/services/categoryPreferences";
 import { toast } from "@/components/ui/use-toast";
@@ -16,6 +32,7 @@ export default function Categories() {
     const queryClient = useQueryClient();
     const [suggestedCategories, setSuggestedCategories] = useState<{ name: string, description: string }[]>([]);
     const [addingCategory, setAddingCategory] = useState<string | null>(null);
+    const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
     const { data: categories, isLoading, error } = useQuery({
         queryKey: ["categories"],
@@ -70,6 +87,27 @@ export default function Categories() {
         }
     };
 
+    const handleDeleteCategory = async () => {
+        if (!categoryToDelete) return;
+        try {
+            await inventoryService.deleteCategory(categoryToDelete);
+            await queryClient.invalidateQueries({ queryKey: ["categories"] });
+            toast({
+                title: "Category Deleted",
+                description: "Category has been successfully deleted.",
+            });
+        } catch (error) {
+            console.error("Failed to delete category", error);
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Failed to delete category.",
+            });
+        } finally {
+            setCategoryToDelete(null);
+        }
+    };
+
     if (isLoading || authLoading) {
         return (
             <div className="space-y-6">
@@ -115,12 +153,12 @@ export default function Categories() {
                     <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
                     <p className="text-gray-500 mt-1">Manage your product categories</p>
                 </div>
-                <CreateCategoryDialog>
+                <CategoryDialog>
                     <Button className="bg-teal-600 hover:bg-teal-700 text-white">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Category
                     </Button>
-                </CreateCategoryDialog>
+                </CategoryDialog>
             </div>
 
             {/* Recommended Categories Section */}
@@ -179,13 +217,12 @@ export default function Categories() {
                 {categories && categories.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {categories.map((category) => (
-                            <Link
+                            <div
                                 key={category.id}
-                                to={`/inventory/category/${category.id}`}
                                 className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-teal-300 hover:shadow-md transition-all duration-200"
                             >
                                 <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
+                                    <Link to={`/inventory/category/${category.id}`} className="flex items-center gap-3 flex-1">
                                         <div className="h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
                                             <FolderOpen className="h-5 w-5 text-teal-600" />
                                         </div>
@@ -199,10 +236,31 @@ export default function Categories() {
                                                 </p>
                                             )}
                                         </div>
-                                    </div>
-                                    <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-teal-500 transition-colors" />
+                                    </Link>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                                <MoreVertical className="h-4 w-4 text-gray-400" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <CategoryDialog category={category}>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                            </CategoryDialog>
+                                            <DropdownMenuItem
+                                                className="text-red-600"
+                                                onClick={() => setCategoryToDelete(category.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 ) : (
@@ -213,16 +271,37 @@ export default function Categories() {
                             </div>
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">No categories yet</h3>
                             <p className="text-gray-500 mb-6">Create your first category to organize your products</p>
-                            <CreateCategoryDialog>
+                            <CategoryDialog>
                                 <Button className="bg-teal-600 hover:bg-teal-700 text-white">
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Category
                                 </Button>
-                            </CreateCategoryDialog>
+                            </CategoryDialog>
                         </div>
                     )
                 )}
             </div>
+
+            <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the category
+                            and remove it from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={handleDeleteCategory}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

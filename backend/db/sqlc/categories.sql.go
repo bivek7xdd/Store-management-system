@@ -41,6 +41,20 @@ func (q *Queries) CreateCategories(ctx context.Context, arg CreateCategoriesPara
 	return i, err
 }
 
+const deleteCategory = `-- name: DeleteCategory :exec
+DELETE FROM categories WHERE store_id = $1 AND id = $2
+`
+
+type DeleteCategoryParams struct {
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+	ID      pgtype.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error {
+	_, err := q.db.Exec(ctx, deleteCategory, arg.StoreID, arg.ID)
+	return err
+}
+
 const getCategories = `-- name: GetCategories :many
 SELECT id, name, description, store_id, created_at, updated_at FROM categories WHERE store_id = $1
 `
@@ -70,4 +84,83 @@ func (q *Queries) GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Cat
 		return nil, err
 	}
 	return items, nil
+}
+
+const getCategory = `-- name: GetCategory :one
+SELECT id, name, description, store_id, created_at, updated_at FROM categories WHERE id = $1 AND store_id = $2
+`
+
+type GetCategoryParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) GetCategory(ctx context.Context, arg GetCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, getCategory, arg.ID, arg.StoreID)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.StoreID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCategoryByStore = `-- name: GetCategoryByStore :one
+SELECT id, name, description, store_id, created_at, updated_at FROM categories WHERE store_id = $1 AND id = $2
+`
+
+type GetCategoryByStoreParams struct {
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+	ID      pgtype.UUID `db:"id" json:"id"`
+}
+
+func (q *Queries) GetCategoryByStore(ctx context.Context, arg GetCategoryByStoreParams) (Category, error) {
+	row := q.db.QueryRow(ctx, getCategoryByStore, arg.StoreID, arg.ID)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.StoreID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateCategory = `-- name: UpdateCategory :one
+UPDATE categories
+SET name = $2, description = $3
+WHERE id = $1 AND store_id = $4
+RETURNING id, name, description, store_id, created_at, updated_at
+`
+
+type UpdateCategoryParams struct {
+	ID          pgtype.UUID `db:"id" json:"id"`
+	Name        string      `db:"name" json:"name"`
+	Description pgtype.Text `db:"description" json:"description"`
+	StoreID     pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, updateCategory,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.StoreID,
+	)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.StoreID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

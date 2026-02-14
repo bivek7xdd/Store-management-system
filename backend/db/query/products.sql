@@ -74,3 +74,16 @@ SELECT * FROM products
 WHERE store_id = $1 AND is_tracked = TRUE
 ORDER BY updated_at DESC
 LIMIT 6;
+
+-- name: GetCategoryStats :one
+SELECT 
+    COUNT(*) as product_count,
+    COALESCE(SUM(stock_quantity), 0)::int as total_stock,
+    COALESCE(SUM(price * stock_quantity), 0)::numeric as total_value
+FROM products
+WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued';
+
+-- name: ListProductsByCategory :many
+SELECT * FROM products
+WHERE store_id = $1 AND category_id = $2
+ORDER BY created_at DESC;

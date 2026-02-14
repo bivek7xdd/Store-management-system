@@ -9,15 +9,17 @@ import { toast } from "sonner";
 import { inventoryService } from "@/services/inventory";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface CreateCategoryDialogProps {
+interface CategoryDialogProps {
+    category?: { id: string, name: string, description: string };
     onSuccess?: () => void;
     children?: React.ReactNode;
 }
 
-export function CreateCategoryDialog({ onSuccess, children }: CreateCategoryDialogProps) {
+export function CategoryDialog({ category, onSuccess, children }: CategoryDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const queryClient = useQueryClient();
+    const isEdit = !!category;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -25,16 +27,28 @@ export function CreateCategoryDialog({ onSuccess, children }: CreateCategoryDial
         const formData = new FormData(e.currentTarget);
 
         try {
-            await inventoryService.createCategory({
+            const data = {
                 name: formData.get("name") as string,
                 description: formData.get("description") as string,
-            });
-            toast.success("Category created successfully");
+            };
+
+            if (isEdit && category) {
+                await inventoryService.updateCategory(category.id, data);
+                toast.success("Category updated successfully");
+            } else {
+                await inventoryService.createCategory(data);
+                toast.success("Category created successfully");
+            }
+
             queryClient.invalidateQueries({ queryKey: ["categories"] });
+            if (isEdit && category) {
+                queryClient.invalidateQueries({ queryKey: ["category", category.id] });
+            }
+
             setOpen(false);
             onSuccess?.();
         } catch (error) {
-            toast.error("Failed to create category");
+            toast.error(isEdit ? "Failed to update category" : "Failed to create category");
             console.error(error);
         } finally {
             setLoading(false);
@@ -52,22 +66,22 @@ export function CreateCategoryDialog({ onSuccess, children }: CreateCategoryDial
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add Category</DialogTitle>
+                    <DialogTitle>{isEdit ? "Edit Category" : "Add Category"}</DialogTitle>
                     <DialogDescription>
-                        Create a new category for your products.
+                        {isEdit ? "Update category details." : "Create a new category for your products."}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
-                        <Input id="name" name="name" required placeholder="e.g. Electronics" />
+                        <Input id="name" name="name" defaultValue={category?.name} required placeholder="e.g. Electronics" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
-                        <Input id="description" name="description" required placeholder="Category description" />
+                        <Input id="description" name="description" defaultValue={category?.description} required placeholder="Category description" />
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? "Creating..." : "Create Category"}
+                        {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Category" : "Create Category")}
                     </Button>
                 </form>
             </DialogContent>
