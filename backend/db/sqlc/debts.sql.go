@@ -196,27 +196,33 @@ func (q *Queries) GetDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDebts
 const updateDebt = `-- name: UpdateDebt :one
 UPDATE debts
 SET 
-    amount_paid = COALESCE($3, amount_paid),
-    status = COALESCE($4, status),
-    notes = COALESCE($5, notes),
+    amount_owed = COALESCE($3, amount_owed),
+    amount_paid = COALESCE($4, amount_paid),
+    due_date = COALESCE($5, due_date),
+    status = COALESCE($6, status),
+    notes = COALESCE($7, notes),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND store_id = $2
 RETURNING id, store_id, customer_id, sale_id, amount_owed, amount_paid, due_date, status, notes, created_at, updated_at
 `
 
 type UpdateDebtParams struct {
-	ID         pgtype.UUID    `db:"id" json:"id"`
-	StoreID    pgtype.UUID    `db:"store_id" json:"store_id"`
-	AmountPaid pgtype.Numeric `db:"amount_paid" json:"amount_paid"`
-	Status     NullDebtStatus `db:"status" json:"status"`
-	Notes      pgtype.Text    `db:"notes" json:"notes"`
+	ID         pgtype.UUID        `db:"id" json:"id"`
+	StoreID    pgtype.UUID        `db:"store_id" json:"store_id"`
+	AmountOwed pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate    pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status     NullDebtStatus     `db:"status" json:"status"`
+	Notes      pgtype.Text        `db:"notes" json:"notes"`
 }
 
 func (q *Queries) UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error) {
 	row := q.db.QueryRow(ctx, updateDebt,
 		arg.ID,
 		arg.StoreID,
+		arg.AmountOwed,
 		arg.AmountPaid,
+		arg.DueDate,
 		arg.Status,
 		arg.Notes,
 	)

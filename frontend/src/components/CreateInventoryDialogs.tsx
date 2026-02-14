@@ -89,15 +89,17 @@ export function CategoryDialog({ category, onSuccess, children }: CategoryDialog
     );
 }
 
-interface CreateSupplierDialogProps {
+interface SupplierDialogProps {
+    supplier?: { id: string, name: string, address: string, phone_number: string, email: string };
     onSuccess?: () => void;
     children?: React.ReactNode;
 }
 
-export function CreateSupplierDialog({ onSuccess, children }: CreateSupplierDialogProps) {
+export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const queryClient = useQueryClient();
+    const isEdit = !!supplier;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -105,18 +107,30 @@ export function CreateSupplierDialog({ onSuccess, children }: CreateSupplierDial
         const formData = new FormData(e.currentTarget);
 
         try {
-            await inventoryService.createSupplier({
+            const data = {
                 name: formData.get("name") as string,
                 address: formData.get("address") as string,
                 phone_number: formData.get("phone_number") as string,
                 email: formData.get("email") as string,
-            });
-            toast.success("Supplier created successfully");
+            };
+
+            if (isEdit && supplier) {
+                await inventoryService.updateSupplier(supplier.id, data);
+                toast.success("Supplier updated successfully");
+            } else {
+                await inventoryService.createSupplier(data);
+                toast.success("Supplier created successfully");
+            }
+
             queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+            if (isEdit && supplier) {
+                queryClient.invalidateQueries({ queryKey: ["supplier", supplier.id] });
+            }
+
             setOpen(false);
             onSuccess?.();
         } catch (error) {
-            toast.error("Failed to create supplier");
+            toast.error(isEdit ? "Failed to update supplier" : "Failed to create supplier");
             console.error(error);
         } finally {
             setLoading(false);
@@ -134,30 +148,30 @@ export function CreateSupplierDialog({ onSuccess, children }: CreateSupplierDial
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add Supplier</DialogTitle>
+                    <DialogTitle>{isEdit ? "Edit Supplier" : "Add Supplier"}</DialogTitle>
                     <DialogDescription>
-                        Add a new supplier to your list.
+                        {isEdit ? "Update supplier details." : "Add a new supplier to your list."}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
-                        <Input id="name" name="name" required placeholder="Supplier Name" />
+                        <Input id="name" name="name" defaultValue={supplier?.name} required placeholder="Supplier Name" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="address">Address</Label>
-                        <Input id="address" name="address" required placeholder="Address" />
+                        <Input id="address" name="address" defaultValue={supplier?.address} required placeholder="Address" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone_number">Phone</Label>
-                        <Input id="phone_number" name="phone_number" required placeholder="Phone Number" />
+                        <Input id="phone_number" name="phone_number" defaultValue={supplier?.phone_number} required placeholder="Phone Number" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" name="email" type="email" required placeholder="Email" />
+                        <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" />
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? "Creating..." : "Create Supplier"}
+                        {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Supplier" : "Create Supplier")}
                     </Button>
                 </form>
             </DialogContent>

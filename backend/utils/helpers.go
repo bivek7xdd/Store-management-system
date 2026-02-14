@@ -20,3 +20,10 @@ func OptionalText(s string) pgtype.Text {
 		Valid:  true,
 	}
 }
+
+// Numeric converts a float64 to a valid pgtype.Numeric
+func Numeric(f float64) pgtype.Numeric {
+	var n pgtype.Numeric
+	n.Scan(f)
+	return n
+}

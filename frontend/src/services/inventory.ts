@@ -132,6 +132,18 @@ export const inventoryService = {
         return response.data.data;
     },
 
+    updateSupplier: async (id: string, data: Partial<Omit<Supplier, 'id' | 'store_id'>>) => {
+        const response = await api.put<{ data: Supplier }>(`suppliers/${id}`, data);
+        const updatedSupplier = response.data.data;
+        await db.suppliers.put(updatedSupplier);
+        return updatedSupplier;
+    },
+
+    deleteSupplier: async (id: string) => {
+        await api.delete(`suppliers/${id}`);
+        await db.suppliers.delete(id);
+    },
+
     getSupplier: async (id: string) => {
         const cached = await db.suppliers.get(id);
         if (cached) return cached;

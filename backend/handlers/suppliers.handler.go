@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -71,4 +72,116 @@ func GetAllSuppliers(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, "Suppliers fetched successfully", suppliers)
+}
+
+func GetSupplier(c *gin.Context) {
+	storeId := c.MustGet("store_id").(pgtype.UUID)
+	idStr := c.Param("id")
+
+	supplierUUID, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid supplier ID", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+	defer cancel()
+
+	supplier, err := utils.Queries.GetSupplier(ctx, db.GetSupplierParams{
+		ID:      pgtype.UUID{Bytes: supplierUUID, Valid: true},
+		StoreID: storeId,
+	})
+	if err != nil {
+		log.Println("error getting supplier:", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to get supplier", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Supplier fetched successfully", supplier)
+}
+
+type updateSupplierReq struct {
+	Name        string `json:"name"`
+	Address     string `json:"address"`
+	PhoneNumber string `json:"phone_number"`
+	Email       string `json:"email"`
+}
+
+func UpdateSupplier(c *gin.Context) {
+	storeId := c.MustGet("store_id").(pgtype.UUID)
+	idStr := c.Param("id")
+
+	supplierUUID, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid supplier ID", err)
+		return
+	}
+
+	var req updateSupplierReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+	defer cancel()
+
+	// Prepare optional params
+	var name, address, phone, email pgtype.Text
+	if req.Name != "" {
+		name = utils.Text(req.Name)
+	}
+	if req.Address != "" {
+		address = utils.Text(req.Address)
+	}
+	if req.PhoneNumber != "" {
+		phone = utils.Text(req.PhoneNumber)
+	}
+	if req.Email != "" {
+		email = utils.Text(req.Email)
+	}
+
+	supplier, err := utils.Queries.UpdateSupplier(ctx, db.UpdateSupplierParams{
+		ID:          pgtype.UUID{Bytes: supplierUUID, Valid: true},
+		Name:        name,
+		Address:     address,
+		PhoneNumber: phone,
+		Email:       email,
+		StoreID:     storeId,
+	})
+
+	if err != nil {
+		log.Println("error updating supplier:", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to update supplier", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Supplier updated successfully", supplier)
+}
+
+func DeleteSupplier(c *gin.Context) {
+	storeId := c.MustGet("store_id").(pgtype.UUID)
+	idStr := c.Param("id")
+
+	supplierUUID, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid supplier ID", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+	defer cancel()
+
+	err = utils.Queries.DeleteSupplier(ctx, db.DeleteSupplierParams{
+		ID:      pgtype.UUID{Bytes: supplierUUID, Valid: true},
+		StoreID: storeId,
+	})
+
+	if err != nil {
+		log.Println("error deleting supplier:", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to delete supplier", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Supplier deleted successfully", nil)
 }

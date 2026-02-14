@@ -50,10 +50,10 @@ func main() {
 	{
 		categoryRoutes.POST("/create", handlers.CreateCategories)
 		categoryRoutes.GET("", handlers.GetAllCategories)
-		categoryRoutes.GET("/:id", handlers.GetCategory)           // Get single category
-		categoryRoutes.GET("/:id/stats", handlers.GetCategoryStats) // Get category stats
+		categoryRoutes.GET("/:id", handlers.GetCategory)                  // Get single category
+		categoryRoutes.GET("/:id/stats", handlers.GetCategoryStats)       // Get category stats
 		categoryRoutes.GET("/:id/products", handlers.GetCategoryProducts) // Get products in category
-		categoryRoutes.PUT("/:id", handlers.UpdateCategory)       // Update category
+		categoryRoutes.PUT("/:id", handlers.UpdateCategory)               // Update category
 		categoryRoutes.DELETE("", handlers.DeleteCategory)
 	}
 
@@ -63,6 +63,9 @@ func main() {
 	{
 		supplierRoutes.POST("/create", handlers.CreateSuppliers)
 		supplierRoutes.GET("", handlers.GetAllSuppliers)
+		supplierRoutes.GET("/:id", handlers.GetSupplier)
+		supplierRoutes.PUT("/:id", handlers.UpdateSupplier)
+		supplierRoutes.DELETE("/:id", handlers.DeleteSupplier)
 	}
 
 	// Product routes
@@ -98,6 +101,7 @@ func main() {
 	debtRoutes := router.Group("/api/debts")
 	debtRoutes.Use(utils.JWTMiddleware())
 	{
+		debtRoutes.POST("/create", handlers.CreateDebt)
 		debtRoutes.GET("", handlers.GetDebts)
 		debtRoutes.POST("/:id/remind", handlers.SendDebtReminder)
 		debtRoutes.PUT("/:id", handlers.UpdateDebt)

@@ -34,7 +34,9 @@ WHERE d.id = $1 AND d.store_id = $2;
 -- name: UpdateDebt :one
 UPDATE debts
 SET 
+    amount_owed = COALESCE(sqlc.narg('amount_owed'), amount_owed),
     amount_paid = COALESCE(sqlc.narg('amount_paid'), amount_paid),
+    due_date = COALESCE(sqlc.narg('due_date'), due_date),
     status = COALESCE(sqlc.narg('status'), status),
     notes = COALESCE(sqlc.narg('notes'), notes),
     updated_at = CURRENT_TIMESTAMP

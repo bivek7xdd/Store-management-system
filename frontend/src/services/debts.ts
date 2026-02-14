@@ -22,7 +22,12 @@ export const debtService = {
         return response.data.data;
     },
 
-    updateDebt: async (id: string, data: { amount_paid?: number; status?: string; notes?: string }) => {
+    createDebt: async (data: { customer_id: string; amount_owed: number; due_date?: string; notes?: string }) => {
+        const response = await api.post<{ data: Debt, message: string }>('/debts/create', data);
+        return response.data.data;
+    },
+
+    updateDebt: async (id: string, data: { amount_owed?: number; amount_paid?: number; due_date?: string; status?: string; notes?: string }) => {
         const response = await api.put<{ data: Debt, message: string }>(`/debts/${id}`, data);
         return response.data.data;
     },

@@ -1,13 +1,27 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Truck } from "lucide-react";
+import { ArrowLeft, Truck, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SupplierDialog } from "@/components/CreateInventoryDialogs";
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner"; // Using sonner as per SupplierDialog
 
 export default function SupplierDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const { data: supplier, isLoading } = useQuery({
         queryKey: ["supplier", id],
@@ -15,16 +29,43 @@ export default function SupplierDetails() {
         enabled: !!id,
     });
 
+    const handleDelete = async () => {
+        if (!id) return;
+        try {
+            await inventoryService.deleteSupplier(id);
+            toast.success("Supplier deleted successfully");
+            queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+            navigate("/inventory/suppliers");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete supplier");
+        }
+    };
+
     if (isLoading) return <div className="p-8">Loading...</div>;
     if (!supplier) return <div className="p-8">Supplier not found</div>;
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h1 className="text-2xl font-bold">Supplier Details</h1>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <h1 className="text-2xl font-bold">Supplier Details</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <SupplierDialog supplier={supplier} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["supplier", id] })}>
+                        <Button variant="outline" size="sm">
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button>
+                    </SupplierDialog>
+                    <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -53,6 +94,27 @@ export default function SupplierDetails() {
                     </div>
                 </CardContent>
             </Card>
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the supplier
+                            and remove their data from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                        >
+                            Delete
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

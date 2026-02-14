@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MessageCircle, Phone, Users, Wallet, RefreshCw, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Search, MessageCircle, Phone, Users, Wallet, RefreshCw, ChevronLeft, ChevronRight, Filter, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { debtService, Debt } from "@/services/debts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DebtDialog } from "@/components/DebtDialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const colors = {
   primary: "#0d9488",
@@ -28,6 +39,10 @@ export default function Debtors() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [debtToDelete, setDebtToDelete] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchDebts();
@@ -91,6 +106,21 @@ export default function Debtors() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!debtToDelete) return;
+
+    try {
+      await debtService.deleteDebt(debtToDelete);
+      toast.success("Debt deleted successfully");
+      setDebtToDelete(null);
+      setDeleteDialogOpen(false);
+      fetchDebts();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete debt");
+    }
+  };
+
   const handleSendSMSReminder = async (debtor: Debt) => {
     if (!debtor.customer_phone) {
       toast.error("No phone number for this customer");
@@ -117,9 +147,12 @@ export default function Debtors() {
           <h1 className="text-3xl font-bold text-gray-900">Debtors / Credit Management</h1>
           <p className="text-gray-500 mt-1">Track outstanding payments from customers</p>
         </div>
-        <Button variant="outline" size="icon" onClick={fetchDebts}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={fetchDebts}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+          <DebtDialog onSuccess={fetchDebts} />
+        </div>
       </div>
 
       {/* Summary Card */}
@@ -229,7 +262,25 @@ export default function Debtors() {
           paginatedDebtors.map((debtor) => {
             const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
             return (
-              <Card key={debtor.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card key={debtor.id} className="border-0 shadow-sm hover:shadow-md transition-shadow relative group">
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                  <DebtDialog debt={debtor} onSuccess={fetchDebts}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
+                      <Pencil className="h-4 w-4 text-gray-500" />
+                    </Button>
+                  </DebtDialog>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-red-50"
+                    onClick={() => {
+                      setDebtToDelete(debtor.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -260,6 +311,14 @@ export default function Debtors() {
                         रू {outstanding.toLocaleString()}
                       </span>
                     </div>
+                    {debtor.due_date && (
+                      <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                        <span className="text-gray-500">Due Date</span>
+                        <span className="font-medium text-gray-700">
+                          {new Date(debtor.due_date).toLocaleDateString("en-NP")}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
                       <span className="text-gray-500">Last Updated</span>
                       <span className="font-medium text-gray-700">
@@ -301,6 +360,9 @@ export default function Debtors() {
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
             <p className="text-gray-500">No debtors found matching your criteria</p>
+            <div className="mt-4">
+              <DebtDialog onSuccess={fetchDebts} />
+            </div>
           </CardContent>
         </Card>
       )}
@@ -329,6 +391,26 @@ export default function Debtors() {
           </Button>
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Debt Record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this debt record. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

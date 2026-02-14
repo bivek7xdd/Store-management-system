@@ -28,6 +28,7 @@ type Querier interface {
 	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
+	DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) error
 	GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error)
 	GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
 	GetCategory(ctx context.Context, arg GetCategoryParams) (Category, error)
@@ -54,6 +55,7 @@ type Querier interface {
 	GetStoreOwnerByEmail(ctx context.Context, email string) (StoreOwner, error)
 	GetStoreOwnerById(ctx context.Context, id pgtype.UUID) (StoreOwner, error)
 	GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetStoreWithOwnerRow, error)
+	GetSupplier(ctx context.Context, arg GetSupplierParams) (Supplier, error)
 	GetTopDebtors(ctx context.Context, arg GetTopDebtorsParams) ([]GetTopDebtorsRow, error)
 	GetTopSellingProducts(ctx context.Context, arg GetTopSellingProductsParams) ([]GetTopSellingProductsRow, error)
 	GetTotalSales(ctx context.Context, arg GetTotalSalesParams) (GetTotalSalesRow, error)
@@ -72,6 +74,7 @@ type Querier interface {
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)
 	UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerParams) (StoreOwner, error)
+	UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) (Supplier, error)
 	VerifyOTP(ctx context.Context, arg VerifyOTPParams) (OtpToken, error)
 }
 

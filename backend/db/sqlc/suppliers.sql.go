@@ -53,8 +53,22 @@ func (q *Queries) CreateSuppliers(ctx context.Context, arg CreateSuppliersParams
 	return i, err
 }
 
+const deleteSupplier = `-- name: DeleteSupplier :exec
+DELETE FROM suppliers WHERE id = $1 AND store_id = $2
+`
+
+type DeleteSupplierParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) error {
+	_, err := q.db.Exec(ctx, deleteSupplier, arg.ID, arg.StoreID)
+	return err
+}
+
 const getAllSuppliers = `-- name: GetAllSuppliers :many
-SELECT id, name, address, phone_number, email, store_id, created_at, updated_at FROM suppliers WHERE store_id = $1
+SELECT id, name, address, phone_number, email, store_id, created_at, updated_at FROM suppliers WHERE store_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error) {
@@ -84,4 +98,72 @@ func (q *Queries) GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]S
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSupplier = `-- name: GetSupplier :one
+SELECT id, name, address, phone_number, email, store_id, created_at, updated_at FROM suppliers WHERE id = $1 AND store_id = $2
+`
+
+type GetSupplierParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) GetSupplier(ctx context.Context, arg GetSupplierParams) (Supplier, error) {
+	row := q.db.QueryRow(ctx, getSupplier, arg.ID, arg.StoreID)
+	var i Supplier
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.PhoneNumber,
+		&i.Email,
+		&i.StoreID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateSupplier = `-- name: UpdateSupplier :one
+UPDATE suppliers
+SET 
+  name = COALESCE($2, name),
+  address = COALESCE($3, address),
+  phone_number = COALESCE($4, phone_number),
+  email = COALESCE($5, email)
+WHERE id = $1 AND store_id = $6
+RETURNING id, name, address, phone_number, email, store_id, created_at, updated_at
+`
+
+type UpdateSupplierParams struct {
+	ID          pgtype.UUID `db:"id" json:"id"`
+	Name        pgtype.Text `db:"name" json:"name"`
+	Address     pgtype.Text `db:"address" json:"address"`
+	PhoneNumber pgtype.Text `db:"phone_number" json:"phone_number"`
+	Email       pgtype.Text `db:"email" json:"email"`
+	StoreID     pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) (Supplier, error) {
+	row := q.db.QueryRow(ctx, updateSupplier,
+		arg.ID,
+		arg.Name,
+		arg.Address,
+		arg.PhoneNumber,
+		arg.Email,
+		arg.StoreID,
+	)
+	var i Supplier
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.PhoneNumber,
+		&i.Email,
+		&i.StoreID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

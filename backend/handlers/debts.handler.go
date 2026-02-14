@@ -15,6 +15,63 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type createDebtReq struct {
+	CustomerID string  `json:"customer_id" binding:"required"`
+	AmountOwed float64 `json:"amount_owed" binding:"required"`
+	DueDate    string  `json:"due_date"`
+	Notes      string  `json:"notes"`
+}
+
+func CreateDebt(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	var req createDebtReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
+
+	customerUUID, err := uuid.Parse(req.CustomerID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid customer ID", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	var dueDate pgtype.Timestamptz
+	if req.DueDate != "" {
+		parsedDate, err := time.Parse("2006-01-02", req.DueDate)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid due date format (YYYY-MM-DD)", err)
+			return
+		}
+		dueDate = pgtype.Timestamptz{Time: parsedDate, Valid: true}
+	} else {
+		dueDate = pgtype.Timestamptz{Valid: false}
+	}
+
+	debt, err := utils.Queries.CreateDebt(ctx, db.CreateDebtParams{
+		StoreID:    storeID,
+		CustomerID: pgtype.UUID{Bytes: customerUUID, Valid: true},
+		SaleID:     pgtype.UUID{Valid: false}, // Manual debt creation has no sale ID initially
+		AmountOwed: utils.Numeric(req.AmountOwed),
+		AmountPaid: utils.Numeric(0),
+		DueDate:    dueDate,
+		Status:     db.DebtStatusPending,
+		Notes:      utils.Text(req.Notes),
+	})
+
+	if err != nil {
+		log.Printf("error creating debt: %v", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create debt", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Debt created successfully", debt)
+}
+
 func GetDebts(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
 
@@ -58,7 +115,9 @@ func DeleteDebt(c *gin.Context) {
 }
 
 type updateDebtReq struct {
+	AmountOwed *float64 `json:"amount_owed"`
 	AmountPaid *float64 `json:"amount_paid"`
+	DueDate    *string  `json:"due_date"`
 	Status     string   `json:"status"`
 	Notes      string   `json:"notes"`
 }
@@ -82,6 +141,16 @@ func UpdateDebt(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
+	var amountOwed pgtype.Numeric
+	if req.AmountOwed != nil {
+		if err := amountOwed.Scan(fmt.Sprintf("%f", *req.AmountOwed)); err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid amount owed format", err)
+			return
+		}
+	} else {
+		amountOwed = pgtype.Numeric{Valid: false}
+	}
+
 	var amountPaid pgtype.Numeric
 	if req.AmountPaid != nil {
 		if err := amountPaid.Scan(fmt.Sprintf("%f", *req.AmountPaid)); err != nil {
@@ -90,6 +159,18 @@ func UpdateDebt(c *gin.Context) {
 		}
 	} else {
 		amountPaid = pgtype.Numeric{Valid: false}
+	}
+
+	var dueDate pgtype.Timestamptz
+	if req.DueDate != nil && *req.DueDate != "" {
+		parsedDate, err := time.Parse("2006-01-02", *req.DueDate)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid due date format (YYYY-MM-DD)", err)
+			return
+		}
+		dueDate = pgtype.Timestamptz{Time: parsedDate, Valid: true}
+	} else {
+		dueDate = pgtype.Timestamptz{Valid: false}
 	}
 
 	var status db.NullDebtStatus
@@ -109,7 +190,9 @@ func UpdateDebt(c *gin.Context) {
 	debt, err := utils.Queries.UpdateDebt(ctx, db.UpdateDebtParams{
 		ID:         pgtype.UUID{Bytes: debtUUID, Valid: true},
 		StoreID:    storeID,
+		AmountOwed: amountOwed,
 		AmountPaid: amountPaid,
+		DueDate:    dueDate,
 		Status:     status,
 		Notes:      notes,
 	})
