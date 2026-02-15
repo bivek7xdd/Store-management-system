@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS products (
     name VARCHAR(150) NOT NULL,
     barcode VARCHAR(50),
     price DECIMAL(10, 2) NOT NULL,
+    cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
     market_price DECIMAL(10, 2),
     stock_quantity INT NOT NULL DEFAULT 0,
     low_stock_threshold INT DEFAULT 10,

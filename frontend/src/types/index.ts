@@ -3,6 +3,7 @@ export interface Product {
   name: string;
   barcode?: { String: string; Valid: boolean };
   price: { Int64: number; Valid: boolean } | number;
+  cost_price: { Int64: number; Valid: boolean } | number;
   market_price?: { Int64: number; Valid: boolean } | number;
   stock_quantity: number;
   low_stock_threshold: { Int32: number; Valid: boolean } | number;

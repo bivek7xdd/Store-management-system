@@ -19,6 +19,7 @@ type createProductReq struct {
 	Name              string  `json:"name" binding:"required"`
 	Barcode           string  `json:"barcode"`
 	Price             float64 `json:"price" binding:"required"`
+	CostPrice         float64 `json:"cost_price" binding:"required"`
 	MarketPrice       float64 `json:"market_price"`
 	StockQuantity     int32   `json:"stock_quantity" binding:"required"`
 	LowStockThreshold int32   `json:"low_stock_threshold"`
@@ -110,6 +111,7 @@ func CreateProduct(c *gin.Context) {
 		Name:              req.Name,
 		Barcode:           barcode,
 		Price:             price,
+		CostPrice:         utils.Numeric(req.CostPrice),
 		MarketPrice:       marketPrice,
 		StockQuantity:     req.StockQuantity,
 		LowStockThreshold: lowStockThreshold,
@@ -191,6 +193,7 @@ type updateProductReq struct {
 	Name              string  `json:"name"`
 	Barcode           string  `json:"barcode"`
 	Price             float64 `json:"price"`
+	CostPrice         float64 `json:"cost_price"`
 	MarketPrice       float64 `json:"market_price"`
 	StockQuantity     int32   `json:"stock_quantity"`
 	LowStockThreshold int32   `json:"low_stock_threshold"`
@@ -247,6 +250,14 @@ func UpdateProduct(c *gin.Context) {
 	}
 
 	marketPrice := existingProduct.MarketPrice
+	costPrice := existingProduct.CostPrice
+	if req.CostPrice > 0 {
+		if err := costPrice.Scan(fmt.Sprintf("%f", req.CostPrice)); err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid cost price format", err)
+			return
+		}
+	}
+
 	if req.MarketPrice > 0 {
 		if err := marketPrice.Scan(fmt.Sprintf("%f", req.MarketPrice)); err != nil {
 			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid market price format", err)
@@ -317,6 +328,7 @@ func UpdateProduct(c *gin.Context) {
 		Name:              name,
 		Barcode:           barcode,
 		Price:             price,
+		CostPrice:         costPrice,
 		MarketPrice:       marketPrice,
 		StockQuantity:     stockQuantity,
 		LowStockThreshold: lowStockThreshold,

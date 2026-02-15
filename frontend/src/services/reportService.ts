@@ -52,6 +52,11 @@ export interface ReportStats {
             last_transaction: string;
         }>;
     };
+    profit: {
+        total_revenue: number;
+        total_cost: number;
+        gross_profit: number;
+    };
     insights: Array<{
         type: "success" | "warning" | "info";
         message: string;
@@ -65,5 +70,17 @@ export interface ReportStats {
 
 export const getReportStats = async (range: string = "today"): Promise<ReportStats> => {
     const response = await api.get(`/reports/stats?range=${range}`);
-    return response.data.data; // Assuming backend returns { message: "...", data: { ... } }
+    return response.data.data;
+};
+
+export const exportReportCSV = async (range: string = "today") => {
+    const token = localStorage.getItem('token');
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/reports/export/csv?range=${range}&token=${token}`;
+    window.open(url, '_blank');
+};
+
+export const exportReportPDF = async (range: string = "today") => {
+    const token = localStorage.getItem('token');
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/reports/export/pdf?range=${range}&token=${token}`;
+    window.open(url, '_blank');
 };

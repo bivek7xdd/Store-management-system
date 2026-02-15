@@ -27,3 +27,12 @@ func Numeric(f float64) pgtype.Numeric {
 	n.Scan(f)
 	return n
 }
+
+// Float64 converts pgtype.Numeric back to float64
+func Float64(n pgtype.Numeric) float64 {
+	if !n.Valid {
+		return 0
+	}
+	f, _ := n.Float64Value()
+	return f.Float64
+}

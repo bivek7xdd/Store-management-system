@@ -332,6 +332,7 @@ export default function Inventory() {
       name: formData.get("name") as string,
       barcode: formData.get("barcode") as string || undefined,
       price: parseFloat(formData.get("price") as string),
+      cost_price: parseFloat(formData.get("cost_price") as string),
       market_price: formData.get("market_price") ? parseFloat(formData.get("market_price") as string) : undefined,
       stock_quantity: parseInt(formData.get("stock_quantity") as string),
       low_stock_threshold: formData.get("low_stock_threshold") ? parseInt(formData.get("low_stock_threshold") as string) : 10,
@@ -504,6 +505,21 @@ export default function Inventory() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)*</Label>
+                    <Input
+                      id="cost_price"
+                      name="cost_price"
+                      type="number"
+                      step="0.01"
+                      defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
+                      placeholder="80"
+                      required
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="market_price" className="text-sm font-medium">Market Price (रू)</Label>
                     <Input
                       id="market_price"
@@ -515,8 +531,6 @@ export default function Inventory() {
                       className="rounded-lg"
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
                     <Input
@@ -529,17 +543,17 @@ export default function Inventory() {
                       className="rounded-lg"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
-                    <Input
-                      id="low_stock_threshold"
-                      name="low_stock_threshold"
-                      type="number"
-                      defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
-                      placeholder="10"
-                      className="rounded-lg"
-                    />
-                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
+                  <Input
+                    id="low_stock_threshold"
+                    name="low_stock_threshold"
+                    type="number"
+                    defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
+                    placeholder="10"
+                    className="rounded-lg"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expires_at" className="text-sm font-medium">Expiry Date (optional)</Label>
@@ -610,139 +624,143 @@ export default function Inventory() {
             </Select>
           </div>
         </CardContent>
-      </Card>
+      </Card >
 
       {/* Products Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.map((product: Product) => {
-          const stockQuantity = product.stock_quantity;
-          const lowThreshold = getInt32Value(product.low_stock_threshold);
-          const isLowStock = stockQuantity < lowThreshold;
+      < div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" >
+        {
+          filteredProducts.map((product: Product) => {
+            const stockQuantity = product.stock_quantity;
+            const lowThreshold = getInt32Value(product.low_stock_threshold);
+            const isLowStock = stockQuantity < lowThreshold;
 
-          const expiryDate = getDateValue(product.expires_at);
-          const daysUntilExpiry = expiryDate
-            ? Math.floor((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-            : null;
-          const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+            const expiryDate = getDateValue(product.expires_at);
+            const daysUntilExpiry = expiryDate
+              ? Math.floor((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              : null;
+            const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
 
-          const price = getNumericValue(product.price);
-          const marketPrice = getNumericValue(product.market_price);
-          const barcode = getTextValue(product.barcode);
+            const price = getNumericValue(product.price);
+            const marketPrice = getNumericValue(product.market_price);
+            const barcode = getTextValue(product.barcode);
 
-          return (
-            <Card key={product.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: `${colors.primary}10` }}
+            return (
+              <Card key={product.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: `${colors.primary}10` }}
+                      >
+                        <Package className="h-5 w-5" style={{ color: colors.primary }} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-semibold text-gray-900">{product.name}</CardTitle>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {product.status?.product_status || 'active'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {isLowStock && (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-xs">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Low
+                        </Badge>
+                      )}
+                      {isExpiringSoon && (
+                        <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {daysUntilExpiry}d
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id={`track-${product.id}`}
+                        checked={product.is_tracked || false}
+                        onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
+                        className="data-[state=checked]:bg-teal-600"
+                      />
+                      <Label htmlFor={`track-${product.id}`} className="text-xs text-gray-500 cursor-pointer">
+                        Track Online Price
+                      </Label>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500">Stock</span>
+                      <span className="font-semibold text-gray-900">{stockQuantity} units</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500">Price</span>
+                      <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
+                    </div>
+                    {marketPrice > 0 && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-500">Market Price</span>
+                        <span className="font-medium text-gray-700">रू {marketPrice}</span>
+                      </div>
+                    )}
+                    {expiryDate && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-500">Expiry</span>
+                        <span className="font-medium text-gray-700">
+                          {new Date(expiryDate).toLocaleDateString("en-NP")}
+                        </span>
+                      </div>
+                    )}
+                    {barcode && (
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-500">Barcode</span>
+                        <span className="font-mono text-xs text-gray-600">{barcode}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                      onClick={() => handleEditClick(product)}
                     >
-                      <Package className="h-5 w-5" style={{ color: colors.primary }} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base font-semibold text-gray-900">{product.name}</CardTitle>
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {product.status?.product_status || 'active'}
-                      </p>
-                    </div>
+                      <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-lg border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
+                      onClick={() => handleDeleteClick(product)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    {isLowStock && (
-                      <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-xs">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Low
-                      </Badge>
-                    )}
-                    {isExpiringSoon && (
-                      <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {daysUntilExpiry}d
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id={`track-${product.id}`}
-                      checked={product.is_tracked || false}
-                      onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
-                      className="data-[state=checked]:bg-teal-600"
-                    />
-                    <Label htmlFor={`track-${product.id}`} className="text-xs text-gray-500 cursor-pointer">
-                      Track Online Price
-                    </Label>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">Stock</span>
-                    <span className="font-semibold text-gray-900">{stockQuantity} units</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">Price</span>
-                    <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
-                  </div>
-                  {marketPrice > 0 && (
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Market Price</span>
-                      <span className="font-medium text-gray-700">रू {marketPrice}</span>
-                    </div>
-                  )}
-                  {expiryDate && (
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Expiry</span>
-                      <span className="font-medium text-gray-700">
-                        {new Date(expiryDate).toLocaleDateString("en-NP")}
-                      </span>
-                    </div>
-                  )}
-                  {barcode && (
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-500">Barcode</span>
-                      <span className="font-mono text-xs text-gray-600">{barcode}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
-                    onClick={() => handleEditClick(product)}
-                  >
-                    <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-lg border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
-                    onClick={() => handleDeleteClick(product)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        }
+      </div >
 
-      {filteredProducts.length === 0 && (
-        <Card className="border-0 shadow-sm">
-          <CardContent className="py-12 text-center">
-            <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">
-              {productsList.length === 0
-                ? "No products yet. Add your first product to get started!"
-                : "No products found matching your filters"}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+      {
+        filteredProducts.length === 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardContent className="py-12 text-center">
+              <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500">
+                {productsList.length === 0
+                  ? "No products yet. Add your first product to get started!"
+                  : "No products found matching your filters"}
+              </p>
+            </CardContent>
+          </Card>
+        )
+      }
+    </div >
   );
 }

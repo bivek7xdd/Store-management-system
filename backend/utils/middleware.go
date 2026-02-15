@@ -15,24 +15,24 @@ import (
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get Authorization header
+		tokenString := ""
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			ErrorResponse(c, http.StatusUnauthorized, "Authorization header required", nil)
-			c.Abort()
-			return
+
+		if authHeader != "" {
+			// Check if header starts with "Bearer "
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				ErrorResponse(c, http.StatusUnauthorized, "Invalid authorization header format", nil)
+				c.Abort()
+				return
+			}
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			// Try to get token from query parameter (for direct downloads)
+			tokenString = c.Query("token")
 		}
 
-		// Check if header starts with "Bearer "
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			ErrorResponse(c, http.StatusUnauthorized, "Invalid authorization header format", nil)
-			c.Abort()
-			return
-		}
-
-		// Extract token from header
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == "" {
-			ErrorResponse(c, http.StatusUnauthorized, "Token not found", nil)
+			ErrorResponse(c, http.StatusUnauthorized, "Authorization required", nil)
 			c.Abort()
 			return
 		}

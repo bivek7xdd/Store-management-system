@@ -155,6 +155,36 @@ func (q *Queries) GetInventoryStats(ctx context.Context, storeID pgtype.UUID) (G
 	return i, err
 }
 
+const getProfitStats = `-- name: GetProfitStats :one
+SELECT 
+    COALESCE(SUM(si.total_price), 0.0)::DECIMAL(12,2) as total_revenue,
+    COALESCE(SUM(si.quantity * p.cost_price), 0.0)::DECIMAL(12,2) as total_cost,
+    (COALESCE(SUM(si.total_price), 0.0) - COALESCE(SUM(si.quantity * p.cost_price), 0.0))::DECIMAL(12,2) as gross_profit
+FROM sale_items si
+JOIN products p ON si.product_id = p.id
+JOIN sales s ON si.sale_id = s.id
+WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3
+`
+
+type GetProfitStatsParams struct {
+	StoreID    pgtype.UUID        `db:"store_id" json:"store_id"`
+	SaleDate   pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	SaleDate_2 pgtype.Timestamptz `db:"sale_date_2" json:"sale_date_2"`
+}
+
+type GetProfitStatsRow struct {
+	TotalRevenue pgtype.Numeric `db:"total_revenue" json:"total_revenue"`
+	TotalCost    pgtype.Numeric `db:"total_cost" json:"total_cost"`
+	GrossProfit  pgtype.Numeric `db:"gross_profit" json:"gross_profit"`
+}
+
+func (q *Queries) GetProfitStats(ctx context.Context, arg GetProfitStatsParams) (GetProfitStatsRow, error) {
+	row := q.db.QueryRow(ctx, getProfitStats, arg.StoreID, arg.SaleDate, arg.SaleDate_2)
+	var i GetProfitStatsRow
+	err := row.Scan(&i.TotalRevenue, &i.TotalCost, &i.GrossProfit)
+	return i, err
+}
+
 const getRecentSales = `-- name: GetRecentSales :many
 SELECT 
     s.id,
@@ -312,6 +342,59 @@ func (q *Queries) GetSalesForPeriod(ctx context.Context, arg GetSalesForPeriodPa
 	var total_sales pgtype.Numeric
 	err := row.Scan(&total_sales)
 	return total_sales, err
+}
+
+const getSalesInRange = `-- name: GetSalesInRange :many
+SELECT 
+    s.id,
+    s.total_amount,
+    s.sales_type,
+    s.sale_date,
+    c.name as customer_name
+FROM sales s
+LEFT JOIN customers c ON s.customer_id = c.id
+WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3
+ORDER BY s.sale_date DESC
+`
+
+type GetSalesInRangeParams struct {
+	StoreID    pgtype.UUID        `db:"store_id" json:"store_id"`
+	SaleDate   pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	SaleDate_2 pgtype.Timestamptz `db:"sale_date_2" json:"sale_date_2"`
+}
+
+type GetSalesInRangeRow struct {
+	ID           pgtype.UUID        `db:"id" json:"id"`
+	TotalAmount  pgtype.Numeric     `db:"total_amount" json:"total_amount"`
+	SalesType    SalesTypes         `db:"sales_type" json:"sales_type"`
+	SaleDate     pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	CustomerName pgtype.Text        `db:"customer_name" json:"customer_name"`
+}
+
+func (q *Queries) GetSalesInRange(ctx context.Context, arg GetSalesInRangeParams) ([]GetSalesInRangeRow, error) {
+	rows, err := q.db.Query(ctx, getSalesInRange, arg.StoreID, arg.SaleDate, arg.SaleDate_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSalesInRangeRow
+	for rows.Next() {
+		var i GetSalesInRangeRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TotalAmount,
+			&i.SalesType,
+			&i.SaleDate,
+			&i.CustomerName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getStockByCategory = `-- name: GetStockByCategory :many

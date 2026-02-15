@@ -16,6 +16,7 @@ INSERT INTO products (
     name,
     barcode,
     price,
+    cost_price,
     market_price,
     stock_quantity,
     low_stock_threshold,
@@ -27,14 +28,15 @@ INSERT INTO products (
     image_url,
     is_tracked
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-) RETURNING id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+) RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
 type CreateProductParams struct {
 	Name              string             `db:"name" json:"name"`
 	Barcode           pgtype.Text        `db:"barcode" json:"barcode"`
 	Price             pgtype.Numeric     `db:"price" json:"price"`
+	CostPrice         pgtype.Numeric     `db:"cost_price" json:"cost_price"`
 	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
 	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
 	LowStockThreshold pgtype.Int4        `db:"low_stock_threshold" json:"low_stock_threshold"`
@@ -52,6 +54,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.Name,
 		arg.Barcode,
 		arg.Price,
+		arg.CostPrice,
 		arg.MarketPrice,
 		arg.StockQuantity,
 		arg.LowStockThreshold,
@@ -69,6 +72,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.Name,
 		&i.Barcode,
 		&i.Price,
+		&i.CostPrice,
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
@@ -124,7 +128,7 @@ func (q *Queries) GetCategoryStats(ctx context.Context, arg GetCategoryStatsPara
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE id = $1 LIMIT 1
 `
 
@@ -136,6 +140,7 @@ func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, erro
 		&i.Name,
 		&i.Barcode,
 		&i.Price,
+		&i.CostPrice,
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
@@ -153,7 +158,7 @@ func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, erro
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -179,6 +184,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 			&i.Name,
 			&i.Barcode,
 			&i.Price,
+			&i.CostPrice,
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
@@ -203,7 +209,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 }
 
 const listProductsByCategory = `-- name: ListProductsByCategory :many
-SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND category_id = $2
 ORDER BY created_at DESC
 `
@@ -227,6 +233,7 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsBy
 			&i.Name,
 			&i.Barcode,
 			&i.Price,
+			&i.CostPrice,
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
@@ -251,7 +258,7 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsBy
 }
 
 const listTrackedProducts = `-- name: ListTrackedProducts :many
-SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND is_tracked = TRUE
 ORDER BY updated_at DESC
 LIMIT 6
@@ -271,6 +278,7 @@ func (q *Queries) ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) 
 			&i.Name,
 			&i.Barcode,
 			&i.Price,
+			&i.CostPrice,
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
@@ -295,7 +303,7 @@ func (q *Queries) ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) 
 }
 
 const searchProducts = `-- name: SearchProducts :many
-SELECT id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE 
     store_id = $1 AND (
     name ILIKE '%' || $2 || '%' OR
@@ -331,6 +339,7 @@ func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) 
 			&i.Name,
 			&i.Barcode,
 			&i.Price,
+			&i.CostPrice,
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
@@ -360,18 +369,19 @@ SET
     name = COALESCE($2, name),
     barcode = COALESCE($3, barcode),
     price = COALESCE($4, price),
-    market_price = COALESCE($5, market_price),
-    stock_quantity = COALESCE($6, stock_quantity),
-    low_stock_threshold = COALESCE($7, low_stock_threshold),
-    expires_at = COALESCE($8, expires_at),
-    status = COALESCE($9, status),
-    category_id = COALESCE($10, category_id),
-    supplier_id = COALESCE($11, supplier_id),
-    image_url = COALESCE($12, image_url),
-    is_tracked = COALESCE($13, is_tracked),
+    cost_price = COALESCE($5, cost_price),
+    market_price = COALESCE($6, market_price),
+    stock_quantity = COALESCE($7, stock_quantity),
+    low_stock_threshold = COALESCE($8, low_stock_threshold),
+    expires_at = COALESCE($9, expires_at),
+    status = COALESCE($10, status),
+    category_id = COALESCE($11, category_id),
+    supplier_id = COALESCE($12, supplier_id),
+    image_url = COALESCE($13, image_url),
+    is_tracked = COALESCE($14, is_tracked),
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
 type UpdateProductParams struct {
@@ -379,6 +389,7 @@ type UpdateProductParams struct {
 	Name              string             `db:"name" json:"name"`
 	Barcode           pgtype.Text        `db:"barcode" json:"barcode"`
 	Price             pgtype.Numeric     `db:"price" json:"price"`
+	CostPrice         pgtype.Numeric     `db:"cost_price" json:"cost_price"`
 	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
 	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
 	LowStockThreshold pgtype.Int4        `db:"low_stock_threshold" json:"low_stock_threshold"`
@@ -396,6 +407,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.Name,
 		arg.Barcode,
 		arg.Price,
+		arg.CostPrice,
 		arg.MarketPrice,
 		arg.StockQuantity,
 		arg.LowStockThreshold,
@@ -412,6 +424,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.Name,
 		&i.Barcode,
 		&i.Price,
+		&i.CostPrice,
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
@@ -434,7 +447,7 @@ SET
     stock_quantity = stock_quantity - $2,
     updated_at = NOW()
 WHERE id = $1 AND store_id = $3
-RETURNING id, name, barcode, price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
 type UpdateProductStockParams struct {
@@ -451,6 +464,7 @@ func (q *Queries) UpdateProductStock(ctx context.Context, arg UpdateProductStock
 		&i.Name,
 		&i.Barcode,
 		&i.Price,
+		&i.CostPrice,
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,

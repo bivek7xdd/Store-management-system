@@ -3,6 +3,7 @@ INSERT INTO products (
     name,
     barcode,
     price,
+    cost_price,
     market_price,
     stock_quantity,
     low_stock_threshold,
@@ -14,7 +15,7 @@ INSERT INTO products (
     image_url,
     is_tracked
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 ) RETURNING *;
 
 -- name: GetProduct :one
@@ -33,15 +34,16 @@ SET
     name = COALESCE($2, name),
     barcode = COALESCE($3, barcode),
     price = COALESCE($4, price),
-    market_price = COALESCE($5, market_price),
-    stock_quantity = COALESCE($6, stock_quantity),
-    low_stock_threshold = COALESCE($7, low_stock_threshold),
-    expires_at = COALESCE($8, expires_at),
-    status = COALESCE($9, status),
-    category_id = COALESCE($10, category_id),
-    supplier_id = COALESCE($11, supplier_id),
-    image_url = COALESCE($12, image_url),
-    is_tracked = COALESCE($13, is_tracked),
+    cost_price = COALESCE($5, cost_price),
+    market_price = COALESCE($6, market_price),
+    stock_quantity = COALESCE($7, stock_quantity),
+    low_stock_threshold = COALESCE($8, low_stock_threshold),
+    expires_at = COALESCE($9, expires_at),
+    status = COALESCE($10, status),
+    category_id = COALESCE($11, category_id),
+    supplier_id = COALESCE($12, supplier_id),
+    image_url = COALESCE($13, image_url),
+    is_tracked = COALESCE($14, is_tracked),
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;

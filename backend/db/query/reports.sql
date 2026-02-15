@@ -14,6 +14,18 @@ FROM sales
 WHERE store_id = $1 AND sale_date BETWEEN $2 AND $3
 GROUP BY sales_type;
 
+-- name: GetSalesInRange :many
+SELECT 
+    s.id,
+    s.total_amount,
+    s.sales_type,
+    s.sale_date,
+    c.name as customer_name
+FROM sales s
+LEFT JOIN customers c ON s.customer_id = c.id
+WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3
+ORDER BY s.sale_date DESC;
+
 -- name: GetInventoryStats :one
 SELECT 
     COUNT(*) as total_products,
@@ -123,3 +135,13 @@ HAVING
     OR MAX(s.sale_date) IS NULL
 ORDER BY potential_revenue DESC
 LIMIT $2;
+
+-- name: GetProfitStats :one
+SELECT 
+    COALESCE(SUM(si.total_price), 0.0)::DECIMAL(12,2) as total_revenue,
+    COALESCE(SUM(si.quantity * p.cost_price), 0.0)::DECIMAL(12,2) as total_cost,
+    (COALESCE(SUM(si.total_price), 0.0) - COALESCE(SUM(si.quantity * p.cost_price), 0.0))::DECIMAL(12,2) as gross_profit
+FROM sale_items si
+JOIN products p ON si.product_id = p.id
+JOIN sales s ON si.sale_id = s.id
+WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3;

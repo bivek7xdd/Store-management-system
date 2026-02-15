@@ -52,11 +52,17 @@ export default function Reports() {
   const [dateRange, setDateRange] = useState("today");
 
   const handleExportPDF = () => {
-    toast.success("Exporting report as PDF...");
+    import("@/services/reportService").then((service) => {
+      service.exportReportPDF(dateRange);
+      toast.success("Downloading PDF report...");
+    });
   };
 
   const handleExportCSV = () => {
-    toast.success("Exporting report as CSV...");
+    import("@/services/reportService").then((service) => {
+      service.exportReportCSV(dateRange);
+      toast.success("Downloading CSV report...");
+    });
   };
 
   const { data: stats, isLoading } = useQuery({
@@ -244,6 +250,52 @@ export default function Reports() {
                 <p className="text-xs text-gray-500 mt-1">
                   {Math.round((creditSales / totalSales) * 100)}% of total
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 mt-4">
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-teal-500 to-teal-700 text-white">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-teal-100 text-sm font-medium">Estimated Gross Profit</p>
+                    <p className="text-3xl font-bold mt-1">रू {stats.profit.gross_profit.toLocaleString()}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="text-xs px-2 py-0.5 rounded-full bg-white/20">
+                        {Math.round((stats.profit.gross_profit / stats.profit.total_revenue) * 100)}% Margin
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm">
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Revenue</p>
+                      <p className="text-lg font-bold text-gray-900">रू {stats.profit.total_revenue.toLocaleString()}</p>
+                    </div>
+                    <div className="h-1 bg-teal-100 w-24 rounded-full overflow-hidden">
+                      <div className="h-full bg-teal-500" style={{ width: '100%' }} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Cost</p>
+                      <p className="text-lg font-bold text-gray-900">रू {stats.profit.total_cost.toLocaleString()}</p>
+                    </div>
+                    <div className="h-1 bg-amber-100 w-24 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, (stats.profit.total_cost / stats.profit.total_revenue) * 100)}%` }} />
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

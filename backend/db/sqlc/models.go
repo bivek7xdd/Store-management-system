@@ -186,6 +186,7 @@ type Product struct {
 	Name              string             `db:"name" json:"name"`
 	Barcode           pgtype.Text        `db:"barcode" json:"barcode"`
 	Price             pgtype.Numeric     `db:"price" json:"price"`
+	CostPrice         pgtype.Numeric     `db:"cost_price" json:"cost_price"`
 	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
 	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
 	LowStockThreshold pgtype.Int4        `db:"low_stock_threshold" json:"low_stock_threshold"`

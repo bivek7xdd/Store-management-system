@@ -113,6 +113,8 @@ func main() {
 	reportRoutes.Use(utils.JWTMiddleware())
 	{
 		reportRoutes.GET("/stats", handlers.GetReportStats)
+		reportRoutes.GET("/export/csv", handlers.ExportSalesReportCSV)
+		reportRoutes.GET("/export/pdf", handlers.ExportSalesReportPDF)
 	}
 
 	// Market routes

@@ -19,4 +19,10 @@ env "dev" {
     dir = "file://db/migration"
     revisions_schema = "public"
   }
+
+  diff {
+    skip {
+      drop_schema = true
+    }
+  }
 }
