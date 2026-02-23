@@ -24,6 +24,7 @@ import CategoryDetails from "./pages/CategoryDetails";
 import SupplierDetails from "./pages/SupplierDetails";
 import React from "react";
 import DevOfflineHandler from "./components/DevOfflineHandler";
+import { WalkthroughProvider } from "./contexts/WalkthroughContext";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -82,101 +83,103 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<EnhancedSignup />} />
-                  <Route path="/otp" element={<OTP />} />
+                <WalkthroughProvider>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<EnhancedSignup />} />
+                    <Route path="/otp" element={<OTP />} />
 
-                  {/* Protected routes */}
-                  <Route path="/" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Dashboard />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/inventory" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Inventory />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/inventory/categories" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Categories />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/inventory/suppliers" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Suppliers />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/inventory/category/:id" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <CategoryDetails />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/inventory/supplier/:id" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <SupplierDetails />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/sales" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Sales />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/sales/history" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <SalesHistory />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/debtors" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Debtors />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/reports" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Reports />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/market" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Market />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/market/discovery" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <MarketDiscovery />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Catch-all route for 404 */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                    {/* Protected routes */}
+                    <Route path="/" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Dashboard />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/inventory" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Inventory />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/inventory/categories" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Categories />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/inventory/suppliers" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Suppliers />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/inventory/category/:id" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <CategoryDetails />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/inventory/supplier/:id" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <SupplierDetails />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/sales" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Sales />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/sales/history" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <SalesHistory />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/debtors" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Debtors />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/reports" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Reports />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/market" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Market />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/market/discovery" element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <MarketDiscovery />
+                        </Layout>
+                      </ProtectedRoute>
+                    } />
+
+                    {/* Catch-all route for 404 */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </WalkthroughProvider>
               </BrowserRouter>
             </TooltipProvider>
           </AuthProvider>

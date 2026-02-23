@@ -54,7 +54,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="dashboard-cards">
         <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
@@ -126,7 +126,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm" data-tour="quick-actions">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-900">Quick Actions</CardTitle>
         </CardHeader>
@@ -165,7 +165,7 @@ export default function Dashboard() {
       </Card>
 
       {/* Alerts Section */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2" data-tour="dashboard-alerts">
         {/* Low Stock Alerts */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
@@ -261,7 +261,7 @@ export default function Dashboard() {
       </div>
 
       {/* Market Insights */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm" data-tour="market-insights">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
             <div

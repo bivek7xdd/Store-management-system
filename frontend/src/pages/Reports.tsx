@@ -89,7 +89,7 @@ export default function Reports() {
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="reports-header">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
           <p className="text-gray-500 mt-1">View business insights and export data</p>
@@ -107,7 +107,7 @@ export default function Reports() {
       </div>
 
       {/* Date Range Selector */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm" data-tour="reports-date-range">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <Calendar className="h-5 w-5 text-gray-400" />
@@ -163,7 +163,7 @@ export default function Reports() {
         </Card>
       )}
 
-      <Tabs defaultValue="sales" className="space-y-4">
+      <Tabs defaultValue="sales" className="space-y-4" data-tour="reports-tabs">
         <TabsList className="grid w-full grid-cols-3 rounded-xl bg-gray-100 p-1">
           <TabsTrigger value="sales" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <TrendingUp className="h-4 w-4" />

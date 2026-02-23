@@ -21,7 +21,7 @@ import (
 
 type RegisterStoreOwnerParams struct {
 	Name           string `json:"name" binding:"required"`
-	Email          string `json:"email" binding:"required"`
+	Email          string `json:"email" binding:"required,email"`
 	Password       string `json:"password" binding:"required"`
 	Phone          string `json:"phone"`
 	ProfilePicture string `db:"profile_picture" json:"profile_picture"`
@@ -42,7 +42,8 @@ func RegisterUserHandler(c *gin.Context) {
 		fmt.Printf("Validation error: %v\n", err)
 		// Handle validation errors
 		if errs, ok := err.(validator.ValidationErrors); ok {
-			utils.ErrorResponse(c, 500, "validation error", errs)
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid email/fields required", errs)
+			return
 		}
 
 		// Handle other errors (e.g., invalid JSON)
@@ -63,48 +64,64 @@ func RegisterUserHandler(c *gin.Context) {
 	}
 	otp, err := utils.GenerateOTP()
 	if err != nil {
-		println("error:", err)
-	}
-
-	// Create User
-	user, err := utils.Queries.CreateStoreOwner(context.Background(), db.CreateStoreOwnerParams{
-		Name:           req.Name,
-		Email:          req.Email,
-		Password:       string(hashedPassword),
-		Phone:          req.Phone,
-		ProfilePicture: req.ProfilePicture,
-	})
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate OTP", err)
 		return
 	}
 
-	// Create Store Info
-	_, err = utils.Queries.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
-		OwnerID:      user.ID,
-		Name:         req.StoreName,
-		Address:      req.StoreAddress,
-		CurrencyCode: req.CurrencyCode,
+	var createdUser db.StoreOwner
+
+	// Execute user creation, store info, token logic and email dispatch inside a transaction.
+	err = utils.Store.ExecTx(context.Background(), func(q *db.Queries) error {
+		var txErr error
+
+		// 1. Create User
+		createdUser, txErr = q.CreateStoreOwner(context.Background(), db.CreateStoreOwnerParams{
+			Name:           req.Name,
+			Email:          req.Email,
+			Password:       string(hashedPassword),
+			Phone:          req.Phone,
+			ProfilePicture: req.ProfilePicture,
+		})
+		if txErr != nil {
+			return fmt.Errorf("failed to create user: %w", txErr)
+		}
+
+		// 2. Create Store Info
+		_, txErr = q.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
+			OwnerID:      createdUser.ID,
+			Name:         req.StoreName,
+			Address:      req.StoreAddress,
+			CurrencyCode: req.CurrencyCode,
+		})
+		if txErr != nil {
+			return fmt.Errorf("failed to create store info: %w", txErr)
+		}
+
+		// 3. Set the OTP
+		_, txErr = q.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+			UserEmail: createdUser.Email,
+			Otp:       otp,
+			Purpose:   "email_verification",
+		})
+		if txErr != nil {
+			return fmt.Errorf("failed to create otp token: %w", txErr)
+		}
+
+		// 4. Send the OTP Email (rolls back all above steps if it fails)
+		txErr = utils.SendOTPEmail(createdUser.Email, otp)
+		if txErr != nil {
+			return fmt.Errorf("failed to send mail: %w", txErr)
+		}
+
+		return nil
 	})
+
 	if err != nil {
-		// Note: Ideally we should rollback user creation here, but keeping it simple for now
-		fmt.Printf("Failed to create store info: %v\n", err)
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create store info", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
 
-	//set the otp
-	utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
-		UserEmail: user.Email,
-		Otp:       otp,
-		Purpose:   "email_verification",
-	})
-	//TODO: Fix the bug of creating user even though the email is not sent
-	err = utils.SendOTPEmail(user.Email, otp)
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Error sending mail", err)
-	}
-	utils.SuccessResponse(c, "User and Store created successfully", user)
+	utils.SuccessResponse(c, "User and Store created successfully", createdUser)
 
 }
 

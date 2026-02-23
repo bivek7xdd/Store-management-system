@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS otp_tokens(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_email VARCHAR(50) NOT NULL,
-    otp VARCHAR(6) NOT NULL,
+    otp VARCHAR(6) NOT NULL,    
     purpose VARCHAR(50) NOT NULL, -- 'email_verification', 'password_reset'
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMPTZ NOT NULL

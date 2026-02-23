@@ -21,7 +21,7 @@ export function MarketSidebarItem({ isActive }: { isActive: boolean }) {
     ];
 
     return (
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" data-tour="sidebar-market">
             <AccordionItem value="market" className="border-0">
                 <AccordionTrigger
                     className={cn(

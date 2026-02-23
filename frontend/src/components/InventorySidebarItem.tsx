@@ -23,7 +23,7 @@ export function InventorySidebarItem({ isActive }: { isActive: boolean }) {
     ];
 
     return (
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" data-tour="sidebar-inventory">
             <AccordionItem value="inventory" className="border-0">
                 <AccordionTrigger
                     className={cn(

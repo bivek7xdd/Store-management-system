@@ -111,6 +111,8 @@ export const syncService = {
       const errors: string[] = [];
 
       for (const sale of unsyncedSales) {
+        console.log("Raw sale data from DB:", JSON.stringify(sale, null, 2));  // Log exactly what's retrieved from DB
+
         try {
           // Emit progress update
           syncEvents.emit('syncProgress', {
@@ -119,15 +121,32 @@ export const syncService = {
             current: `Syncing sale ${sale.id}...`
           });
 
+          // Trim and validate customer fields
+          const cleanedSale = {
+            ...sale,
+            customer_name: (sale.customer_name || '').trim(),
+            customer_phone: (sale.customer_phone || '').trim(),
+          };
+
           // Prepare payload matching CreateSaleData
           const payload = {
-            sales_type: sale.sales_type,
-            amount_paid: sale.amount_paid,
-            note: sale.note,
-            discount_applied: sale.discount_applied,
-            customer_id: sale.customer_id,
-            items: sale.items,
+            sales_type: cleanedSale.sales_type,
+            amount_paid: cleanedSale.amount_paid,
+            total_amount: cleanedSale.total_amount,
+            note: cleanedSale.note,
+            discount_applied: cleanedSale.discount_applied,
+            customer_name: cleanedSale.customer_name,
+            customer_phone: cleanedSale.customer_phone,
+            items: cleanedSale.items,
           };
+
+          console.log("Transformed sale data payload:", JSON.stringify(payload, null, 2));
+
+          // Validate key fields, including customer details for credit
+          if (payload.sales_type === 'credit' && (!payload.customer_name || !payload.customer_phone)) {
+            console.error("Customer details missing for credit sale:", payload);
+            throw new Error("Customer details required for credit sales");
+          }
 
           console.log(`Syncing sale ID ${sale.id}...`);
           const response = await api.post('sales/create', payload);
@@ -141,9 +160,12 @@ export const syncService = {
 
           syncedCount++;
           console.log(`Sale ID ${sale.id} synced successfully`);
-        } catch (error) {
+        } catch (error: any) {
           const errorMsg = `Failed to sync sale ${sale.id}: ${error}`;
           console.warn(errorMsg);
+          console.error("Full backend error response:", JSON.stringify(error.response?.data, null, 2));
+          console.error("Raw DB data:", JSON.stringify(sale, null, 2));
+          console.error("Transformed payload:", JSON.stringify(payload, null, 2));
           errors.push(errorMsg);
         }
       }

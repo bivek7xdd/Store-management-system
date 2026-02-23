@@ -262,12 +262,12 @@ export default function Market() {
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
-      <div>
+      <div data-tour="market-header">
         <h1 className="text-3xl font-bold text-gray-900">Market Insights</h1>
         <p className="text-gray-500 mt-1">Real-time competitor analysis and market trends</p>
       </div>
 
-      <Card className="border-0 shadow-sm overflow-hidden relative">
+      <Card className="border-0 shadow-sm overflow-hidden relative" data-tour="market-competitors">
         <div className="absolute inset-0 bg-gradient-to-r from-teal-900 to-teal-800 opacity-90 z-0" />
         <CardContent className="pt-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white">
@@ -309,7 +309,7 @@ export default function Market() {
             <div className="p-2 rounded-lg bg-teal-50">
               <TrendingUp className="h-5 w-5 text-teal-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Tracked Online Prices</h2>
+            <h2 className="text-xl font-bold text-gray-900" data-tour="market-prices">Tracked Online Prices</h2>
           </div>
           <Button
             variant="outline"

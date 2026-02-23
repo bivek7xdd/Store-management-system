@@ -225,80 +225,86 @@ export default function Sales() {
     setCart(cart.filter((item) => item.productId !== productId));
   };
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) {
-      toast.error("Cart is empty");
-      return;
+const handleCheckout = async () => {
+  if (cart.length === 0) {
+    toast.error("Cart is empty");
+    return;
+  }
+
+  // Validate and trim customer details
+  const trimmedCustomerName = customerName.trim();
+  const trimmedCustomerPhone = customerPhone.trim();
+
+  // Check if partial payment (credit) but no customer details
+  if (change < 0 && (!trimmedCustomerName || !trimmedCustomerPhone)) {
+    toast.error("Please enter valid customer details for partial payment / credit sales");
+    return;
+  }
+
+  // Validate numeric inputs to prevent NaN or invalid values in saleData
+  const parsedDiscountValue = parseFloat(discountValue) || 0;
+  const parsedAmountReceived = amountReceived ? parseFloat(amountReceived) : 0;
+  if (isNaN(parsedDiscountValue) || parsedDiscountValue < 0) {
+    toast.error("Invalid discount value. Please enter a valid number.");
+    return;
+  }
+  if (isNaN(parsedAmountReceived) || parsedAmountReceived < 0) {
+    toast.error("Invalid amount received. Please enter a valid number.");
+    return;
+  }
+  if (isNaN(subtotal) || subtotal < 0) {
+    toast.error("Invalid cart subtotal. Please check cart items.");
+    return;
+  }
+
+  setIsProcessing(true);
+  try {
+    const saleData: CreateSaleData = {
+      sales_type: change < 0 ? "credit" : "cash",
+      amount_paid: parsedAmountReceived,
+      total_amount: finalTotal,
+      note: debtNote,
+      discount_applied: discountAmount,
+      customer_name: trimmedCustomerName,
+      customer_phone: trimmedCustomerPhone,
+      items: cart.map(item => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.price * item.quantity,
+        product_name: item.name
+      }))
+    };
+
+    console.log("Creating sale with data:", saleData);  // This should now print if validation passes
+    console.log("Offline status:", offlineStatus.isOnline);  // Additional debug log
+
+    await salesService.createSale(saleData);
+
+    // Show appropriate success message based on online status
+    if (offlineStatus.isOnline) {
+      toast.success("Sale completed successfully!");
+    } else {
+      toast.success("Sale saved offline! Will sync when connection is restored.");
     }
 
-    // Check if partial payment (credit) but no customer details
-    if (change < 0 && (!customerName || !customerPhone)) {
-      toast.error("Please enter customer details for partial payment / credit sales");
-      return;
-    }
+    // ...existing code (reset state)...
+  } catch (error: any) {
+    console.error("Checkout error:", error);  // Enhanced logging for debugging
+    console.error("Error response:", error.response?.data);  // Log backend error details
+    toast.error(error.response?.data?.message || "Failed to complete sale");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
-    setIsProcessing(true);
-    try {
-      const saleData: CreateSaleData = {
-        sales_type: change < 0 ? "credit" : "cash", // Logic handled by backend mostly, but good for intent
-        amount_paid: amountReceived ? parseFloat(amountReceived) : 0,
-        total_amount: finalTotal, // Added total_amount
-        note: debtNote,
-        discount_applied: discountAmount,
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        items: cart.map(item => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: item.price,
-          total_price: item.price * item.quantity,
-          product_name: item.name
-        }))
-      };
-
-      await salesService.createSale(saleData);
-
-      // Show appropriate success message based on online status
-      if (offlineStatus.isOnline) {
-        toast.success("Sale completed successfully!");
-      } else {
-        toast.success("Sale saved offline! Will sync when connection is restored.");
-      }
-
-      setCart([]);
-      setCustomerName("");
-      setCustomerPhone("");
-      setDebtNote("");
-      setAmountReceived("");
-      setDiscountValue("");
-      setSearchTerm("");
-
-      // Trigger search/refresh to update UI stock
-      // Since searchTerm is cleared, we might want to just reset products or refetch default
-      // But if we clear search, products list might clear too.
-      // Ideally user wants to see the updated stock if they search again.
-      // If we cleared the search, the list is empty. 
-      // Let's just clear products for now, or if we want to keep them, we need to refetch.
-      setProducts([]);
-
-      // Update pending sales count after offline sale
-      if (!offlineStatus.isOnline) {
-        syncService.updatePendingSalesCount();
-      }
-    } catch (error: any) {
-      console.error("Checkout error:", error);
-      toast.error(error.response?.data?.message || "Failed to complete sale");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   if (authLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-tour="sales-header">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Sales / POS</h1>
           <p className="text-gray-500 mt-1">Create new sales and manage transactions</p>
@@ -370,7 +376,7 @@ export default function Sales() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Product Search */}
         <div className="lg:col-span-2 space-y-4">
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm" data-tour="sales-search">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-semibold text-gray-900">Product Search</CardTitle>
@@ -464,7 +470,7 @@ export default function Sales() {
 
         {/* Cart & Checkout */}
         <div className="space-y-4">
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm" data-tour="sales-cart">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -553,7 +559,7 @@ export default function Sales() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm" data-tour="sales-payment">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold text-gray-900">Payment</CardTitle>
             </CardHeader>

@@ -21,7 +21,7 @@ export function SalesSidebarItem({ isActive }: { isActive: boolean }) {
     ];
 
     return (
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" data-tour="sidebar-sales">
             <AccordionItem value="sales" className="border-0">
                 <AccordionTrigger
                     className={cn(

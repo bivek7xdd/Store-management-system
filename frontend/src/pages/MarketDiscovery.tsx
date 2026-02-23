@@ -27,7 +27,6 @@ import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
 import categoryPreferencesService from "@/services/categoryPreferences";
 import { inventoryService } from "@/services/inventory";
 
-// Fix for default Leaflet marker icons in React/Vite
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
@@ -1187,7 +1186,7 @@ export default function MarketDiscovery() {
             </div>
 
             {/* Search Section */}
-            <Card className="border-0 shadow-sm" style={{ background: colors.primaryDark }}>
+            <Card className="border-0 shadow-sm" style={{ background: colors.primaryDark }} data-tour="market-discovery-search">
                 <CardContent className="pt-6">
                     <form onSubmit={handleSearch} className="space-y-4">
                         {/* Search Input */}
@@ -1309,7 +1308,7 @@ export default function MarketDiscovery() {
             {/* Map and Results Grid */}
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Map Container */}
-                <Card className="border-0 shadow-sm lg:col-span-2 overflow-hidden h-[500px] relative z-0">
+                <Card className="border-0 shadow-sm lg:col-span-2 overflow-hidden h-[500px] relative z-0" data-tour="market-discovery-map">
                     {currentMapCenter ? (
                         <MapContainer
                             center={[currentMapCenter.lat, currentMapCenter.lng]}

@@ -27,6 +27,7 @@ import {
   Plus,
   Box,
   Truck,
+  HelpCircle,
 } from "lucide-react";
 import {
   Accordion,
@@ -40,6 +41,7 @@ import { CreateCategoryDialog, CreateSupplierDialog } from "./CreateInventoryDia
 import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
 import { MarketSidebarItem } from "./MarketSidebarItem";
+import { useWalkthrough } from "@/contexts/WalkthroughContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -58,6 +60,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { startTour } = useWalkthrough();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -112,7 +115,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex flex-1 flex-col mt-6">
+          <nav className="flex flex-1 flex-col mt-6" data-tour="sidebar-nav">
             <p className="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Menu
             </p>
@@ -145,6 +148,7 @@ export default function Layout({ children }: LayoutProps) {
                   <Link
                     key={item.path}
                     to={isOfflineDisabled ? "#" : item.path}
+                    data-tour={`sidebar-${item.label.toLowerCase()}`}
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                       isActive
@@ -169,8 +173,20 @@ export default function Layout({ children }: LayoutProps) {
               })}
             </div>
 
+            {/* Start Tour Button */}
+            <div className="mt-auto pt-4">
+              <button
+                onClick={startTour}
+                data-tour="start-tour-btn"
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+              >
+                <HelpCircle className="h-5 w-5 shrink-0" />
+                Start Tour
+              </button>
+            </div>
+
             {/* User Menu */}
-            <div className="mt-auto pt-4 border-t border-border flex items-center gap-2">
+            <div className="pt-2 border-t border-border flex items-center gap-2" data-tour="user-profile">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

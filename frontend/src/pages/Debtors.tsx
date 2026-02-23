@@ -142,7 +142,7 @@ export default function Debtors() {
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start" data-tour="debtors-header">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Debtors / Credit Management</h1>
           <p className="text-gray-500 mt-1">Track outstanding payments from customers</p>
@@ -156,7 +156,7 @@ export default function Debtors() {
       </div>
 
       {/* Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="debtors-summary">
         <Card className="border-0 shadow-sm" style={{ background: colors.primaryDark }}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between text-white">
@@ -191,7 +191,7 @@ export default function Debtors() {
       </div>
 
       {/* Filters & Search */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm" data-tour="debtors-filters">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -223,7 +223,7 @@ export default function Debtors() {
       </Card>
 
       {/* Debtors List */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="debtors-list">
         {loading ? (
           // Skeleton Loading
           Array.from({ length: 6 }).map((_, i) => (

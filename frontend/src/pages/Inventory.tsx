@@ -411,7 +411,7 @@ export default function Inventory() {
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="inventory-header">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
           <p className="text-gray-500 mt-1">Manage your products and stock levels</p>
@@ -580,7 +580,7 @@ export default function Inventory() {
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm" data-tour="inventory-filters">
         <CardContent className="pt-6">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="relative">
@@ -627,7 +627,7 @@ export default function Inventory() {
       </Card >
 
       {/* Products Grid */}
-      < div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="inventory-grid">
         {
           filteredProducts.map((product: Product) => {
             const stockQuantity = product.stock_quantity;
