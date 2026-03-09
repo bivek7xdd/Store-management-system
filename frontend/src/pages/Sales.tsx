@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2, WifiOff, Database } from "lucide-react";
+import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2, WifiOff, Database, AlertCircle } from "lucide-react";
 import { inventoryService } from "@/services/inventory";
 import { salesService, CreateSaleData } from "@/services/sales";
 import { syncService } from "@/services/syncService";
@@ -225,78 +225,78 @@ export default function Sales() {
     setCart(cart.filter((item) => item.productId !== productId));
   };
 
-const handleCheckout = async () => {
-  if (cart.length === 0) {
-    toast.error("Cart is empty");
-    return;
-  }
-
-  // Validate and trim customer details
-  const trimmedCustomerName = customerName.trim();
-  const trimmedCustomerPhone = customerPhone.trim();
-
-  // Check if partial payment (credit) but no customer details
-  if (change < 0 && (!trimmedCustomerName || !trimmedCustomerPhone)) {
-    toast.error("Please enter valid customer details for partial payment / credit sales");
-    return;
-  }
-
-  // Validate numeric inputs to prevent NaN or invalid values in saleData
-  const parsedDiscountValue = parseFloat(discountValue) || 0;
-  const parsedAmountReceived = amountReceived ? parseFloat(amountReceived) : 0;
-  if (isNaN(parsedDiscountValue) || parsedDiscountValue < 0) {
-    toast.error("Invalid discount value. Please enter a valid number.");
-    return;
-  }
-  if (isNaN(parsedAmountReceived) || parsedAmountReceived < 0) {
-    toast.error("Invalid amount received. Please enter a valid number.");
-    return;
-  }
-  if (isNaN(subtotal) || subtotal < 0) {
-    toast.error("Invalid cart subtotal. Please check cart items.");
-    return;
-  }
-
-  setIsProcessing(true);
-  try {
-    const saleData: CreateSaleData = {
-      sales_type: change < 0 ? "credit" : "cash",
-      amount_paid: parsedAmountReceived,
-      total_amount: finalTotal,
-      note: debtNote,
-      discount_applied: discountAmount,
-      customer_name: trimmedCustomerName,
-      customer_phone: trimmedCustomerPhone,
-      items: cart.map(item => ({
-        product_id: item.productId,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
-        product_name: item.name
-      }))
-    };
-
-    console.log("Creating sale with data:", saleData);  // This should now print if validation passes
-    console.log("Offline status:", offlineStatus.isOnline);  // Additional debug log
-
-    await salesService.createSale(saleData);
-
-    // Show appropriate success message based on online status
-    if (offlineStatus.isOnline) {
-      toast.success("Sale completed successfully!");
-    } else {
-      toast.success("Sale saved offline! Will sync when connection is restored.");
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      toast.error("Cart is empty");
+      return;
     }
 
-    // ...existing code (reset state)...
-  } catch (error: any) {
-    console.error("Checkout error:", error);  // Enhanced logging for debugging
-    console.error("Error response:", error.response?.data);  // Log backend error details
-    toast.error(error.response?.data?.message || "Failed to complete sale");
-  } finally {
-    setIsProcessing(false);
-  }
-};
+    // Validate and trim customer details
+    const trimmedCustomerName = customerName.trim();
+    const trimmedCustomerPhone = customerPhone.trim();
+
+    // Check if partial payment (credit) but no customer details
+    if (change < 0 && (!trimmedCustomerName || !trimmedCustomerPhone)) {
+      toast.error("Please enter valid customer details for partial payment / credit sales");
+      return;
+    }
+
+    // Validate numeric inputs to prevent NaN or invalid values in saleData
+    const parsedDiscountValue = parseFloat(discountValue) || 0;
+    const parsedAmountReceived = amountReceived ? parseFloat(amountReceived) : 0;
+    if (isNaN(parsedDiscountValue) || parsedDiscountValue < 0) {
+      toast.error("Invalid discount value. Please enter a valid number.");
+      return;
+    }
+    if (isNaN(parsedAmountReceived) || parsedAmountReceived < 0) {
+      toast.error("Amount received cannot be negative");
+      return;
+    }
+    if (isNaN(subtotal) || subtotal < 0) {
+      toast.error("Invalid cart subtotal. Please check cart items.");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const saleData: CreateSaleData = {
+        sales_type: change < 0 ? "credit" : "cash",
+        amount_paid: parsedAmountReceived,
+        total_amount: finalTotal,
+        note: debtNote,
+        discount_applied: discountAmount,
+        customer_name: trimmedCustomerName,
+        customer_phone: trimmedCustomerPhone,
+        items: cart.map(item => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.price,
+          total_price: item.price * item.quantity,
+          product_name: item.name
+        }))
+      };
+
+      console.log("Creating sale with data:", saleData);  // This should now print if validation passes
+      console.log("Offline status:", offlineStatus.isOnline);  // Additional debug log
+
+      await salesService.createSale(saleData);
+
+      // Show appropriate success message based on online status
+      if (offlineStatus.isOnline) {
+        toast.success("Sale completed successfully!");
+      } else {
+        toast.success("Sale saved offline! Will sync when connection is restored.");
+      }
+
+      // ...existing code (reset state)...
+    } catch (error: any) {
+      console.error("Checkout error:", error);  // Enhanced logging for debugging
+      console.error("Error response:", error.response?.data);  // Log backend error details
+      toast.error(error.response?.data?.message || "Failed to complete sale");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
 
   if (authLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
@@ -598,10 +598,11 @@ const handleCheckout = async () => {
                   <Input
                     id="amountReceived"
                     type="number"
+                    min={0}
                     placeholder="Enter amount given by customer"
                     value={amountReceived}
                     onChange={(e) => setAmountReceived(e.target.value)}
-                    className="h-12 rounded-xl border-gray-200 pl-4 font-semibold text-lg"
+                    className={`h-12 rounded-xl border-gray-200 pl-4 font-semibold text-lg ${parseFloat(amountReceived) < 0 ? "border-red-500 bg-red-50" : ""}`}
                   />
                   {amountReceived && (
                     <Button
@@ -617,17 +618,17 @@ const handleCheckout = async () => {
               </div>
 
               {amountReceived && (
-                <div className={`p-4 rounded-xl border flex justify-between items-center ${change >= 0 ? "bg-teal-50 border-teal-100" : "bg-orange-50 border-orange-100"}`}>
+                <div className={`p-4 rounded-xl border flex justify-between items-center ${parseFloat(amountReceived) < 0 ? "bg-red-50 border-red-100" : (change >= 0 ? "bg-teal-50 border-teal-100" : "bg-orange-50 border-orange-100")}`}>
                   <div>
-                    <p className={`text-xs font-medium uppercase tracking-wider ${change >= 0 ? "text-teal-600" : "text-orange-600"}`}>
-                      {change >= 0 ? "Change to Return" : "Remaining Due / Debt"}
+                    <p className={`text-xs font-medium uppercase tracking-wider ${parseFloat(amountReceived) < 0 ? "text-red-600" : (change >= 0 ? "text-teal-600" : "text-orange-600")}`}>
+                      {parseFloat(amountReceived) < 0 ? "Error" : (change >= 0 ? "Change to Return" : "Remaining Due / Debt")}
                     </p>
-                    <p className={`text-xl font-bold ${change >= 0 ? "text-teal-700" : "text-orange-700"}`}>
-                      रू {Math.abs(change).toLocaleString()}
+                    <p className={`text-xl font-bold ${parseFloat(amountReceived) < 0 ? "text-red-700" : (change >= 0 ? "text-teal-700" : "text-orange-700")}`}>
+                      {parseFloat(amountReceived) < 0 ? "Invalid Amount" : `रू ${Math.abs(change).toLocaleString()}`}
                     </p>
                   </div>
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${change >= 0 ? "bg-teal-100" : "bg-orange-100"}`}>
-                    <Banknote className={`h-5 w-5 ${change >= 0 ? "text-teal-600" : "text-orange-600"}`} />
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${parseFloat(amountReceived) < 0 ? "bg-red-100" : (change >= 0 ? "bg-teal-100" : "bg-orange-100")}`}>
+                    {parseFloat(amountReceived) < 0 ? <AlertCircle className="h-5 w-5 text-red-600" /> : <Banknote className={`h-5 w-5 ${change >= 0 ? "text-teal-600" : "text-orange-600"}`} />}
                   </div>
                 </div>
               )}

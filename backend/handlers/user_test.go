@@ -435,25 +435,51 @@ func TestAuthMiddleware_MalformedAuthHeader(t *testing.T) {
 
 // ====================================================================
 // SEC-01: SQL Injection / XSS attempts on auth endpoints
+// These tests verify that malicious payloads are REJECTED (400),
+// not just "don't crash". The handler must refuse to store dangerous input.
 // ====================================================================
 func TestRegister_SQLInjectionAttempts(t *testing.T) {
 	router := setupTestRouter()
 
 	tests := []struct {
-		name string
-		body string
+		name        string
+		body        string
+		expectedMsg string
 	}{
 		{
-			name: "SQL Injection in email",
-			body: `{"email":"admin'--@test.com","password":"validpass123","name":"Test","store_name":"Store","store_address":"Addr","currency_code":"USD"}`,
+			name:        "SQL Injection in name (DROP TABLE)",
+			body:        `{"email":"sqli1@example.com","password":"validpass123","name":"'; DROP TABLE store_owners; --","store_name":"Store","store_address":"Addr","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in name",
 		},
 		{
-			name: "SQL Injection in name",
-			body: `{"email":"test@example.com","password":"validpass123","name":"'; DROP TABLE store_owners; --","store_name":"Store","store_address":"Addr","currency_code":"USD"}`,
+			name:        "SQL Injection in name (UNION SELECT)",
+			body:        `{"email":"sqli2@example.com","password":"validpass123","name":"' UNION SELECT * FROM store_owners --","store_name":"Store","store_address":"Addr","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in name",
 		},
 		{
-			name: "XSS in store name",
-			body: `{"email":"test@xss.com","password":"validpass123","name":"Test","store_name":"<script>alert('xss')</script>","store_address":"Addr","currency_code":"USD"}`,
+			name:        "SQL Injection in store_name",
+			body:        `{"email":"sqli3@example.com","password":"validpass123","name":"Test","store_name":"'; DELETE FROM products; --","store_address":"Addr","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in store_name",
+		},
+		{
+			name:        "SQL Injection in store_address",
+			body:        `{"email":"sqli4@example.com","password":"validpass123","name":"Test","store_name":"Store","store_address":"'; DROP TABLE stores; --","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in store_address",
+		},
+		{
+			name:        "XSS in store name (script tag)",
+			body:        `{"email":"xss1@example.com","password":"validpass123","name":"Test","store_name":"<script>alert('xss')</script>","store_address":"Addr","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in store_name",
+		},
+		{
+			name:        "XSS in name (img tag with onerror)",
+			body:        `{"email":"xss2@example.com","password":"validpass123","name":"<img src=x onerror=alert(1)>","store_name":"Store","store_address":"Addr","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in name",
+		},
+		{
+			name:        "XSS in store_address (iframe)",
+			body:        `{"email":"xss3@example.com","password":"validpass123","name":"Test","store_name":"Store","store_address":"<iframe src='evil.com'></iframe>","currency_code":"USD"}`,
+			expectedMsg: "Invalid characters in store_address",
 		},
 	}
 
@@ -464,10 +490,48 @@ func TestRegister_SQLInjectionAttempts(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			router.ServeHTTP(w, req)
 
-			// These should either fail validation (400) or succeed without causing damage
-			// They should NOT cause a 500 server error from SQL injection
-			assert.NotEqual(t, http.StatusInternalServerError, w.Code,
-				"SQL injection/XSS should not cause server error")
+			// Malicious input must be REJECTED, not silently stored
+			assert.Equal(t, http.StatusBadRequest, w.Code,
+				"SQL injection/XSS should be rejected with 400. Got %d. Body: %s", w.Code, w.Body.String())
+			assert.Contains(t, w.Body.String(), tt.expectedMsg,
+				"Response should indicate which field contains invalid characters")
+		})
+	}
+}
+
+// TestRegister_CleanInputAccepted ensures that the sanitization doesn't block legitimate input.
+func TestRegister_CleanInputAccepted(t *testing.T) {
+	router := setupTestRouter()
+
+	// These should NOT be rejected by sanitization (they may still fail for other reasons like DB)
+	tests := []struct {
+		name string
+		body string
+	}{
+		{
+			name: "Name with apostrophe (O'Brien)",
+			body: `{"email":"obrien@example.com","password":"validpass123","name":"O'Brien","store_name":"O'Brien's Shop","store_address":"123 Main St","currency_code":"USD"}`,
+		},
+		{
+			name: "Name with ampersand",
+			body: `{"email":"amper@example.com","password":"validpass123","name":"Ben & Jerry","store_name":"B&J Store","store_address":"456 Elm St","currency_code":"USD"}`,
+		},
+		{
+			name: "Name with unicode",
+			body: `{"email":"unicode@example.com","password":"validpass123","name":"José García","store_name":"Tienda México","store_address":"Calle 123","currency_code":"MXN"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/register", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, req)
+
+			// These should NOT be rejected by input sanitization
+			assert.NotEqual(t, http.StatusBadRequest, w.Code,
+				"Legitimate input should not be rejected. Body: %s", w.Body.String())
 		})
 	}
 }
@@ -480,12 +544,16 @@ func TestLogin_SQLInjectionAttempts(t *testing.T) {
 		body string
 	}{
 		{
-			name: "SQL Injection in email",
+			name: "SQL Injection in email (OR bypass)",
 			body: `{"email":"admin' OR '1'='1","password":"anything"}`,
 		},
 		{
-			name: "SQL Injection in password",
+			name: "SQL Injection in password (OR bypass)",
 			body: `{"email":"test@test.com","password":"' OR '1'='1"}`,
+		},
+		{
+			name: "SQL Injection in email (UNION SELECT)",
+			body: `{"email":"' UNION SELECT * FROM store_owners --","password":"anything"}`,
 		},
 	}
 
@@ -496,7 +564,7 @@ func TestLogin_SQLInjectionAttempts(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			router.ServeHTTP(w, req)
 
-			// Should return 401 (user not found) or 400, never a 500
+			// Should return 401 (user not found) or 400, never 200 or 500
 			assert.NotEqual(t, http.StatusInternalServerError, w.Code,
 				"SQL injection should not cause server error")
 			assert.NotEqual(t, http.StatusOK, w.Code,

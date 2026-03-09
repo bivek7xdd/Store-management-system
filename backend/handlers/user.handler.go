@@ -50,6 +50,18 @@ func RegisterUserHandler(c *gin.Context) {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
 		return
 	}
+
+	// Validate inputs for SQL injection / XSS patterns
+	if offending := utils.ValidateUserInputFields(map[string]string{
+		"name":          req.Name,
+		"email":         req.Email,
+		"store_name":    req.StoreName,
+		"store_address": req.StoreAddress,
+		"phone":         req.Phone,
+	}); offending != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid characters in %s", offending), nil)
+		return
+	}
 	//check if user already exists
 	_, err := utils.Queries.GetStoreOwnerByEmail(context.Background(), req.Email)
 	if err == nil {
@@ -190,6 +202,15 @@ func CreateStoreInfoHandler(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	// Validate inputs for SQL injection / XSS patterns
+	if offending := utils.ValidateUserInputFields(map[string]string{
+		"name":    req.Name,
+		"address": req.Address,
+	}); offending != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid characters in %s", offending), nil)
 		return
 	}
 

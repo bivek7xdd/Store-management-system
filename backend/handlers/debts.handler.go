@@ -85,6 +85,10 @@ func GetDebts(c *gin.Context) {
 		return
 	}
 
+	if debts == nil {
+		debts = []db.GetDebtsRow{}
+	}
+
 	utils.SuccessResponse(c, "Debts fetched successfully", debts)
 }
 
@@ -290,4 +294,65 @@ func SendDebtReminder(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, "SMS sent successfully", nil)
+}
+
+type recordPaymentReq struct {
+	Amount float64 `json:"amount" binding:"required,gt=0"`
+}
+
+func RecordDebtPayment(c *gin.Context) {
+	idParam := c.Param("id")
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	debtUUID, err := uuid.Parse(idParam)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid debt ID", err)
+		return
+	}
+
+	var req recordPaymentReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body. Amount must be greater than 0.", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	// First, check if debt exists and is not already paid
+	debt, err := utils.Queries.GetDebt(ctx, db.GetDebtParams{
+		ID:      pgtype.UUID{Bytes: debtUUID, Valid: true},
+		StoreID: storeID,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "Debt not found", err)
+		return
+	}
+
+	owed, _ := debt.AmountOwed.Float64Value()
+	paid, _ := debt.AmountPaid.Float64Value()
+	outstanding := owed.Float64 - paid.Float64
+
+	if outstanding <= 0 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Debt is already fully paid", nil)
+		return
+	}
+
+	// Validate payment amount doesn't exceed outstanding (optional but good practice)
+	// We'll allow over-payment for now as it might be a tip or rounding,
+	// but the SQL CASE handles status correctly.
+
+	updatedDebt, err := utils.Queries.RecordDebtPayment(ctx, db.RecordDebtPaymentParams{
+		ID:         pgtype.UUID{Bytes: debtUUID, Valid: true},
+		StoreID:    storeID,
+		AmountPaid: utils.Numeric(req.Amount),
+	})
+
+	if err != nil {
+		log.Printf("error recording debt payment: %v", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to record payment", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Payment recorded successfully", updatedDebt)
 }

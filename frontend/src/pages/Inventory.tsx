@@ -79,6 +79,7 @@ export default function Inventory() {
   const [searchScannerOpen, setSearchScannerOpen] = useState(false);
   const [formScannerOpen, setFormScannerOpen] = useState(false);
   const [barcodeValue, setBarcodeValue] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -319,9 +320,24 @@ export default function Inventory() {
     if (!open) {
       setEditingProduct(null);
       setBarcodeValue("");
+      setFormErrors({});
     } else if (editingProduct) {
       setBarcodeValue(getTextValue(editingProduct.barcode));
     }
+  };
+
+  const INT32_MAX = 2_147_483_647;
+
+  const validateProductForm = (data: CreateProductData): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (data.price < 0) errors.price = "Price cannot be negative";
+    if (data.cost_price < 0) errors.cost_price = "Cost price cannot be negative";
+    if (data.market_price !== undefined && data.market_price < 0) errors.market_price = "Market price cannot be negative";
+    if (data.stock_quantity < 0) errors.stock_quantity = "Stock quantity cannot be negative";
+    if (data.stock_quantity > INT32_MAX) errors.stock_quantity = `Stock quantity cannot exceed ${INT32_MAX.toLocaleString()}`;
+    if (data.low_stock_threshold !== undefined && data.low_stock_threshold < 0) errors.low_stock_threshold = "Low stock alert cannot be negative";
+    if (data.low_stock_threshold !== undefined && data.low_stock_threshold > INT32_MAX) errors.low_stock_threshold = `Low stock alert cannot exceed ${INT32_MAX.toLocaleString()}`;
+    return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -339,6 +355,13 @@ export default function Inventory() {
       expires_at: formData.get("expires_at") ? new Date(formData.get("expires_at") as string).toISOString() : undefined,
       category_id: formData.get("category_id") as string,
     };
+
+    const errors = validateProductForm(data);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
 
     try {
       if (editingProduct) {
@@ -501,8 +524,14 @@ export default function Inventory() {
                       defaultValue={editingProduct ? getNumericValue(editingProduct.price) : undefined}
                       placeholder="100"
                       required
-                      className="rounded-lg"
+                      className={`rounded-lg ${formErrors.price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                      onChange={() => setFormErrors(prev => ({ ...prev, price: "" }))}
                     />
+                    {formErrors.price && (
+                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                        <span>⚠</span> {formErrors.price}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)*</Label>
@@ -514,8 +543,14 @@ export default function Inventory() {
                       defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
                       placeholder="80"
                       required
-                      className="rounded-lg"
+                      className={`rounded-lg ${formErrors.cost_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                      onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
                     />
+                    {formErrors.cost_price && (
+                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                        <span>⚠</span> {formErrors.cost_price}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -528,8 +563,14 @@ export default function Inventory() {
                       step="0.01"
                       defaultValue={editingProduct ? getNumericValue(editingProduct.market_price) : undefined}
                       placeholder="120"
-                      className="rounded-lg"
+                      className={`rounded-lg ${formErrors.market_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                      onChange={() => setFormErrors(prev => ({ ...prev, market_price: "" }))}
                     />
+                    {formErrors.market_price && (
+                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                        <span>⚠</span> {formErrors.market_price}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
@@ -537,11 +578,19 @@ export default function Inventory() {
                       id="stock_quantity"
                       name="stock_quantity"
                       type="number"
+                      min={0}
+                      max={2147483647}
                       defaultValue={editingProduct?.stock_quantity}
                       placeholder="50"
                       required
-                      className="rounded-lg"
+                      className={`rounded-lg ${formErrors.stock_quantity ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                      onChange={() => setFormErrors(prev => ({ ...prev, stock_quantity: "" }))}
                     />
+                    {formErrors.stock_quantity && (
+                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                        <span>⚠</span> {formErrors.stock_quantity}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -550,10 +599,18 @@ export default function Inventory() {
                     id="low_stock_threshold"
                     name="low_stock_threshold"
                     type="number"
+                    min={0}
+                    max={2147483647}
                     defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
                     placeholder="10"
-                    className="rounded-lg"
+                    className={`rounded-lg ${formErrors.low_stock_threshold ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                    onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
                   />
+                  {formErrors.low_stock_threshold && (
+                    <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                      <span>⚠</span> {formErrors.low_stock_threshold}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expires_at" className="text-sm font-medium">Expiry Date (optional)</Label>

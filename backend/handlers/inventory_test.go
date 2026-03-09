@@ -417,33 +417,74 @@ func TestDeleteCategory_InvalidID(t *testing.T) {
 }
 
 // ====================================================================
-// INV-10: Large values for price/stock — boundary tests
+// INV-02: Large values for price/stock — boundary tests
 // ====================================================================
 func TestCreateProduct_LargeValues(t *testing.T) {
 	storeID := getTestStoreID(t)
 	router := setupProductRouter(storeID)
 
-	// This test checks the handler doesn't panic on large values - it won't
-	// actually create a product because the category won't exist, but the
-	// price/stock parsing should not overflow
-	body := `{
-		"name":"Expensive Product",
-		"price":9999999.99,
-		"cost_price":8888888.88,
-		"market_price":9999999.99,
-		"stock_quantity":2147483647,
-		"low_stock_threshold":999999,
-		"category_id":"` + uuid.NewString() + `"
-	}`
+	tests := []struct {
+		name           string
+		body           string
+		expectNotPanic bool // just assert no panic (code != 0)
+		expectBadReq   bool // assert 400 Bad Request
+	}{
+		{
+			name: "INV-02: stock_quantity at int32 max (2,147,483,647)",
+			body: `{
+				"name":"Boundary Product",
+				"price":9999999.99,
+				"cost_price":8888888.88,
+				"market_price":9999999.99,
+				"stock_quantity":2147483647,
+				"low_stock_threshold":999999,
+				"category_id":"` + uuid.NewString() + `"
+			}`,
+			expectNotPanic: true,
+			expectBadReq:   false,
+		},
+		{
+			name: "INV-02: stock_quantity exceeds int32 max (overflow)",
+			body: `{
+				"name":"Overflow Product",
+				"price":9999999.99,
+				"cost_price":8888888.88,
+				"stock_quantity":3000000000,
+				"category_id":"` + uuid.NewString() + `"
+			}`,
+			expectNotPanic: true,
+			expectBadReq:   true, // Gin JSON binding must reject int32 overflow
+		},
+		{
+			name: "INV-02: stock_quantity just above 1,000,000 (should be handled)",
+			body: `{
+				"name":"Large Stock Product",
+				"price":10.0,
+				"cost_price":5.0,
+				"stock_quantity":1000001,
+				"category_id":"` + uuid.NewString() + `"
+			}`,
+			expectNotPanic: true,
+			expectBadReq:   false, // 1,000,001 is within int32 range
+		},
+	}
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/products", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/products", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, req)
 
-	// Should not return a 500 from overflow — either 500 from DB constraint or
-	// success if the category existed. Key assertion: no panic.
-	assert.NotEqual(t, 0, w.Code, "Should not panic on large values")
+			if tt.expectNotPanic {
+				assert.NotEqual(t, 0, w.Code, "Should not panic on large values")
+			}
+			if tt.expectBadReq {
+				assert.Equal(t, http.StatusBadRequest, w.Code,
+					"stock_quantity > int32 max should be rejected with 400. Body: %s", w.Body.String())
+			}
+		})
+	}
 }
 
 // ====================================================================

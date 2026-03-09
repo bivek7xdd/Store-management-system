@@ -1,6 +1,10 @@
 package utils
 
-import "github.com/jackc/pgx/v5/pgtype"
+import (
+	"fmt"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
 
 // Text converts a string to a valid pgtype.Text
 func Text(s string) pgtype.Text {
@@ -21,10 +25,13 @@ func OptionalText(s string) pgtype.Text {
 	}
 }
 
-// Numeric converts a float64 to a valid pgtype.Numeric
+// Numeric converts a float64 to a valid pgtype.Numeric.
+// pgtype.Numeric.Scan(float64) does NOT set Valid=true; only string scanning
+// works reliably. We format via Sprintf to match how price is handled in handlers.
 func Numeric(f float64) pgtype.Numeric {
 	var n pgtype.Numeric
-	n.Scan(f)
+	// Intentionally ignore error — invalid floats (NaN/Inf) will leave Valid=false
+	_ = n.Scan(fmt.Sprintf("%f", f))
 	return n
 }
 

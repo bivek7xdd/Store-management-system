@@ -1,4 +1,4 @@
-h1:UWj2s37X4Dg5IpPKuNdm+0KcsdgR5Sp8PSiX7hY9vho=
+h1:DQyD7dmx4BAuliQhCqOSHci/JsVwsBdSZllVdBcqTb0=
 20251127012722_init_schema.sql h1:F+/xJANfbMuPkgImXg+0DTUG42JkL62JjrtejS0tJfM=
 20251127013943_test.sql h1:/io4P/AvY2AtaZsYeg90AYTxnrXF/YKu0WC4fXKn9gM=
 20251127014057_removed-test.sql h1:Xl8UqALtYI0c2DbtagoZHGEjdvq2t7wU/MzS75U5who=
@@ -15,3 +15,4 @@ h1:UWj2s37X4Dg5IpPKuNdm+0KcsdgR5Sp8PSiX7hY9vho=
 20251229024338_debts.sql h1:7+VOmzEgmW4ZvqmQ4D7Z/IiDvzx7hoTCpsBEQ672iEY=
 20260211020606_tracking.sql h1:KKlR6hLFv5P9v6aOkkhCMdIO15arcLKK5IMI9qB2RUk=
 20260215090200_reportupdate.sql h1:HA2J9+DnaUIDSgzJpFsMApi5LM5DXzCbmXxlGhDhIKI=
+20260304211000_add_expiring_status.sql h1:iasW/R7lldU6DOZSR3vLdPwRpeKiFyj5xj5ZOY5SJJc=

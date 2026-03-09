@@ -193,6 +193,44 @@ func (q *Queries) GetDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDebts
 	return items, nil
 }
 
+const recordDebtPayment = `-- name: RecordDebtPayment :one
+UPDATE debts
+SET 
+    amount_paid = amount_paid + $3,
+    status = CASE 
+        WHEN amount_paid + $3 >= amount_owed THEN 'paid'::debt_status 
+        ELSE 'partial'::debt_status 
+    END,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND store_id = $2
+RETURNING id, store_id, customer_id, sale_id, amount_owed, amount_paid, due_date, status, notes, created_at, updated_at
+`
+
+type RecordDebtPaymentParams struct {
+	ID         pgtype.UUID    `db:"id" json:"id"`
+	StoreID    pgtype.UUID    `db:"store_id" json:"store_id"`
+	AmountPaid pgtype.Numeric `db:"amount_paid" json:"amount_paid"`
+}
+
+func (q *Queries) RecordDebtPayment(ctx context.Context, arg RecordDebtPaymentParams) (Debt, error) {
+	row := q.db.QueryRow(ctx, recordDebtPayment, arg.ID, arg.StoreID, arg.AmountPaid)
+	var i Debt
+	err := row.Scan(
+		&i.ID,
+		&i.StoreID,
+		&i.CustomerID,
+		&i.SaleID,
+		&i.AmountOwed,
+		&i.AmountPaid,
+		&i.DueDate,
+		&i.Status,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateDebt = `-- name: UpdateDebt :one
 UPDATE debts
 SET 

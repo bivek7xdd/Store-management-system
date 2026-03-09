@@ -89,3 +89,12 @@ WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued';
 SELECT * FROM products
 WHERE store_id = $1 AND category_id = $2
 ORDER BY created_at DESC;
+
+-- name: FlagExpiringProducts :exec
+UPDATE products
+SET status = 'expiring'
+WHERE status != 'discontinued'
+  AND status != 'expiring'
+  AND expires_at IS NOT NULL
+  AND expires_at <= NOW() + INTERVAL '7 days'
+  AND expires_at > NOW();

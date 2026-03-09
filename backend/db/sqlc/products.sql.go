@@ -100,6 +100,21 @@ func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const flagExpiringProducts = `-- name: FlagExpiringProducts :exec
+UPDATE products
+SET status = 'expiring'
+WHERE status != 'discontinued'
+  AND status != 'expiring'
+  AND expires_at IS NOT NULL
+  AND expires_at <= NOW() + INTERVAL '7 days'
+  AND expires_at > NOW()
+`
+
+func (q *Queries) FlagExpiringProducts(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, flagExpiringProducts)
+	return err
+}
+
 const getCategoryStats = `-- name: GetCategoryStats :one
 SELECT 
     COUNT(*) as product_count,

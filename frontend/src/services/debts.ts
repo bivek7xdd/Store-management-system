@@ -19,7 +19,7 @@ export interface Debt {
 export const debtService = {
     getDebts: async () => {
         const response = await api.get<{ data: Debt[], message: string }>('/debts');
-        return response.data.data;
+        return response.data.data || [];
     },
 
     createDebt: async (data: { customer_id: string; amount_owed: number; due_date?: string; notes?: string }) => {
@@ -40,5 +40,10 @@ export const debtService = {
     sendReminder: async (id: string, message?: string) => {
         const response = await api.post(`/debts/${id}/remind`, { message });
         return response.data;
+    },
+
+    recordPayment: async (id: string, amount: number) => {
+        const response = await api.post<{ data: Debt, message: string }>(`/debts/${id}/pay`, { amount });
+        return response.data.data;
     }
 };

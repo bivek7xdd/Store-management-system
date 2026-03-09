@@ -5,6 +5,7 @@ import { walkthroughSteps, WalkthroughStep } from "@/data/walkthroughSteps";
 import WalkthroughTooltip from "@/components/WalkthroughTooltip";
 
 const WALKTHROUGH_STORAGE_KEY = "storehub_walkthrough_completed";
+const TOUR_PENDING_KEY = "storehub_tour_pending";
 
 interface WalkthroughContextType {
     isRunning: boolean;
@@ -61,16 +62,20 @@ export const WalkthroughProvider: React.FC<WalkthroughProviderProps> = ({ childr
     const isNavigatingRef = useRef(false);
     const pendingStepRef = useRef<number | null>(null);
 
-    // Auto-start tour on first visit to dashboard
+    // Auto-start tour on first visit to dashboard ONLY if it was triggered by registration
     React.useEffect(() => {
-        if (location.pathname === "/" && !hasCompletedTour && !isRunning) {
+        const isTourPending = localStorage.getItem(TOUR_PENDING_KEY) === "true";
+
+        if (location.pathname === "/" && isTourPending && !isRunning) {
             const timer = setTimeout(() => {
                 setStepIndex(0);
                 setIsRunning(true);
+                // We keep the pending flag until it's finished or explicitly closed/skipped
+                // so that it survives refreshes during the tour
             }, 600);
             return () => clearTimeout(timer);
         }
-    }, [location.pathname, hasCompletedTour]);
+    }, [location.pathname, isRunning]);
 
     // Resume tour after navigation — wait for the target element to appear
     React.useEffect(() => {
@@ -133,13 +138,15 @@ export const WalkthroughProvider: React.FC<WalkthroughProviderProps> = ({ childr
             setStepIndex(0);
             setHasCompletedTour(true);
             localStorage.setItem(WALKTHROUGH_STORAGE_KEY, "true");
+            localStorage.removeItem(TOUR_PENDING_KEY);
             navigate("/");
             return;
         }
 
-        if (action === ACTIONS.CLOSE) {
+        if (action === ACTIONS.CLOSE || status === STATUS.SKIPPED) {
             setIsRunning(false);
             setStepIndex(0);
+            localStorage.removeItem(TOUR_PENDING_KEY);
             return;
         }
 
@@ -152,6 +159,7 @@ export const WalkthroughProvider: React.FC<WalkthroughProviderProps> = ({ childr
                 setStepIndex(0);
                 setHasCompletedTour(true);
                 localStorage.setItem(WALKTHROUGH_STORAGE_KEY, "true");
+                localStorage.removeItem(TOUR_PENDING_KEY);
                 navigate("/");
                 return;
             }
@@ -172,6 +180,7 @@ export const WalkthroughProvider: React.FC<WalkthroughProviderProps> = ({ childr
                 setStepIndex(0);
                 setHasCompletedTour(true);
                 localStorage.setItem(WALKTHROUGH_STORAGE_KEY, "true");
+                localStorage.removeItem(TOUR_PENDING_KEY);
             }
         }
     }, [location.pathname, navigate, navigateToStep]);

@@ -125,6 +125,9 @@ const OTP = () => {
                 description: "Account verified successfully! Please log in.",
             });
 
+            // Set flag to show tour after the first login following registration
+            localStorage.setItem("storehub_tour_pending", "true");
+
             navigate("/login", { state: { message: "Account verified successfully! Please log in." } });
 
         } catch (error: any) {

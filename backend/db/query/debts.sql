@@ -46,3 +46,15 @@ RETURNING *;
 -- name: DeleteDebt :exec
 DELETE FROM debts
 WHERE id = $1 AND store_id = $2;
+
+-- name: RecordDebtPayment :one
+UPDATE debts
+SET 
+    amount_paid = amount_paid + $3,
+    status = CASE 
+        WHEN amount_paid + $3 >= amount_owed THEN 'paid'::debt_status 
+        ELSE 'partial'::debt_status 
+    END,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND store_id = $2
+RETURNING *;

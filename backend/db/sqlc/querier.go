@@ -29,6 +29,7 @@ type Querier interface {
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) error
+	FlagExpiringProducts(ctx context.Context) error
 	GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error)
 	GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
 	GetCategory(ctx context.Context, arg GetCategoryParams) (Category, error)
@@ -68,6 +69,7 @@ type Querier interface {
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
 	ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
+	RecordDebtPayment(ctx context.Context, arg RecordDebtPaymentParams) (Debt, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error)

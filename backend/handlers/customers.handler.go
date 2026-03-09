@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	db "storemanagement/db/sqlc"
 	"storemanagement/utils"
 	"time"
 
@@ -20,6 +21,10 @@ func ListCustomers(c *gin.Context) {
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch customers", err)
 		return
+	}
+
+	if customers == nil {
+		customers = []db.Customer{}
 	}
 
 	utils.SuccessResponse(c, "Customers fetched successfully", customers)

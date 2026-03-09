@@ -61,6 +61,7 @@ const (
 	ProductStatusActive       ProductStatus = "active"
 	ProductStatusOutOfStock   ProductStatus = "out_of_stock"
 	ProductStatusDiscontinued ProductStatus = "discontinued"
+	ProductStatusExpiring     ProductStatus = "expiring"
 )
 
 func (e *ProductStatus) Scan(src interface{}) error {

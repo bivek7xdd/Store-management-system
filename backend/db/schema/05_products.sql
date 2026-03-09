@@ -1,6 +1,6 @@
 
 
-CREATE TYPE product_status AS ENUM ('active', 'out_of_stock', 'discontinued');
+CREATE TYPE product_status AS ENUM ('active', 'out_of_stock', 'discontinued', 'expiring');
 
 CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

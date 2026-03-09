@@ -16,6 +16,7 @@ func init() {
 }
 
 func main() {
+	utils.StartCronJobs()
 	fmt.Println("Hello World")
 
 	router := gin.Default()
@@ -105,6 +106,7 @@ func main() {
 		debtRoutes.GET("", handlers.GetDebts)
 		debtRoutes.POST("/:id/remind", handlers.SendDebtReminder)
 		debtRoutes.PUT("/:id", handlers.UpdateDebt)
+		debtRoutes.POST("/:id/pay", handlers.RecordDebtPayment)
 		debtRoutes.DELETE("/:id", handlers.DeleteDebt)
 	}
 

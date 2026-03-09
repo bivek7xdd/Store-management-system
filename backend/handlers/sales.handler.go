@@ -191,6 +191,10 @@ func ListSales(c *gin.Context) {
 		return
 	}
 
+	if sales == nil {
+		sales = []db.ListSalesRow{}
+	}
+
 	utils.SuccessResponse(c, "Sales fetched successfully", sales)
 }
 
