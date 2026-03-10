@@ -13,6 +13,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
 
     services:
       # Label used to access the service container
@@ -48,7 +51,13 @@ jobs:
         which migrate
 
     - name: Run migrations
-      run: make migrateup
+      run: migrate -path db/migration -database "postgres://root:password@localhost:5432/store-management-system?sslmode=disable" -verbose up
+
+    - name: Build
+      run: go build -v ./...
 
     - name: Test
-      run: make test
+      run: go test -v -cover ./...
+      env:
+        DB_URL: postgres://root:password@localhost:5432/store-management-system?sslmode=disable
+        JWT_SECRET: test-secret-key-for-ci-testing-only
