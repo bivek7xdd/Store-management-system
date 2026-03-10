@@ -16,6 +16,9 @@ WHERE id = $1 LIMIT 1;
 SELECT * FROM store_info
 WHERE owner_id = $1 LIMIT 1;
 
+-- name: GetAllStores :many
+SELECT * FROM store_info;
+
 -- name: ListStoreInfo :many
 SELECT * FROM store_info
 ORDER BY created_at DESC

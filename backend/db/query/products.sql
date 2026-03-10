@@ -98,3 +98,10 @@ WHERE status != 'discontinued'
   AND expires_at IS NOT NULL
   AND expires_at <= NOW() + INTERVAL '7 days'
   AND expires_at > NOW();
+
+-- name: GetLowStockProducts :many
+SELECT * FROM products
+WHERE store_id = $1
+  AND status = 'active'
+  AND stock_quantity <= low_stock_threshold
+ORDER BY stock_quantity ASC;

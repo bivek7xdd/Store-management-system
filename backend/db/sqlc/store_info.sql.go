@@ -59,6 +59,38 @@ func (q *Queries) DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const getAllStores = `-- name: GetAllStores :many
+SELECT id, name, address, currency_code, owner_id, created_at, updated_at FROM store_info
+`
+
+func (q *Queries) GetAllStores(ctx context.Context) ([]StoreInfo, error) {
+	rows, err := q.db.Query(ctx, getAllStores)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StoreInfo
+	for rows.Next() {
+		var i StoreInfo
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.CurrencyCode,
+			&i.OwnerID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getStoreInfo = `-- name: GetStoreInfo :one
 SELECT id, name, address, currency_code, owner_id, created_at, updated_at FROM store_info
 WHERE id = $1 LIMIT 1

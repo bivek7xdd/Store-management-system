@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
@@ -20,6 +21,8 @@ import NotFound from "./pages/NotFound";
 import EnhancedSignup from "./components/EnhancedSignup";
 import Login from "./pages/Login";
 import OTP from "./pages/OTP";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import CategoryDetails from "./pages/CategoryDetails";
 import SupplierDetails from "./pages/SupplierDetails";
 import React from "react";
@@ -79,16 +82,19 @@ const App = () => {
       <DevOfflineHandler>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <WalkthroughProvider>
-                  <Routes>
+            <NotificationProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <WalkthroughProvider>
+                    <Routes>
                     {/* Public routes */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<EnhancedSignup />} />
                     <Route path="/otp" element={<OTP />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
                     {/* Protected routes */}
                     <Route path="/" element={
@@ -179,9 +185,10 @@ const App = () => {
                     {/* Catch-all route for 404 */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </WalkthroughProvider>
-              </BrowserRouter>
-            </TooltipProvider>
+                  </WalkthroughProvider>
+                </BrowserRouter>
+              </TooltipProvider>
+            </NotificationProvider>
           </AuthProvider>
         </QueryClientProvider>
       </DevOfflineHandler>

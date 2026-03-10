@@ -55,6 +55,93 @@ func (ns NullDebtStatus) Value() (driver.Value, error) {
 	return string(ns.DebtStatus), nil
 }
 
+type NotificationStatus string
+
+const (
+	NotificationStatusUnread    NotificationStatus = "unread"
+	NotificationStatusRead      NotificationStatus = "read"
+	NotificationStatusDismissed NotificationStatus = "dismissed"
+)
+
+func (e *NotificationStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationStatus(s)
+	case string:
+		*e = NotificationStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationStatus: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationStatus struct {
+	NotificationStatus NotificationStatus `json:"notification_status"`
+	Valid              bool               `json:"valid"` // Valid is true if NotificationStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationStatus), nil
+}
+
+type NotificationType string
+
+const (
+	NotificationTypeDebtDue         NotificationType = "debt_due"
+	NotificationTypeLowStock        NotificationType = "low_stock"
+	NotificationTypeExpiringProduct NotificationType = "expiring_product"
+	NotificationTypeSystem          NotificationType = "system"
+)
+
+func (e *NotificationType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationType(s)
+	case string:
+		*e = NotificationType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationType: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationType struct {
+	NotificationType NotificationType `json:"notification_type"`
+	Valid            bool             `json:"valid"` // Valid is true if NotificationType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationType) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationType), nil
+}
+
 type ProductStatus string
 
 const (
@@ -171,6 +258,19 @@ type Debt struct {
 	Notes      pgtype.Text        `db:"notes" json:"notes"`
 	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Notification struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	Type          NotificationType   `db:"type" json:"type"`
+	Title         string             `db:"title" json:"title"`
+	Message       string             `db:"message" json:"message"`
+	ReferenceID   pgtype.UUID        `db:"reference_id" json:"reference_id"`
+	ReferenceType pgtype.Text        `db:"reference_type" json:"reference_type"`
+	Status        NotificationStatus `db:"status" json:"status"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type OtpToken struct {

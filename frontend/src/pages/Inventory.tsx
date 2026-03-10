@@ -296,6 +296,7 @@ export default function Inventory() {
 
   const handleEditClick = (product: Product) => {
     setEditingProduct(product);
+    setBarcodeValue(getTextValue(product.barcode));
     setAddDialogOpen(true);
   };
 
@@ -348,8 +349,7 @@ export default function Inventory() {
       name: formData.get("name") as string,
       barcode: formData.get("barcode") as string || undefined,
       price: parseFloat(formData.get("price") as string),
-      cost_price: parseFloat(formData.get("cost_price") as string),
-      market_price: formData.get("market_price") ? parseFloat(formData.get("market_price") as string) : undefined,
+      cost_price: formData.get("cost_price") ? parseFloat(formData.get("cost_price") as string) : 0,
       stock_quantity: parseInt(formData.get("stock_quantity") as string),
       low_stock_threshold: formData.get("low_stock_threshold") ? parseInt(formData.get("low_stock_threshold") as string) : 10,
       expires_at: formData.get("expires_at") ? new Date(formData.get("expires_at") as string).toISOString() : undefined,
@@ -534,7 +534,7 @@ export default function Inventory() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)*</Label>
+                    <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)</Label>
                     <Input
                       id="cost_price"
                       name="cost_price"
@@ -542,7 +542,6 @@ export default function Inventory() {
                       step="0.01"
                       defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
                       placeholder="80"
-                      required
                       className={`rounded-lg ${formErrors.cost_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
                       onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
                     />
@@ -554,24 +553,6 @@ export default function Inventory() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="market_price" className="text-sm font-medium">Market Price (रू)</Label>
-                    <Input
-                      id="market_price"
-                      name="market_price"
-                      type="number"
-                      step="0.01"
-                      defaultValue={editingProduct ? getNumericValue(editingProduct.market_price) : undefined}
-                      placeholder="120"
-                      className={`rounded-lg ${formErrors.market_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                      onChange={() => setFormErrors(prev => ({ ...prev, market_price: "" }))}
-                    />
-                    {formErrors.market_price && (
-                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                        <span>⚠</span> {formErrors.market_price}
-                      </p>
-                    )}
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
                     <Input
@@ -592,25 +573,25 @@ export default function Inventory() {
                       </p>
                     )}
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
-                  <Input
-                    id="low_stock_threshold"
-                    name="low_stock_threshold"
-                    type="number"
-                    min={0}
-                    max={2147483647}
-                    defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
-                    placeholder="10"
-                    className={`rounded-lg ${formErrors.low_stock_threshold ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                    onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
-                  />
-                  {formErrors.low_stock_threshold && (
-                    <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                      <span>⚠</span> {formErrors.low_stock_threshold}
-                    </p>
-                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
+                    <Input
+                      id="low_stock_threshold"
+                      name="low_stock_threshold"
+                      type="number"
+                      min={0}
+                      max={2147483647}
+                      defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
+                      placeholder="10"
+                      className={`rounded-lg ${formErrors.low_stock_threshold ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                      onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
+                    />
+                    {formErrors.low_stock_threshold && (
+                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                        <span>⚠</span> {formErrors.low_stock_threshold}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expires_at" className="text-sm font-medium">Expiry Date (optional)</Label>
@@ -818,6 +799,20 @@ export default function Inventory() {
           </Card>
         )
       }
+
+      {/* Barcode Scanner for Form */}
+      <BarcodeScanner
+        open={formScannerOpen}
+        onOpenChange={setFormScannerOpen}
+        onScanSuccess={handleFormScanSuccess}
+      />
+
+      {/* Barcode Scanner for Search */}
+      <BarcodeScanner
+        open={searchScannerOpen}
+        onOpenChange={setSearchScannerOpen}
+        onScanSuccess={handleSearchScanSuccess}
+      />
     </div >
   );
 }

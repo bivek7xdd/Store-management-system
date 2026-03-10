@@ -58,3 +58,15 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND store_id = $2
 RETURNING *;
+
+-- name: GetDueDebts :many
+SELECT 
+    d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM debts d
+LEFT JOIN customers c ON d.customer_id = c.id
+WHERE d.store_id = $1
+  AND d.status IN ('pending', 'partial')
+  AND d.due_date <= CURRENT_DATE
+ORDER BY d.due_date ASC;

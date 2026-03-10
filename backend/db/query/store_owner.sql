@@ -51,3 +51,10 @@ UPDATE store_owner
 SET
   emailVerified = true
 WHERE email = $1;
+
+-- name: UpdatePasswordByEmail :exec
+UPDATE store_owner
+SET
+  password = $2,
+  updated_at = CURRENT_TIMESTAMP
+WHERE email = $1;

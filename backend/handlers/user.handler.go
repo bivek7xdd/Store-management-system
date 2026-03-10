@@ -308,3 +308,130 @@ func VerifyOTP(c *gin.Context) {
 		"purpose":  req.Purpose,
 	})
 }
+
+/*
+* * * ---------------------------------------------------- Handler for forgot password (send OTP) * * * ----------------------------------------
+ */
+
+type ForgotPasswordParams struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+func ForgotPasswordHandler(c *gin.Context) {
+	var req ForgotPasswordParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid email address", err)
+		return
+	}
+
+	// Check if user exists
+	user, err := utils.Queries.GetStoreOwnerByEmail(context.Background(), req.Email)
+	if err != nil {
+		// Don't reveal whether user exists or not for security
+		utils.SuccessResponse(c, "If an account with that email exists, we have sent a password reset code", nil)
+		return
+	}
+
+	// Generate OTP
+	otp, err := utils.GenerateOTP()
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate reset code", err)
+		return
+	}
+
+	// Use transaction to ensure OTP is only created if email is sent successfully
+	err = utils.Store.ExecTx(context.Background(), func(q *db.Queries) error {
+		// Store OTP in database
+		_, txErr := q.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+			UserEmail: user.Email,
+			Otp:       otp,
+			Purpose:   "password_reset",
+		})
+		if txErr != nil {
+			return fmt.Errorf("failed to create reset code: %w", txErr)
+		}
+
+		// Send OTP email (rolls back transaction if it fails)
+		txErr = utils.SendOTPEmail(user.Email, otp)
+		if txErr != nil {
+			return fmt.Errorf("failed to send reset email: %w", txErr)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	utils.SuccessResponse(c, "If an account with that email exists, we have sent a password reset code", nil)
+}
+
+/*
+* * * ---------------------------------------------------- Handler for reset password (verify OTP and update password) * * * ----------------------------------------
+ */
+
+type ResetPasswordParams struct {
+	Email    string `json:"email" binding:"required,email"`
+	Otp      string `json:"otp" binding:"required"`
+	Password string `json:"password" binding:"required,min=8"`
+}
+
+func ResetPasswordHandler(c *gin.Context) {
+	var req ResetPasswordParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	// Validate OTP format (should be 6 digits)
+	if len(req.Otp) != 6 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid OTP format: must be 6 digits", nil)
+		return
+	}
+
+	// Validate password strength
+	if len(req.Password) < 8 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Password must be at least 8 characters", nil)
+		return
+	}
+
+	// Verify the OTP
+	otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
+		UserEmail: req.Email,
+		Otp:       req.Otp,
+		Purpose:   "password_reset",
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired reset code", err)
+		return
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to hash password", err)
+		return
+	}
+
+	// Update password in database
+	err = utils.Queries.UpdatePasswordByEmail(context.Background(), db.UpdatePasswordByEmailParams{
+		Email:    req.Email,
+		Password: string(hashedPassword),
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update password", err)
+		return
+	}
+
+	// Delete the OTP after successful use
+	err = utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID)
+	if err != nil {
+		fmt.Printf("Warning: failed to delete used OTP: %v\n", err)
+	}
+
+	utils.SuccessResponse(c, "Password reset successfully", nil)
+}

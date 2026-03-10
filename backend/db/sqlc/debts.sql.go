@@ -193,6 +193,69 @@ func (q *Queries) GetDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDebts
 	return items, nil
 }
 
+const getDueDebts = `-- name: GetDueDebts :many
+SELECT 
+    d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
+    c.name as customer_name,
+    c.phone as customer_phone
+FROM debts d
+LEFT JOIN customers c ON d.customer_id = c.id
+WHERE d.store_id = $1
+  AND d.status IN ('pending', 'partial')
+  AND d.due_date <= CURRENT_DATE
+ORDER BY d.due_date ASC
+`
+
+type GetDueDebtsRow struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID    pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleID        pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	AmountOwed    pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate       pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status        DebtStatus         `db:"status" json:"status"`
+	Notes         pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	CustomerName  pgtype.Text        `db:"customer_name" json:"customer_name"`
+	CustomerPhone pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+}
+
+func (q *Queries) GetDueDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDueDebtsRow, error) {
+	rows, err := q.db.Query(ctx, getDueDebts, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDueDebtsRow
+	for rows.Next() {
+		var i GetDueDebtsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.StoreID,
+			&i.CustomerID,
+			&i.SaleID,
+			&i.AmountOwed,
+			&i.AmountPaid,
+			&i.DueDate,
+			&i.Status,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CustomerName,
+			&i.CustomerPhone,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const recordDebtPayment = `-- name: RecordDebtPayment :one
 UPDATE debts
 SET 

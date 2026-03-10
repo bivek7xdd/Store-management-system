@@ -52,7 +52,7 @@ atlas-schema-apply:
 
 # Atlas: Apply migrations to database
 atlas-apply:
-	atlas migrate apply --env dev
+	atlas migrate apply --env dev --allow-dirty
 
 # Atlas: Check schema status
 atlas-status:

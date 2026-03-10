@@ -37,7 +37,7 @@ func CreateDebt(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 
 	var dueDate pgtype.Timestamptz
@@ -75,7 +75,7 @@ func CreateDebt(c *gin.Context) {
 func GetDebts(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 
 	debts, err := utils.Queries.GetDebts(ctx, storeID)

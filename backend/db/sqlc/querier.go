@@ -11,9 +11,11 @@ import (
 )
 
 type Querier interface {
+	CheckNotificationExists(ctx context.Context, arg CheckNotificationExistsParams) (bool, error)
 	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
 	CreateDebt(ctx context.Context, arg CreateDebtParams) (Debt, error)
+	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error)
@@ -24,12 +26,16 @@ type Querier interface {
 	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
 	DeleteDebt(ctx context.Context, arg DeleteDebtParams) error
 	DeleteExpiredOTPs(ctx context.Context) error
+	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) error
 	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
+	DeleteOldNotifications(ctx context.Context, storeID pgtype.UUID) error
 	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) error
+	DismissNotification(ctx context.Context, arg DismissNotificationParams) (Notification, error)
 	FlagExpiringProducts(ctx context.Context) error
+	GetAllStores(ctx context.Context) ([]StoreInfo, error)
 	GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error)
 	GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
 	GetCategory(ctx context.Context, arg GetCategoryParams) (Category, error)
@@ -40,8 +46,11 @@ type Querier interface {
 	GetDebt(ctx context.Context, arg GetDebtParams) (GetDebtRow, error)
 	GetDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDebtsRow, error)
 	GetDebtsStats(ctx context.Context, storeID pgtype.UUID) (GetDebtsStatsRow, error)
+	GetDueDebts(ctx context.Context, storeID pgtype.UUID) ([]GetDueDebtsRow, error)
 	GetInactiveProducts(ctx context.Context, arg GetInactiveProductsParams) ([]GetInactiveProductsRow, error)
 	GetInventoryStats(ctx context.Context, storeID pgtype.UUID) (GetInventoryStatsRow, error)
+	GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
+	GetNotifications(ctx context.Context, arg GetNotificationsParams) ([]Notification, error)
 	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
 	GetProfitStats(ctx context.Context, arg GetProfitStatsParams) (GetProfitStatsRow, error)
 	GetRecentSales(ctx context.Context, arg GetRecentSalesParams) ([]GetRecentSalesRow, error)
@@ -62,6 +71,8 @@ type Querier interface {
 	GetTopDebtors(ctx context.Context, arg GetTopDebtorsParams) ([]GetTopDebtorsRow, error)
 	GetTopSellingProducts(ctx context.Context, arg GetTopSellingProductsParams) ([]GetTopSellingProductsRow, error)
 	GetTotalSales(ctx context.Context, arg GetTotalSalesParams) (GetTotalSalesRow, error)
+	GetUnreadCount(ctx context.Context, storeID pgtype.UUID) (int64, error)
+	GetUnreadNotifications(ctx context.Context, storeID pgtype.UUID) ([]Notification, error)
 	ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Customer, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
@@ -69,11 +80,14 @@ type Querier interface {
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
 	ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
+	MarkAllNotificationsAsRead(ctx context.Context, storeID pgtype.UUID) error
+	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (Notification, error)
 	RecordDebtPayment(ctx context.Context, arg RecordDebtPaymentParams) (Debt, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error)
 	UpdateEmailVerification(ctx context.Context, email string) error
+	UpdatePasswordByEmail(ctx context.Context, arg UpdatePasswordByEmailParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)

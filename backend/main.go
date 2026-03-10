@@ -34,6 +34,8 @@ func main() {
 		userRoutes.POST("/register", handlers.RegisterUserHandler)
 		userRoutes.POST("/login", handlers.LoginHandler)
 		userRoutes.POST("/verify-otp", handlers.VerifyOTP)
+		userRoutes.POST("/forgot-password", handlers.ForgotPasswordHandler)
+		userRoutes.POST("/reset-password", handlers.ResetPasswordHandler)
 
 		// Protected routes (require JWT token)
 		protected := userRoutes.Group("/")
@@ -117,6 +119,18 @@ func main() {
 		reportRoutes.GET("/stats", handlers.GetReportStats)
 		reportRoutes.GET("/export/csv", handlers.ExportSalesReportCSV)
 		reportRoutes.GET("/export/pdf", handlers.ExportSalesReportPDF)
+	}
+
+	// Notification routes
+	notificationRoutes := router.Group("/api/notifications")
+	notificationRoutes.Use(utils.JWTMiddleware())
+	{
+		notificationRoutes.GET("", handlers.GetNotifications)
+		notificationRoutes.GET("/unread-count", handlers.GetUnreadCount)
+		notificationRoutes.PUT("/:id/read", handlers.MarkNotificationAsRead)
+		notificationRoutes.PUT("/mark-all-read", handlers.MarkAllNotificationsAsRead)
+		notificationRoutes.PUT("/:id/dismiss", handlers.DismissNotification)
+		notificationRoutes.DELETE("/:id", handlers.DeleteNotification)
 	}
 
 	// Market routes

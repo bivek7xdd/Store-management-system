@@ -42,6 +42,7 @@ import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
 import { MarketSidebarItem } from "./MarketSidebarItem";
 import { useWalkthrough } from "@/contexts/WalkthroughContext";
+import NotificationBell from "./NotificationBell";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -185,8 +186,9 @@ export default function Layout({ children }: LayoutProps) {
               </button>
             </div>
 
-            {/* User Menu */}
+            {/* Notifications & User Menu */}
             <div className="pt-2 border-t border-border flex items-center gap-2" data-tour="user-profile">
+              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -234,6 +236,7 @@ export default function Layout({ children }: LayoutProps) {
           <h1 className="text-lg font-bold text-foreground">StoreHub</h1>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="rounded-full">

@@ -142,6 +142,52 @@ func (q *Queries) GetCategoryStats(ctx context.Context, arg GetCategoryStatsPara
 	return i, err
 }
 
+const getLowStockProducts = `-- name: GetLowStockProducts :many
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+WHERE store_id = $1
+  AND status = 'active'
+  AND stock_quantity <= low_stock_threshold
+ORDER BY stock_quantity ASC
+`
+
+func (q *Queries) GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error) {
+	rows, err := q.db.Query(ctx, getLowStockProducts, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Barcode,
+			&i.Price,
+			&i.CostPrice,
+			&i.MarketPrice,
+			&i.StockQuantity,
+			&i.LowStockThreshold,
+			&i.ExpiresAt,
+			&i.Status,
+			&i.CategoryID,
+			&i.SupplierID,
+			&i.StoreID,
+			&i.ImageUrl,
+			&i.IsTracked,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE id = $1 LIMIT 1

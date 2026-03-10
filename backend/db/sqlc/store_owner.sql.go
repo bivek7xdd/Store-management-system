@@ -192,6 +192,24 @@ func (q *Queries) UpdateEmailVerification(ctx context.Context, email string) err
 	return err
 }
 
+const updatePasswordByEmail = `-- name: UpdatePasswordByEmail :exec
+UPDATE store_owner
+SET
+  password = $2,
+  updated_at = CURRENT_TIMESTAMP
+WHERE email = $1
+`
+
+type UpdatePasswordByEmailParams struct {
+	Email    string `db:"email" json:"email"`
+	Password string `db:"password" json:"password"`
+}
+
+func (q *Queries) UpdatePasswordByEmail(ctx context.Context, arg UpdatePasswordByEmailParams) error {
+	_, err := q.db.Exec(ctx, updatePasswordByEmail, arg.Email, arg.Password)
+	return err
+}
+
 const updateStoreOwner = `-- name: UpdateStoreOwner :one
 UPDATE store_owner
 SET
