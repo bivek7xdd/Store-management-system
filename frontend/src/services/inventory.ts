@@ -7,6 +7,7 @@ export interface CreateProductData {
     barcode?: string;
     price: number;
     cost_price?: number;
+    market_price?: number;
     stock_quantity: number;
     low_stock_threshold?: number;
     expires_at?: string;
