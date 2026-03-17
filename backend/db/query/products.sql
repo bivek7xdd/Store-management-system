@@ -24,7 +24,7 @@ WHERE id = $1 LIMIT 1;
 
 -- name: ListProducts :many
 SELECT * FROM products
-WHERE store_id = $1
+WHERE store_id = $1 AND status != 'discontinued'
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
@@ -56,7 +56,8 @@ WHERE id = $1;
 -- name: SearchProducts :many
 SELECT * FROM products
 WHERE 
-    store_id = $1 AND (
+    store_id = $1 AND 
+    status != 'discontinued' AND (
     name ILIKE '%' || $2 || '%' OR
     barcode ILIKE '%' || $2 || '%'
     )
@@ -73,7 +74,7 @@ RETURNING *;
 
 -- name: ListTrackedProducts :many
 SELECT * FROM products
-WHERE store_id = $1 AND is_tracked = TRUE
+WHERE store_id = $1 AND is_tracked = TRUE AND status != 'discontinued'
 ORDER BY updated_at DESC
 LIMIT 6;
 
@@ -87,7 +88,7 @@ WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued';
 
 -- name: ListProductsByCategory :many
 SELECT * FROM products
-WHERE store_id = $1 AND category_id = $2
+WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued'
 ORDER BY created_at DESC;
 
 -- name: FlagExpiringProducts :exec
@@ -102,6 +103,6 @@ WHERE status != 'discontinued'
 -- name: GetLowStockProducts :many
 SELECT * FROM products
 WHERE store_id = $1
-  AND status = 'active'
+  AND status != 'discontinued'
   AND stock_quantity <= low_stock_threshold
 ORDER BY stock_quantity ASC;

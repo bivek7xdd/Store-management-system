@@ -130,6 +130,9 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	// Check for low stock notification
+	utils.Queries.CheckAndNotifyLowStock(ctx, storeID, product)
+
 	utils.SuccessResponse(c, "Product created successfully", product)
 }
 
@@ -345,6 +348,9 @@ func UpdateProduct(c *gin.Context) {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update product", err)
 		return
 	}
+
+	// Check for low stock notification
+	utils.Queries.CheckAndNotifyLowStock(ctx, product.StoreID, product)
 
 	utils.SuccessResponse(c, "Product updated successfully", product)
 }

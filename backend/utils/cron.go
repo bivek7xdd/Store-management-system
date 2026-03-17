@@ -68,9 +68,6 @@ func checkAndCreateNotifications() {
 		// Check for due/overdue debts
 		checkDueDebts(ctx, store.ID)
 
-		// Check for low stock products
-		checkLowStock(ctx, store.ID)
-
 		// Clean up old dismissed notifications
 		err := Queries.DeleteOldNotifications(ctx, store.ID)
 		if err != nil {
@@ -128,57 +125,6 @@ func checkDueDebts(ctx context.Context, storeID pgtype.UUID) {
 			log.Printf("[Cron] Error creating debt notification: %v", err)
 		} else {
 			log.Printf("[Cron] Created debt notification for %s", customerName)
-		}
-	}
-}
-
-// checkLowStock checks for low stock products and creates notifications
-func checkLowStock(ctx context.Context, storeID pgtype.UUID) {
-	// Get low stock products
-	products, err := Queries.GetLowStockProducts(ctx, storeID)
-	if err != nil {
-		log.Printf("[Cron] Error fetching low stock products for store %s: %v", storeID, err)
-		return
-	}
-
-	for _, product := range products {
-		// Check if notification already exists (within last 24 hours)
-		exists, err := Queries.CheckNotificationExists(ctx, db.CheckNotificationExistsParams{
-			StoreID:     storeID,
-			Type:        db.NotificationTypeLowStock,
-			ReferenceID: product.ID,
-		})
-		if err != nil {
-			log.Printf("[Cron] Error checking notification existence: %v", err)
-			continue
-		}
-
-		if exists {
-			continue // Skip if already notified recently
-		}
-
-		// Create notification
-		title := "Low Stock Alert"
-		threshold := 10 // default
-		if product.LowStockThreshold.Valid {
-			threshold = int(product.LowStockThreshold.Int32)
-		}
-		message := fmt.Sprintf("%s is running low on stock. Current: %d, Threshold: %d",
-			product.Name, product.StockQuantity, threshold)
-
-		_, err = Queries.CreateNotification(ctx, db.CreateNotificationParams{
-			StoreID:       storeID,
-			Type:          db.NotificationTypeLowStock,
-			Title:         title,
-			Message:       message,
-			ReferenceID:   product.ID,
-			ReferenceType: pgtype.Text{String: "product", Valid: true},
-			Status:        db.NotificationStatusUnread,
-		})
-		if err != nil {
-			log.Printf("[Cron] Error creating low stock notification: %v", err)
-		} else {
-			log.Printf("[Cron] Created low stock notification for %s", product.Name)
 		}
 	}
 }

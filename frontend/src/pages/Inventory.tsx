@@ -272,6 +272,9 @@ export default function Inventory() {
   // Filter products (ensure products is always an array)
   const productsList = products || [];
   const filteredProducts = productsList.filter((product: Product) => {
+    const status = product.status?.product_status || 'active';
+    if (status === 'discontinued') return false;
+
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       getTextValue(product.barcode).includes(searchTerm);

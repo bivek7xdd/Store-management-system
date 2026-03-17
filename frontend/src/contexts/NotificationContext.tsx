@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { notificationService, Notification } from '@/services/notifications';
+import { db } from '@/db/db';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 interface NotificationContextType {
     notifications: Notification[];
@@ -27,15 +29,40 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
+
+    // Live query for notifications from Dexie
+    const notifications = useLiveQuery(
+        async () => {
+            return await db.notifications
+                .orderBy('created_at')
+                .reverse()
+                .toArray();
+        },
+        []
+    ) || [];
+
+    // Derive unread count from live query
+    const unreadCount = notifications.filter(n => n.status === 'unread').length;
 
     const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const data = await notificationService.getNotifications();
-            setNotifications(data);
+            if (data.length > 0) {
+                // Sync API data to Dexie
+                await Promise.all(data.map(async (n) => {
+                    // If we have a local version (matched by reference_id and type), 
+                    // delete the local one before putting the backend one
+                    if (n.reference_id) {
+                        await db.notifications
+                            .where('reference_id').equals(n.reference_id)
+                            .filter(local => local.type === n.type && local.id.startsWith('local-'))
+                            .delete();
+                    }
+                    return db.notifications.put(n);
+                }));
+            }
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
         } finally {
@@ -45,8 +72,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const fetchUnreadCount = useCallback(async () => {
         try {
-            const count = await notificationService.getUnreadCount();
-            setUnreadCount(count);
+            // we don't strictly need to store just count, but it ensures we're syncing
+            await notificationService.getUnreadCount();
+            // In an offline-first app, we'd rely on the main fetch to populate Dexie
         } catch (error) {
             console.error('Failed to fetch unread count:', error);
         }
@@ -54,11 +82,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const markAsRead = useCallback(async (id: string) => {
         try {
-            await notificationService.markAsRead(id);
-            setNotifications(prev =>
-                prev.map(n => n.id === id ? { ...n, status: 'read' as const } : n)
-            );
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            // Update UI/Local DB first
+            await db.notifications.update(id, { status: 'read', updated_at: new Date().toISOString() });
+
+            // Sync with backend if online
+            if (navigator.onLine) {
+                await notificationService.markAsRead(id);
+            }
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
         }
@@ -66,44 +96,47 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const markAllAsRead = useCallback(async () => {
         try {
-            await notificationService.markAllAsRead();
-            setNotifications(prev =>
-                prev.map(n => ({ ...n, status: 'read' as const }))
-            );
-            setUnreadCount(0);
+            const unreadIds = notifications.filter(n => n.status === 'unread').map(n => n.id);
+            if (unreadIds.length === 0) return;
+
+            await db.notifications.where('id').anyOf(unreadIds).modify({
+                status: 'read',
+                updated_at: new Date().toISOString()
+            });
+
+            if (navigator.onLine) {
+                await notificationService.markAllAsRead();
+            }
         } catch (error) {
             console.error('Failed to mark all notifications as read:', error);
         }
-    }, []);
+    }, [notifications]);
 
     const dismiss = useCallback(async (id: string) => {
         try {
-            await notificationService.dismiss(id);
-            setNotifications(prev =>
-                prev.map(n => n.id === id ? { ...n, status: 'dismissed' as const } : n)
-            );
-            // Update unread count if the notification was unread
-            const notification = notifications.find(n => n.id === id);
-            if (notification && notification.status === 'unread') {
-                setUnreadCount(prev => Math.max(0, prev - 1));
+            await db.notifications.update(id, { status: 'dismissed', updated_at: new Date().toISOString() });
+
+            if (navigator.onLine) {
+                await notificationService.dismiss(id);
             }
         } catch (error) {
             console.error('Failed to dismiss notification:', error);
         }
-    }, [notifications]);
+    }, []);
 
-    // Fetch unread count on mount and periodically
+    // Initial fetch
     useEffect(() => {
-        fetchUnreadCount();
         fetchNotifications();
 
         // Poll for new notifications every 60 seconds
         const interval = setInterval(() => {
-            fetchUnreadCount();
+            if (navigator.onLine) {
+                fetchNotifications();
+            }
         }, 60000);
 
         return () => clearInterval(interval);
-    }, [fetchUnreadCount, fetchNotifications]);
+    }, [fetchNotifications]);
 
     const value: NotificationContextType = {
         notifications,

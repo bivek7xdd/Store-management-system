@@ -96,7 +96,15 @@ export const inventoryService = {
             }
             return products;
         }
-        return await db.products.where('category_id').equals(id).reverse().sortBy('created_at');
+        const allInCategory = await db.products.where('category_id').equals(id).toArray();
+        return allInCategory
+            .filter(p => {
+                const status = typeof p.status === 'string'
+                    ? p.status
+                    : (p.status?.product_status || 'active');
+                return status !== 'discontinued';
+            })
+            .sort((a, b) => new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime());
     },
 
     updateCategory: async (id: string, data: Partial<Omit<Category, 'id' | 'store_id'>>) => {
@@ -159,26 +167,34 @@ export const inventoryService = {
         if (isOnline()) {
             try {
                 const response = await api.get<{ data: Product[] }>(`products?limit=${limit}&offset=${offset}`);
-                const products = response.data.data || [];
+                const serverProducts = response.data.data || [];
 
-                if (products.length > 0) {
-                    // Update cache for offline use
-                    await db.products.bulkPut(products);
+                // For the first page (offset 0), we can assume it's a good time to sync
+                // and potentially remove local items that aren't on the server
+                if (offset === 0) {
+                    const localProducts = await db.products.toArray();
+                    const serverIds = new Set(serverProducts.map(p => p.id));
+
+                    // If we have products on server, items missing from server response 
+                    // AND not recently created locally (offline) should be removed.
+                    // For simplicity in this app, we'll sync by replacement for the fetched range.
+                    await db.products.bulkPut(serverProducts);
+
+                    // But wait, if serverProducts is just a page, we can't delete everything.
+                    // However, if the user deleted something, it won't be in serverProducts.
+                    // If we want a true sync, we'd need a "ListAllProductIds" or similar.
+                } else {
+                    await db.products.bulkPut(serverProducts);
                 }
-                return products;
+
+                return serverProducts;
             } catch (error) {
                 console.warn('[Inventory] Fetching products failed, falling back to cache', error);
-                // Fall through to local return
             }
         }
 
         // Return local data as the source of truth for the UI
-        try {
-            return await db.products.toArray();
-        } catch (error) {
-            console.error('Failed to read from local DB', error);
-            return [];
-        }
+        return await db.products.reverse().sortBy('created_at');
     },
 
     getProduct: async (id: string) => {
@@ -235,34 +251,34 @@ export const inventoryService = {
     },
 
     searchProducts: async (query: string, limit = 50, offset = 0) => {
+        const performOfflineSearch = async () => {
+            const lowerQuery = query.toLowerCase();
+            const all = await db.products.toArray();
+            return all.filter(p => {
+                const status = typeof p.status === 'string'
+                    ? p.status
+                    : (p.status?.product_status || 'active');
+
+                if (status === 'discontinued') return false;
+
+                const barcodeStr = typeof p.barcode === 'string'
+                    ? p.barcode
+                    : (p.barcode && 'Valid' in p.barcode && p.barcode.Valid ? p.barcode.String : '');
+
+                return p.name.toLowerCase().includes(lowerQuery) ||
+                    (barcodeStr && barcodeStr.includes(query));
+            });
+        };
+
         try {
             if (isOnline()) {
                 const response = await api.get<{ data: Product[] }>(`products/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
                 return response.data.data || [];
             }
-            // Offline search
-            const lowerQuery = query.toLowerCase();
-            const all = await db.products.toArray();
-            return all.filter(p => {
-                const barcodeStr = typeof p.barcode === 'string'
-                    ? p.barcode
-                    : (p.barcode && 'Valid' in p.barcode && p.barcode.Valid ? p.barcode.String : '');
-
-                return p.name.toLowerCase().includes(lowerQuery) ||
-                    (barcodeStr && barcodeStr.includes(query));
-            });
+            return await performOfflineSearch();
         } catch (error) {
-            // Fallback to offline search
-            const lowerQuery = query.toLowerCase();
-            const all = await db.products.toArray();
-            return all.filter(p => {
-                const barcodeStr = typeof p.barcode === 'string'
-                    ? p.barcode
-                    : (p.barcode && 'Valid' in p.barcode && p.barcode.Valid ? p.barcode.String : '');
-
-                return p.name.toLowerCase().includes(lowerQuery) ||
-                    (barcodeStr && barcodeStr.includes(query));
-            });
+            console.warn('[Inventory] Search failed, falling back to local', error);
+            return await performOfflineSearch();
         }
     },
 };

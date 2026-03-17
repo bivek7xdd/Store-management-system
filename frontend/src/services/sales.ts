@@ -43,7 +43,7 @@ export const salesService = {
 
         // 1.5 Update local inventory (decrement stock)
         try {
-            await db.transaction('rw', db.products, async () => {
+            await db.transaction('rw', [db.products, db.notifications], async () => {
                 for (const item of data.items) {
                     const product = await db.products.get(item.product_id);
                     if (product) {
@@ -52,12 +52,47 @@ export const salesService = {
                             stock_quantity: newStock
                         });
                         console.log(`[Sales] Updated stock for ${product.name}: ${product.stock_quantity} -> ${newStock}`);
+
+                        // 1.6 Local Low Stock Check
+                        const threshold = typeof product.low_stock_threshold === 'number'
+                            ? product.low_stock_threshold
+                            : (product.low_stock_threshold && typeof product.low_stock_threshold === 'object' && 'Int32' in (product.low_stock_threshold as any) && (product.low_stock_threshold as any).Valid
+                                ? (product.low_stock_threshold as any).Int32
+                                : 0);
+
+                        console.log(`[Sales] Low stock check for ${product.name}: stock=${newStock}, threshold=${threshold}`);
+
+                        if (newStock <= threshold) {
+                            // Check if we already have a local unread notification for this product
+                            // or one created in the last 24h
+                            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+                            const existing = await db.notifications.where('reference_id').equals(item.product_id)
+                                .and(n => n.type === 'low_stock' && n.created_at > twentyFourHoursAgo)
+                                .first();
+
+                            if (!existing) {
+                                await db.notifications.add({
+                                    id: `local-${crypto.randomUUID()}`,
+                                    store_id: product.store_id,
+                                    type: 'low_stock',
+                                    title: 'Low Stock Alert',
+                                    message: `${product.name} is running low on stock. Current: ${newStock}, Threshold: ${threshold}`,
+                                    reference_id: product.id,
+                                    reference_type: 'product',
+                                    status: 'unread',
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString()
+                                });
+                                console.log(`[Sales] Created local low stock notification for ${product.name}`);
+                            } else {
+                                console.log(`[Sales] Notification already exists for ${product.name}, skipping`);
+                            }
+                        }
                     }
                 }
             });
         } catch (e) {
-            console.error('[Sales] Failed to update local inventory:', e);
-            // Don't fail the sale just because inventory update failed, but it's bad.
+            console.error('[Sales] Failed to update local inventory or create notification:', e);
         }
 
         // 2. Trigger background sync if online

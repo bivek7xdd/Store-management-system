@@ -145,7 +145,7 @@ func (q *Queries) GetCategoryStats(ctx context.Context, arg GetCategoryStatsPara
 const getLowStockProducts = `-- name: GetLowStockProducts :many
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1
-  AND status = 'active'
+  AND status != 'discontinued'
   AND stock_quantity <= low_stock_threshold
 ORDER BY stock_quantity ASC
 `
@@ -220,7 +220,7 @@ func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, erro
 
 const listProducts = `-- name: ListProducts :many
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
-WHERE store_id = $1
+WHERE store_id = $1 AND status != 'discontinued'
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -271,7 +271,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 
 const listProductsByCategory = `-- name: ListProductsByCategory :many
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
-WHERE store_id = $1 AND category_id = $2
+WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued'
 ORDER BY created_at DESC
 `
 
@@ -320,7 +320,7 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsBy
 
 const listTrackedProducts = `-- name: ListTrackedProducts :many
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
-WHERE store_id = $1 AND is_tracked = TRUE
+WHERE store_id = $1 AND is_tracked = TRUE AND status != 'discontinued'
 ORDER BY updated_at DESC
 LIMIT 6
 `
@@ -366,7 +366,8 @@ func (q *Queries) ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) 
 const searchProducts = `-- name: SearchProducts :many
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE 
-    store_id = $1 AND (
+    store_id = $1 AND 
+    status != 'discontinued' AND (
     name ILIKE '%' || $2 || '%' OR
     barcode ILIKE '%' || $2 || '%'
     )
