@@ -62,7 +62,7 @@ func RegisterUserHandler(c *gin.Context) {
 		utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid characters in %s", offending), nil)
 		return
 	}
-	//check if user already exists
+	// check if user already exists
 	_, err := utils.Queries.GetStoreOwnerByEmail(context.Background(), req.Email)
 	if err == nil {
 		utils.ErrorResponse(c, http.StatusConflict, "User already exists", err)
@@ -119,22 +119,23 @@ func RegisterUserHandler(c *gin.Context) {
 			return fmt.Errorf("failed to create otp token: %w", txErr)
 		}
 
-		// 4. Send the OTP Email (rolls back all above steps if it fails)
-		txErr = utils.SendOTPEmail(createdUser.Email, otp)
-		if txErr != nil {
-			return fmt.Errorf("failed to send mail: %w", txErr)
-		}
-
 		return nil
 	})
-
+	if err == nil {
+		// 4. Send OTP email (outside transaction - we don't want to roll back user creation if email fails, but we log the error)
+		go func(email, code string) {
+			err := utils.SendOTPEmail(email, code)
+			if err != nil {
+				fmt.Printf("Failed to send OTP email: %v\n", err)
+			}
+		}(createdUser.Email, otp)
+	}
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
 
 	utils.SuccessResponse(c, "User and Store created successfully", createdUser)
-
 }
 
 type LoginStoreOwnerParams struct {
@@ -183,7 +184,7 @@ type StoreInfoParams struct {
 }
 
 func CreateStoreInfoHandler(c *gin.Context) {
-	//gent user id from token
+	// gent user id from token
 	userId, _ := c.Get("user_id")
 	// Type assert userId to pgtype.UUID
 	userUUID, ok := userId.(pgtype.UUID)
@@ -193,7 +194,7 @@ func CreateStoreInfoHandler(c *gin.Context) {
 	}
 	var req StoreInfoParams
 
-	//check if user exists
+	// check if user exists
 	_, err := utils.Queries.GetStoreOwnerById(context.Background(), userUUID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, "User not found", err)
@@ -225,9 +226,8 @@ func CreateStoreInfoHandler(c *gin.Context) {
 		return
 	}
 
-	//create store info
+	// create store info
 	utils.SuccessResponse(c, "Store info created successfully", info)
-
 }
 
 /*
@@ -360,6 +360,14 @@ func ForgotPasswordHandler(c *gin.Context) {
 
 		return nil
 	})
+	if err == nil {
+		go func(email, code string) {
+			err := utils.SendOTPEmail(email, code)
+			if err != nil {
+				fmt.Printf("Failed to send OTP email: %v\n", err)
+			}
+		}(user.Email, otp)
+	}
 
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)

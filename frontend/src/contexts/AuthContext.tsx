@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import api from '@/services/api';
-import { db } from '@/db/db';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import api from "@/services/api";
+import { db } from "@/db/db";
 
 interface User {
   id: string;
@@ -25,7 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -41,8 +47,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Initialize auth state from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
     if (storedToken && storedUser && storedUser !== "undefined") {
       try {
@@ -50,15 +56,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(JSON.parse(storedUser));
 
         // Set default authorization header for api
-        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
       } catch (e) {
         console.error("Failed to parse stored user:", e);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
       }
     } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     }
 
     setLoading(false);
@@ -66,9 +72,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
-      const response = await api.post('/users/login', {
+      const response = await api.post("/users/login", {
         email,
-        password
+        password,
       });
 
       const { newToken, userData } = response.data.data;
@@ -82,12 +88,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(userData);
 
       // Store in localStorage
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(userData));
 
       // Set default authorization header for future requests
-      api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-
+      api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
     } catch (error) {
       throw error; // Re-throw to handle in component
     }
@@ -99,8 +104,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
 
     // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
     // Clear Dexie database to prevent cross-account data leakage
     try {
@@ -111,13 +116,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         db.sales.clear(),
         db.customers.clear(),
       ]);
-      console.log('Local database cleared on logout');
+      console.log("Local database cleared on logout");
     } catch (error) {
-      console.error('Failed to clear local database:', error);
+      console.error("Failed to clear local database:", error);
     }
 
     // Remove authorization header
-    delete api.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common["Authorization"];
   };
 
   const value: AuthContextType = {
@@ -126,12 +131,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!token && !!user,
-    loading
+    loading,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
