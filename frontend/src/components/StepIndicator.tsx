@@ -6,7 +6,7 @@ export interface StepConfig {
   id: number;
   title: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 }
 
 export interface StepIndicatorProps {
@@ -22,7 +22,6 @@ export interface StepIndicatorProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-// Default step configuration
 export const DEFAULT_STEPS: StepConfig[] = [
   { id: 1, title: 'Personal', description: 'Account details', icon: User },
   { id: 2, title: 'Store', description: 'Business info', icon: Store },
@@ -43,12 +42,10 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   size = 'md',
 }) => {
   const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  
-  // Focus management for accessibility
+
   useEffect(() => {
     const currentStepIndex = steps.findIndex(step => step.id === currentStep);
     if (currentStepIndex !== -1 && stepRefs.current[currentStepIndex]) {
-      // Only focus if the user is navigating with keyboard
       const activeElement = document.activeElement;
       if (activeElement && activeElement.getAttribute('role') === 'tab') {
         stepRefs.current[currentStepIndex]?.focus();
@@ -57,47 +54,22 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   }, [currentStep, steps]);
 
   const progressBarRef = useRef<HTMLDivElement>(null);
-  
-  // Animate progress bar changes
+
   useEffect(() => {
     if (progressBarRef.current) {
       const progressBar = progressBarRef.current;
-      
-      // Add a subtle pulse effect when progress changes
       progressBar.style.transform = 'scaleY(1.1)';
       progressBar.style.transition = 'transform 0.2s ease-out';
-      
       setTimeout(() => {
         progressBar.style.transform = 'scaleY(1)';
       }, 200);
     }
   }, [progressPercentage]);
-  // Size configurations
+
   const sizeConfig = {
-    sm: {
-      circle: 'w-8 h-8',
-      icon: 'w-4 h-4',
-      title: 'text-xs',
-      description: 'text-xs',
-      connector: 'h-0.5',
-      spacing: 'gap-2',
-    },
-    md: {
-      circle: 'w-10 h-10',
-      icon: 'w-5 h-5',
-      title: 'text-sm',
-      description: 'text-xs',
-      connector: 'h-0.5',
-      spacing: 'gap-3',
-    },
-    lg: {
-      circle: 'w-12 h-12',
-      icon: 'w-6 h-6',
-      title: 'text-base',
-      description: 'text-sm',
-      connector: 'h-1',
-      spacing: 'gap-4',
-    },
+    sm: { circle: 32, icon: 16, title: '0.75rem', description: '0.7rem', connector: 2 },
+    md: { circle: 40, icon: 20, title: '0.85rem', description: '0.75rem', connector: 2 },
+    lg: { circle: 48, icon: 24, title: '1rem', description: '0.85rem', connector: 4 },
   };
 
   const config = sizeConfig[size];
@@ -106,7 +78,6 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
     const isActive = currentStep === stepId;
     const isCompleted = completedSteps.includes(stepId);
     const canNavigate = canNavigateToStep ? canNavigateToStep(stepId) : isCompleted;
-    
     return { isActive, isCompleted, canNavigate };
   };
 
@@ -119,7 +90,6 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
 
   const handleKeyDown = (event: React.KeyboardEvent, stepId: number) => {
     const { canNavigate } = getStepState(stepId);
-    
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       if (canNavigate && onStepClick) {
@@ -134,84 +104,82 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   const navigateWithKeyboard = (direction: 'next' | 'prev', currentStepId: number) => {
     const currentIndex = steps.findIndex(step => step.id === currentStepId);
     let targetIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
-    
-    // Find next navigable step
     while (targetIndex >= 0 && targetIndex < steps.length) {
       const targetStep = steps[targetIndex];
       const { canNavigate } = getStepState(targetStep.id);
-      
       if (canNavigate) {
         stepRefs.current[targetIndex]?.focus();
         break;
       }
-      
       targetIndex = direction === 'next' ? targetIndex + 1 : targetIndex - 1;
     }
   };
 
-  const getStepClasses = (stepId: number) => {
+  const getCircleStyle = (stepId: number): React.CSSProperties => {
     const { isActive, isCompleted, canNavigate } = getStepState(stepId);
-    
-    const baseClasses = `
-      relative ${config.circle} rounded-full flex items-center justify-center 
-      transition-all duration-500 ease-in-out transform
-    `;
-    
+
+    const base: React.CSSProperties = {
+      position: 'relative',
+      width: config.circle,
+      height: config.circle,
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.4s ease',
+      border: 'none',
+      outline: 'none',
+      padding: 0,
+    };
+
     if (isCompleted) {
-      return cn(
-        baseClasses,
-        'bg-teal-500 shadow-lg shadow-teal-500/30',
-        canNavigate && 'cursor-pointer hover:bg-teal-400 hover:scale-110 hover:shadow-xl hover:shadow-teal-500/40',
-        canNavigate && 'focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900',
-        canNavigate && 'active:scale-95 transition-transform'
-      );
+      return {
+        ...base,
+        background: '#b89767',
+        boxShadow: '0 4px 12px rgba(184, 151, 103, 0.3)',
+        cursor: canNavigate ? 'pointer' : 'default',
+      };
     }
-    
+
     if (isActive) {
-      return cn(
-        baseClasses,
-        'bg-teal-600 shadow-lg shadow-teal-600/30 scale-110 ring-4 ring-teal-500/20',
-        'focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900'
-      );
+      return {
+        ...base,
+        background: '#1a1a1a',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15), 0 0 0 4px rgba(184, 151, 103, 0.15)',
+      };
     }
-    
+
     if (canNavigate) {
-      return cn(
-        baseClasses,
-        'bg-white/10 border border-white/20 cursor-pointer',
-        'hover:bg-white/20 hover:scale-105 hover:border-white/30',
-        'focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900',
-        'active:scale-95 transition-transform'
-      );
+      return {
+        ...base,
+        background: 'rgba(229, 224, 209, 0.5)',
+        border: '1px solid #d4cbb8',
+        cursor: 'pointer',
+      };
     }
-    
-    return cn(
-      baseClasses,
-      'bg-white/5 border border-white/10 cursor-not-allowed opacity-60'
-    );
+
+    return {
+      ...base,
+      background: 'rgba(229, 224, 209, 0.3)',
+      border: '1px solid #e5e0d1',
+      cursor: 'not-allowed',
+      opacity: 0.5,
+    };
   };
 
-  const getIconClasses = (stepId: number) => {
+  const getIconColor = (stepId: number): string => {
     const { isActive, isCompleted, canNavigate } = getStepState(stepId);
-    
-    if (isCompleted || isActive) {
-      return cn(config.icon, 'text-white');
-    }
-    
-    if (canNavigate) {
-      return cn(config.icon, 'text-gray-300');
-    }
-    
-    return cn(config.icon, 'text-gray-500');
+    if (isCompleted || isActive) return '#ffffff';
+    if (canNavigate) return '#888';
+    return '#bbb';
   };
 
-  const getConnectorClasses = (stepId: number) => {
-    const isConnectorCompleted = currentStep > stepId;
-    
-    return cn(
-      `flex-1 ${config.connector} mx-3 rounded-full transition-all duration-500`,
-      isConnectorCompleted ? 'bg-teal-500 shadow-sm shadow-teal-500/30' : 'bg-white/10'
-    );
+  const getTitleColor = (stepId: number): string => {
+    const { isActive, isCompleted, canNavigate } = getStepState(stepId);
+    if (isActive) return '#1a1a1a';
+    if (isCompleted) return '#b89767';
+    if (canNavigate) return '#666';
+    return '#bbb';
   };
 
   const renderHorizontalSteps = () => (
@@ -223,13 +191,12 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
         return (
           <div key={step.id} className="flex items-center flex-1">
             <div className="flex flex-col items-center">
-              {/* Step Circle */}
               <button
                 ref={(el) => (stepRefs.current[index] = el)}
                 onClick={() => handleStepClick(step.id)}
                 onKeyDown={(e) => handleKeyDown(e, step.id)}
                 disabled={!canNavigate}
-                className={getStepClasses(step.id)}
+                style={getCircleStyle(step.id)}
                 aria-label={`Step ${step.id}: ${step.title} - ${step.description}${isCompleted ? ' (completed)' : isActive ? ' (current)' : ''}`}
                 aria-describedby={`step-${step.id}-description`}
                 role="tab"
@@ -237,41 +204,69 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                 tabIndex={canNavigate ? 0 : -1}
               >
                 {isCompleted ? (
-                  <Check className={cn(config.icon, 'text-white')} />
+                  <Check style={{ width: config.icon, height: config.icon, color: '#fff' }} />
                 ) : (
-                  <StepIcon className={getIconClasses(step.id)} />
+                  <StepIcon
+                    style={{ width: config.icon, height: config.icon, color: getIconColor(step.id) }}
+                  />
                 )}
-                
-                {/* Active step pulse animation */}
+
+                {/* Active step pulse */}
                 {isActive && (
-                  <div className="absolute inset-0 rounded-full bg-teal-500 animate-ping opacity-20" />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '50%',
+                      background: 'rgba(184, 151, 103, 0.2)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}
+                  />
                 )}
               </button>
-              
+
               {/* Step Labels */}
-              <div className="mt-2 text-center" id={`step-${step.id}-description`}>
-                <div className={cn(
-                  config.title,
-                  'font-medium transition-colors duration-300',
-                  isActive ? 'text-teal-300' : 
-                  isCompleted ? 'text-teal-400' : 
-                  canNavigate ? 'text-gray-300' : 'text-gray-500'
-                )}>
+              <div style={{ marginTop: '0.5rem', textAlign: 'center' }} id={`step-${step.id}-description`}>
+                <div
+                  style={{
+                    fontSize: config.title,
+                    fontWeight: 500,
+                    color: getTitleColor(step.id),
+                    transition: 'color 0.3s ease',
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
                   {step.title}
                 </div>
-                <div className={cn(
-                  config.description,
-                  'text-gray-400 mt-0.5 transition-colors duration-300',
-                  isActive && 'text-gray-300'
-                )}>
+                <div
+                  style={{
+                    fontSize: config.description,
+                    color: isActive ? '#888' : '#bbb',
+                    marginTop: '0.125rem',
+                    transition: 'color 0.3s ease',
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
                   {step.description}
                 </div>
               </div>
             </div>
-            
-            {/* Connector Line */}
+
+            {/* Connector */}
             {index < steps.length - 1 && (
-              <div className={getConnectorClasses(step.id)} />
+              <div
+                style={{
+                  flex: 1,
+                  height: config.connector,
+                  margin: '0 0.75rem',
+                  borderRadius: '9999px',
+                  transition: 'all 0.4s ease',
+                  background: currentStep > step.id
+                    ? 'linear-gradient(90deg, #b89767, #d9b99b)'
+                    : '#e5e0d1',
+                  boxShadow: currentStep > step.id ? '0 1px 4px rgba(184, 151, 103, 0.2)' : 'none',
+                }}
+              />
             )}
           </div>
         );
@@ -280,20 +275,19 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
   );
 
   const renderVerticalSteps = () => (
-    <div className={cn('flex flex-col', config.spacing, className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
       {steps.map((step, index) => {
         const StepIcon = step.icon;
         const { isActive, isCompleted, canNavigate } = getStepState(step.id);
 
         return (
           <div key={step.id} className="flex items-center">
-            {/* Step Circle */}
             <button
               ref={(el) => (stepRefs.current[index] = el)}
               onClick={() => handleStepClick(step.id)}
               onKeyDown={(e) => handleKeyDown(e, step.id)}
               disabled={!canNavigate}
-              className={getStepClasses(step.id)}
+              style={getCircleStyle(step.id)}
               aria-label={`Step ${step.id}: ${step.title} - ${step.description}${isCompleted ? ' (completed)' : isActive ? ' (current)' : ''}`}
               aria-describedby={`step-${step.id}-description`}
               role="tab"
@@ -301,40 +295,59 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               tabIndex={canNavigate ? 0 : -1}
             >
               {isCompleted ? (
-                <Check className={cn(config.icon, 'text-white')} />
+                <Check style={{ width: config.icon, height: config.icon, color: '#fff' }} />
               ) : (
-                <StepIcon className={getIconClasses(step.id)} />
+                <StepIcon
+                  style={{ width: config.icon, height: config.icon, color: getIconColor(step.id) }}
+                />
               )}
-              
-              {/* Active step pulse animation */}
               {isActive && (
-                <div className="absolute inset-0 rounded-full bg-teal-500 animate-ping opacity-20" />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    background: 'rgba(184, 151, 103, 0.2)',
+                    animation: 'pulse 2s ease-in-out infinite',
+                  }}
+                />
               )}
             </button>
-            
-            {/* Step Content */}
-            <div className="ml-4 flex-1" id={`step-${step.id}-description`}>
-              <div className={cn(
-                config.title,
-                'font-medium transition-colors duration-300',
-                isActive ? 'text-teal-300' : 
-                isCompleted ? 'text-teal-400' : 
-                canNavigate ? 'text-gray-300' : 'text-gray-500'
-              )}>
+
+            <div style={{ marginLeft: '1rem', flex: 1 }} id={`step-${step.id}-description`}>
+              <div
+                style={{
+                  fontSize: config.title,
+                  fontWeight: 500,
+                  color: getTitleColor(step.id),
+                  transition: 'color 0.3s ease',
+                }}
+              >
                 {step.title}
               </div>
-              <div className={cn(
-                config.description,
-                'text-gray-400 transition-colors duration-300',
-                isActive && 'text-gray-300'
-              )}>
+              <div
+                style={{
+                  fontSize: config.description,
+                  color: isActive ? '#888' : '#bbb',
+                  transition: 'color 0.3s ease',
+                }}
+              >
                 {step.description}
               </div>
             </div>
-            
-            {/* Vertical Connector */}
+
             {index < steps.length - 1 && (
-              <div className="absolute left-5 top-12 w-0.5 h-8 bg-white/10 transition-colors duration-500" />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '20px',
+                  top: '48px',
+                  width: '2px',
+                  height: '32px',
+                  background: '#e5e0d1',
+                  transition: 'background 0.4s ease',
+                }}
+              />
             )}
           </div>
         );
@@ -346,19 +359,41 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
     if (!showProgress) return null;
 
     return (
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-400 mb-2">
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#888', marginBottom: '0.5rem' }}>
           <span>Progress</span>
           <span>{Math.round(progressPercentage)}%</span>
         </div>
-        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+        <div
+          style={{
+            width: '100%',
+            background: '#e5e0d1',
+            borderRadius: '9999px',
+            height: '6px',
+            overflow: 'hidden',
+          }}
+        >
           <div
             ref={progressBarRef}
-            className="bg-gradient-to-r from-teal-600 to-teal-500 h-2 rounded-full transition-all duration-700 ease-out shadow-sm shadow-teal-500/30 relative"
-            style={{ width: `${progressPercentage}%` }}
+            style={{
+              background: 'linear-gradient(90deg, #b89767, #d9b99b)',
+              height: '6px',
+              borderRadius: '9999px',
+              transition: 'width 0.7s ease-out',
+              width: `${progressPercentage}%`,
+              position: 'relative',
+              boxShadow: '0 1px 4px rgba(184, 151, 103, 0.3)',
+            }}
           >
-            {/* Animated shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+            {/* Shine effect */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                animation: 'shimmer 2s ease-in-out infinite',
+              }}
+            />
           </div>
         </div>
       </div>
@@ -367,6 +402,16 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
 
   return (
     <div role="tablist" aria-label="Signup progress steps">
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0; transform: scale(1.5); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
       {renderProgressBar()}
       {variant === 'horizontal' ? renderHorizontalSteps() : renderVerticalSteps()}
     </div>

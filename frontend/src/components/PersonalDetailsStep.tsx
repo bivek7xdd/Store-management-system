@@ -38,11 +38,16 @@ const PersonalDetailsStep: React.FC<PersonalDetailsStepProps> = ({
   return (
     <div className="step-container space-y-6">
       <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3 bg-teal-500/20">
-          <User className="w-6 h-6 text-teal-400" />
+        <div
+          className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3"
+          style={{ background: 'rgba(184, 151, 103, 0.12)' }}
+        >
+          <User className="w-6 h-6" style={{ color: '#b89767' }} />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Personal Details</h3>
-        <p className="text-gray-400 text-sm">
+        <h3 className="text-xl font-bold mb-2" style={{ color: '#1a1a1a', fontFamily: "'Playfair Display', serif" }}>
+          Personal Details
+        </h3>
+        <p style={{ color: '#888', fontSize: '0.9rem' }}>
           Let's start with your basic information
         </p>
       </div>
@@ -146,8 +151,14 @@ const PersonalDetailsStep: React.FC<PersonalDetailsStepProps> = ({
       </div>
 
       {/* Additional Info */}
-      <div className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10">
-        <p className="text-sm text-gray-300 text-center">
+      <div
+        className="mt-6 p-4 rounded-lg"
+        style={{
+          background: 'rgba(184, 151, 103, 0.06)',
+          border: '1px solid rgba(184, 151, 103, 0.15)',
+        }}
+      >
+        <p className="text-sm text-center" style={{ color: '#888' }}>
           Your information is secure and will only be used to create your StoreHub account.
         </p>
       </div>

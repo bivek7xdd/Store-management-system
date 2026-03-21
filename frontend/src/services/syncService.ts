@@ -2,6 +2,12 @@ import { db } from '../db/db';
 import api from './api';
 import { OfflineStatus, SyncProgress } from '../types';
 
+// Check if user is authenticated before attempting sync
+const isAuthenticated = (): boolean => {
+  const token = localStorage.getItem('token');
+  return !!token;
+};
+
 // Event emitter for sync status updates
 class SyncEventEmitter extends EventTarget {
   emit(eventName: string, data?: any) {
@@ -77,6 +83,10 @@ export const syncService = {
   },
 
   syncSales: async (retryAttempt = 0): Promise<boolean> => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
     if (!navigator.onLine) {
       console.log('Offline: Skipping sync');
       updateSyncStatus({ syncError: 'Device is offline' });
@@ -113,6 +123,7 @@ export const syncService = {
       for (const sale of unsyncedSales) {
         console.log("Raw sale data from DB:", JSON.stringify(sale, null, 2));  // Log exactly what's retrieved from DB
 
+        let payload: any = null;
         try {
           // Emit progress update
           syncEvents.emit('syncProgress', {
@@ -129,7 +140,7 @@ export const syncService = {
           };
 
           // Prepare payload matching CreateSaleData
-          const payload = {
+          payload = {
             sales_type: cleanedSale.sales_type,
             amount_paid: cleanedSale.amount_paid,
             total_amount: cleanedSale.total_amount,
@@ -214,6 +225,10 @@ export const syncService = {
   },
 
   syncProducts: async (retryAttempt = 0): Promise<boolean> => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
     if (!navigator.onLine) {
       console.log('Offline: Skipping product sync');
       return false;
@@ -248,6 +263,10 @@ export const syncService = {
 
   // Manual sync trigger
   triggerSync: async (): Promise<boolean> => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
     if (!navigator.onLine) {
       updateSyncStatus({ syncError: 'Cannot sync while offline' });
       return false;
@@ -263,9 +282,12 @@ export const syncService = {
   init: () => {
     // Update online status
     const handleOnline = () => {
-      console.log('Online detected, triggering sync...');
+      console.log('Online detected');
       updateSyncStatus({ isOnline: true, syncError: null });
-      syncService.triggerSync();
+      if (isAuthenticated()) {
+        console.log('User authenticated, triggering sync...');
+        syncService.triggerSync();
+      }
     };
 
     const handleOffline = () => {
@@ -286,8 +308,8 @@ export const syncService = {
     // Update pending sales count on init
     updatePendingSalesCount();
 
-    // Initial sync check on load if online
-    if (navigator.onLine) {
+    // Initial sync check on load if online and authenticated
+    if (navigator.onLine && isAuthenticated()) {
       syncService.triggerSync();
     }
 

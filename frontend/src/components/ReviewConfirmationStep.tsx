@@ -1,8 +1,5 @@
 import React from 'react';
 import { User, Store, Tag, Edit2, Eye, EyeOff, Lock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { EnhancedSignupFormData, ValidationErrors } from '@/types/enhanced-signup';
 import { BUSINESS_CATEGORIES } from '@/data/businessCategories';
 
@@ -25,7 +22,6 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
   onEditStep,
   onFieldBlur,
 }) => {
-  // Get business category details
   const getBusinessCategoryDetails = () => {
     if (!formData.business_category) return null;
 
@@ -44,15 +40,50 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
 
   const categoryDetails = getBusinessCategoryDetails();
 
+  const sectionStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.4)',
+    border: '1px solid #e5e0d1',
+    borderRadius: '0.75rem',
+    padding: '1rem',
+  };
+
+  const sectionHeaderStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '0.75rem',
+  };
+
+  const editBtnStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    background: 'none',
+    border: 'none',
+    color: '#b89767',
+    cursor: 'pointer',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    padding: '0.25rem 0.5rem',
+    borderRadius: '0.375rem',
+    transition: 'all 0.2s ease',
+    fontFamily: "'Inter', sans-serif",
+  };
+
   return (
     <div className="step-container space-y-6">
       {/* Header */}
       <div className="text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3 bg-emerald-500/20">
-          <Lock className="w-6 h-6 text-emerald-400" />
+        <div
+          className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3"
+          style={{ background: 'rgba(184, 151, 103, 0.12)' }}
+        >
+          <Lock className="w-6 h-6" style={{ color: '#b89767' }} />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">Review & Confirm</h3>
-        <p className="text-sm text-gray-400">
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#1a1a1a', marginBottom: '0.5rem', fontFamily: "'Playfair Display', serif" }}>
+          Review & Confirm
+        </h3>
+        <p style={{ fontSize: '0.85rem', color: '#888' }}>
           Please review your information and confirm your password to complete setup
         </p>
       </div>
@@ -60,120 +91,129 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
       {/* Review Sections */}
       <div className="space-y-4">
         {/* Account Information */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-teal-400" />
-              <h4 className="font-medium text-white">Account Information</h4>
+        <div style={sectionStyle}>
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <User className="w-4 h-4" style={{ color: '#b89767' }} />
+              <h4 style={{ fontWeight: 500, color: '#1a1a1a', fontSize: '0.9rem' }}>Account Information</h4>
             </div>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
+              style={editBtnStyle}
               onClick={() => onEditStep(1)}
-              className="text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 h-8 px-2"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
-              <Edit2 className="w-3 h-3 mr-1" />
+              <Edit2 className="w-3 h-3" />
               Edit
-            </Button>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ fontSize: '0.85rem' }}>
             <div>
-              <span className="text-gray-400">Full Name</span>
-              <p className="text-white font-medium">{formData.name || 'Not provided'}</p>
+              <span style={{ color: '#999' }}>Full Name</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.name || 'Not provided'}</p>
             </div>
             <div>
-              <span className="text-gray-400">Email</span>
-              <p className="text-white font-medium">{formData.email || 'Not provided'}</p>
+              <span style={{ color: '#999' }}>Email</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.email || 'Not provided'}</p>
             </div>
             <div>
-              <span className="text-gray-400">Phone</span>
-              <p className="text-white font-medium">{formData.phone || 'Not provided'}</p>
+              <span style={{ color: '#999' }}>Phone</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.phone || 'Not provided'}</p>
             </div>
             <div>
-              <span className="text-gray-400">Password</span>
-              <p className="text-white font-medium">••••••••</p>
+              <span style={{ color: '#999' }}>Password</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>••••••••</p>
             </div>
           </div>
         </div>
 
         {/* Store Information */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Store className="w-4 h-4 text-teal-400" />
-              <h4 className="font-medium text-white">Store Information</h4>
+        <div style={sectionStyle}>
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Store className="w-4 h-4" style={{ color: '#b89767' }} />
+              <h4 style={{ fontWeight: 500, color: '#1a1a1a', fontSize: '0.9rem' }}>Store Information</h4>
             </div>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
+              style={editBtnStyle}
               onClick={() => onEditStep(2)}
-              className="text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 h-8 px-2"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
-              <Edit2 className="w-3 h-3 mr-1" />
+              <Edit2 className="w-3 h-3" />
               Edit
-            </Button>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ fontSize: '0.85rem' }}>
             <div>
-              <span className="text-gray-400">Store Name</span>
-              <p className="text-white font-medium">{formData.store_name || 'Not provided'}</p>
+              <span style={{ color: '#999' }}>Store Name</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.store_name || 'Not provided'}</p>
             </div>
             <div>
-              <span className="text-gray-400">Currency</span>
-              <p className="text-white font-medium">{formData.currency_code || 'NPR'}</p>
+              <span style={{ color: '#999' }}>Currency</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.currency_code || 'NPR'}</p>
             </div>
             <div className="sm:col-span-2">
-              <span className="text-gray-400">Address</span>
-              <p className="text-white font-medium">{formData.store_address || 'Not provided'}</p>
+              <span style={{ color: '#999' }}>Address</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.store_address || 'Not provided'}</p>
             </div>
           </div>
         </div>
 
         {/* Business Categories */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-teal-400" />
-              <h4 className="font-medium text-white">Business Categories</h4>
+        <div style={sectionStyle}>
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Tag className="w-4 h-4" style={{ color: '#b89767' }} />
+              <h4 style={{ fontWeight: 500, color: '#1a1a1a', fontSize: '0.9rem' }}>Business Categories</h4>
             </div>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
+              style={editBtnStyle}
               onClick={() => onEditStep(3)}
-              className="text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 h-8 px-2"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
-              <Edit2 className="w-3 h-3 mr-1" />
+              <Edit2 className="w-3 h-3" />
               Edit
-            </Button>
+            </button>
           </div>
 
           {formData.skip_categories ? (
-            <div className="text-sm">
-              <span className="text-gray-400">Configuration</span>
-              <p className="text-white font-medium">Skipped - can be configured later</p>
+            <div style={{ fontSize: '0.85rem' }}>
+              <span style={{ color: '#999' }}>Configuration</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>Skipped - can be configured later</p>
             </div>
           ) : formData.business_category === 'other' ? (
-            // Custom "Other" category display
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3" style={{ fontSize: '0.85rem' }}>
               <div>
-                <span className="text-gray-400">Primary Category</span>
-                <p className="text-white font-medium">
+                <span style={{ color: '#999' }}>Primary Category</span>
+                <p style={{ color: '#1a1a1a', fontWeight: 500 }}>
                   {formData.custom_category || 'Custom Category (not specified)'}
                 </p>
               </div>
               {formData.custom_subcategories && formData.custom_subcategories.length > 0 && (
                 <div>
-                  <span className="text-gray-400">Product Types</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <span style={{ color: '#999' }}>Product Types</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
                     {formData.custom_subcategories.map((sub, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          background: 'rgba(217, 185, 155, 0.12)',
+                          color: '#b89767',
+                          border: '1px solid rgba(217, 185, 155, 0.25)',
+                        }}
                       >
                         {sub}
                       </span>
@@ -183,28 +223,47 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               )}
             </div>
           ) : categoryDetails ? (
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3" style={{ fontSize: '0.85rem' }}>
               <div>
-                <span className="text-gray-400">Primary Category</span>
-                <p className="text-white font-medium">{categoryDetails.category.name}</p>
+                <span style={{ color: '#999' }}>Primary Category</span>
+                <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{categoryDetails.category.name}</p>
               </div>
               {(categoryDetails.selectedSubcategories.length > 0 || (formData.custom_subcategories && formData.custom_subcategories.length > 0)) && (
                 <div>
-                  <span className="text-gray-400">Product Types</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <span style={{ color: '#999' }}>Product Types</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
                     {categoryDetails.selectedSubcategories.map((sub) => (
                       <span
                         key={sub.id}
-                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-500/20 text-teal-300 border border-teal-500/30"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          background: 'rgba(184, 151, 103, 0.1)',
+                          color: '#b89767',
+                          border: '1px solid rgba(184, 151, 103, 0.2)',
+                        }}
                       >
                         {sub.name}
                       </span>
                     ))}
-                    {/* Show custom subcategories */}
                     {formData.custom_subcategories && formData.custom_subcategories.map((sub, index) => (
                       <span
                         key={`custom-${index}`}
-                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          background: 'rgba(217, 185, 155, 0.12)',
+                          color: '#c4956a',
+                          border: '1px solid rgba(217, 185, 155, 0.25)',
+                        }}
                       >
                         {sub}
                       </span>
@@ -214,53 +273,88 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               )}
             </div>
           ) : (
-            <div className="text-sm">
-              <span className="text-gray-400">Configuration</span>
-              <p className="text-white font-medium">No categories selected</p>
+            <div style={{ fontSize: '0.85rem' }}>
+              <span style={{ color: '#999' }}>Configuration</span>
+              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>No categories selected</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Password Confirmation */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-        <div className="mb-3">
-          <h4 className="font-medium text-white mb-1">Final Security Check</h4>
-          <p className="text-sm text-gray-400">
+      <div style={sectionStyle}>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <h4 style={{ fontWeight: 500, color: '#1a1a1a', marginBottom: '0.25rem', fontSize: '0.9rem' }}>Final Security Check</h4>
+          <p style={{ fontSize: '0.85rem', color: '#888' }}>
             Please confirm your password to complete account creation
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="final-password-confirm" className="text-sm font-medium text-gray-300">
+          <label
+            htmlFor="final-password-confirm"
+            style={{ fontSize: '0.85rem', fontWeight: 500, color: '#444' }}
+          >
             Confirm Password
-          </Label>
-          <div className="relative">
-            <Input
+          </label>
+          <div style={{ position: 'relative' }}>
+            <input
               id="final-password-confirm"
               type={showConfirmPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
               onChange={(e) => onInputChange('confirmPassword', e.target.value)}
               onBlur={() => onFieldBlur('confirmPassword')}
               placeholder="Re-enter your password"
-              className="pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-teal-500 focus:ring-teal-500/20"
+              style={{
+                width: '100%',
+                height: '2.75rem',
+                paddingLeft: '1rem',
+                paddingRight: '3rem',
+                background: 'rgba(255, 255, 255, 0.5)',
+                border: `1px solid ${validationErrors.confirmPassword ? 'rgba(220, 38, 38, 0.5)' : '#d4cbb8'}`,
+                borderRadius: '0.75rem',
+                color: '#1a1a1a',
+                fontSize: '0.9rem',
+                fontFamily: "'Inter', sans-serif",
+                outline: 'none',
+                transition: 'all 0.25s ease',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#b89767';
+                e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.02), 0 0 0 3px rgba(184, 151, 103, 0.15)';
+              }}
+              onBlurCapture={(e) => {
+                e.currentTarget.style.borderColor = '#d4cbb8';
+                e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.02)';
+              }}
             />
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
               onClick={onToggleConfirmPassword}
-              className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white hover:bg-transparent"
+              style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#999',
+                cursor: 'pointer',
+                padding: '0.25rem',
+                display: 'flex',
+                alignItems: 'center',
+              }}
             >
               {showConfirmPassword ? (
                 <EyeOff className="w-4 h-4" />
               ) : (
                 <Eye className="w-4 h-4" />
               )}
-            </Button>
+            </button>
           </div>
           {validationErrors.confirmPassword && (
-            <p className="text-sm text-red-400 mt-1">
+            <p style={{ fontSize: '0.85rem', color: '#dc2626', marginTop: '0.25rem' }}>
               {validationErrors.confirmPassword.message}
             </p>
           )}
@@ -268,8 +362,16 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
       </div>
 
       {/* Summary */}
-      <div className="text-center p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-        <p className="text-sm text-emerald-300">
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '1rem',
+          background: 'rgba(184, 151, 103, 0.06)',
+          border: '1px solid rgba(184, 151, 103, 0.15)',
+          borderRadius: '0.75rem',
+        }}
+      >
+        <p style={{ fontSize: '0.85rem', color: '#b89767' }}>
           Ready to create your StoreHub account? Click "Create Account" to complete setup.
         </p>
       </div>

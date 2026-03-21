@@ -14,30 +14,30 @@ const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
 }) => {
   const requirements = getPasswordRequirements(password);
   const strength = calculatePasswordStrength(password);
-  
+
   const getStrengthColor = () => {
     switch (strength) {
       case 'weak':
-        return 'text-red-400';
+        return '#dc2626';
       case 'medium':
-        return 'text-yellow-400';
+        return '#d97706';
       case 'strong':
-        return 'text-green-400';
+        return '#16a34a';
       default:
-        return 'text-gray-400';
+        return '#999';
     }
   };
 
   const getStrengthBarColor = () => {
     switch (strength) {
       case 'weak':
-        return 'bg-red-500';
+        return '#dc2626';
       case 'medium':
-        return 'bg-yellow-500';
+        return '#d97706';
       case 'strong':
-        return 'bg-green-500';
+        return '#16a34a';
       default:
-        return 'bg-gray-500';
+        return '#ccc';
     }
   };
 
@@ -51,44 +51,79 @@ const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
   }
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       {/* Strength Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-300">Password Strength</span>
-          <span className={`text-sm font-medium capitalize ${getStrengthColor()}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.85rem', color: '#666' }}>Password Strength</span>
+          <span
+            style={{
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              textTransform: 'capitalize',
+              color: getStrengthColor(),
+            }}
+          >
             {strength}
           </span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div
+          style={{
+            width: '100%',
+            background: '#e5e0d1',
+            borderRadius: '9999px',
+            height: '6px',
+            overflow: 'hidden',
+          }}
+        >
           <div
-            className={`h-2 rounded-full transition-all duration-300 ${getStrengthBarColor()}`}
-            style={{ width: getStrengthWidth() }}
+            style={{
+              height: '6px',
+              borderRadius: '9999px',
+              transition: 'all 0.3s ease',
+              background: getStrengthBarColor(),
+              width: getStrengthWidth(),
+            }}
           />
         </div>
       </div>
 
       {/* Requirements List */}
-      <div className="space-y-2">
-        <span className="text-sm text-gray-300">Requirements:</span>
-        <div className="space-y-1">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <span style={{ fontSize: '0.85rem', color: '#666' }}>Requirements:</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {requirements.map((requirement) => (
             <div
               key={requirement.id}
-              className="flex items-center gap-2 text-sm"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.8rem',
+              }}
             >
-              <div className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
-                requirement.met 
-                  ? 'bg-green-500/20 text-green-400' 
-                  : 'bg-gray-600/20 text-gray-400'
-              }`}>
+              <div
+                style={{
+                  flexShrink: 0,
+                  width: '1rem',
+                  height: '1rem',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: requirement.met
+                    ? 'rgba(22, 163, 74, 0.12)'
+                    : 'rgba(0, 0, 0, 0.04)',
+                  color: requirement.met ? '#16a34a' : '#999',
+                }}
+              >
                 {requirement.met ? (
                   <Check className="w-3 h-3" />
                 ) : (
                   <X className="w-3 h-3" />
                 )}
               </div>
-              <span className={requirement.met ? 'text-green-400' : 'text-gray-400'}>
+              <span style={{ color: requirement.met ? '#16a34a' : '#999' }}>
                 {requirement.label}
               </span>
             </div>

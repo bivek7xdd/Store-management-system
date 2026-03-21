@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { notificationService, Notification } from '@/services/notifications';
-import { db } from '@/db/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 
 interface NotificationContextType {
     notifications: Notification[];
@@ -29,40 +27,21 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Live query for notifications from Dexie
-    const notifications = useLiveQuery(
-        async () => {
-            return await db.notifications
-                .orderBy('created_at')
-                .reverse()
-                .toArray();
-        },
-        []
-    ) || [];
-
-    // Derive unread count from live query
+    // Derive unread count from state
     const unreadCount = notifications.filter(n => n.status === 'unread').length;
 
     const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const data = await notificationService.getNotifications();
-            if (data.length > 0) {
-                // Sync API data to Dexie
-                await Promise.all(data.map(async (n) => {
-                    // If we have a local version (matched by reference_id and type), 
-                    // delete the local one before putting the backend one
-                    if (n.reference_id) {
-                        await db.notifications
-                            .where('reference_id').equals(n.reference_id)
-                            .filter(local => local.type === n.type && local.id.startsWith('local-'))
-                            .delete();
-                    }
-                    return db.notifications.put(n);
-                }));
-            }
+            // Sort by created_at descending (newest first)
+            const sortedData = [...data].sort((a, b) => 
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            setNotifications(sortedData);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
         } finally {
@@ -74,7 +53,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         try {
             // we don't strictly need to store just count, but it ensures we're syncing
             await notificationService.getUnreadCount();
-            // In an offline-first app, we'd rely on the main fetch to populate Dexie
         } catch (error) {
             console.error('Failed to fetch unread count:', error);
         }
@@ -82,55 +60,61 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const markAsRead = useCallback(async (id: string) => {
         try {
-            // Update UI/Local DB first
-            await db.notifications.update(id, { status: 'read', updated_at: new Date().toISOString() });
+            // Optimistic UI update
+            setNotifications(prev => prev.map(n => 
+                n.id === id ? { ...n, status: 'read', updated_at: new Date().toISOString() } : n
+            ));
 
-            // Sync with backend if online
-            if (navigator.onLine) {
-                await notificationService.markAsRead(id);
-            }
+            await notificationService.markAsRead(id);
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
+            // Revert state if necessary by refetching
+            fetchNotifications();
         }
-    }, []);
+    }, [fetchNotifications]);
 
     const markAllAsRead = useCallback(async () => {
         try {
             const unreadIds = notifications.filter(n => n.status === 'unread').map(n => n.id);
             if (unreadIds.length === 0) return;
 
-            await db.notifications.where('id').anyOf(unreadIds).modify({
-                status: 'read',
-                updated_at: new Date().toISOString()
-            });
+            // Optimistic UI update
+            setNotifications(prev => prev.map(n => 
+                n.status === 'unread' ? { ...n, status: 'read', updated_at: new Date().toISOString() } : n
+            ));
 
-            if (navigator.onLine) {
-                await notificationService.markAllAsRead();
-            }
+            await notificationService.markAllAsRead();
         } catch (error) {
             console.error('Failed to mark all notifications as read:', error);
+            fetchNotifications();
         }
-    }, [notifications]);
+    }, [notifications, fetchNotifications]);
 
     const dismiss = useCallback(async (id: string) => {
         try {
-            await db.notifications.update(id, { status: 'dismissed', updated_at: new Date().toISOString() });
+            // Optimistic UI update
+            setNotifications(prev => prev.map(n => 
+                n.id === id ? { ...n, status: 'dismissed', updated_at: new Date().toISOString() } : n
+            ));
 
-            if (navigator.onLine) {
-                await notificationService.dismiss(id);
-            }
+            await notificationService.dismiss(id);
         } catch (error) {
             console.error('Failed to dismiss notification:', error);
+            fetchNotifications();
         }
-    }, []);
+    }, [fetchNotifications]);
 
-    // Initial fetch
+    // Initial fetch — only if authenticated
     useEffect(() => {
-        fetchNotifications();
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetchNotifications();
+        }
 
-        // Poll for new notifications every 60 seconds
+        // Poll for new notifications every 60 seconds — only if authenticated
         const interval = setInterval(() => {
-            if (navigator.onLine) {
+            const currentToken = localStorage.getItem('token');
+            if (navigator.onLine && currentToken) {
                 fetchNotifications();
             }
         }, 60000);

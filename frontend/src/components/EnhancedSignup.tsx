@@ -1,11 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Store, User, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Store, User, Check, ArrowRight, ArrowLeft, Shield, Zap, BarChart3 } from 'lucide-react';
 import gsap from 'gsap';
 
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import SpaceBackground from '@/components/SpaceBackground';
 import StepIndicator, { DEFAULT_STEPS } from '@/components/StepIndicator';
 import PersonalDetailsStep from '@/components/PersonalDetailsStep';
 import StoreInformationStep from '@/components/StoreInformationStep';
@@ -20,12 +18,10 @@ import { validateStep } from '@/utils/signupValidation';
 import { enhancedSignupAPI } from '@/services/api';
 import categoryPreferencesService from '@/services/categoryPreferences';
 
-// Remove the old STEPS configuration since we're using DEFAULT_STEPS from StepIndicator
 const EnhancedSignup: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // State management
   const {
     state,
     setCurrentStep,
@@ -38,7 +34,6 @@ const EnhancedSignup: React.FC = () => {
     togglePasswordVisibility,
   } = useEnhancedSignup();
 
-  // Step navigation
   const {
     nextStep,
     prevStep,
@@ -56,45 +51,39 @@ const EnhancedSignup: React.FC = () => {
     setValidationErrors,
   });
 
-  // Refs for animations
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
   const stepContentRef = useRef<HTMLDivElement>(null);
 
-  // Initialize animations
   useEffect(() => {
     if (containerRef.current) {
       gsap.fromTo(
         containerRef.current,
-        { opacity: 0, x: 50 },
-        { opacity: 1, x: 0, duration: 0.8, delay: 0.5, ease: 'power3.out' }
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 1, delay: 0.5, ease: 'power3.out' }
       );
     }
 
-    if (contentRef.current) {
-      gsap.from(contentRef.current.children, {
-        y: 20,
+    if (heroRef.current) {
+      gsap.from(heroRef.current.children, {
+        y: 30,
         opacity: 0,
-        duration: 1,
-        stagger: 0.1,
+        duration: 0.9,
+        stagger: 0.15,
         delay: 0.2,
-        ease: 'power2.out',
+        ease: 'power3.out',
       });
     }
   }, []);
 
-  // Animate step content when step changes
   useEffect(() => {
     if (stepContentRef.current) {
-      // Simple fade-in animation without complex GSAP logic
       stepContentRef.current.style.opacity = '1';
       stepContentRef.current.style.transform = 'translateX(0)';
     }
   }, [state.currentStep]);
 
-  // Handle step transitions with simple logic
   const handleStepTransition = (direction: 'next' | 'prev' | number) => {
-    // Execute step change immediately without complex animations
     if (direction === 'next') {
       nextStep();
     } else if (direction === 'prev') {
@@ -104,14 +93,11 @@ const EnhancedSignup: React.FC = () => {
     }
   };
 
-  // Handle edit functionality - navigate to specific step
   const handleEditStep = (step: number) => {
     handleStepTransition(step);
   };
 
-  // Handle form submission
   const handleSubmit = async () => {
-    // Final validation before submission
     const finalValidationErrors = validateStep(4, state.formData);
 
     if (Object.keys(finalValidationErrors).length > 0) {
@@ -124,7 +110,6 @@ const EnhancedSignup: React.FC = () => {
       return;
     }
 
-    // Additional password confirmation check
     if (!state.formData.confirmPassword) {
       setValidationErrors({
         confirmPassword: {
@@ -150,10 +135,8 @@ const EnhancedSignup: React.FC = () => {
     setSubmitting(true);
 
     try {
-      // Register user with enhanced signup API
       await enhancedSignupAPI.register(state.formData);
 
-      // Store category preferences in localStorage if not skipped
       if (!state.formData.skip_categories && state.formData.business_category) {
         categoryPreferencesService.store({
           business_category: state.formData.business_category,
@@ -166,10 +149,7 @@ const EnhancedSignup: React.FC = () => {
         description: 'Account created successfully. Please check your email for verification.',
       });
 
-      // Navigate to OTP verification
       navigate('/otp', { state: { email: state.formData.email } });
-
-      // Reset form after successful submission
       resetForm();
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Registration failed. Please try again.';
@@ -183,12 +163,9 @@ const EnhancedSignup: React.FC = () => {
     }
   };
 
-  // Business category handlers
   const handleCategorySelect = (categoryId: string) => {
     handleInputChange('business_category', categoryId);
-    // Reset subcategories when changing primary category
     handleInputChange('product_subcategories', []);
-    // Reset custom fields when changing category
     if (categoryId !== 'other') {
       handleInputChange('custom_category', '');
     }
@@ -199,7 +176,6 @@ const EnhancedSignup: React.FC = () => {
     const updatedSubcategories = currentSubcategories.includes(subcategoryId)
       ? currentSubcategories.filter(id => id !== subcategoryId)
       : [...currentSubcategories, subcategoryId];
-
     handleInputChange('product_subcategories', updatedSubcategories);
   };
 
@@ -219,7 +195,6 @@ const EnhancedSignup: React.FC = () => {
     handleInputChange('custom_subcategories', []);
   };
 
-  // Custom category/subcategory handlers
   const handleCustomCategoryChange = (value: string) => {
     handleInputChange('custom_category', value);
   };
@@ -236,7 +211,6 @@ const EnhancedSignup: React.FC = () => {
     handleInputChange('custom_subcategories', currentCustomSubs.filter(sub => sub !== value));
   };
 
-  // Get current step title
   const getCurrentStepTitle = () => {
     const stepTitles = [
       'Personal Details',
@@ -247,10 +221,7 @@ const EnhancedSignup: React.FC = () => {
     return stepTitles[state.currentStep - 1] || 'Setup';
   };
 
-  // Render step content
   const renderStepContent = () => {
-    console.log('Rendering step:', state.currentStep); // Debug log
-
     switch (state.currentStep) {
       case 1:
         return (
@@ -264,7 +235,6 @@ const EnhancedSignup: React.FC = () => {
             onFieldBlur={handleFieldBlur}
           />
         );
-
       case 2:
         return (
           <StoreInformationStep
@@ -275,7 +245,6 @@ const EnhancedSignup: React.FC = () => {
             onFieldBlur={handleFieldBlur}
           />
         );
-
       case 3:
         return (
           <BusinessCategoryStep
@@ -290,7 +259,6 @@ const EnhancedSignup: React.FC = () => {
             onRemoveCustomSubcategory={handleRemoveCustomSubcategory}
           />
         );
-
       case 4:
         return (
           <ReviewConfirmationStep
@@ -303,29 +271,17 @@ const EnhancedSignup: React.FC = () => {
             onFieldBlur={handleFieldBlur}
           />
         );
-
       default:
         return (
           <div className="step-container space-y-5">
             <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-teal-500/20">
-                <Store className="w-8 h-8 text-teal-400" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ background: 'rgba(184,151,103,0.15)' }}>
+                <Store className="w-8 h-8" style={{ color: '#b89767' }} />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Step {state.currentStep}</h3>
-              <p className="text-gray-400">
+              <h3 className="text-xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Step {state.currentStep}</h3>
+              <p style={{ color: '#888' }}>
                 {getCurrentStepTitle()} - Implementation coming in next tasks
               </p>
-              <div className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10">
-                <p className="text-sm text-gray-300">
-                  Current form data: {Object.keys(state.formData).length} fields
-                </p>
-                <p className="text-sm text-gray-300">
-                  Progress: {getProgressPercentage()}%
-                </p>
-                <p className="text-sm text-gray-300">
-                  Completed steps: {getCompletedSteps().join(', ') || 'None'}
-                </p>
-              </div>
             </div>
           </div>
         );
@@ -333,150 +289,650 @@ const EnhancedSignup: React.FC = () => {
   };
 
   return (
-    <SpaceBackground className="flex">
-      {/* Left Panel - Hero Content */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 relative z-10">
-        <div ref={contentRef} className="text-white">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md bg-white/10">
-              <Store className="h-8 w-8 text-teal-400" />
+    <div className="register-page">
+      <style>{`
+        .register-page {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1.5rem;
+          position: relative;
+          overflow: hidden;
+          background-color: #f8f4eb;
+          background-image:
+            radial-gradient(circle at 100% 0%, rgba(229, 224, 209, 0.5) 0%, transparent 40%),
+            radial-gradient(circle at 0% 100%, rgba(217, 185, 155, 0.3) 0%, transparent 40%),
+            radial-gradient(circle at 50% 50%, rgba(248, 244, 235, 0.8) 0%, transparent 80%);
+          font-family: 'Inter', sans-serif;
+          color: #1a1a1a;
+        }
+
+        .register-page * {
+          box-sizing: border-box;
+        }
+
+        .register-main {
+          width: 100%;
+          max-width: 80rem;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 3rem;
+          position: relative;
+          z-index: 10;
+        }
+
+        @media (min-width: 1024px) {
+          .register-main {
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 4rem;
+          }
+        }
+
+        /* Hero */
+        .register-hero {
+          width: 100%;
+          display: none;
+          flex-direction: column;
+          justify-content: center;
+          position: relative;
+          padding-top: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+          .register-hero {
+            display: flex;
+            width: 38%;
+            position: sticky;
+            top: 2rem;
+          }
+        }
+
+        .hero-content-reg {
+          position: relative;
+          z-index: 10;
+        }
+
+        .logo-container-reg {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 3rem;
+        }
+
+        .logo-icon-reg {
+          width: 2.75rem;
+          height: 2.75rem;
+          border-radius: 0.75rem;
+          background: linear-gradient(135deg, #f0ecde 0%, #e5e0d1 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          border: 1px solid #e5e0d1;
+        }
+
+        .logo-text-reg {
+          font-size: 1.35rem;
+          font-weight: 600;
+          letter-spacing: -0.03em;
+          color: #1a1a1a;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .hero-heading-reg {
+          font-size: 3rem;
+          line-height: 1.1;
+          margin-bottom: 1.25rem;
+          color: #1a1a1a;
+          font-family: 'Playfair Display', serif;
+          font-weight: 600;
+          letter-spacing: -0.02em;
+        }
+
+        .hero-heading-reg .accent-text {
+          display: block;
+          background: linear-gradient(135deg, #b89767 0%, #d9b99b 50%, #c4956a 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .hero-subtitle-reg {
+          color: #666;
+          font-size: 1.05rem;
+          line-height: 1.7;
+          max-width: 22rem;
+          margin-bottom: 2.5rem;
+        }
+
+        .hero-features-reg {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .feature-item-reg {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+        }
+
+        .feature-icon-reg {
+          width: 2.5rem;
+          height: 2.5rem;
+          border-radius: 0.75rem;
+          background: rgba(184, 151, 103, 0.12);
+          border: 1px solid rgba(184, 151, 103, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .feature-text-reg {
+          font-weight: 500;
+          color: #444;
+          font-size: 0.95rem;
+        }
+
+        /* Form Section */
+        .form-section-reg {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          position: relative;
+          z-index: 20;
+        }
+
+        @media (min-width: 1024px) {
+          .form-section-reg {
+            width: 58%;
+            justify-content: center;
+          }
+        }
+
+        .form-card-reg {
+          width: 100%;
+          max-width: 36rem;
+          background: rgba(253, 251, 247, 0.85);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-radius: 1.5rem;
+          padding: 2rem 2.25rem;
+          border: 1px solid #e5e0d1;
+          box-shadow:
+            0 20px 60px -12px rgba(0,0,0,0.08),
+            0 0 0 1px rgba(217, 185, 155, 0.1),
+            0 0 40px rgba(217, 185, 155, 0.08);
+        }
+
+        .form-header-reg {
+          text-align: center;
+          margin-bottom: 1.5rem;
+        }
+
+        .form-badge-reg {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.4rem 1rem;
+          border-radius: 9999px;
+          margin-bottom: 0.75rem;
+          background: rgba(184, 151, 103, 0.1);
+          border: 1px solid rgba(184, 151, 103, 0.2);
+        }
+
+        .form-badge-reg span {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: #b89767;
+        }
+
+        .form-title-reg {
+          font-size: 1.6rem;
+          font-family: 'Playfair Display', serif;
+          color: #1a1a1a;
+          font-weight: 600;
+        }
+
+        /* Step Indicator override for warm theme */
+        .warm-step-indicator [role="tablist"] {
+          margin-bottom: 1.5rem;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons-reg {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1.75rem;
+        }
+
+        .btn-back-reg {
+          flex: 1;
+          height: 3rem;
+          border-radius: 0.75rem;
+          border: 1px solid #d4cbb8;
+          background: transparent;
+          color: #666;
+          font-family: 'Inter', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+
+        .btn-back-reg:hover {
+          background: rgba(229, 224, 209, 0.4);
+          color: #1a1a1a;
+          border-color: #c4b9a3;
+        }
+
+        .btn-continue-reg {
+          flex: 1;
+          height: 3rem;
+          border-radius: 0.75rem;
+          border: 1px solid #444;
+          background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%);
+          color: white;
+          font-family: 'Inter', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          box-shadow:
+            0 8px 24px rgba(184, 151, 107, 0.35),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .btn-continue-reg::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .btn-continue-reg:hover::before {
+          left: 100%;
+        }
+
+        .btn-continue-reg:hover {
+          background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+          transform: translateY(-1px);
+          box-shadow:
+            0 12px 32px rgba(184, 151, 107, 0.4),
+            inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .btn-continue-reg:active {
+          transform: translateY(0);
+        }
+
+        .btn-continue-reg:disabled,
+        .btn-back-reg:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .btn-create-reg {
+          flex: 1;
+          height: 3rem;
+          border-radius: 0.75rem;
+          border: 1px solid rgba(184, 151, 103, 0.4);
+          background: linear-gradient(135deg, #b89767 0%, #c4956a 100%);
+          color: white;
+          font-family: 'Inter', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          box-shadow:
+            0 8px 24px rgba(184, 151, 107, 0.4),
+            inset 0 1px 0 rgba(255,255,255,0.2);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .btn-create-reg::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .btn-create-reg:hover::before {
+          left: 100%;
+        }
+
+        .btn-create-reg:hover {
+          background: linear-gradient(135deg, #c9a577 0%, #d4a57a 100%);
+          transform: translateY(-1px);
+          box-shadow:
+            0 12px 32px rgba(184, 151, 107, 0.5),
+            inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+
+        .btn-create-reg:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .spinner-reg {
+          display: inline-block;
+          width: 1.25rem;
+          height: 1.25rem;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin-reg 0.6s linear infinite;
+        }
+
+        @keyframes spin-reg {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Divider & Sign In */
+        .signin-link-reg {
+          text-align: center;
+          font-size: 0.9rem;
+          color: #888;
+          margin-top: 1.5rem;
+          padding-top: 1.5rem;
+          border-top: 1px solid #e5e0d1;
+        }
+
+        .signin-link-reg a {
+          font-weight: 600;
+          color: #1a1a1a;
+          text-decoration: none;
+          border-bottom: 2px solid transparent;
+          padding-bottom: 1px;
+          transition: all 0.2s ease;
+        }
+
+        .signin-link-reg a:hover {
+          border-bottom-color: #d9b99b;
+        }
+
+        .copyright-reg {
+          text-align: center;
+          font-size: 0.8rem;
+          color: #aaa;
+          margin-top: 1.25rem;
+        }
+
+        /* Background decorations */
+        .bg-deco {
+          position: absolute;
+          border-radius: 50%;
+          pointer-events: none;
+        }
+
+        .bg-deco-1 {
+          top: -8%;
+          right: -4%;
+          width: 450px;
+          height: 450px;
+          border: 0.5px solid rgba(229, 224, 209, 0.5);
+          animation: spin-slow 40s linear infinite;
+        }
+
+        .bg-deco-2 {
+          bottom: -8%;
+          left: -4%;
+          width: 380px;
+          height: 380px;
+          border: 0.5px solid rgba(217, 185, 155, 0.3);
+          animation: spin-slow 30s linear infinite reverse;
+        }
+
+        .bg-deco-3 {
+          top: 35%;
+          right: 25%;
+          width: 180px;
+          height: 180px;
+          background: radial-gradient(circle, rgba(217, 185, 155, 0.08) 0%, transparent 70%);
+        }
+
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .float-dot {
+          position: absolute;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: rgba(217, 185, 155, 0.3);
+          pointer-events: none;
+          animation: float-anim 6s ease-in-out infinite;
+        }
+
+        .float-dot:nth-child(2) { animation-delay: 1.2s; }
+        .float-dot:nth-child(3) { animation-delay: 2.4s; }
+        .float-dot:nth-child(4) { animation-delay: 3.6s; }
+
+        @keyframes float-anim {
+          0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+          50% { transform: translateY(-20px) scale(1.5); opacity: 0.6; }
+        }
+      `}</style>
+
+      {/* Background Decorations */}
+      <div className="bg-deco bg-deco-1" />
+      <div className="bg-deco bg-deco-2" />
+      <div className="bg-deco bg-deco-3" />
+
+      <div className="float-dot" style={{ top: '12%', left: '8%' }} />
+      <div className="float-dot" style={{ top: '65%', left: '20%' }} />
+      <div className="float-dot" style={{ top: '25%', right: '12%' }} />
+      <div className="float-dot" style={{ bottom: '25%', right: '8%' }} />
+
+      {/* SVG Patterns */}
+      <svg
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '22rem',
+          height: '22rem',
+          color: 'rgba(229, 224, 209, 0.35)',
+          pointerEvents: 'none',
+          transform: 'translate(25%, -25%)',
+        }}
+        fill="none"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="0.5" />
+        <circle cx="50" cy="50" r="20" stroke="currentColor" strokeWidth="0.5" />
+        <line x1="10" x2="90" y1="50" y2="50" stroke="currentColor" strokeWidth="0.5" />
+        <line x1="50" x2="50" y1="10" y2="90" stroke="currentColor" strokeWidth="0.5" />
+      </svg>
+      <svg
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '22rem',
+          height: '22rem',
+          color: 'rgba(229, 224, 209, 0.35)',
+          pointerEvents: 'none',
+          transform: 'translate(-25%, 25%)',
+        }}
+        fill="none"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="0.5" />
+        <path d="M5 50 A 45 45 0 0 1 95 50" fill="none" stroke="currentColor" strokeWidth="0.5" />
+        <path d="M5 50 A 45 45 0 0 0 95 50" fill="none" stroke="currentColor" strokeWidth="0.5" />
+      </svg>
+
+      <main className="register-main">
+        {/* Left — Hero */}
+        <section className="register-hero">
+          <div className="hero-content-reg" ref={heroRef}>
+            <div className="logo-container-reg">
+              <div className="logo-icon-reg">
+                <Store className="w-5 h-5" style={{ color: '#888' }} />
+              </div>
+              <span className="logo-text-reg">StoreHub</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight">StoreHub</span>
-          </div>
 
-          <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight shadow-teal-500/20 drop-shadow-lg">
-            Start Your<br />
-            <span className="text-teal-400">Business Journey</span>
-          </h1>
+            <h1 className="hero-heading-reg">
+              Start Your
+              <span className="accent-text">Business Journey</span>
+            </h1>
 
-          <p className="text-lg text-gray-300 max-w-md leading-relaxed mb-12">
-            Join thousands of store owners who trust StoreHub to manage their inventory and grow their business.
-          </p>
+            <p className="hero-subtitle-reg">
+              Join thousands of store owners who trust StoreHub to manage their inventory and grow their business.
+            </p>
 
-          <div className="space-y-4">
-            {[
-              { icon: Store, text: 'Multi-step Setup' },
-              { icon: Check, text: 'Smart Validation' },
-              { icon: User, text: 'Personalized Experience' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md bg-white/10">
-                  <item.icon className="w-5 h-5 text-teal-300" />
+            <div className="hero-features-reg">
+              {[
+                { icon: Shield, text: 'Bank-level Security' },
+                { icon: Zap, text: 'Setup in 2 Minutes' },
+                { icon: BarChart3, text: 'Real-time Analytics' },
+              ].map((item, i) => (
+                <div key={i} className="feature-item-reg">
+                  <div className="feature-icon-reg">
+                    <item.icon className="w-5 h-5" style={{ color: '#b89767' }} />
+                  </div>
+                  <span className="feature-text-reg">{item.text}</span>
                 </div>
-                <span className="font-medium text-gray-200">{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 overflow-hidden relative z-10 backdrop-blur-sm lg:backdrop-blur-none bg-black/30 lg:bg-transparent">
-        <div className="w-full max-w-lg relative z-10" ref={containerRef}>
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
-            <div className="h-12 w-12 rounded-xl bg-teal-500/20 flex items-center justify-center">
-              <Store className="h-6 w-6 text-teal-400" />
+              ))}
             </div>
-            <span className="text-xl font-bold text-white">StoreHub</span>
           </div>
+        </section>
 
-          <div
-            className="rounded-3xl p-8 shadow-2xl border border-white/10 backdrop-blur-xl"
-            style={{ background: 'rgba(15, 23, 42, 0.7)' }}
-          >
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 bg-teal-500/10 border border-teal-500/20">
-                <Store className="w-4 h-4 text-teal-400" />
-                <span className="text-sm font-medium text-teal-300">Create Account</span>
+        {/* Right — Form */}
+        <section className="form-section-reg">
+          <div className="form-card-reg" ref={containerRef}>
+            {/* Mobile logo */}
+            <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
+              <div className="logo-icon-reg">
+                <Store className="w-5 h-5" style={{ color: '#888' }} />
               </div>
-              <h2 className="text-2xl font-bold text-white">{getCurrentStepTitle()}</h2>
+              <span className="logo-text-reg">StoreHub</span>
+            </div>
+
+            <div className="form-header-reg">
+              <div className="form-badge-reg">
+                <Store className="w-4 h-4" style={{ color: '#b89767' }} />
+                <span>Create Account</span>
+              </div>
+              <h2 className="form-title-reg">{getCurrentStepTitle()}</h2>
             </div>
 
             {/* Step Indicator */}
-            <StepIndicator
-              steps={DEFAULT_STEPS}
-              currentStep={state.currentStep}
-              completedSteps={getCompletedSteps()}
-              onStepClick={handleStepTransition}
-              canNavigateToStep={canGoToStep}
-              showProgress={true}
-              progressPercentage={getProgressPercentage()}
-              className="mb-8 px-2"
-            />
+            <div className="warm-step-indicator">
+              <StepIndicator
+                steps={DEFAULT_STEPS}
+                currentStep={state.currentStep}
+                completedSteps={getCompletedSteps()}
+                onStepClick={handleStepTransition}
+                canNavigateToStep={canGoToStep}
+                showProgress={true}
+                progressPercentage={getProgressPercentage()}
+                className="mb-6 px-1"
+              />
+            </div>
 
             {/* Step Content */}
-            <div className="min-h-[320px] relative">
-              <div ref={stepContentRef} className="step-content opacity-100">
+            <div style={{ minHeight: '320px', position: 'relative' }}>
+              <div ref={stepContentRef} style={{ opacity: 1 }}>
                 {renderStepContent()}
               </div>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex gap-3 mt-8">
+            {/* Navigation */}
+            <div className="nav-buttons-reg">
               {canGoPrev() && (
-                <Button
+                <button
                   type="button"
-                  variant="outline"
+                  className="btn-back-reg"
                   onClick={() => handleStepTransition('prev')}
-                  className="flex-1 h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white font-semibold hover:scale-[1.02] hover:shadow-lg transition-all duration-200"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1" />
+                  <ArrowLeft className="w-4 h-4" />
                   Back
-                </Button>
+                </button>
               )}
 
               {state.currentStep < TOTAL_STEPS ? (
-                <Button
+                <button
                   type="button"
+                  className="btn-continue-reg"
                   onClick={() => handleStepTransition('next')}
                   disabled={!canGoNext()}
-                  className="flex-1 h-12 rounded-xl text-base font-semibold shadow-lg bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] hover:shadow-xl transition-all duration-200 group"
                 >
                   Continue
-                  <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" />
-                </Button>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               ) : (
-                <Button
+                <button
                   type="button"
+                  className="btn-create-reg"
                   onClick={handleSubmit}
                   disabled={state.isSubmitting}
-                  className="flex-1 h-12 rounded-xl text-base font-semibold shadow-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white border-0 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] hover:shadow-xl transition-all duration-200 group"
                 >
                   {state.isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <div className="relative">
-                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span className="absolute inset-0 w-5 h-5 border-2 border-transparent border-t-white/50 rounded-full animate-spin animate-reverse" />
-                      </div>
-                      <span className="animate-pulse">Creating...</span>
-                    </span>
+                    <>
+                      <span className="spinner-reg" />
+                      Creating...
+                    </>
                   ) : (
                     <>
-                      <Check className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                      <Check className="w-4 h-4" />
                       Create Account
                     </>
                   )}
-                </Button>
+                </button>
               )}
             </div>
 
-            <div className="text-center mt-6 pt-6 border-t border-white/10">
-              <p className="text-gray-400">
+            <div className="signin-link-reg">
+              <p>
                 Already have an account?{' '}
-                <Link
-                  to="/login"
-                  className="font-semibold text-teal-400 hover:text-teal-300 hover:underline"
-                >
-                  Sign in
-                </Link>
+                <Link to="/login">Sign in</Link>
               </p>
             </div>
-          </div>
 
-          <p className="text-center text-sm text-gray-400 mt-6">© 2024 StoreHub. All rights reserved.</p>
-        </div>
-      </div>
-    </SpaceBackground>
+            <p className="copyright-reg">© 2025 StoreHub. All rights reserved.</p>
+          </div>
+        </section>
+      </main>
+    </div>
   );
 };
 
