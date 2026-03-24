@@ -98,6 +98,10 @@ func GetReportStats(c *gin.Context) {
 		return
 	}
 
+	if recentSales == nil {
+		recentSales = []db.GetRecentSalesRow{}
+	}
+
 	// Chart Data: Daily Sales
 	// Get data for the selected range (e.g. last 7 days for 'week', last 30 for 'month')
 	dailySales, err := utils.Queries.GetDailySales(ctx, db.GetDailySalesParams{
@@ -108,6 +112,10 @@ func GetReportStats(c *gin.Context) {
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch daily sales", err)
 		return
+	}
+
+	if dailySales == nil {
+		dailySales = []db.GetDailySalesRow{}
 	}
 
 	// Chart Data: Top Selling Products
@@ -122,11 +130,19 @@ func GetReportStats(c *gin.Context) {
 		return
 	}
 
+	if topProducts == nil {
+		topProducts = []db.GetTopSellingProductsRow{}
+	}
+
 	// Chart Data: Stock By Category
 	stockByCategory, err := utils.Queries.GetStockByCategory(ctx, storeID)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch stock by category", err)
 		return
+	}
+
+	if stockByCategory == nil {
+		stockByCategory = []db.GetStockByCategoryRow{}
 	}
 
 	// Top Debtors
@@ -137,6 +153,10 @@ func GetReportStats(c *gin.Context) {
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch top debtors", err)
 		return
+	}
+
+	if topDebtors == nil {
+		topDebtors = []db.GetTopDebtorsRow{}
 	}
 
 	// Profit Stats
@@ -215,9 +235,13 @@ func GetReportStats(c *gin.Context) {
 		return
 	}
 
+	if revenueByCategory == nil {
+		revenueByCategory = []db.GetRevenueByCategoryRow{}
+	}
+
 	// Forecast: Linear Regression on Daily Sales
 	// Simplified Linear Regression: y = mx + c (y = sales, x = day index)
-	var forecast []gin.H
+	forecast := []gin.H{}
 	if len(dailySales) > 1 {
 		var sumX, sumY, sumXY, sumXX float64
 		n := float64(len(dailySales))
@@ -258,7 +282,7 @@ func GetReportStats(c *gin.Context) {
 	}
 
 	// Smart Insights Generation
-	var insights []gin.H
+	insights := []gin.H{}
 
 	// Insight 1: Sales Trend
 	if salesGrowth > 10 {

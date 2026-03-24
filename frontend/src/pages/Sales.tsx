@@ -10,6 +10,7 @@ import { inventoryService } from "@/services/inventory";
 import { salesService, CreateSaleData } from "@/services/sales";
 import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
 import { Product, OfflineStatus } from "@/types";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
@@ -31,6 +32,7 @@ const colors = {
 
 export default function Sales() {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { fetchNotifications } = useNotifications();
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -288,7 +290,20 @@ export default function Sales() {
         toast.success("Sale saved offline! Will sync when connection is restored.");
       }
 
-      // ...existing code (reset state)...
+      // Reset form state after successful checkout
+      setCart([]);
+      setCustomerName("");
+      setCustomerPhone("");
+      setDiscountValue("");
+      setAmountReceived("");
+      setDebtNote("");
+      setSearchTerm("");
+      setProducts([]);
+
+      // Fetch notifications after sale to update low stock alerts, etc.
+      if (offlineStatus.isOnline) {
+        fetchNotifications();
+      }
     } catch (error: any) {
       console.error("Checkout error:", error);  // Enhanced logging for debugging
       console.error("Error response:", error.response?.data);  // Log backend error details

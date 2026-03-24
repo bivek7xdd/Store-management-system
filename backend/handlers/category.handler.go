@@ -19,7 +19,7 @@ type createCategoryReq struct {
 }
 
 func CreateCategories(c *gin.Context) {
-	//validate request body
+	// validate request body
 	var req createCategoryReq
 	storeID := c.MustGet("store_id").(pgtype.UUID)
 	err := c.ShouldBindJSON(&req)
@@ -29,11 +29,11 @@ func CreateCategories(c *gin.Context) {
 		return
 	}
 
-	//create context
+	// create context
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 	defer cancel()
 
-	//add to database
+	// add to database
 	category, err := utils.Queries.CreateCategories(ctx, db.CreateCategoriesParams{
 		Name: req.Name,
 		Description: pgtype.Text{
@@ -42,7 +42,6 @@ func CreateCategories(c *gin.Context) {
 		},
 		StoreID: storeID,
 	})
-
 	if err != nil {
 		log.Printf("error creating category: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to create category", err)
@@ -57,14 +56,14 @@ func CreateCategories(c *gin.Context) {
 }
 
 func GetAllCategories(c *gin.Context) {
-	//get store id
+	// get store id
 	storeId := c.MustGet("store_id").(pgtype.UUID)
 
-	//create context
+	// create context
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 	defer cancel()
 
-	//get all categories
+	// get all categories
 	categories, err := utils.Queries.GetCategories(ctx, storeId)
 	if err != nil {
 		log.Println("error geting categories", err)
@@ -124,7 +123,6 @@ func GetCategory(c *gin.Context) {
 		ID:      pgtype.UUID{Bytes: categoryUUID, Valid: true},
 		StoreID: storeId,
 	})
-
 	if err != nil {
 		log.Printf("error getting category: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error getting category", err)
@@ -148,7 +146,6 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 	categoryUUID, err := uuid.Parse(categoryIdStr)
-
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid category ID", err)
 		return
@@ -169,7 +166,6 @@ func UpdateCategory(c *gin.Context) {
 		Description: pgtype.Text{String: req.Description, Valid: true},
 		StoreID:     storeId,
 	})
-
 	if err != nil {
 		log.Printf("error updating category: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error updating category", err)
@@ -188,7 +184,6 @@ func GetCategoryStats(c *gin.Context) {
 		return
 	}
 	categoryUUID, err := uuid.Parse(categoryIdStr)
-
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid category ID", err)
 		return
@@ -219,7 +214,6 @@ func GetCategoryProducts(c *gin.Context) {
 		return
 	}
 	categoryUUID, err := uuid.Parse(categoryIdStr)
-
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid category ID", err)
 		return

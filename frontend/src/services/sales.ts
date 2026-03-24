@@ -96,9 +96,14 @@ export const salesService = {
         }
 
         // 2. Trigger background sync if online
-        // We don't await this, so UI gets immediate response
+        // If online, we await this so the backend has time to process the sale
+        // and create notifications before the UI fetches them.
         if (navigator.onLine) {
-            syncService.syncSales().catch(err => console.error('Background sync failed:', err));
+            try {
+                await syncService.syncSales();
+            } catch (err) {
+                console.error('Background sync failed:', err);
+            }
         }
 
         // Return the local sale object with the generated ID

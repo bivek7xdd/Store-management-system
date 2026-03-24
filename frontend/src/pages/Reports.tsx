@@ -308,7 +308,7 @@ export default function Reports() {
             <CardContent>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={stats.sales.daily_trend}>
+                  <ComposedChart data={stats.sales.daily_trend || []}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                     <XAxis
                       dataKey="sale_date"
@@ -353,7 +353,7 @@ export default function Reports() {
                     <Line type="monotone" dataKey="daily_total" stroke={colors.primary} strokeWidth={2} dot={{ r: 4, fill: colors.primary, strokeWidth: 0 }} />
                     <Line
                       type="monotone"
-                      data={stats.sales.forecast}
+                      data={stats.sales.forecast || []}
                       dataKey="predicted_sales"
                       stroke={colors.primary}
                       strokeWidth={2}
@@ -374,7 +374,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.sales.recent.map((sale) => (
+                {(stats.sales.recent || []).map((sale) => (
                   <div
                     key={sale.id}
                     className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -458,7 +458,7 @@ export default function Reports() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={stats.inventory.stock_by_category}
+                        data={stats.inventory.stock_by_category || []}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -466,7 +466,7 @@ export default function Reports() {
                         paddingAngle={5}
                         dataKey="product_count"
                       >
-                        {stats.inventory.stock_by_category.map((entry, index) => (
+                        {(stats.inventory.stock_by_category || []).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -477,7 +477,7 @@ export default function Reports() {
                   </ResponsiveContainer>
                 </div>
                 <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm text-gray-500">
-                  {stats.inventory.stock_by_category.map((entry, index) => (
+                  {(stats.inventory.stock_by_category || []).map((entry, index) => (
                     <div key={entry.category_name} className="flex items-center gap-1">
                       <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                       <span>{entry.category_name}</span>
@@ -496,7 +496,7 @@ export default function Reports() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       layout="vertical"
-                      data={stats.sales.top_products}
+                      data={stats.sales.top_products || []}
                       margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
@@ -526,7 +526,7 @@ export default function Reports() {
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={stats.inventory.revenue_by_category}
+                      data={stats.inventory.revenue_by_category || []}
                       margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -602,7 +602,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.debts.top_debtors.map((debtor) => (
+                {(stats.debts.top_debtors || []).map((debtor) => (
                   <div
                     key={debtor.customer_phone}
                     className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
