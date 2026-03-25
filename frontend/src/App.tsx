@@ -16,7 +16,6 @@ import SalesHistory from "./pages/SalesHistory";
 import Debtors from "./pages/Debtors";
 import Reports from "./pages/Reports";
 import Market from "./pages/Market";
-import MarketDiscovery from "./pages/MarketDiscovery";
 import NotFound from "./pages/NotFound";
 import EnhancedSignup from "./components/EnhancedSignup";
 import Login from "./pages/Login";
@@ -25,7 +24,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CategoryDetails from "./pages/CategoryDetails";
 import SupplierDetails from "./pages/SupplierDetails";
+import MarketDiscovery from "./pages/MarketDiscovery";
 import React from "react";
+import LandingPage from "./pages/LandingPage";
 import DevOfflineHandler from "./components/DevOfflineHandler";
 import { WalkthroughProvider } from "./contexts/WalkthroughContext";
 
@@ -89,102 +90,108 @@ const App = () => {
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                   <WalkthroughProvider>
                     <Routes>
-                    {/* Public routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<EnhancedSignup />} />
-                    <Route path="/otp" element={<OTP />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
+                      {/* Public routes */}
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<EnhancedSignup />} />
+                      <Route path="/otp" element={<OTP />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
 
-                    {/* Protected routes */}
-                    <Route path="/" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Dashboard />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/inventory" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Inventory />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/inventory/categories" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Categories />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/inventory/suppliers" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Suppliers />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/inventory/category/:id" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <CategoryDetails />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/inventory/supplier/:id" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <SupplierDetails />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/sales" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Sales />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/sales/history" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <SalesHistory />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/debtors" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Debtors />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/reports" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Reports />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/market" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <Market />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/market/discovery" element={
-                      <ProtectedRoute>
-                        <Layout>
-                          <MarketDiscovery />
-                        </Layout>
-                      </ProtectedRoute>
-                    } />
+                      {/* Protected routes */}
+                      <Route path="/" element={
+                        <ProtectedRoute requireAuth={false}>
+                          <LandingPage />
+                        </ProtectedRoute>
+                      } />
 
-                    {/* Catch-all route for 404 */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                      <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Dashboard />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/inventory" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Inventory />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/inventory/categories" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Categories />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/inventory/suppliers" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Suppliers />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/inventory/category/:id" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <CategoryDetails />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/inventory/supplier/:id" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <SupplierDetails />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/sales" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Sales />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/sales/history" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <SalesHistory />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/debtors" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Debtors />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/reports" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Reports />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/market" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Market />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/market/discovery" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <MarketDiscovery />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      {/* Catch-all route for 404 */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
                   </WalkthroughProvider>
                 </BrowserRouter>
               </TooltipProvider>

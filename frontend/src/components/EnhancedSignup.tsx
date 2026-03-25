@@ -17,6 +17,7 @@ import { BUSINESS_CATEGORIES } from '@/data/businessCategories';
 import { validateStep } from '@/utils/signupValidation';
 import { enhancedSignupAPI } from '@/services/api';
 import categoryPreferencesService from '@/services/categoryPreferences';
+import { cn } from '@/lib/utils';
 
 const EnhancedSignup: React.FC = () => {
   const navigate = useNavigate();
@@ -273,13 +274,13 @@ const EnhancedSignup: React.FC = () => {
         );
       default:
         return (
-          <div className="step-container space-y-5">
+          <div className="space-y-5">
             <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ background: 'rgba(184,151,103,0.15)' }}>
-                <Store className="w-8 h-8" style={{ color: '#b89767' }} />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-[#b89767]/15">
+                <Store className="w-8 h-8 text-[#b89767]" />
               </div>
-              <h3 className="text-xl font-bold mb-2" style={{ color: '#1a1a1a' }}>Step {state.currentStep}</h3>
-              <p style={{ color: '#888' }}>
+              <h3 className="text-xl font-bold mb-2 text-[#1a1a1a]">Step {state.currentStep}</h3>
+              <p className="text-[#888]">
                 {getCurrentStepTitle()} - Implementation coming in next tasks
               </p>
             </div>
@@ -289,547 +290,75 @@ const EnhancedSignup: React.FC = () => {
   };
 
   return (
-    <div className="register-page">
-      <style>{`
-        .register-page {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 1.5rem;
-          position: relative;
-          overflow: hidden;
-          background-color: #f8f4eb;
-          background-image:
-            radial-gradient(circle at 100% 0%, rgba(229, 224, 209, 0.5) 0%, transparent 40%),
-            radial-gradient(circle at 0% 100%, rgba(217, 185, 155, 0.3) 0%, transparent 40%),
-            radial-gradient(circle at 50% 50%, rgba(248, 244, 235, 0.8) 0%, transparent 80%);
-          font-family: 'Inter', sans-serif;
-          color: #1a1a1a;
-        }
-
-        .register-page * {
-          box-sizing: border-box;
-        }
-
-        .register-main {
-          width: 100%;
-          max-width: 80rem;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 3rem;
-          position: relative;
-          z-index: 10;
-        }
-
-        @media (min-width: 1024px) {
-          .register-main {
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 4rem;
-          }
-        }
-
-        /* Hero */
-        .register-hero {
-          width: 100%;
-          display: none;
-          flex-direction: column;
-          justify-content: center;
-          position: relative;
-          padding-top: 2rem;
-        }
-
-        @media (min-width: 1024px) {
-          .register-hero {
-            display: flex;
-            width: 38%;
-            position: sticky;
-            top: 2rem;
-          }
-        }
-
-        .hero-content-reg {
-          position: relative;
-          z-index: 10;
-        }
-
-        .logo-container-reg {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 3rem;
-        }
-
-        .logo-icon-reg {
-          width: 2.75rem;
-          height: 2.75rem;
-          border-radius: 0.75rem;
-          background: linear-gradient(135deg, #f0ecde 0%, #e5e0d1 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          border: 1px solid #e5e0d1;
-        }
-
-        .logo-text-reg {
-          font-size: 1.35rem;
-          font-weight: 600;
-          letter-spacing: -0.03em;
-          color: #1a1a1a;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .hero-heading-reg {
-          font-size: 3rem;
-          line-height: 1.1;
-          margin-bottom: 1.25rem;
-          color: #1a1a1a;
-          font-family: 'Playfair Display', serif;
-          font-weight: 600;
-          letter-spacing: -0.02em;
-        }
-
-        .hero-heading-reg .accent-text {
-          display: block;
-          background: linear-gradient(135deg, #b89767 0%, #d9b99b 50%, #c4956a 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .hero-subtitle-reg {
-          color: #666;
-          font-size: 1.05rem;
-          line-height: 1.7;
-          max-width: 22rem;
-          margin-bottom: 2.5rem;
-        }
-
-        .hero-features-reg {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .feature-item-reg {
-          display: flex;
-          align-items: center;
-          gap: 0.85rem;
-        }
-
-        .feature-icon-reg {
-          width: 2.5rem;
-          height: 2.5rem;
-          border-radius: 0.75rem;
-          background: rgba(184, 151, 103, 0.12);
-          border: 1px solid rgba(184, 151, 103, 0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .feature-text-reg {
-          font-weight: 500;
-          color: #444;
-          font-size: 0.95rem;
-        }
-
-        /* Form Section */
-        .form-section-reg {
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          position: relative;
-          z-index: 20;
-        }
-
-        @media (min-width: 1024px) {
-          .form-section-reg {
-            width: 58%;
-            justify-content: center;
-          }
-        }
-
-        .form-card-reg {
-          width: 100%;
-          max-width: 36rem;
-          background: rgba(253, 251, 247, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-radius: 1.5rem;
-          padding: 2rem 2.25rem;
-          border: 1px solid #e5e0d1;
-          box-shadow:
-            0 20px 60px -12px rgba(0,0,0,0.08),
-            0 0 0 1px rgba(217, 185, 155, 0.1),
-            0 0 40px rgba(217, 185, 155, 0.08);
-        }
-
-        .form-header-reg {
-          text-align: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .form-badge-reg {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.4rem 1rem;
-          border-radius: 9999px;
-          margin-bottom: 0.75rem;
-          background: rgba(184, 151, 103, 0.1);
-          border: 1px solid rgba(184, 151, 103, 0.2);
-        }
-
-        .form-badge-reg span {
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: #b89767;
-        }
-
-        .form-title-reg {
-          font-size: 1.6rem;
-          font-family: 'Playfair Display', serif;
-          color: #1a1a1a;
-          font-weight: 600;
-        }
-
-        /* Step Indicator override for warm theme */
-        .warm-step-indicator [role="tablist"] {
-          margin-bottom: 1.5rem;
-        }
-
-        /* Navigation Buttons */
-        .nav-buttons-reg {
-          display: flex;
-          gap: 0.75rem;
-          margin-top: 1.75rem;
-        }
-
-        .btn-back-reg {
-          flex: 1;
-          height: 3rem;
-          border-radius: 0.75rem;
-          border: 1px solid #d4cbb8;
-          background: transparent;
-          color: #666;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-        }
-
-        .btn-back-reg:hover {
-          background: rgba(229, 224, 209, 0.4);
-          color: #1a1a1a;
-          border-color: #c4b9a3;
-        }
-
-        .btn-continue-reg {
-          flex: 1;
-          height: 3rem;
-          border-radius: 0.75rem;
-          border: 1px solid #444;
-          background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%);
-          color: white;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          box-shadow:
-            0 8px 24px rgba(184, 151, 107, 0.35),
-            inset 0 1px 0 rgba(255,255,255,0.1);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .btn-continue-reg::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-          transition: left 0.5s ease;
-        }
-
-        .btn-continue-reg:hover::before {
-          left: 100%;
-        }
-
-        .btn-continue-reg:hover {
-          background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
-          transform: translateY(-1px);
-          box-shadow:
-            0 12px 32px rgba(184, 151, 107, 0.4),
-            inset 0 1px 0 rgba(255,255,255,0.15);
-        }
-
-        .btn-continue-reg:active {
-          transform: translateY(0);
-        }
-
-        .btn-continue-reg:disabled,
-        .btn-back-reg:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .btn-create-reg {
-          flex: 1;
-          height: 3rem;
-          border-radius: 0.75rem;
-          border: 1px solid rgba(184, 151, 103, 0.4);
-          background: linear-gradient(135deg, #b89767 0%, #c4956a 100%);
-          color: white;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          box-shadow:
-            0 8px 24px rgba(184, 151, 107, 0.4),
-            inset 0 1px 0 rgba(255,255,255,0.2);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .btn-create-reg::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-          transition: left 0.5s ease;
-        }
-
-        .btn-create-reg:hover::before {
-          left: 100%;
-        }
-
-        .btn-create-reg:hover {
-          background: linear-gradient(135deg, #c9a577 0%, #d4a57a 100%);
-          transform: translateY(-1px);
-          box-shadow:
-            0 12px 32px rgba(184, 151, 107, 0.5),
-            inset 0 1px 0 rgba(255,255,255,0.25);
-        }
-
-        .btn-create-reg:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .spinner-reg {
-          display: inline-block;
-          width: 1.25rem;
-          height: 1.25rem;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin-reg 0.6s linear infinite;
-        }
-
-        @keyframes spin-reg {
-          to { transform: rotate(360deg); }
-        }
-
-        /* Divider & Sign In */
-        .signin-link-reg {
-          text-align: center;
-          font-size: 0.9rem;
-          color: #888;
-          margin-top: 1.5rem;
-          padding-top: 1.5rem;
-          border-top: 1px solid #e5e0d1;
-        }
-
-        .signin-link-reg a {
-          font-weight: 600;
-          color: #1a1a1a;
-          text-decoration: none;
-          border-bottom: 2px solid transparent;
-          padding-bottom: 1px;
-          transition: all 0.2s ease;
-        }
-
-        .signin-link-reg a:hover {
-          border-bottom-color: #d9b99b;
-        }
-
-        .copyright-reg {
-          text-align: center;
-          font-size: 0.8rem;
-          color: #aaa;
-          margin-top: 1.25rem;
-        }
-
-        /* Background decorations */
-        .bg-deco {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
-        }
-
-        .bg-deco-1 {
-          top: -8%;
-          right: -4%;
-          width: 450px;
-          height: 450px;
-          border: 0.5px solid rgba(229, 224, 209, 0.5);
-          animation: spin-slow 40s linear infinite;
-        }
-
-        .bg-deco-2 {
-          bottom: -8%;
-          left: -4%;
-          width: 380px;
-          height: 380px;
-          border: 0.5px solid rgba(217, 185, 155, 0.3);
-          animation: spin-slow 30s linear infinite reverse;
-        }
-
-        .bg-deco-3 {
-          top: 35%;
-          right: 25%;
-          width: 180px;
-          height: 180px;
-          background: radial-gradient(circle, rgba(217, 185, 155, 0.08) 0%, transparent 70%);
-        }
-
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .float-dot {
-          position: absolute;
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: rgba(217, 185, 155, 0.3);
-          pointer-events: none;
-          animation: float-anim 6s ease-in-out infinite;
-        }
-
-        .float-dot:nth-child(2) { animation-delay: 1.2s; }
-        .float-dot:nth-child(3) { animation-delay: 2.4s; }
-        .float-dot:nth-child(4) { animation-delay: 3.6s; }
-
-        @keyframes float-anim {
-          0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-          50% { transform: translateY(-20px) scale(1.5); opacity: 0.6; }
-        }
-      `}</style>
-
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#f8f4eb] font-sans text-[#1a1a1a]">
       {/* Background Decorations */}
-      <div className="bg-deco bg-deco-1" />
-      <div className="bg-deco bg-deco-2" />
-      <div className="bg-deco bg-deco-3" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-8%] right-[-4%] w-[450px] h-[450px] border-[0.5px] border-[#e5e0d1]/50 rounded-full animate-[spin_40s_linear_infinite]" />
+        <div className="absolute bottom-[-8%] left-[-4%] w-[380px] h-[380px] border-[0.5px] border-[#d9b99b]/30 rounded-full animate-[spin_30s_linear_infinite_reverse]" />
+        <div className="absolute top-[35%] right-[25%] w-[180px] h-[180px] bg-[radial-gradient(circle,rgba(217,185,155,0.08)_0%,transparent_70%)] rounded-full" />
+        
+        {/* Float Dots */}
+        {[
+          { top: '12%', left: '8%', delay: '0s' },
+          { top: '65%', left: '20%', delay: '1.2s' },
+          { top: '25%', right: '12%', delay: '2.4s' },
+          { bottom: '25%', right: '8%', delay: '3.6s' },
+        ].map((dot, i) => (
+          <div 
+            key={i}
+            className="absolute w-1.5 h-1.5 rounded-full bg-[#d9b99b]/30 animate-[float_6s_ease-in-out_infinite]"
+            style={{ ...dot, animationDelay: dot.delay }}
+          />
+        ))}
 
-      <div className="float-dot" style={{ top: '12%', left: '8%' }} />
-      <div className="float-dot" style={{ top: '65%', left: '20%' }} />
-      <div className="float-dot" style={{ top: '25%', right: '12%' }} />
-      <div className="float-dot" style={{ bottom: '25%', right: '8%' }} />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(229,224,209,0.5)_0%,transparent_40%),radial-gradient(circle_at_0%_100%,rgba(217,185,155,0.3)_0%,transparent_40%),radial-gradient(circle_at_50%_50%,rgba(248,244,235,0.8)_0%,transparent_80%)]" />
+      </div>
 
       {/* SVG Patterns */}
-      <svg
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '22rem',
-          height: '22rem',
-          color: 'rgba(229, 224, 209, 0.35)',
-          pointerEvents: 'none',
-          transform: 'translate(25%, -25%)',
-        }}
-        fill="none"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg className="absolute top-0 right-0 w-[22rem] h-[22rem] text-[#e5e0d1]/35 pointer-events-none translate-x-1/4 -translate-y-1/4" fill="none" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="0.5" />
         <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="0.5" />
         <circle cx="50" cy="50" r="20" stroke="currentColor" strokeWidth="0.5" />
         <line x1="10" x2="90" y1="50" y2="50" stroke="currentColor" strokeWidth="0.5" />
         <line x1="50" x2="50" y1="10" y2="90" stroke="currentColor" strokeWidth="0.5" />
       </svg>
-      <svg
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          width: '22rem',
-          height: '22rem',
-          color: 'rgba(229, 224, 209, 0.35)',
-          pointerEvents: 'none',
-          transform: 'translate(-25%, 25%)',
-        }}
-        fill="none"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg className="absolute bottom-0 left-0 w-[22rem] h-[22rem] text-[#e5e0d1]/35 pointer-events-none -translate-x-1/4 translate-y-1/4" fill="none" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="0.5" />
         <path d="M5 50 A 45 45 0 0 1 95 50" fill="none" stroke="currentColor" strokeWidth="0.5" />
         <path d="M5 50 A 45 45 0 0 0 95 50" fill="none" stroke="currentColor" strokeWidth="0.5" />
       </svg>
 
-      <main className="register-main">
+      <main className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center lg:items-start justify-center gap-12 lg:gap-16 relative z-10">
         {/* Left — Hero */}
-        <section className="register-hero">
-          <div className="hero-content-reg" ref={heroRef}>
-            <div className="logo-container-reg">
-              <div className="logo-icon-reg">
-                <Store className="w-5 h-5" style={{ color: '#888' }} />
+        <section className="hidden lg:flex w-full lg:w-[38%] flex-col justify-center sticky top-8">
+          <div className="relative z-10" ref={heroRef}>
+            <div className="flex items-center gap-3 mb-12">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#f0ecde] to-[#e5e0d1] flex items-center justify-center shadow-sm border border-[#e5e0d1]">
+                <Store className="w-5 h-5 text-[#888]" />
               </div>
-              <span className="logo-text-reg">StoreHub</span>
+              <span className="text-[1.35rem] font-semibold tracking-tight">StoreHub</span>
             </div>
 
-            <h1 className="hero-heading-reg">
+            <h1 className="text-5xl font-serif font-bold leading-[1.1] mb-5 tracking-tight">
               Start Your
-              <span className="accent-text">Business Journey</span>
+              <span className="block bg-gradient-to-br from-[#b89767] via-[#d9b99b] to-[#c4956a] bg-clip-text text-transparent">Business Journey</span>
             </h1>
 
-            <p className="hero-subtitle-reg">
+            <p className="text-[#666] text-lg leading-relaxed max-w-xs mb-10">
               Join thousands of store owners who trust StoreHub to manage their inventory and grow their business.
             </p>
 
-            <div className="hero-features-reg">
+            <div className="flex flex-col gap-4">
               {[
                 { icon: Shield, text: 'Bank-level Security' },
                 { icon: Zap, text: 'Setup in 2 Minutes' },
                 { icon: BarChart3, text: 'Real-time Analytics' },
               ].map((item, i) => (
-                <div key={i} className="feature-item-reg">
-                  <div className="feature-icon-reg">
-                    <item.icon className="w-5 h-5" style={{ color: '#b89767' }} />
+                <div key={i} className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#b89767]/12 border border-[#b89767]/20 flex items-center justify-center shrink-0">
+                    <item.icon className="w-5 h-5 text-[#b89767]" />
                   </div>
-                  <span className="feature-text-reg">{item.text}</span>
+                  <span className="font-medium text-[#444] text-[0.95rem]">{item.text}</span>
                 </div>
               ))}
             </div>
@@ -837,26 +366,26 @@ const EnhancedSignup: React.FC = () => {
         </section>
 
         {/* Right — Form */}
-        <section className="form-section-reg">
-          <div className="form-card-reg" ref={containerRef}>
+        <section className="w-full lg:w-[58%] flex justify-center relative z-20">
+          <div className="w-full max-w-xl bg-white/85 backdrop-blur-[20px] rounded-[1.5rem] p-8 lg:p-9 border border-[#e5e0d1] shadow-[0_20px_60px_-12px_rgba(0,0,0,0.08),0_0_0_1px_rgba(217,185,155,0.1),0_0_40px_rgba(217,185,155,0.08)]" ref={containerRef}>
             {/* Mobile logo */}
             <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
-              <div className="logo-icon-reg">
-                <Store className="w-5 h-5" style={{ color: '#888' }} />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#f0ecde] to-[#e5e0d1] flex items-center justify-center shadow-sm border border-[#e5e0d1]">
+                <Store className="w-5 h-5 text-[#888]" />
               </div>
-              <span className="logo-text-reg">StoreHub</span>
+              <span className="text-[1.35rem] font-semibold tracking-tight">StoreHub</span>
             </div>
 
-            <div className="form-header-reg">
-              <div className="form-badge-reg">
-                <Store className="w-4 h-4" style={{ color: '#b89767' }} />
-                <span>Create Account</span>
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b89767]/10 border border-[#b89767]/20 mb-3">
+                <Store className="w-4 h-4 text-[#b89767]" />
+                <span className="text-[0.85rem] font-medium text-[#b89767]">Create Account</span>
               </div>
-              <h2 className="form-title-reg">{getCurrentStepTitle()}</h2>
+              <h2 className="text-[1.6rem] font-serif font-bold text-[#1a1a1a]">{getCurrentStepTitle()}</h2>
             </div>
 
             {/* Step Indicator */}
-            <div className="warm-step-indicator">
+            <div className="mb-6 px-1">
               <StepIndicator
                 steps={DEFAULT_STEPS}
                 currentStep={state.currentStep}
@@ -865,23 +394,23 @@ const EnhancedSignup: React.FC = () => {
                 canNavigateToStep={canGoToStep}
                 showProgress={true}
                 progressPercentage={getProgressPercentage()}
-                className="mb-6 px-1"
+                className="mb-6"
               />
             </div>
 
             {/* Step Content */}
-            <div style={{ minHeight: '320px', position: 'relative' }}>
-              <div ref={stepContentRef} style={{ opacity: 1 }}>
+            <div className="min-h-[320px] relative">
+              <div ref={stepContentRef} className="opacity-100 transition-all duration-300">
                 {renderStepContent()}
               </div>
             </div>
 
             {/* Navigation */}
-            <div className="nav-buttons-reg">
+            <div className="flex gap-3 mt-7">
               {canGoPrev() && (
                 <button
                   type="button"
-                  className="btn-back-reg"
+                  className="flex-1 h-12 rounded-xl border border-[#d4cbb8] bg-transparent text-[#666] font-medium transition-all hover:bg-[#e5e0d1]/40 hover:text-[#1a1a1a] hover:border-[#c4b9a3] flex items-center justify-center gap-2"
                   onClick={() => handleStepTransition('prev')}
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -892,23 +421,25 @@ const EnhancedSignup: React.FC = () => {
               {state.currentStep < TOTAL_STEPS ? (
                 <button
                   type="button"
-                  className="btn-continue-reg"
+                  className="flex-1 h-12 rounded-xl bg-gradient-to-br from-[#3a3a3a] to-[#1a1a1a] text-white font-medium transition-all duration-300 hover:bg-gradient-to-br hover:from-[#4a4a4a] hover:to-[#2a2a2a] hover:-translate-y-0.5 shadow-[0_8px_24px_rgba(184,151,107,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_12px_32px_rgba(184,151,107,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] flex items-center justify-center gap-2 group relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
                   onClick={() => handleStepTransition('next')}
                   disabled={!canGoNext()}
                 >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-500" />
                   Continue
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   type="button"
-                  className="btn-create-reg"
+                  className="flex-1 h-12 rounded-xl bg-gradient-to-br from-[#b89767] to-[#c4956a] text-white font-semibold transition-all duration-300 hover:bg-gradient-to-br hover:from-[#c9a577] hover:to-[#d4a57a] hover:-translate-y-0.5 shadow-[0_8px_24px_rgba(184,151,107,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_12px_32px_rgba(184,151,107,0.5),inset_0_1px_0_rgba(255,255,255,0.25)] flex items-center justify-center gap-2 group relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
                   onClick={handleSubmit}
                   disabled={state.isSubmitting}
                 >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-500" />
                   {state.isSubmitting ? (
                     <>
-                      <span className="spinner-reg" />
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Creating...
                     </>
                   ) : (
@@ -921,17 +452,24 @@ const EnhancedSignup: React.FC = () => {
               )}
             </div>
 
-            <div className="signin-link-reg">
+            <div className="text-center text-[0.9rem] text-[#888] mt-6 pt-6 border-t border-[#e5e0d1]">
               <p>
                 Already have an account?{' '}
-                <Link to="/login">Sign in</Link>
+                <Link to="/login" className="font-semibold text-[#1a1a1a] border-b-2 border-transparent hover:border-[#d9b99b] transition-all">Sign in</Link>
               </p>
             </div>
 
-            <p className="copyright-reg">© 2025 StoreHub. All rights reserved.</p>
+            <p className="text-center text-[0.8rem] text-[#aaa] mt-5">© 2025 StoreHub. All rights reserved.</p>
           </div>
         </section>
       </main>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+          50% { transform: translateY(-20px) scale(1.5); opacity: 0.6; }
+        }
+      `}</style>
     </div>
   );
 };

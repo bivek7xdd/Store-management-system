@@ -137,11 +137,10 @@ export default function Dashboard() {
               <button
                 key={opt.value}
                 onClick={() => setRange(opt.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  range === opt.value
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${range === opt.value
                     ? "text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
-                }`}
+                  }`}
                 style={range === opt.value ? { background: colors.primary } : {}}
               >
                 {opt.label}
@@ -160,7 +159,7 @@ export default function Dashboard() {
             className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
             style={{ background: `${colors.primary}10`, color: colors.primaryDark }}
           >
-            <Sparkles className="h-4 w-4" />
+
             <span className="font-medium">{today}</span>
           </div>
         </div>
@@ -207,9 +206,8 @@ export default function Dashboard() {
                 </div>
                 {stats?.sales?.growth !== undefined ? (
                   <p
-                    className={`text-xs font-medium mt-1 flex items-center gap-1 ${
-                      stats.sales.growth >= 0 ? "text-emerald-600" : "text-red-500"
-                    }`}
+                    className={`text-xs font-medium mt-1 flex items-center gap-1 ${stats.sales.growth >= 0 ? "text-emerald-600" : "text-red-500"
+                      }`}
                   >
                     {stats.sales.growth >= 0 ? (
                       <TrendingUp className="h-3 w-3" />
@@ -345,13 +343,12 @@ export default function Dashboard() {
                 {stats!.insights.map((insight, i) => (
                   <div
                     key={i}
-                    className={`rounded-xl border p-4 flex items-start gap-3 ${
-                      insight.type === "success"
+                    className={`rounded-xl border p-4 flex items-start gap-3 ${insight.type === "success"
                         ? "border-emerald-100 bg-emerald-50"
                         : insight.type === "warning"
-                        ? "border-amber-100 bg-amber-50"
-                        : "border-blue-100 bg-blue-50"
-                    }`}
+                          ? "border-amber-100 bg-amber-50"
+                          : "border-blue-100 bg-blue-50"
+                      }`}
                   >
                     <div className="mt-0.5">
                       {insight.type === "success" ? (
@@ -364,13 +361,12 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-1">
                       <p
-                        className={`text-sm font-medium ${
-                          insight.type === "success"
+                        className={`text-sm font-medium ${insight.type === "success"
                             ? "text-emerald-800"
                             : insight.type === "warning"
-                            ? "text-amber-800"
-                            : "text-blue-800"
-                        }`}
+                              ? "text-amber-800"
+                              : "text-blue-800"
+                          }`}
                       >
                         {insight.message}
                       </p>
@@ -666,22 +662,20 @@ export default function Dashboard() {
                 <div key={sale.id} className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                        sale.sales_type === "cash"
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center ${sale.sales_type === "cash"
                           ? "bg-emerald-50"
                           : sale.sales_type === "credit"
-                          ? "bg-amber-50"
-                          : "bg-blue-50"
-                      }`}
+                            ? "bg-amber-50"
+                            : "bg-blue-50"
+                        }`}
                     >
                       <ShoppingCart
-                        className={`h-4 w-4 ${
-                          sale.sales_type === "cash"
+                        className={`h-4 w-4 ${sale.sales_type === "cash"
                             ? "text-emerald-600"
                             : sale.sales_type === "credit"
-                            ? "text-amber-600"
-                            : "text-blue-600"
-                        }`}
+                              ? "text-amber-600"
+                              : "text-blue-600"
+                          }`}
                       />
                     </div>
                     <div>
@@ -697,13 +691,12 @@ export default function Dashboard() {
                     <p className="font-semibold text-gray-900 text-sm">रू {sale.total_amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     <Badge
                       variant="outline"
-                      className={`text-xs ${
-                        sale.sales_type === "cash"
+                      className={`text-xs ${sale.sales_type === "cash"
                           ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                           : sale.sales_type === "credit"
-                          ? "bg-amber-50 text-amber-600 border-amber-200"
-                          : "bg-blue-50 text-blue-600 border-blue-200"
-                      }`}
+                            ? "bg-amber-50 text-amber-600 border-amber-200"
+                            : "bg-blue-50 text-blue-600 border-blue-200"
+                        }`}
                     >
                       {sale.sales_type}
                     </Badge>

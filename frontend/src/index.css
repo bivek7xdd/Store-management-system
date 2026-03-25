@@ -10,45 +10,52 @@ All colors MUST be HSL.
   :root {
     --background: 210 20% 98%;
     --foreground: 215 25% 15%;
-
     --card: 0 0% 100%;
     --card-foreground: 215 25% 15%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
-
     --primary: 183 70% 42%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 210 15% 92%;
     --secondary-foreground: 215 25% 15%;
-
     --muted: 210 15% 95%;
     --muted-foreground: 215 15% 45%;
-
     --accent: 183 70% 42%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-
     --border: 214 20% 88%;
     --input: 214 20% 88%;
     --ring: 183 70% 42%;
-
     --radius: 0.75rem;
+    --hero-subtitle: 215 15% 45%;
+  }
 
-    --chart-1: 183 70% 42%;
-    --chart-2: 142 76% 36%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 262 83% 58%;
-    --chart-5: 343 81% 75%;
+  .dark, .dark-landing {
+    --background: 222 47% 3%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 183 70% 50%;
+    --primary-foreground: 222 47% 3%;
+    --secondary: 217 32% 10%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 32% 12%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 183 70% 50%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32% 15%;
+    --input: 217 32% 15%;
+    --ring: 183 70% 50%;
+    --hero-subtitle: 215 20% 75%;
   }
 }
 
@@ -56,8 +63,17 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .liquid-glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)];
+  }
+  
+  .dark-landing {
+    color-scheme: dark;
   }
 }
