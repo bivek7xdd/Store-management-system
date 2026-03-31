@@ -1,10 +1,33 @@
 import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
-  Play, ChevronDown, Search, Bell, ChevronRight, Check, Plus,
-  MoreHorizontal, Send, ArrowDownLeft, ArrowUpRight, Landmark,
-  CreditCard, FileText, Home, ListChecks, Wallet,
-  Settings as SettingsIcon, BellRing, Route, Package, TrendingUp, Users, BarChart3, Shield, Smartphone, Star
+  Play,
+  ChevronDown,
+  Search,
+  Bell,
+  ChevronRight,
+  Check,
+  Plus,
+  MoreHorizontal,
+  Send,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Landmark,
+  CreditCard,
+  FileText,
+  Home,
+  ListChecks,
+  Wallet,
+  Settings as SettingsIcon,
+  BellRing,
+  Route,
+  Package,
+  TrendingUp,
+  Users,
+  BarChart3,
+  Shield,
+  Smartphone,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -27,16 +50,31 @@ function Navbar() {
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-8 py-3 font-body backdrop-blur-3xl bg-white/[0.08] border-t border-white/30 border-x border-white/10 border-b border-white/5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.1)] transition-all w-[90%] max-w-6xl mx-auto">
       <div className="flex items-center gap-2 group cursor-pointer">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">SH</div>
-        <span className="text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">✦ StoreHub</span>
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+          SH
+        </div>
+        <span className="text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
+          StoreHub
+        </span>
       </div>
       <div className="hidden md:flex items-center gap-10 bg-white/5 dark:bg-black/20 px-8 py-2.5 rounded-full border border-white/10 backdrop-blur-xl">
         {["Features", "Testimonials", "Contact"].map((l) => (
-          <a key={l} href={`#${l.toLowerCase()}`} className="text-sm font-medium text-muted-foreground hover:text-primary transition-all hover:scale-105 active:scale-95">{l}</a>
+          <a
+            key={l}
+            href={`#${l.toLowerCase()}`}
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-all hover:scale-105 active:scale-95"
+          >
+            {l}
+          </a>
         ))}
       </div>
       <div className="flex items-center gap-6">
-        <Link to="/login" className="text-sm font-semibold hover:text-primary transition-colors pr-2">Sign In</Link>
+        <Link
+          to="/login"
+          className="text-sm font-semibold hover:text-primary transition-colors pr-2"
+        >
+          Sign In
+        </Link>
         <Link to="/register">
           <Button className="rounded-full px-7 h-11 text-sm font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
             Join Now
@@ -66,9 +104,27 @@ function DashboardPreview() {
   ];
 
   const transactions = [
-    { date: "Mar 15", desc: "Premium Apparel", amount: "-$5,200", status: "In-Stock", color: "text-emerald-500" },
-    { date: "Mar 14", desc: "Wholesale Order", amount: "+$12,000", status: "Delivered", color: "text-emerald-500" },
-    { date: "Mar 13", desc: "Supplier Batch", amount: "-$8,450", status: "Pending", color: "text-amber-500" },
+    {
+      date: "Mar 15",
+      desc: "Premium Apparel",
+      amount: "-$5,200",
+      status: "In-Stock",
+      color: "text-emerald-500",
+    },
+    {
+      date: "Mar 14",
+      desc: "Wholesale Order",
+      amount: "+$12,000",
+      status: "Delivered",
+      color: "text-emerald-500",
+    },
+    {
+      date: "Mar 13",
+      desc: "Supplier Batch",
+      amount: "-$8,450",
+      status: "Pending",
+      color: "text-amber-500",
+    },
   ];
 
   return (
@@ -76,16 +132,25 @@ function DashboardPreview() {
       {/* Sidebar */}
       <div className="w-40 border-r border-border flex-shrink-0 flex flex-col py-3 px-2.5 hidden md:flex bg-muted/20">
         <div className="flex items-center gap-2 px-1.5 mb-4">
-          <div className="w-6 h-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-semibold">SH</div>
+          <div className="w-6 h-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-semibold">
+            SH
+          </div>
           <span className="font-semibold text-xs">StoreHub</span>
           <ChevronDown className="w-3 h-3 ml-auto text-muted-foreground" />
         </div>
         <div className="space-y-0.5">
           {sidebarItems.map((item) => (
-            <div key={item.label} className={`flex items-center gap-2 px-1.5 py-1.5 rounded-md ${item.active ? "bg-secondary font-medium" : "text-muted-foreground"}`}>
+            <div
+              key={item.label}
+              className={`flex items-center gap-2 px-1.5 py-1.5 rounded-md ${item.active ? "bg-secondary font-medium" : "text-muted-foreground"}`}
+            >
               <item.icon className="w-3.5 h-3.5" />
               <span className="flex-1">{item.label}</span>
-              {item.badge && <span className="bg-accent text-accent-foreground rounded-full px-1.5 text-[9px] font-medium">{item.badge}</span>}
+              {item.badge && (
+                <span className="bg-accent text-accent-foreground rounded-full px-1.5 text-[9px] font-medium">
+                  {item.badge}
+                </span>
+              )}
               {item.chevron && <ChevronRight className="w-3 h-3" />}
             </div>
           ))}
@@ -103,9 +168,16 @@ function DashboardPreview() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="h-6 rounded-md px-2 text-[10px] font-medium">New Sale</Button>
+            <Button
+              variant="outline"
+              className="h-6 rounded-md px-2 text-[10px] font-medium"
+            >
+              New Sale
+            </Button>
             <Bell className="w-3.5 h-3.5 text-muted-foreground" />
-            <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-[9px] font-semibold">AR</div>
+            <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-[9px] font-semibold">
+              AR
+            </div>
           </div>
         </div>
 
@@ -121,32 +193,52 @@ function DashboardPreview() {
               { icon: TrendingUp, label: "Analytics" },
               { label: "Reports", icon: FileText },
             ].map((btn) => (
-              <span key={btn.label} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium ${btn.primary ? "bg-accent text-accent-foreground" : "bg-background text-foreground border border-border"}`}>
-                <btn.icon className="w-2.5 h-2.5" />{btn.label}
+              <span
+                key={btn.label}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium ${btn.primary ? "bg-accent text-accent-foreground" : "bg-background text-foreground border border-border"}`}
+              >
+                <btn.icon className="w-2.5 h-2.5" />
+                {btn.label}
               </span>
             ))}
           </div>
 
           <div className="flex gap-3 mb-4">
             <div className="flex-1 basis-0 bg-background rounded-xl border border-border p-3 shadow-sm">
-              <span className="text-[10px] text-muted-foreground block mb-1">Total Sales</span>
-              <p className="text-lg font-semibold tracking-tight">$42,190<span className="text-xs text-muted-foreground">.50</span></p>
+              <span className="text-[10px] text-muted-foreground block mb-1">
+                Total Sales
+              </span>
+              <p className="text-lg font-semibold tracking-tight">
+                $42,190
+                <span className="text-xs text-muted-foreground">.50</span>
+              </p>
               <div className="flex gap-2 mt-1.5 text-[9px] font-medium">
                 <span className="text-emerald-500">+12% vs last month</span>
               </div>
             </div>
             <div className="flex-1 basis-0 bg-background rounded-xl border border-border p-3 shadow-sm hidden sm:block">
-              <span className="text-[10px] text-muted-foreground block mb-1">Low Stock Alerts</span>
-              <p className="text-lg font-semibold tracking-tight text-amber-500">14 <span className="text-xs text-muted-foreground font-normal">items</span></p>
+              <span className="text-[10px] text-muted-foreground block mb-1">
+                Low Stock Alerts
+              </span>
+              <p className="text-lg font-semibold tracking-tight text-amber-500">
+                14{" "}
+                <span className="text-xs text-muted-foreground font-normal">
+                  items
+                </span>
+              </p>
               <div className="flex gap-2 mt-1.5 text-[9px] font-medium">
-                <span className="text-amber-500 uppercase tracking-wider">Requires Action</span>
+                <span className="text-amber-500 uppercase tracking-wider">
+                  Requires Action
+                </span>
               </div>
             </div>
           </div>
 
           {/* Transactions table */}
           <div className="bg-background rounded-xl border border-border p-3 shadow-sm">
-            <p className="text-[10px] font-medium mb-2">Recent Inventory Movements</p>
+            <p className="text-[10px] font-medium mb-2">
+              Recent Inventory Movements
+            </p>
             <table className="w-full text-[10px]">
               <thead>
                 <tr className="text-muted-foreground border-b border-border">
@@ -159,8 +251,12 @@ function DashboardPreview() {
                 {transactions.map((t, i) => (
                   <tr key={i} className="border-b border-border last:border-0">
                     <td className="py-1.5">{t.desc}</td>
-                    <td className="py-1.5 text-right font-medium">{t.amount}</td>
-                    <td className={`py-1.5 text-right font-medium ${t.color}`}>{t.status}</td>
+                    <td className="py-1.5 text-right font-medium">
+                      {t.amount}
+                    </td>
+                    <td className={`py-1.5 text-right font-medium ${t.color}`}>
+                      {t.status}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -173,7 +269,15 @@ function DashboardPreview() {
 }
 
 /* ── Animated Section Wrapper ── */
-function AnimatedSection({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+function AnimatedSection({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   return (
@@ -190,7 +294,17 @@ function AnimatedSection({ children, className = "", delay = 0 }: { children: Re
 }
 
 /* ── Card Deck Item (Sticky Stack) ── */
-function FeatureStackCard({ items, index, total, className = "" }: { items: any[]; index: number; total: number; className?: string }) {
+function FeatureStackCard({
+  items,
+  index,
+  total,
+  className = "",
+}: {
+  items: any[];
+  index: number;
+  total: number;
+  className?: string;
+}) {
   return (
     <div className="sticky top-40 mb-20 w-full px-4 text-white">
       <motion.div
@@ -205,13 +319,24 @@ function FeatureStackCard({ items, index, total, className = "" }: { items: any[
         <div className="relative z-10 w-full p-10 md:p-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 w-full">
             {items.map((f, i) => (
-              <div key={i} className="flex flex-col justify-center p-12 rounded-[3.5rem] bg-white/[0.03] border border-white/5 hover:border-primary/50 transition-all duration-700 relative overflow-hidden group/card shadow-2xl">
+              <div
+                key={i}
+                className="flex flex-col justify-center p-12 rounded-[3.5rem] bg-white/[0.03] border border-white/5 hover:border-primary/50 transition-all duration-700 relative overflow-hidden group/card shadow-2xl"
+              >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity" />
                 <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-10 text-white shadow-2xl shadow-primary/40 relative z-10">
                   <f.icon className="w-10 h-10" />
                 </div>
-                <h3 className={`text-5xl font-black mb-6 tracking-tighter uppercase relative z-10 ${className || "text-white"}`}>{f.title}</h3>
-                <p className={`leading-relaxed text-2xl font-medium tracking-tight relative z-10 ${className || "text-zinc-300"}`}>{f.desc}</p>
+                <h3
+                  className={`text-5xl font-black mb-6 tracking-tighter uppercase relative z-10 ${className || "text-white"}`}
+                >
+                  {f.title}
+                </h3>
+                <p
+                  className={`leading-relaxed text-2xl font-medium tracking-tight relative z-10 ${className || "text-zinc-300"}`}
+                >
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -230,22 +355,52 @@ export default function LandingPage() {
   const featureGroups = [
     {
       items: [
-        { icon: Package, title: "Inventory Mastery", desc: "Real-time tracking of products, categories, and stock levels across multiple locations.", colSpan: "md:col-span-3" },
-        { icon: TrendingUp, title: "Sales Analytics", desc: "Gain deep insights into your revenue, profit margins, and peak periods with AI-driven forecasting.", colSpan: "md:col-span-3" },
-      ]
+        {
+          icon: Package,
+          title: "Inventory Mastery",
+          desc: "Real-time tracking of products, categories, and stock levels across multiple locations.",
+          colSpan: "md:col-span-3",
+        },
+        {
+          icon: TrendingUp,
+          title: "Sales Analytics",
+          desc: "Gain deep insights into your revenue, profit margins, and peak periods with AI-driven forecasting.",
+          colSpan: "md:col-span-3",
+        },
+      ],
     },
     {
       items: [
-        { icon: Users, title: "Supplier Hub", desc: "Effortlessly manage vendor relationships and supply chain logistics automatically.", colSpan: "md:col-span-3" },
-        { icon: BarChart3, title: "Smart Reporting", desc: "Automated daily, weekly, and monthly reports generated instantly with a single tap.", colSpan: "md:col-span-3" },
-      ]
+        {
+          icon: Users,
+          title: "Supplier Hub",
+          desc: "Effortlessly manage vendor relationships and supply chain logistics automatically.",
+          colSpan: "md:col-span-3",
+        },
+        {
+          icon: BarChart3,
+          title: "Smart Reporting",
+          desc: "Automated daily, weekly, and monthly reports generated instantly with a single tap.",
+          colSpan: "md:col-span-3",
+        },
+      ],
     },
     {
       items: [
-        { icon: Shield, title: "Security First", desc: "Secure multi-user access with granular permission controls for every employee role.", colSpan: "md:col-span-3" },
-        { icon: Smartphone, title: "Mobile Ready", desc: "Manage your store from anywhere with our fully responsive dashboard tailored for tablet and mobile.", colSpan: "md:col-span-3" },
-      ]
-    }
+        {
+          icon: Shield,
+          title: "Security First",
+          desc: "Secure multi-user access with granular permission controls for every employee role.",
+          colSpan: "md:col-span-3",
+        },
+        {
+          icon: Smartphone,
+          title: "Mobile Ready",
+          desc: "Manage your store from anywhere with our fully responsive dashboard tailored for tablet and mobile.",
+          colSpan: "md:col-span-3",
+        },
+      ],
+    },
   ];
 
   return (
@@ -265,7 +420,7 @@ export default function LandingPage() {
             animate={{
               x: [0, 200, 0],
               y: [0, -150, 0],
-              scale: [1, 1.5, 1]
+              scale: [1, 1.5, 1],
             }}
             transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
             className="absolute top-[-10%] left-[-10%] w-[80%] h-[80%] bg-blue-600/30 blur-[150px] rounded-full"
@@ -274,7 +429,7 @@ export default function LandingPage() {
             animate={{
               x: [0, -200, 0],
               y: [0, 150, 0],
-              scale: [1, 1.4, 1]
+              scale: [1, 1.4, 1],
             }}
             transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
             className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-purple-600/30 blur-[150px] rounded-full"
@@ -282,18 +437,20 @@ export default function LandingPage() {
           <motion.div
             animate={{
               scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3]
+              opacity: [0.3, 0.5, 0.3],
             }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] bg-emerald-500/10 blur-[160px] rounded-full"
           />
         </div>
 
-
         {/* Background video overlay */}
         <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
           <video
-            autoPlay muted loop playsInline
+            autoPlay
+            muted
+            loop
+            playsInline
             className="w-full h-full object-cover"
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
           />
@@ -301,7 +458,10 @@ export default function LandingPage() {
         </div>
 
         {/* Hero Content */}
-        <motion.div style={{ y: heroY }} className="relative z-10 flex flex-col items-center pt-32 md:pt-40 max-w-5xl text-foreground">
+        <motion.div
+          style={{ y: heroY }}
+          className="relative z-10 flex flex-col items-center pt-32 md:pt-40 max-w-5xl text-foreground"
+        >
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -314,7 +474,10 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Headline */}
-          <motion.h1 {...fade(0.1)} className="text-center font-display text-6xl md:text-8xl lg:text-9xl leading-[0.85] tracking-tighter max-w-5xl px-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground via-foreground to-foreground/40 pb-4">
+          <motion.h1
+            {...fade(0.1)}
+            className="text-center font-display text-6xl md:text-8xl lg:text-9xl leading-[0.85] tracking-tighter max-w-5xl px-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground via-foreground to-foreground/40 pb-4"
+          >
             The Future of <br />
             <span className="italic font-serif text-primary relative">
               Smarter
@@ -324,23 +487,38 @@ export default function LandingPage() {
                 transition={{ duration: 1, delay: 0.5 }}
                 className="absolute bottom-2 left-0 h-[2px] bg-primary/40 rounded-full"
               />
-            </span> Retailing
+            </span>{" "}
+            Retailing
           </motion.h1>
 
           {/* Subheadline */}
-          <motion.p {...fade(0.2)} className="mt-6 text-center text-lg md:text-2xl text-muted-foreground/80 max-w-2xl leading-relaxed">
-            Automate your inventory, tracking, and sales with intelligent insights that grow your business.
+          <motion.p
+            {...fade(0.2)}
+            className="mt-6 text-center text-lg md:text-2xl text-muted-foreground/80 max-w-2xl leading-relaxed"
+          >
+            Automate your inventory, tracking, and sales with intelligent
+            insights that grow your business.
           </motion.p>
 
           {/* CTA */}
-          <motion.div {...fade(0.3)} className="mt-12 flex flex-col sm:flex-row items-center gap-6">
+          <motion.div
+            {...fade(0.3)}
+            className="mt-12 flex flex-col sm:flex-row items-center gap-6"
+          >
             <Link to="/register">
-              <Button size="lg" className="rounded-full px-10 h-16 text-lg font-bold shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 transition-all hover:scale-105 active:scale-95">
+              <Button
+                size="lg"
+                className="rounded-full px-10 h-16 text-lg font-bold shadow-2xl shadow-primary/30 bg-primary hover:bg-primary/90 transition-all hover:scale-105 active:scale-95"
+              >
                 Get Started for Free
               </Button>
             </Link>
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="lg" className="rounded-full px-8 h-16 text-lg font-medium bg-background/20 backdrop-blur-xl border-white/10 hover:bg-white/5 transition-all">
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-full px-8 h-16 text-lg font-medium bg-background/20 backdrop-blur-xl border-white/10 hover:bg-white/5 transition-all"
+              >
                 See Features
               </Button>
               <motion.button
@@ -357,7 +535,7 @@ export default function LandingPage() {
         {/* Hero Dashboard Preview */}
         <motion.div
           style={{ y: dashboardY }}
-          className="relative z-10 mt-16 w-full max-w-6xl px-4"
+          className="relative z-10 -mt-20 w-full max-w-6xl px-4"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.5 }}
@@ -374,15 +552,23 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-32 px-6 md:px-12 lg:px-20 relative bg-muted/20">
+      <section
+        id="features"
+        className="py-32 px-6 md:px-12 lg:px-20 relative bg-muted/20"
+      >
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
         <div className="max-w-7xl mx-auto relative z-10">
           <AnimatedSection className="text-center mb-24">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6">
               Features
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-semibold tracking-tight mb-6 text-zinc-500">Everything you need</h2>
-            <p className="text-zinc-400 text-xl max-w-2xl mx-auto leading-relaxed">Built for scale, speed, and simplicity. Manage your entire retail empire from a single intuitive command center.</p>
+            <h2 className="text-5xl md:text-7xl font-display font-semibold tracking-tight mb-6 text-zinc-500">
+              Everything you need
+            </h2>
+            <p className="text-zinc-400 text-xl max-w-2xl mx-auto leading-relaxed">
+              Built for scale, speed, and simplicity. Manage your entire retail
+              empire from a single intuitive command center.
+            </p>
           </AnimatedSection>
 
           <div className="flex flex-col items-center ">
@@ -400,30 +586,64 @@ export default function LandingPage() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section id="testimonials" className="py-32 px-6 md:px-12 lg:px-20 bg-background relative overflow-hidden">
+      <section
+        id="testimonials"
+        className="py-32 px-6 md:px-12 lg:px-20 bg-background relative overflow-hidden"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-background pointer-events-none" />
         <div className="max-w-7xl mx-auto">
           <AnimatedSection className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-display font-semibold tracking-tight mb-4 text-zinc-500">Loved by Retailers</h2>
-            <p className="text-zinc-400 text-lg max-w-2xl mx-auto">See why business owners across the globe are switching to StoreHub.</p>
+            <h2 className="text-4xl md:text-5xl font-display font-semibold tracking-tight mb-4 text-gray-800">
+              Loved by Retailers
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              See why business owners across the globe are switching to
+              StoreHub.
+            </p>
           </AnimatedSection>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { name: "Sarah Jenkins", role: "Boutique Owner", text: "StoreHub changed my life. I used to spend hours on spreadsheets; now everything is automated." },
-              { name: "David Chen", role: "Retail Operations", text: "The reporting features are second to none. It's the most polished inventory tool I've ever used." },
-              { name: "Michael Ross", role: "Store Manager", text: "The mobile experience is incredible. I can check stock while I'm on the floor without missing a beat." }
+              {
+                name: "Sarah Jenkins",
+                role: "Boutique Owner",
+                text: "StoreHub changed my life. I used to spend hours on spreadsheets; now everything is automated.",
+              },
+              {
+                name: "David Chen",
+                role: "Retail Operations",
+                text: "The reporting features are second to none. It's the most polished inventory tool I've ever used.",
+              },
+              {
+                name: "Michael Ross",
+                role: "Store Manager",
+                text: "The mobile experience is incredible. I can check stock while I'm on the floor without missing a beat.",
+              },
             ].map((t, i) => (
-              <AnimatedSection key={i} delay={i * 0.1} className="p-10 rounded-[2.5rem] bg-secondary/20 backdrop-blur-md border border-white/5 relative group hover:bg-secondary/30 transition-all duration-500">
+              <AnimatedSection
+                key={i}
+                delay={i * 0.1}
+                className="p-10 rounded-[2.5rem] bg-secondary/20 backdrop-blur-md border border-white/5 relative group hover:bg-secondary/30 transition-all duration-500"
+              >
                 <div className="flex gap-1 mb-6">
-                  {[...Array(5)].map((_, j) => <Star key={j} className="w-5 h-5 fill-zinc-400 text-zinc-400" />)}
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-5 h-5 fill-black text-black" />
+                  ))}
                 </div>
-                <p className="text-xl font-medium leading-relaxed mb-8 text-foreground/90">"{t.text}"</p>
+                <p className="text-xl font-medium leading-relaxed mb-8 text-foreground/90">
+                  "{t.text}"
+                </p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-white/20 to-zinc-500 flex items-center justify-center font-bold text-zinc-900 shadow-lg">{t.name[0]}</div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-white/20 to-zinc-500 flex items-center justify-center font-bold text-zinc-900 shadow-lg">
+                    {t.name[0]}
+                  </div>
                   <div>
-                    <p className="font-bold text-base text-foreground">{t.name}</p>
-                    <p className="text-sm text-zinc-400 font-medium tracking-wide uppercase">{t.role}</p>
+                    <p className="font-bold text-base text-foreground">
+                      {t.name}
+                    </p>
+                    <p className="text-sm text-zinc-400 font-medium tracking-wide uppercase">
+                      {t.role}
+                    </p>
                   </div>
                 </div>
               </AnimatedSection>
@@ -437,17 +657,26 @@ export default function LandingPage() {
         <AnimatedSection className="max-w-6xl mx-auto rounded-[4rem] bg-foreground text-background p-16 md:p-28 text-center relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-transparent to-purple-600/30 opacity-20" />
           <div className="relative z-10">
-            <h2 className="text-5xl md:text-8xl font-display font-bold mb-8 tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-white via-primary to-emerald-400">Ready to scale <br />your empire?</h2>
-            <p className="text-white/60 text-xl md:text-2xl mb-14 max-w-2xl mx-auto font-body leading-relaxed">Join the world's fastest-growing retail brands using StoreHub to automate their success.</p>
+            <h2 className="text-5xl md:text-8xl font-display font-bold mb-8 tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-white via-primary to-emerald-400">
+              Ready to scale <br />
+              your empire?
+            </h2>
+            <p className="text-white/60 text-xl md:text-2xl mb-14 max-w-2xl mx-auto font-body leading-relaxed">
+              Join the world's fastest-growing retail brands using StoreHub to
+              automate their success.
+            </p>
             <Link to="/register">
-              <Button size="lg" variant="secondary" className="rounded-full px-12 h-20 text-xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-transform bg-primary text-primary-foreground hover:bg-primary/90 border-0">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="rounded-full px-12 h-20 text-xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-transform bg-primary text-primary-foreground hover:bg-primary/90 border-0"
+              >
                 Start Free Trial Now
               </Button>
             </Link>
           </div>
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/40 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2 animate-pulse" />
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/20 blur-[150px] rounded-full translate-y-1/2 -translate-x-1/2 animate-pulse" />
-
         </AnimatedSection>
       </section>
 
@@ -455,16 +684,28 @@ export default function LandingPage() {
       <footer className="py-12 px-6 border-t border-border bg-muted/20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-zinc-700 flex items-center justify-center text-zinc-200 font-bold text-[10px]">SH</div>
+            <div className="w-6 h-6 rounded bg-zinc-700 flex items-center justify-center text-zinc-200 font-bold text-[10px]">
+              SH
+            </div>
             <span className="font-bold">StoreHub</span>
           </div>
           <div className="flex gap-8 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Terms</a>
-            <a href="#" className="hover:text-foreground">Twitter</a>
-            <a href="#" className="hover:text-foreground">LinkedIn</a>
+            <a href="#" className="hover:text-foreground">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Terms
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Twitter
+            </a>
+            <a href="#" className="hover:text-foreground">
+              LinkedIn
+            </a>
           </div>
-          <p className="text-xs text-muted-foreground">© 2025 StoreHub Inc. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">
+            © 2025 StoreHub Inc. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
