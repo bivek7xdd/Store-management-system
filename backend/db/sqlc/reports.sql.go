@@ -52,6 +52,70 @@ func (q *Queries) GetDailySales(ctx context.Context, arg GetDailySalesParams) ([
 	return items, nil
 }
 
+const getDeadStock = `-- name: GetDeadStock :many
+SELECT 
+    p.name as product_name,
+    c.name as category_name,
+    p.stock_quantity,
+    p.cost_price,
+    (p.stock_quantity * p.cost_price)::DECIMAL(12,2) as capital_tied_up,
+    COALESCE(EXTRACT(DAY FROM (NOW() - COALESCE(MAX(s.sale_date), p.created_at))), 0)::INT as days_since_last_sale
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN sale_items si ON p.id = si.product_id
+LEFT JOIN sales s ON si.sale_id = s.id
+WHERE 
+    p.store_id = $1 
+    AND p.stock_quantity > 0 
+    AND p.status = 'active'
+GROUP BY p.id, p.name, c.name, p.stock_quantity, p.cost_price, p.created_at
+HAVING 
+    MAX(s.sale_date) <= NOW() - ($2::int * INTERVAL '1 day')
+    OR (MAX(s.sale_date) IS NULL AND p.created_at <= NOW() - ($2::int * INTERVAL '1 day'))
+ORDER BY capital_tied_up DESC
+`
+
+type GetDeadStockParams struct {
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+	Column2 int32       `db:"column_2" json:"column_2"`
+}
+
+type GetDeadStockRow struct {
+	ProductName       string         `db:"product_name" json:"product_name"`
+	CategoryName      pgtype.Text    `db:"category_name" json:"category_name"`
+	StockQuantity     int32          `db:"stock_quantity" json:"stock_quantity"`
+	CostPrice         pgtype.Numeric `db:"cost_price" json:"cost_price"`
+	CapitalTiedUp     pgtype.Numeric `db:"capital_tied_up" json:"capital_tied_up"`
+	DaysSinceLastSale int32          `db:"days_since_last_sale" json:"days_since_last_sale"`
+}
+
+func (q *Queries) GetDeadStock(ctx context.Context, arg GetDeadStockParams) ([]GetDeadStockRow, error) {
+	rows, err := q.db.Query(ctx, getDeadStock, arg.StoreID, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDeadStockRow
+	for rows.Next() {
+		var i GetDeadStockRow
+		if err := rows.Scan(
+			&i.ProductName,
+			&i.CategoryName,
+			&i.StockQuantity,
+			&i.CostPrice,
+			&i.CapitalTiedUp,
+			&i.DaysSinceLastSale,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDebtsStats = `-- name: GetDebtsStats :one
 SELECT 
     COALESCE(SUM(amount_owed - amount_paid), 0.0)::DECIMAL(12,2) as total_outstanding,
@@ -70,6 +134,43 @@ func (q *Queries) GetDebtsStats(ctx context.Context, storeID pgtype.UUID) (GetDe
 	var i GetDebtsStatsRow
 	err := row.Scan(&i.TotalOutstanding, &i.TotalDebtors)
 	return i, err
+}
+
+const getHourlyTransactionHeatmap = `-- name: GetHourlyTransactionHeatmap :many
+SELECT 
+    EXTRACT(ISODOW FROM sale_date)::INT as day_of_week, 
+    EXTRACT(HOUR FROM sale_date)::INT as hour_of_day,
+    COUNT(*) as transaction_count
+FROM sales
+WHERE store_id = $1 AND sale_date >= NOW() - INTERVAL '30 days'
+GROUP BY EXTRACT(ISODOW FROM sale_date), EXTRACT(HOUR FROM sale_date)
+ORDER BY day_of_week, hour_of_day
+`
+
+type GetHourlyTransactionHeatmapRow struct {
+	DayOfWeek        int32 `db:"day_of_week" json:"day_of_week"`
+	HourOfDay        int32 `db:"hour_of_day" json:"hour_of_day"`
+	TransactionCount int64 `db:"transaction_count" json:"transaction_count"`
+}
+
+func (q *Queries) GetHourlyTransactionHeatmap(ctx context.Context, storeID pgtype.UUID) ([]GetHourlyTransactionHeatmapRow, error) {
+	rows, err := q.db.Query(ctx, getHourlyTransactionHeatmap, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetHourlyTransactionHeatmapRow
+	for rows.Next() {
+		var i GetHourlyTransactionHeatmapRow
+		if err := rows.Scan(&i.DayOfWeek, &i.HourOfDay, &i.TransactionCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getInactiveProducts = `-- name: GetInactiveProducts :many
@@ -153,6 +254,120 @@ func (q *Queries) GetInventoryStats(ctx context.Context, storeID pgtype.UUID) (G
 	var i GetInventoryStatsRow
 	err := row.Scan(&i.TotalProducts, &i.TotalValue, &i.LowStockCount)
 	return i, err
+}
+
+const getProductPairFrequency = `-- name: GetProductPairFrequency :many
+WITH order_pairs AS (
+    SELECT 
+        si1.product_id as product_a_id,
+        si2.product_id as product_b_id,
+        s.id as sale_id
+    FROM sale_items si1
+    JOIN sale_items si2 ON si1.sale_id = si2.sale_id AND si1.product_id < si2.product_id
+    JOIN sales s ON si1.sale_id = s.id
+    WHERE s.store_id = $1 AND s.sale_date >= NOW() - INTERVAL '90 days'
+)
+SELECT 
+    pa.name as product_a_name,
+    pb.name as product_b_name,
+    COUNT(op.sale_id) as pair_frequency
+FROM order_pairs op
+JOIN products pa ON op.product_a_id = pa.id
+JOIN products pb ON op.product_b_id = pb.id
+GROUP BY op.product_a_id, op.product_b_id, pa.name, pb.name
+ORDER BY pair_frequency DESC
+LIMIT 5
+`
+
+type GetProductPairFrequencyRow struct {
+	ProductAName  string `db:"product_a_name" json:"product_a_name"`
+	ProductBName  string `db:"product_b_name" json:"product_b_name"`
+	PairFrequency int64  `db:"pair_frequency" json:"pair_frequency"`
+}
+
+func (q *Queries) GetProductPairFrequency(ctx context.Context, storeID pgtype.UUID) ([]GetProductPairFrequencyRow, error) {
+	rows, err := q.db.Query(ctx, getProductPairFrequency, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductPairFrequencyRow
+	for rows.Next() {
+		var i GetProductPairFrequencyRow
+		if err := rows.Scan(&i.ProductAName, &i.ProductBName, &i.PairFrequency); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductVelocity = `-- name: GetProductVelocity :many
+WITH product_sales AS (
+    SELECT 
+        si.product_id,
+        COALESCE(SUM(si.quantity), 0) as total_sold_30d
+    FROM sale_items si
+    JOIN sales s ON si.sale_id = s.id
+    WHERE s.store_id = $1 AND s.sale_date >= NOW() - INTERVAL '30 days'
+    GROUP BY si.product_id
+)
+SELECT 
+    p.name as product_name,
+    c.name as category_name,
+    p.stock_quantity,
+    (ps.total_sold_30d / 30.0)::DECIMAL(10,2) as avg_daily_sales,
+    CASE 
+        WHEN ps.total_sold_30d > 0 THEN 
+            CAST(p.stock_quantity / (ps.total_sold_30d / 30.0) AS INT)
+        ELSE 9999 
+    END as estimated_days_to_stockout
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+JOIN product_sales ps ON p.id = ps.product_id
+WHERE 
+    p.store_id = $1 
+    AND p.status = 'active'
+    AND ps.total_sold_30d > 0
+ORDER BY estimated_days_to_stockout ASC
+LIMIT 50
+`
+
+type GetProductVelocityRow struct {
+	ProductName             string         `db:"product_name" json:"product_name"`
+	CategoryName            pgtype.Text    `db:"category_name" json:"category_name"`
+	StockQuantity           int32          `db:"stock_quantity" json:"stock_quantity"`
+	AvgDailySales           pgtype.Numeric `db:"avg_daily_sales" json:"avg_daily_sales"`
+	EstimatedDaysToStockout int32          `db:"estimated_days_to_stockout" json:"estimated_days_to_stockout"`
+}
+
+func (q *Queries) GetProductVelocity(ctx context.Context, storeID pgtype.UUID) ([]GetProductVelocityRow, error) {
+	rows, err := q.db.Query(ctx, getProductVelocity, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductVelocityRow
+	for rows.Next() {
+		var i GetProductVelocityRow
+		if err := rows.Scan(
+			&i.ProductName,
+			&i.CategoryName,
+			&i.StockQuantity,
+			&i.AvgDailySales,
+			&i.EstimatedDaysToStockout,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getProfitStats = `-- name: GetProfitStats :one

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import * as XLSX from "xlsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan } from "lucide-react";
@@ -80,6 +90,8 @@ export default function Inventory() {
   const [formScannerOpen, setFormScannerOpen] = useState(false);
   const [barcodeValue, setBarcodeValue] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -319,6 +331,10 @@ export default function Inventory() {
     toast.success(`Barcode scanned: ${barcode}`);
   };
 
+  const handleImportClick = () => {
+    setImportDialogOpen(true);
+  };
+
   const handleDialogChange = (open: boolean) => {
     setAddDialogOpen(open);
     if (!open) {
@@ -378,12 +394,146 @@ export default function Inventory() {
     }
   };
 
-  const handleImport = () => {
-    toast.success("CSV import feature ready (connect to backend to enable)");
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const data = event.target?.result as string;
+      if (!data) return;
+
+      try {
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Convert to JSON with headers mapped properly
+        const rawData = XLSX.utils.sheet_to_json(worksheet) as any[];
+        
+        if (rawData.length === 0) {
+          toast.error("No valid products found in file");
+          return;
+        }
+
+        const newProducts: CreateProductData[] = [];
+        const categoryLookup = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+
+        for (const row of rawData) {
+          const product: any = {};
+          
+          // Case-insensitive mapping for columns
+          Object.entries(row).forEach(([key, val]) => {
+            const normalizedKey = key.trim().toLowerCase();
+            const value = val as any;
+            
+            if (value === undefined || value === null) return;
+
+            switch (normalizedKey) {
+              case 'name': product.name = String(value); break;
+              case 'barcode': product.barcode = String(value); break;
+              case 'price': product.price = parseFloat(String(value)); break;
+              case 'cost_price': product.cost_price = parseFloat(String(value)); break;
+              case 'stock_quantity': product.stock_quantity = parseInt(String(value)); break;
+              case 'category_name': 
+                product.category_id = categoryLookup.get(String(value).toLowerCase());
+                break;
+              case 'low_stock_threshold': product.low_stock_threshold = parseInt(String(value)); break;
+              case 'expires_at': 
+                try {
+                  // Handle potential date serial numbers from Excel
+                  if (typeof value === 'number') {
+                    product.expires_at = new Date((value - (25567 + 2)) * 86400 * 1000).toISOString();
+                  } else {
+                    product.expires_at = new Date(String(value)).toISOString();
+                  }
+                } catch (e) {
+                  console.error("Invalid date value:", value);
+                }
+                break;
+            }
+          });
+
+          if (product.name && product.price !== undefined && product.category_id) {
+            newProducts.push(product);
+          }
+        }
+
+        if (newProducts.length === 0) {
+          toast.error("No valid products found check columns headers: name, price, category_name");
+          return;
+        }
+
+        toast.info(`Importing ${newProducts.length} products...`);
+        let successCount = 0;
+        for (const pData of newProducts) {
+          try {
+            await createProductMutation.mutateAsync(pData);
+            successCount++;
+          } catch (err) {
+            console.error(`Failed to import ${pData.name}:`, err);
+          }
+        }
+
+        toast.success(`Successfully imported ${successCount} products!`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setImportDialogOpen(false);
+      } catch (err) {
+        console.error("File parsing error:", err);
+        toast.error("Failed to parse file. Please use a valid CSV or Excel file.");
+      }
+    };
+
+    reader.readAsBinaryString(file);
   };
 
   const handleExport = () => {
-    toast.success("Exporting inventory data...");
+    if (products.length === 0) {
+      toast.error("No products to export");
+      return;
+    }
+
+    const headers = ["name", "barcode", "price", "cost_price", "stock_quantity", "category_name", "low_stock_threshold", "expires_at"];
+    const csvRows = [headers.join(",")];
+
+    products.forEach((p: Product) => {
+      const category = categories.find(c => c.id === p.category_id)?.name || "";
+      const row = [
+        `"${p.name}"`,
+        `"${getTextValue(p.barcode)}"`,
+        getNumericValue(p.price),
+        getNumericValue(p.cost_price as any),
+        p.stock_quantity,
+        `"${category}"`,
+        getInt32Value(p.low_stock_threshold),
+        `"${getDateValue(p.expires_at) || ""}"`
+      ];
+      csvRows.push(row.join(","));
+    });
+
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `inventory_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Inventory exported successfully!");
+  };
+
+  const downloadTemplate = () => {
+    const headers = "name,barcode,price,cost_price,stock_quantity,category_name,low_stock_threshold,expires_at";
+    const dummyRow = "Sample Product,8901234567890,150.00,120.00,50,Beverages,10,2026-12-31";
+    const blob = new Blob([headers + "\n" + dummyRow], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "inventory_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (productsLoading || authLoading) {
@@ -443,7 +593,14 @@ export default function Inventory() {
           <p className="text-gray-500 mt-1">Manage your products and stock levels</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleImport} className="rounded-lg border-gray-200">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".csv, .xlsx, .xls"
+            onChange={handleImport}
+          />
+          <Button variant="outline" size="sm" onClick={handleImportClick} className="rounded-lg border-gray-200">
             <Upload className="mr-2 h-4 w-4" />
             Import CSV
           </Button>
@@ -458,7 +615,7 @@ export default function Inventory() {
                 Add Product
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl">
+            <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold">
                   {editingProduct ? "Edit Product" : "Add New Product"}
@@ -615,6 +772,87 @@ export default function Inventory() {
                   {isSubmitting ? (editingProduct ? "Updating..." : "Adding...") : (editingProduct ? "Update Product" : "Add Product")}
                 </Button>
               </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Import CSV Dialog */}
+          <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-primary" />
+                  Import Products from Spreadsheet
+                </DialogTitle>
+                <DialogDescription>
+                  Supported formats: CSV, Excel (.xlsx, .xls) and Google Sheets.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg mb-4 text-xs text-blue-700 flex gap-2">
+                <span className="shrink-0 font-bold bg-blue-100 h-5 w-5 rounded-full flex items-center justify-center">i</span>
+                <p>For <strong>Google Sheets</strong>: Go to File &gt; Download &gt; Microsoft Excel (.xlsx) and then upload that file here.</p>
+              </div>
+
+              <div className="border rounded-xl overflow-hidden my-4">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow>
+                      <TableHead className="w-[150px] font-semibold text-xs">Spreadsheet Column</TableHead>
+                      <TableHead className="font-semibold text-xs text-center border-l">Required</TableHead>
+                      <TableHead className="font-semibold text-xs border-l">Sample Value</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[
+                      { col: "name", req: "Yes", sample: "Basmati Rice" },
+                      { col: "price", req: "Yes", sample: "150.00" },
+                      { col: "category_name", req: "Yes", sample: "Grains" },
+                      { col: "barcode", req: "No", sample: "8901234567890" },
+                      { col: "cost_price", req: "No", sample: "120.00" },
+                      { col: "stock_quantity", req: "No (defaults to 0)", sample: "50" },
+                      { col: "low_stock_threshold", req: "No (defaults to 10)", sample: "10" },
+                      { col: "expires_at", req: "No", sample: "2026-12-31" },
+                    ].map((row, idx) => (
+                      <TableRow key={idx} className="text-sm">
+                        <TableCell className="font-medium bg-gray-50/50">{row.col}</TableCell>
+                        <TableCell className="text-center border-l">
+                          <Badge variant={row.req.startsWith("Yes") ? "default" : "secondary"} className="text-[10px] py-0">
+                            {row.req}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground border-l font-mono text-xs italic">{row.sample}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div 
+                  className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-gray-50/50 hover:bg-gray-50 hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="p-3 bg-white rounded-full shadow-sm border border-gray-100 text-primary">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-medium text-gray-900">Choose your Excel or CSV file</p>
+                    <p className="text-sm text-gray-500 mt-1">Make sure the first row contains the column headers</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 pt-2">
+                  <Button variant="ghost" size="sm" onClick={downloadTemplate} className="text-xs text-muted-foreground hover:text-primary gap-2">
+                    <Download className="h-3 w-3" />
+                    Download XLSX Template
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="rounded-lg" onClick={() => setImportDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

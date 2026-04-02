@@ -281,49 +281,122 @@ func GetReportStats(c *gin.Context) {
 		}
 	}
 
-	// Smart Insights Generation
+	// ── Feature 1: Enhanced Insights Engine ─────────────────────────────────────
 	insights := []gin.H{}
 
-	// Insight 1: Sales Trend
+	// Insight: Sales Trend
 	if salesGrowth > 10 {
 		insights = append(insights, gin.H{
 			"type":    "success",
-			"message": fmt.Sprintf("Sales are trending up! growth of %.1f%% compared to previous period.", salesGrowth),
+			"message": fmt.Sprintf("Sales are up %.1f%% compared to the previous period. Great work!", salesGrowth),
+			"action":  "view_sales",
 		})
 	} else if salesGrowth < -10 {
 		insights = append(insights, gin.H{
 			"type":    "warning",
-			"message": fmt.Sprintf("Sales are down by %.1f%%. Consider running a promotion.", math.Abs(salesGrowth)),
+			"message": fmt.Sprintf("Sales are down %.1f%%. Running a promotion could help recover momentum.", math.Abs(salesGrowth)),
+			"action":  "view_sales",
 		})
 	}
 
-	// Insight 2: Dead Stock
-	deadStock, err := utils.Queries.GetInactiveProducts(ctx, db.GetInactiveProductsParams{
-		StoreID: storeID,
-		Limit:   5,
-	})
-	if err == nil && len(deadStock) > 0 {
-		var productNames []string
-		for _, p := range deadStock {
-			productNames = append(productNames, p.ProductName)
-		}
+	// Insight: High Outstanding Debt
+	outstandingDebt, _ := debtStats.TotalOutstanding.Float64Value()
+	if outstandingDebt.Float64 > 50000 {
 		insights = append(insights, gin.H{
 			"type":    "warning",
-			"message": fmt.Sprintf("%d products haven't sold in 30 days. Consider a clearance sale.", len(deadStock)),
-			"details": productNames,
+			"message": fmt.Sprintf("रू %.0f in outstanding debt. Follow up with your top debtors to free up cash flow.", outstandingDebt.Float64),
+			"action":  "view_debtors",
 		})
 	}
 
-	// Insight 3: High Outstanding Debt
-	outstandingDebt, _ := debtStats.TotalOutstanding.Float64Value()
-	if outstandingDebt.Float64 > 50000 { // Threshold example
+	// ── Feature 2: Dead Stock (60-day threshold for insights) ───────────────────
+	deadStockItems, err := utils.Queries.GetDeadStock(ctx, db.GetDeadStockParams{
+		StoreID: storeID,
+		Column2: 60,
+	})
+	if err != nil {
+		deadStockItems = []db.GetDeadStockRow{}
+	}
+
+	// Compute dead stock totals by category & threshold buckets
+	var deadStockTotal60, deadStockTotal90, deadStockTotal120 float64
+	deadStockByCategory := map[string]float64{}
+	for _, item := range deadStockItems {
+		capital, _ := item.CapitalTiedUp.Float64Value()
+		deadStockByCategory[item.CategoryName.String] += capital.Float64
+		if item.DaysSinceLastSale >= 120 {
+			deadStockTotal120 += capital.Float64
+		}
+		if item.DaysSinceLastSale >= 90 {
+			deadStockTotal90 += capital.Float64
+		}
+		deadStockTotal60 += capital.Float64
+	}
+
+	// Dead stock insight
+	if deadStockTotal60 > 0 {
 		insights = append(insights, gin.H{
-			"type":    "info",
-			"message": fmt.Sprintf("Total outstanding debt is high (रू %.2f). Review debtors list.", outstandingDebt.Float64),
+			"type":    "warning",
+			"message": fmt.Sprintf("रू %.0f is tied up in inventory that hasn't sold in 60+ days. A discount campaign could unlock this cash.", deadStockTotal60),
+			"action":  "view_dead_stock",
 		})
 	}
 
-	// Prepare Response
+	// ── Feature 3: Product Velocity insights ────────────────────────────────────
+	velocityItems, err := utils.Queries.GetProductVelocity(ctx, storeID)
+	if err != nil {
+		velocityItems = []db.GetProductVelocityRow{}
+	}
+
+	// Stockout-within-7-days insight
+	criticalItems := 0
+	for _, v := range velocityItems {
+		if v.EstimatedDaysToStockout <= 7 {
+			criticalItems++
+		}
+	}
+	if criticalItems > 0 {
+		insights = append(insights, gin.H{
+			"type":    "alert",
+			"message": fmt.Sprintf("%d product(s) will run out of stock within 7 days. Reorder now to avoid lost sales.", criticalItems),
+			"action":  "view_velocity",
+		})
+	}
+
+	// ── Feature 4: Market Basket Analysis (cross-sell insight) ─────────────────
+	basketPairs, err := utils.Queries.GetProductPairFrequency(ctx, storeID)
+	if err != nil {
+		basketPairs = []db.GetProductPairFrequencyRow{}
+	}
+	if len(basketPairs) > 0 {
+		top := basketPairs[0]
+		insights = append(insights, gin.H{
+			"type":    "opportunity",
+			"message": fmt.Sprintf("Customers who buy \"%s\" often also buy \"%s\". Consider bundling them for a higher average order value.", top.ProductAName, top.ProductBName),
+			"action":  "view_basket",
+		})
+	}
+
+	// ── Feature 5: Traffic Heatmap ──────────────────────────────────────────────
+	heatmapRows, err := utils.Queries.GetHourlyTransactionHeatmap(ctx, storeID)
+	if err != nil {
+		heatmapRows = []db.GetHourlyTransactionHeatmapRow{}
+	}
+
+	// Build dead-stock category breakdown list for response
+	type deadStockCategorySummary struct {
+		Category string  `json:"category"`
+		Total    float64 `json:"total"`
+	}
+	var deadStockCategoryList []deadStockCategorySummary
+	for cat, total := range deadStockByCategory {
+		deadStockCategoryList = append(deadStockCategoryList, deadStockCategorySummary{
+			Category: cat,
+			Total:    total,
+		})
+	}
+
+	// ── Prepare Response ────────────────────────────────────────────────────────
 	utils.SuccessResponse(c, "Report stats fetched successfully", gin.H{
 		"sales": gin.H{
 			"total":        totalSales.TotalSales,
@@ -335,7 +408,7 @@ func GetReportStats(c *gin.Context) {
 			"online":       onlineSales,
 			"recent":       recentSales,
 			"daily_trend":  dailySales,
-			"forecast":     forecast, // Added forecast
+			"forecast":     forecast,
 			"top_products": topProducts,
 		},
 		"inventory": gin.H{
@@ -355,7 +428,17 @@ func GetReportStats(c *gin.Context) {
 			"total_cost":    profitStats.TotalCost,
 			"gross_profit":  profitStats.GrossProfit,
 		},
-		"insights": insights, // Added insights
+		"insights": insights,
+		"dead_stock": gin.H{
+			"total_60d":     deadStockTotal60,
+			"total_90d":     deadStockTotal90,
+			"total_120d":    deadStockTotal120,
+			"items":         deadStockItems,
+			"by_category":   deadStockCategoryList,
+		},
+		"velocity":         velocityItems,
+		"basket_pairs":     basketPairs,
+		"traffic_heatmap":  heatmapRows,
 		"date_range": gin.H{
 			"start": startDate,
 			"end":   endDate,

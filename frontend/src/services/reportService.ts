@@ -1,11 +1,66 @@
 import api from "./api";
 
+// ── Insight types ──────────────────────────────────────────────────────────────
+export interface Insight {
+    type: "success" | "warning" | "info" | "alert" | "opportunity";
+    message: string;
+    action?: "view_sales" | "view_debtors" | "view_dead_stock" | "view_velocity" | "view_basket" | string;
+    details?: string[];
+}
+
+// ── Dead Stock ────────────────────────────────────────────────────────────────
+export interface DeadStockItem {
+    product_name: string;
+    category_name: string;
+    stock_quantity: number;
+    cost_price: number;
+    capital_tied_up: number;
+    days_since_last_sale: number;
+}
+
+export interface DeadStockCategorySummary {
+    category: string;
+    total: number;
+}
+
+export interface DeadStock {
+    total_60d: number;
+    total_90d: number;
+    total_120d: number;
+    items: DeadStockItem[];
+    by_category: DeadStockCategorySummary[];
+}
+
+// ── Velocity ──────────────────────────────────────────────────────────────────
+export interface VelocityItem {
+    product_name: string;
+    category_name: string;
+    stock_quantity: number;
+    avg_daily_sales: number;
+    estimated_days_to_stockout: number;
+}
+
+// ── Basket Pairs ─────────────────────────────────────────────────────────────
+export interface BasketPair {
+    product_a_name: string;
+    product_b_name: string;
+    pair_frequency: number;
+}
+
+// ── Traffic Heatmap ──────────────────────────────────────────────────────────
+export interface HeatmapCell {
+    day_of_week: number;   // 1=Mon … 7=Sun (ISO DOW)
+    hour_of_day: number;   // 0–23
+    transaction_count: number;
+}
+
+// ── Full Report Stats ────────────────────────────────────────────────────────
 export interface ReportStats {
     sales: {
         total: number;
         count: number;
-        growth?: number; // Added optional growth percentage
-        aov?: number;    // Added optional AOV
+        growth?: number;
+        aov?: number;
         cash: number;
         credit: number;
         online: number;
@@ -20,7 +75,7 @@ export interface ReportStats {
             sale_date: string;
             daily_total: number;
         }>;
-        forecast: Array<{ // Added forecast
+        forecast: Array<{
             date: string;
             predicted_sales: number;
         }>;
@@ -57,11 +112,11 @@ export interface ReportStats {
         total_cost: number;
         gross_profit: number;
     };
-    insights: Array<{
-        type: "success" | "warning" | "info";
-        message: string;
-        details?: string[]; // Added optional details for specific items (e.g. product names)
-    }>;
+    insights: Insight[];
+    dead_stock: DeadStock;
+    velocity: VelocityItem[];
+    basket_pairs: BasketPair[];
+    traffic_heatmap: HeatmapCell[];
     date_range: {
         start: string;
         end: string;

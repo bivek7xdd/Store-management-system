@@ -145,3 +145,87 @@ FROM sale_items si
 JOIN products p ON si.product_id = p.id
 JOIN sales s ON si.sale_id = s.id
 WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3;
+
+-- name: GetDeadStock :many
+SELECT 
+    p.name as product_name,
+    c.name as category_name,
+    p.stock_quantity,
+    p.cost_price,
+    (p.stock_quantity * p.cost_price)::DECIMAL(12,2) as capital_tied_up,
+    COALESCE(EXTRACT(DAY FROM (NOW() - COALESCE(MAX(s.sale_date), p.created_at))), 0)::INT as days_since_last_sale
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN sale_items si ON p.id = si.product_id
+LEFT JOIN sales s ON si.sale_id = s.id
+WHERE 
+    p.store_id = $1 
+    AND p.stock_quantity > 0 
+    AND p.status = 'active'
+GROUP BY p.id, p.name, c.name, p.stock_quantity, p.cost_price, p.created_at
+HAVING 
+    MAX(s.sale_date) <= NOW() - ($2::int * INTERVAL '1 day')
+    OR (MAX(s.sale_date) IS NULL AND p.created_at <= NOW() - ($2::int * INTERVAL '1 day'))
+ORDER BY capital_tied_up DESC;
+
+-- name: GetProductVelocity :many
+WITH product_sales AS (
+    SELECT 
+        si.product_id,
+        COALESCE(SUM(si.quantity), 0) as total_sold_30d
+    FROM sale_items si
+    JOIN sales s ON si.sale_id = s.id
+    WHERE s.store_id = $1 AND s.sale_date >= NOW() - INTERVAL '30 days'
+    GROUP BY si.product_id
+)
+SELECT 
+    p.name as product_name,
+    c.name as category_name,
+    p.stock_quantity,
+    (ps.total_sold_30d / 30.0)::DECIMAL(10,2) as avg_daily_sales,
+    CASE 
+        WHEN ps.total_sold_30d > 0 THEN 
+            CAST(p.stock_quantity / (ps.total_sold_30d / 30.0) AS INT)
+        ELSE 9999 
+    END as estimated_days_to_stockout
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+JOIN product_sales ps ON p.id = ps.product_id
+WHERE 
+    p.store_id = $1 
+    AND p.status = 'active'
+    AND ps.total_sold_30d > 0
+ORDER BY estimated_days_to_stockout ASC
+LIMIT 50;
+
+-- name: GetProductPairFrequency :many
+WITH order_pairs AS (
+    SELECT 
+        si1.product_id as product_a_id,
+        si2.product_id as product_b_id,
+        s.id as sale_id
+    FROM sale_items si1
+    JOIN sale_items si2 ON si1.sale_id = si2.sale_id AND si1.product_id < si2.product_id
+    JOIN sales s ON si1.sale_id = s.id
+    WHERE s.store_id = $1 AND s.sale_date >= NOW() - INTERVAL '90 days'
+)
+SELECT 
+    pa.name as product_a_name,
+    pb.name as product_b_name,
+    COUNT(op.sale_id) as pair_frequency
+FROM order_pairs op
+JOIN products pa ON op.product_a_id = pa.id
+JOIN products pb ON op.product_b_id = pb.id
+GROUP BY op.product_a_id, op.product_b_id, pa.name, pb.name
+ORDER BY pair_frequency DESC
+LIMIT 5;
+
+-- name: GetHourlyTransactionHeatmap :many
+SELECT 
+    EXTRACT(ISODOW FROM sale_date)::INT as day_of_week, 
+    EXTRACT(HOUR FROM sale_date)::INT as hour_of_day,
+    COUNT(*) as transaction_count
+FROM sales
+WHERE store_id = $1 AND sale_date >= NOW() - INTERVAL '30 days'
+GROUP BY EXTRACT(ISODOW FROM sale_date), EXTRACT(HOUR FROM sale_date)
+ORDER BY day_of_week, hour_of_day;
