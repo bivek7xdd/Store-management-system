@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"storemanagement/redis"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -136,7 +137,11 @@ func (q *Queries) CheckAndNotifyLowStock(ctx context.Context, storeID pgtype.UUI
 			if err != nil {
 				// Just log the error, don't break the flow
 				fmt.Printf("Error creating low stock notification for product %s: %v\n", product.Name, err)
+			} else {
+				// Invalidate cache so the badge count updates
+				redis.InvalidateNotificationCount(ctx, storeID)
 			}
+
 		}
 	}
 }

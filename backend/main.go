@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"storemanagement/handlers"
+	"storemanagement/redis"
 	"storemanagement/utils"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -13,6 +15,7 @@ import (
 func init() {
 	utils.LoadEnv()
 	utils.ConnectToDB()
+	redis.ConnectToRedis()
 }
 
 func main() {
@@ -32,9 +35,9 @@ func main() {
 	userRoutes := router.Group("/api/users")
 	{
 		userRoutes.POST("/register", handlers.RegisterUserHandler)
-		userRoutes.POST("/login", handlers.LoginHandler)
-		userRoutes.POST("/verify-otp", handlers.VerifyOTP)
-		userRoutes.POST("/forgot-password", handlers.ForgotPasswordHandler)
+		userRoutes.POST("/login", utils.RateLimitMiddleware(5, time.Minute), handlers.LoginHandler)
+		userRoutes.POST("/verify-otp", utils.RateLimitMiddleware(10, 15*time.Minute), handlers.VerifyOTP)
+		userRoutes.POST("/forgot-password", utils.RateLimitMiddleware(3, 15*time.Minute), handlers.ForgotPasswordHandler)
 		userRoutes.POST("/reset-password", handlers.ResetPasswordHandler)
 
 		// Protected routes (require JWT token)

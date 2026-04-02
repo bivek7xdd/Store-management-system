@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	db "storemanagement/db/sqlc"
+	"storemanagement/redis"
 	"storemanagement/utils"
 
 	"github.com/gin-gonic/gin"
@@ -82,7 +83,7 @@ func RegisterUserHandler(c *gin.Context) {
 
 	var createdUser db.StoreOwner
 
-	// Execute user creation, store info, token logic and email dispatch inside a transaction.
+	// Execute user creation and store info inside a transaction.
 	err = utils.Store.ExecTx(context.Background(), func(q *db.Queries) error {
 		var txErr error
 
@@ -109,31 +110,37 @@ func RegisterUserHandler(c *gin.Context) {
 			return fmt.Errorf("failed to create store info: %w", txErr)
 		}
 
-		// 3. Set the OTP
-		_, txErr = q.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
-			UserEmail: createdUser.Email,
-			Otp:       otp,
-			Purpose:   "email_verification",
-		})
-		if txErr != nil {
-			return fmt.Errorf("failed to create otp token: %w", txErr)
-		}
-
 		return nil
 	})
-	if err == nil {
-		// 4. Send OTP email (outside transaction - we don't want to roll back user creation if email fails, but we log the error)
-		go func(email, code string) {
-			err := utils.SendOTPEmail(email, code)
-			if err != nil {
-				fmt.Printf("Failed to send OTP email: %v\n", err)
-			}
-		}(createdUser.Email, otp)
-	}
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
+
+	// 3. Store OTP — prefer Redis (auto-expiring), fall back to Postgres.
+	if redis.IsRedisAvailable() {
+		if redisErr := redis.StoreOTP(context.Background(), createdUser.Email, "email_verification", otp); redisErr != nil {
+			fmt.Printf("[Redis] StoreOTP failed, falling back to Postgres: %v\n", redisErr)
+			utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+				UserEmail: createdUser.Email,
+				Otp:       otp,
+				Purpose:   "email_verification",
+			})
+		}
+	} else {
+		utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+			UserEmail: createdUser.Email,
+			Otp:       otp,
+			Purpose:   "email_verification",
+		})
+	}
+
+	// 4. Send OTP email asynchronously.
+	go func(email, code string) {
+		if emailErr := utils.SendOTPEmail(email, code); emailErr != nil {
+			fmt.Printf("Failed to send OTP email: %v\n", emailErr)
+		}
+	}(createdUser.Email, otp)
 
 	utils.SuccessResponse(c, "User and Store created successfully", createdUser)
 }
@@ -279,27 +286,30 @@ func VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// Verify the OTP exists and is not expired
-	otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
-		UserEmail: req.UserEmail,
-		Otp:       req.Otp,
-		Purpose:   req.Purpose,
-	})
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
-		return
+	// Verify OTP — prefer Redis (auto-consuming), fall back to Postgres.
+	if redis.IsRedisAvailable() {
+		if err := redis.VerifyAndConsumeOTP(c.Request.Context(), req.UserEmail, req.Purpose, req.Otp); err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
+			return
+		}
+	} else {
+		// Postgres fallback
+		otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
+			UserEmail: req.UserEmail,
+			Otp:       req.Otp,
+			Purpose:   req.Purpose,
+		})
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
+			return
+		}
+		if delErr := utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID); delErr != nil {
+			fmt.Printf("Warning: failed to delete used OTP: %v\n", delErr)
+		}
 	}
 
-	// Delete the OTP after successful verification (one-time use)
-	err = utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID)
-	if err != nil {
-		// Log the error but don't fail the request - OTP was valid
-		fmt.Printf("Warning: failed to delete used OTP: %v\n", err)
-	}
-
-	err = utils.Queries.UpdateEmailVerification(context.Background(), req.UserEmail)
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired OTP", err)
+	if err := utils.Queries.UpdateEmailVerification(context.Background(), req.UserEmail); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Failed to verify email", err)
 		return
 	}
 
@@ -340,39 +350,38 @@ func ForgotPasswordHandler(c *gin.Context) {
 		return
 	}
 
-	// Use transaction to ensure OTP is only created if email is sent successfully
-	err = utils.Store.ExecTx(context.Background(), func(q *db.Queries) error {
-		// Store OTP in database
-		_, txErr := q.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+	// Store OTP — prefer Redis (auto-expiring), fall back to Postgres.
+	if redis.IsRedisAvailable() {
+		if redisErr := redis.StoreOTP(context.Background(), user.Email, "password_reset", otp); redisErr != nil {
+			fmt.Printf("[Redis] StoreOTP failed, falling back to Postgres: %v\n", redisErr)
+			_, dbErr := utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+				UserEmail: user.Email,
+				Otp:       otp,
+				Purpose:   "password_reset",
+			})
+			if dbErr != nil {
+				utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create reset code", dbErr)
+				return
+			}
+		}
+	} else {
+		_, dbErr := utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
 			UserEmail: user.Email,
 			Otp:       otp,
 			Purpose:   "password_reset",
 		})
-		if txErr != nil {
-			return fmt.Errorf("failed to create reset code: %w", txErr)
+		if dbErr != nil {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create reset code", dbErr)
+			return
 		}
-
-		// Send OTP email (rolls back transaction if it fails)
-		txErr = utils.SendOTPEmail(user.Email, otp)
-		if txErr != nil {
-			return fmt.Errorf("failed to send reset email: %w", txErr)
-		}
-
-		return nil
-	})
-	if err == nil {
-		go func(email, code string) {
-			err := utils.SendOTPEmail(email, code)
-			if err != nil {
-				fmt.Printf("Failed to send OTP email: %v\n", err)
-			}
-		}(user.Email, otp)
 	}
 
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)
-		return
-	}
+	// Send OTP email asynchronously.
+	go func(email, code string) {
+		if emailErr := utils.SendOTPEmail(email, code); emailErr != nil {
+			fmt.Printf("Failed to send OTP email: %v\n", emailErr)
+		}
+	}(user.Email, otp)
 
 	utils.SuccessResponse(c, "If an account with that email exists, we have sent a password reset code", nil)
 }
@@ -407,15 +416,25 @@ func ResetPasswordHandler(c *gin.Context) {
 		return
 	}
 
-	// Verify the OTP
-	otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
-		UserEmail: req.Email,
-		Otp:       req.Otp,
-		Purpose:   "password_reset",
-	})
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired reset code", err)
-		return
+	// Verify OTP — prefer Redis (auto-consuming), fall back to Postgres.
+	if redis.IsRedisAvailable() {
+		if err := redis.VerifyAndConsumeOTP(c.Request.Context(), req.Email, "password_reset", req.Otp); err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired reset code", err)
+			return
+		}
+	} else {
+		otpRecord, err := utils.Queries.VerifyOTP(context.Background(), db.VerifyOTPParams{
+			UserEmail: req.Email,
+			Otp:       req.Otp,
+			Purpose:   "password_reset",
+		})
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid or expired reset code", err)
+			return
+		}
+		if delErr := utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID); delErr != nil {
+			fmt.Printf("Warning: failed to delete used OTP: %v\n", delErr)
+		}
 	}
 
 	// Hash the new password
@@ -426,19 +445,12 @@ func ResetPasswordHandler(c *gin.Context) {
 	}
 
 	// Update password in database
-	err = utils.Queries.UpdatePasswordByEmail(context.Background(), db.UpdatePasswordByEmailParams{
+	if err := utils.Queries.UpdatePasswordByEmail(context.Background(), db.UpdatePasswordByEmailParams{
 		Email:    req.Email,
 		Password: string(hashedPassword),
-	})
-	if err != nil {
+	}); err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update password", err)
 		return
-	}
-
-	// Delete the OTP after successful use
-	err = utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID)
-	if err != nil {
-		fmt.Printf("Warning: failed to delete used OTP: %v\n", err)
 	}
 
 	utils.SuccessResponse(c, "Password reset successfully", nil)

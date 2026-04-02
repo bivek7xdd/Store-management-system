@@ -7,6 +7,7 @@ import (
 	"time"
 
 	db "storemanagement/db/sqlc"
+	"storemanagement/redis"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -41,10 +42,15 @@ func runExpiryCheck() {
 		return
 	}
 
-	// Also delete expired OTPs while we're at it (cleaning up the system)
-	err = Queries.DeleteExpiredOTPs(ctx)
-	if err != nil {
-		log.Printf("[Cron] Error deleting expired OTPs: %v", err)
+	// Note: OTP cleanup is no longer needed here.
+	// When Redis is available, OTPs auto-expire via TTL (10 min).
+	// When Redis is unavailable (Postgres fallback), the otp_tokens table
+	// still accumulates rows, so we clean them up defensively.
+	if !redis.IsRedisAvailable() {
+		err = Queries.DeleteExpiredOTPs(ctx)
+		if err != nil {
+			log.Printf("[Cron] Error deleting expired Postgres OTPs: %v", err)
+		}
 	}
 
 	log.Println("[Cron] Daily cron-job completed successfully")
@@ -125,6 +131,8 @@ func checkDueDebts(ctx context.Context, storeID pgtype.UUID) {
 			log.Printf("[Cron] Error creating debt notification: %v", err)
 		} else {
 			log.Printf("[Cron] Created debt notification for %s", customerName)
+			// Invalidate cache so the badge count updates
+			redis.InvalidateNotificationCount(ctx, storeID)
 		}
 	}
 }

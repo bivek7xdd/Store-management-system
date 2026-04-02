@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-
+	"storemanagement/redis"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -78,3 +80,39 @@ func JWTMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// RateLimitMiddleware throttles requests based on client IP and route path.
+// If Redis is not available, it gracefully allows the request to proceed.
+func RateLimitMiddleware(limit int, window time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !redis.IsRedisAvailable() {
+			c.Next()
+			return
+		}
+
+		// Create a unique key per IP and route path
+		key := fmt.Sprintf("rate_limit:%s:%s", c.ClientIP(), c.FullPath())
+
+		ctx := c.Request.Context()
+		count, err := redis.RedisClient.Incr(ctx, key).Result()
+		if err != nil {
+			log.Printf("[Redis] Rate limiting error: %v", err)
+			c.Next()
+			return
+		}
+
+		// On the first request in the window, set the expiry
+		if count == 1 {
+			redis.RedisClient.Expire(ctx, key, window)
+		}
+
+		if count > int64(limit) {
+			ErrorResponse(c, http.StatusTooManyRequests, "Too many requests. Please try again later.", nil)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+

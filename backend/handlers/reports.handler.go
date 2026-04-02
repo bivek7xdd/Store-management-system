@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
 	db "storemanagement/db/sqlc"
+	"storemanagement/redis"
 	"storemanagement/utils"
 	"time"
 
@@ -26,6 +28,19 @@ import (
 func GetReportStats(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
 	rangeType := c.DefaultQuery("range", "today")
+
+	// ── Redis Cache Lookup ────────────────────────────────────────────────────────
+	cacheKey := fmt.Sprintf("report_stats:%s:%s", storeID.String(), rangeType)
+	if redis.IsRedisAvailable() {
+		cachedData, err := redis.RedisClient.Get(c.Request.Context(), cacheKey).Result()
+		if err == nil {
+			var result gin.H
+			if err := json.Unmarshal([]byte(cachedData), &result); err == nil {
+				utils.SuccessResponse(c, "Report stats fetched successfully (from cache)", result)
+				return
+			}
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -397,7 +412,7 @@ func GetReportStats(c *gin.Context) {
 	}
 
 	// ── Prepare Response ────────────────────────────────────────────────────────
-	utils.SuccessResponse(c, "Report stats fetched successfully", gin.H{
+	responseData := gin.H{
 		"sales": gin.H{
 			"total":        totalSales.TotalSales,
 			"count":        totalSales.SalesCount,
@@ -443,7 +458,17 @@ func GetReportStats(c *gin.Context) {
 			"start": startDate,
 			"end":   endDate,
 		},
-	})
+	}
+
+	// ── Store in Redis Cache (TTL: 5 Minutes) ──────────────────────────────────
+	if redis.IsRedisAvailable() {
+		jsonData, err := json.Marshal(responseData)
+		if err == nil {
+			redis.RedisClient.Set(ctx, cacheKey, jsonData, 5*time.Minute)
+		}
+	}
+
+	utils.SuccessResponse(c, "Report stats fetched successfully", responseData)
 }
 
 func ExportSalesReportCSV(c *gin.Context) {
