@@ -15,10 +15,10 @@ dropdevdb:
 	docker exec -it sms dropdb atlas-dev
 
 migrateup:
-	migrate -path db/migration -database "postgres://root:password@localhost:5432/sms?sslmode=disable" -verbose up
+	atlas migrate apply --url "postgres://root:password@localhost:5432/sms?sslmode=disable" --dir "file://db/migration"
 
 migratedown:
-	migrate -path db/migration -database "postgres://root:password@localhost:5432/sms?sslmode=disable" -verbose down
+	@echo "Atlas handles rollbacks differently (e.g., 'atlas migrate apply [version]'). See Atlas docs."
 
 createdbtest:
 	docker exec -it sms createdb --username=root --owner=root store-management-test

@@ -44,14 +44,12 @@ jobs:
       with:
         go-version: '1.24'
 
-    - name: Install golang migrate
+    - name: Install Atlas
       run: |
-        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.19.0/migrate.linux-amd64.tar.gz | tar xvz
-        sudo mv migrate /usr/bin/migrate
-        which migrate
+        curl -sSf https://atlasgo.sh | sh
 
     - name: Run migrations
-      run: migrate -path db/migration -database "postgres://root:password@localhost:5432/store-management-system?sslmode=disable" -verbose up
+      run: atlas migrate apply --url "postgres://root:password@localhost:5432/store-management-system?sslmode=disable" --dir "file://db/migration"
 
     - name: Build
       run: go build -v ./...
