@@ -38,6 +38,7 @@ import { inventoryService, CreateProductData, UpdateProductData } from "@/servic
 import { useAuth } from "@/contexts/AuthContext";
 import { Product, Category } from "@/types";
 import { ProductSkeleton } from "@/components/ProductSkeleton";
+import { PremiumEmptyState } from "@/components/PremiumEmptyState";
 
 const colors = {
   primary: "#0d9488",
@@ -1026,20 +1027,43 @@ export default function Inventory() {
         }
       </div >
 
-      {
-        filteredProducts.length === 0 && (
-          <Card className="border-0 shadow-sm">
-            <CardContent className="py-12 text-center">
-              <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">
-                {productsList.length === 0
-                  ? "No products yet. Add your first product to get started!"
-                  : "No products found matching your filters"}
-              </p>
-            </CardContent>
-          </Card>
-        )
-      }
+      {filteredProducts.length === 0 && (
+        <Card className="border-0 shadow-sm border-dashed border-2">
+          <CardContent className="py-12">
+            <PremiumEmptyState
+              icon={Package}
+              title={productsList.length === 0 ? "No products yet" : "No results found"}
+              description={
+                productsList.length === 0
+                  ? "Start building your inventory by adding your first product or importing from a CSV."
+                  : "We couldn't find any products matching your current filters. Try adjusting your search or filters."
+              }
+              action={
+                productsList.length === 0 ? (
+                  <Button
+                    onClick={() => setAddDialogOpen(true)}
+                    style={{ background: colors.primaryDark }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add First Product
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setCategoryFilter("all");
+                      setStockFilter("all");
+                    }}
+                  >
+                    Clear All Filters
+                  </Button>
+                )
+              }
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Barcode Scanner for Form */}
       <BarcodeScanner

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2, WifiOff, Database, AlertCircle } from "lucide-react";
+import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2, WifiOff, Database, AlertCircle, PartyPopper } from "lucide-react";
 import { inventoryService } from "@/services/inventory";
 import { salesService, CreateSaleData } from "@/services/sales";
 import { syncService } from "@/services/syncService";
@@ -16,6 +16,8 @@ import { Product, OfflineStatus } from "@/types";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { db } from "@/db/db";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
+import confetti from "canvas-confetti";
+import { Settings2 } from "lucide-react";
 
 interface CartItem {
   productId: string;
@@ -47,6 +49,14 @@ export default function Sales() {
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
   const [cachedProductsCount, setCachedProductsCount] = useState(0);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(() => {
+    const saved = localStorage.getItem("storeflow_confetti");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("storeflow_confetti", JSON.stringify(showConfetti));
+  }, [showConfetti]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -286,6 +296,14 @@ export default function Sales() {
       // Show appropriate success message based on online status
       if (offlineStatus.isOnline) {
         toast.success("Sale completed successfully!");
+        if (showConfetti) {
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#0d9488", "#14b8a6", "#3b82f6"],
+          });
+        }
       } else {
         toast.success("Sale saved offline! Will sync when connection is restored.");
       }
@@ -333,6 +351,15 @@ export default function Sales() {
             syncError={offlineStatus.syncError}
             lastSyncTime={offlineStatus.lastSyncTime}
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowConfetti(!showConfetti)}
+            className={`h-9 w-9 rounded-full ${showConfetti ? "text-teal-600 bg-teal-50" : "text-gray-400 bg-gray-50"}`}
+            title={showConfetti ? "Celebrations On" : "Celebrations Off"}
+          >
+            <PartyPopper className={`h-4 w-4 ${showConfetti ? "fill-teal-600" : ""}`} />
+          </Button>
           <Button
             onClick={() => setScannerOpen(true)}
             className="rounded-lg gap-2"

@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { debtService, Debt } from "@/services/debts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PremiumEmptyState } from "@/components/PremiumEmptyState";
 import {
   Select,
   SelectContent,
@@ -410,17 +411,35 @@ export default function Debtors() {
         )}
       </div>
 
-      {/* Empty State */}
       {filteredDebtors.length === 0 && !loading && (
-        <Card className="border-0 shadow-sm bg-white p-16 text-center rounded-[3rem]">
-          <div className="h-24 w-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100">
-            <Users className="h-10 w-10 text-slate-300" />
-          </div>
-          <h3 className="text-2xl font-black text-slate-900">Zero Debtors Found</h3>
-          <p className="text-slate-400 font-medium max-w-sm mx-auto mt-2 leading-relaxed">No customer accounts match your current filters. Try searching for a different name or viewing all accounts.</p>
-          <div className="mt-8 flex justify-center">
-            <DebtDialog onSuccess={fetchDebts} />
-          </div>
+        <Card className="border-0 shadow-sm bg-white p-12 rounded-[3rem] border-dashed border-2 border-slate-100">
+          <CardContent className="py-8">
+            <PremiumEmptyState
+              icon={Users}
+              title={debts.length === 0 ? "No Debtors Yet" : "No Match Found"}
+              description={
+                debts.length === 0
+                  ? "Your credit sales will appear here. You can also manually add a new debtor to track their payments."
+                  : "We couldn't find any accounts matching your current search or filters. Try a different term."
+              }
+              action={
+                debts.length === 0 ? (
+                  <DebtDialog onSuccess={fetchDebts} />
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("all");
+                    }}
+                  >
+                    Reset All Filters
+                  </Button>
+                )
+              }
+            />
+          </CardContent>
         </Card>
       )}
 

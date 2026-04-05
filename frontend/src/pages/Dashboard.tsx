@@ -13,7 +13,6 @@ import {
   ShoppingCart,
   FileText,
   ArrowRight,
-  Sparkles,
   RefreshCw,
   Package,
   DollarSign,
@@ -21,11 +20,15 @@ import {
   Info,
   BarChart3,
   Receipt,
+  LayoutDashboard,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getReportStats, ReportStats } from "@/services/reportService";
 import { inventoryService } from "@/services/inventory";
 import { Product } from "@/types";
+import { CountUp } from "@/components/CountUp";
+import { PremiumEmptyState } from "@/components/PremiumEmptyState";
 
 const colors = {
   primary: "#0d9488",
@@ -131,10 +134,41 @@ export default function Dashboard() {
   const rangeLabel =
     RANGE_OPTIONS.find((r) => r.value === range)?.label ?? "Today";
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        duration: 0.4,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.21, 0.47, 0.32, 0.98] as const,
+      },
+    },
+  };
+
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="space-y-6 pb-20 lg:pb-6"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-500 mt-1">
@@ -181,11 +215,14 @@ export default function Dashboard() {
             <span className="font-medium">{today}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+        <motion.div
+          variants={itemVariants}
+          className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"
+        >
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <span className="flex-1">{error}</span>
           <Button
@@ -196,11 +233,12 @@ export default function Dashboard() {
           >
             Retry
           </Button>
-        </div>
+        </motion.div>
       )}
 
       {/* Summary Cards */}
-      <div
+      <motion.div
+        variants={itemVariants}
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         data-tour="dashboard-cards"
       >
@@ -213,14 +251,15 @@ export default function Dashboard() {
           </>
         ) : (
           <>
-            {/* Today's Sales */}
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            {/* Sales Card */}
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.02] transition-colors" />
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">
                   {rangeLabel} Sales
                 </CardTitle>
                 <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center"
+                  className="h-9 w-9 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform"
                   style={{ background: `${colors.primary}15` }}
                 >
                   <TrendingUp
@@ -231,10 +270,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">
-                  रू{" "}
-                  {(stats?.sales?.total ?? 0).toLocaleString(undefined, {
-                    maximumFractionDigits: 0,
-                  })}
+                  रू <CountUp to={stats?.sales?.total ?? 0} />
                 </div>
                 {stats?.sales?.growth !== undefined ? (
                   <p
@@ -254,20 +290,21 @@ export default function Dashboard() {
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-1">
-                    {stats?.sales?.count ?? 0} transactions
+                    <CountUp to={stats?.sales?.count ?? 0} /> transactions
                   </p>
                 )}
               </CardContent>
             </Card>
 
             {/* Total Debtors */}
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.02] transition-colors" />
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">
                   Outstanding Debts
                 </CardTitle>
                 <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center"
+                  className="h-9 w-9 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform"
                   style={{ background: `${colors.primary}15` }}
                 >
                   <Users
@@ -278,31 +315,28 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">
-                  रू{" "}
-                  {(stats?.debts?.total_outstanding ?? 0).toLocaleString(
-                    undefined,
-                    { maximumFractionDigits: 0 },
-                  )}
+                  रू <CountUp to={stats?.debts?.total_outstanding ?? 0} />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {stats?.debts?.total_debtors ?? 0} customers
+                  <CountUp to={stats?.debts?.total_debtors ?? 0} /> customers
                 </p>
               </CardContent>
             </Card>
 
             {/* Low Stock */}
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-amber-500/0 group-hover:bg-amber-500/[0.02] transition-colors" />
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">
                   Low Stock Items
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-amber-50">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-amber-50 group-hover:scale-110 transition-transform">
                   <AlertTriangle className="h-5 w-5 text-amber-500" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">
-                  {stats?.inventory?.low_stock ?? lowStockItems.length}
+                  <CountUp to={stats?.inventory?.low_stock ?? lowStockItems.length} />
                 </div>
                 <p className="text-xs text-amber-600 font-medium mt-1">
                   Require attention
@@ -311,18 +345,19 @@ export default function Dashboard() {
             </Card>
 
             {/* Near Expiry */}
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/[0.02] transition-colors" />
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">
                   Near Expiry
                 </CardTitle>
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-red-50">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-red-50 group-hover:scale-110 transition-transform">
                   <Calendar className="h-5 w-5 text-red-500" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">
-                  {nearExpiryItems.length}
+                  <CountUp to={nearExpiryItems.length} />
                 </div>
                 <p className="text-xs text-red-600 font-medium mt-1">
                   Within 30 days
@@ -331,129 +366,166 @@ export default function Dashboard() {
             </Card>
           </>
         )}
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
-      <Card className="border-0 shadow-sm" data-tour="quick-actions">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">
-            Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Button
-              asChild
-              className="w-full h-12 rounded-xl font-semibold shadow-sm"
-              style={{ background: colors.primaryDark }}
-            >
-              <Link to="/sales">
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                New Sale
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
-            >
-              <Link to="/inventory">
-                <Plus className="mr-2 h-5 w-5" />
-                Add Product
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
-            >
-              <Link to="/debtors">
-                <Users className="mr-2 h-5 w-5" />
-                View Debtors
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
-            >
-              <Link to="/reports">
-                <FileText className="mr-2 h-5 w-5" />
-                View Reports
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Smart Insights */}
-      {(loading || (stats?.insights && stats.insights.length > 0)) && (
-        <Card className="border-0 shadow-sm">
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-sm" data-tour="quick-actions">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              Smart Insights
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              Quick Actions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full rounded-xl" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {stats!.insights.map((insight, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-xl border p-4 flex items-start gap-3 ${
-                      insight.type === "success"
-                        ? "border-emerald-100 bg-emerald-50"
-                        : insight.type === "warning"
-                          ? "border-amber-100 bg-amber-50"
-                          : "border-blue-100 bg-blue-50"
-                    }`}
-                  >
-                    <div className="mt-0.5">
-                      {insight.type === "success" ? (
-                        <CheckCircle className="h-5 w-5 text-emerald-600" />
-                      ) : insight.type === "warning" ? (
-                        <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      ) : (
-                        <Info className="h-5 w-5 text-blue-500" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p
-                        className={`text-sm font-medium ${
-                          insight.type === "success"
-                            ? "text-emerald-800"
-                            : insight.type === "warning"
-                              ? "text-amber-800"
-                              : "text-blue-800"
-                        }`}
-                      >
-                        {insight.message}
-                      </p>
-                      {insight.details && insight.details.length > 0 && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {insight.details.slice(0, 3).join(", ")}
-                          {insight.details.length > 3
-                            ? ` +${insight.details.length - 3} more`
-                            : ""}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Button
+                asChild
+                className="w-full h-12 rounded-xl font-semibold shadow-sm"
+                style={{ background: colors.primaryDark }}
+              >
+                <Link to="/sales">
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  New Sale
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
+              >
+                <Link to="/inventory">
+                  <Plus className="mr-2 h-5 w-5" />
+                  Add Product
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
+              >
+                <Link to="/debtors">
+                  <Users className="mr-2 h-5 w-5" />
+                  View Debtors
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
+              >
+                <Link to="/reports">
+                  <FileText className="mr-2 h-5 w-5" />
+                  View Reports
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
-      )}
+      </motion.div>
+
+      {/* Smart Insights */}
+      <AnimatePresence mode="wait">
+        {loading || (stats?.insights && stats.insights.length > 0) ? (
+          <motion.div
+            key="insights"
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+          >
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                  Smart Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2].map((i) => (
+                      <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stats!.insights.map((insight, i) => (
+                      <div
+                        key={i}
+                        className={`rounded-xl border p-4 flex items-start gap-3 transition-colors ${
+                          insight.type === "success"
+                            ? "border-emerald-100 bg-emerald-50 hover:bg-emerald-100/50"
+                            : insight.type === "warning"
+                              ? "border-amber-100 bg-amber-50 hover:bg-amber-100/50"
+                              : "border-blue-100 bg-blue-50 hover:bg-blue-100/50"
+                        }`}
+                      >
+                        <div className="mt-0.5">
+                          {insight.type === "success" ? (
+                            <CheckCircle className="h-5 w-5 text-emerald-600" />
+                          ) : insight.type === "warning" ? (
+                            <AlertTriangle className="h-5 w-5 text-amber-500" />
+                          ) : (
+                            <Info className="h-5 w-5 text-blue-500" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p
+                            className={`text-sm font-medium ${
+                              insight.type === "success"
+                                ? "text-emerald-800"
+                                : insight.type === "warning"
+                                  ? "text-amber-800"
+                                  : "text-blue-800"
+                            }`}
+                          >
+                            {insight.message}
+                          </p>
+                          {insight.details && insight.details.length > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {insight.details.slice(0, 3).join(", ")}
+                              {insight.details.length > 3
+                                ? ` +${insight.details.length - 3} more`
+                                : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          !loading &&
+          stats?.sales?.total === 0 && (
+            <motion.div
+              key="empty"
+              variants={itemVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <Card className="border-0 shadow-sm border-dashed border-2">
+                <CardContent className="pt-6 text-center">
+                  <PremiumEmptyState
+                    icon={LayoutDashboard}
+                    title="No insights yet"
+                    description="When you start making sales and tracking inventory, smart insights will appear here to help you grow."
+                    action={
+                      <Button asChild style={{ background: colors.primaryDark }}>
+                        <Link to="/sales">Create your first sale</Link>
+                      </Button>
+                    }
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        )}
+      </AnimatePresence>
 
       {/* Payment Breakdown + Profit */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-2">
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -571,10 +643,14 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Alerts Section */}
-      <div className="grid gap-4 lg:grid-cols-2" data-tour="dashboard-alerts">
+      <motion.div
+        variants={itemVariants}
+        className="grid gap-4 lg:grid-cols-2"
+        data-tour="dashboard-alerts"
+      >
         {/* Low Stock Alerts */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
@@ -600,9 +676,7 @@ export default function Dashboard() {
                     className="flex items-center justify-between rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
                   >
                     <div>
-                      <p className="font-medium text-gray-900">
-                        {product.name}
-                      </p>
+                      <p className="font-medium text-gray-900">{product.name}</p>
                       <p className="text-sm text-gray-500">
                         Stock: {product.stock_quantity} units
                       </p>
@@ -662,9 +736,7 @@ export default function Dashboard() {
                       className="flex items-center justify-between rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">
-                          {product.name}
-                        </p>
+                        <p className="font-medium text-gray-900">{product.name}</p>
                         <p className="text-sm text-gray-500">
                           Expires:{" "}
                           {new Date(expiresAt.Time).toLocaleDateString("en-NP")}
@@ -696,10 +768,10 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Top Selling Products + Top Debtors */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-2">
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -707,10 +779,7 @@ export default function Dashboard() {
                 className="h-8 w-8 rounded-lg flex items-center justify-center"
                 style={{ background: `${colors.primary}15` }}
               >
-                <Package
-                  className="h-4 w-4"
-                  style={{ color: colors.primary }}
-                />
+                <Package className="h-4 w-4" style={{ color: colors.primary }} />
               </div>
               Top Selling Products
             </CardTitle>
@@ -779,15 +848,12 @@ export default function Dashboard() {
                         {debtor.customer_phone}
                       </p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className="bg-red-50 text-red-600 border-red-200"
-                    >
-                      रू{" "}
-                      {debtor.total_debt.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}
-                    </Badge>
+                    <div className="text-right">
+                      <p className="font-bold text-red-600 text-sm">
+                        रू {debtor.total_debt.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-gray-400">awaiting pay</p>
+                    </div>
                   </div>
                 ))}
                 <Button
@@ -805,102 +871,104 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Recent Transactions */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-            <div
-              className="h-8 w-8 rounded-lg flex items-center justify-center"
-              style={{ background: `${colors.primary}15` }}
-            >
-              <Receipt className="h-4 w-4" style={{ color: colors.primary }} />
-            </div>
-            Recent Transactions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <ListSkeleton rows={5} />
-          ) : !stats?.sales?.recent?.length ? (
-            <p className="text-sm text-gray-500">No recent transactions.</p>
-          ) : (
-            <div className="space-y-3">
-              {stats.sales.recent.map((sale) => (
-                <div
-                  key={sale.id}
-                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                        sale.sales_type === "cash"
-                          ? "bg-emerald-50"
-                          : sale.sales_type === "credit"
-                            ? "bg-amber-50"
-                            : "bg-blue-50"
-                      }`}
-                    >
-                      <ShoppingCart
-                        className={`h-4 w-4 ${
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center"
+                style={{ background: `${colors.primary}15` }}
+              >
+                <Receipt className="h-4 w-4" style={{ color: colors.primary }} />
+              </div>
+              Recent Transactions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <ListSkeleton rows={5} />
+            ) : !stats?.sales?.recent?.length ? (
+              <p className="text-sm text-gray-500">No recent transactions.</p>
+            ) : (
+              <div className="space-y-3">
+                {stats.sales.recent.map((sale) => (
+                  <div
+                    key={sale.id}
+                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-8 w-8 rounded-lg flex items-center justify-center ${
                           sale.sales_type === "cash"
-                            ? "text-emerald-600"
+                            ? "bg-emerald-50"
                             : sale.sales_type === "credit"
-                              ? "text-amber-600"
-                              : "text-blue-600"
+                              ? "bg-amber-50"
+                              : "bg-blue-50"
                         }`}
-                      />
+                      >
+                        <ShoppingCart
+                          className={`h-4 w-4 ${
+                            sale.sales_type === "cash"
+                              ? "text-emerald-600"
+                              : sale.sales_type === "credit"
+                                ? "text-amber-600"
+                                : "text-blue-600"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {sale.customer_name || "Walk-in Customer"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(sale.sale_date).toLocaleString("en-NP", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">
-                        {sale.customer_name || "Walk-in Customer"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(sale.sale_date).toLocaleString("en-NP", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900 text-sm">
+                        रू{" "}
+                        {sale.total_amount.toLocaleString(undefined, {
+                          maximumFractionDigits: 0,
                         })}
                       </p>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          sale.sales_type === "cash"
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                            : sale.sales_type === "credit"
+                              ? "bg-amber-50 text-amber-600 border-amber-200"
+                              : "bg-blue-50 text-blue-600 border-blue-200"
+                        }`}
+                      >
+                        {sale.sales_type}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900 text-sm">
-                      रू{" "}
-                      {sale.total_amount.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs ${
-                        sale.sales_type === "cash"
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                          : sale.sales_type === "credit"
-                            ? "bg-amber-50 text-amber-600 border-amber-200"
-                            : "bg-blue-50 text-blue-600 border-blue-200"
-                      }`}
-                    >
-                      {sale.sales_type}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full text-sm"
-                style={{ color: colors.primary }}
-              >
-                <Link to="/reports" className="flex items-center gap-1">
-                  View all transactions
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                ))}
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="w-full text-sm"
+                  style={{ color: colors.primary }}
+                >
+                  <Link to="/reports" className="flex items-center gap-1">
+                    View all transactions
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

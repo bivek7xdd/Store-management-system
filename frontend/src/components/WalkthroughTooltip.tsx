@@ -19,7 +19,7 @@ export default function WalkthroughTooltip({
     return (
         <div
             {...tooltipProps}
-            className="relative w-[380px] max-w-[90vw] rounded-2xl bg-white/70 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white/40 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300"
+            className="relative w-[400px] max-w-[90vw] rounded-[2rem] bg-white/80 backdrop-blur-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] border border-white/60 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 ease-out"
         >
             {/* Background Decoration */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -41,10 +41,10 @@ export default function WalkthroughTooltip({
             <button
                 {...closeProps}
                 type="button"
-                className="absolute top-4 right-4 p-1.5 rounded-full text-gray-500 hover:text-gray-900 hover:bg-white/50 backdrop-blur-md transition-all z-10"
+                className="absolute top-5 right-5 p-2 rounded-full text-gray-400 hover:text-gray-900 hover:bg-black/5 backdrop-blur-md transition-all z-10 group"
                 aria-label="Close tour"
             >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 transform group-hover:rotate-90 transition-transform duration-300" />
             </button>
 
             {/* Content */}
@@ -116,6 +116,7 @@ export default function WalkthroughTooltip({
                             className="inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-bold shadow-[0_4px_12px_rgba(13,148,136,0.3)] text-white transition-all transform hover:scale-[1.05] active:scale-[0.95] hover:shadow-[0_6px_20px_rgba(13,148,136,0.4)]"
                             style={{
                                 background: "linear-gradient(135deg, #14b8a6, #0d9488)",
+                                boxShadow: "0 10px 20px -5px rgba(13, 148, 136, 0.4)",
                             }}
                         >
                             {isLastStep ? (
