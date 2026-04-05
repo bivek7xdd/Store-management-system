@@ -138,12 +138,14 @@ func (q *Queries) GetDebtsStats(ctx context.Context, storeID pgtype.UUID) (GetDe
 
 const getHourlyTransactionHeatmap = `-- name: GetHourlyTransactionHeatmap :many
 SELECT 
-    EXTRACT(ISODOW FROM sale_date)::INT as day_of_week, 
-    EXTRACT(HOUR FROM sale_date)::INT as hour_of_day,
+    EXTRACT(ISODOW FROM sale_date AT TIME ZONE 'Asia/Kathmandu')::INT as day_of_week, 
+    EXTRACT(HOUR FROM sale_date AT TIME ZONE 'Asia/Kathmandu')::INT as hour_of_day,
     COUNT(*) as transaction_count
 FROM sales
 WHERE store_id = $1 AND sale_date >= NOW() - INTERVAL '30 days'
-GROUP BY EXTRACT(ISODOW FROM sale_date), EXTRACT(HOUR FROM sale_date)
+GROUP BY 
+    EXTRACT(ISODOW FROM sale_date AT TIME ZONE 'Asia/Kathmandu'), 
+    EXTRACT(HOUR FROM sale_date AT TIME ZONE 'Asia/Kathmandu')
 ORDER BY day_of_week, hour_of_day
 `
 
