@@ -215,7 +215,7 @@ const Login = () => {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                <Link to="/forgot-password" size="sm" className="block text-right text-[0.85rem] text-[#888] hover:text-[#b89767] transition-colors mt-1">
+                <Link to="/forgot-password" className="block text-right text-[0.85rem] text-[#888] hover:text-[#b89767] transition-colors mt-1">
                   Forgot Password?
                 </Link>
               </div>

@@ -12,7 +12,9 @@ export interface MarketPriceItem {
 export const marketService = {
     getMarketPrices: async (query: string): Promise<MarketPriceItem[]> => {
         try {
-            const response = await api.get(`/market/prices?q=${encodeURIComponent(query)}`);
+            const response = await api.get(`/market/prices?q=${encodeURIComponent(query)}`, {
+                timeout: 15000 // 15s timeout for Serper Shopping + Fallback
+            });
             if (response.data.success) {
                 return response.data.data;
             }
