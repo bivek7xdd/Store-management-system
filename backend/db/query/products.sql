@@ -106,3 +106,17 @@ WHERE store_id = $1
   AND status != 'discontinued'
   AND stock_quantity <= low_stock_threshold
 ORDER BY stock_quantity ASC;
+
+-- name: GetSupplierStats :one
+SELECT 
+    COUNT(*) as product_count,
+    COALESCE(SUM(stock_quantity), 0)::int as total_stock,
+    COALESCE(SUM(price * stock_quantity), 0)::numeric as total_value,
+    COUNT(*) FILTER (WHERE stock_quantity <= low_stock_threshold) as low_stock_count
+FROM products
+WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued';
+
+-- name: ListProductsBySupplier :many
+SELECT * FROM products
+WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued'
+ORDER BY created_at DESC;

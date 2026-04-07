@@ -70,6 +70,8 @@ func main() {
 		supplierRoutes.POST("/create", handlers.CreateSuppliers)
 		supplierRoutes.GET("", handlers.GetAllSuppliers)
 		supplierRoutes.GET("/:id", handlers.GetSupplier)
+		supplierRoutes.GET("/:id/stats", handlers.GetSupplierStats)
+		supplierRoutes.GET("/:id/products", handlers.GetSupplierProducts)
 		supplierRoutes.PUT("/:id", handlers.UpdateSupplier)
 		supplierRoutes.DELETE("/:id", handlers.DeleteSupplier)
 	}

@@ -702,6 +702,7 @@ func (q *Queries) GetTopDebtors(ctx context.Context, arg GetTopDebtorsParams) ([
 
 const getTopSellingProducts = `-- name: GetTopSellingProducts :many
 SELECT 
+    p.id as product_id,
     p.name as product_name,
     SUM(si.quantity)::BIGINT as total_quantity
 FROM sale_items si
@@ -721,8 +722,9 @@ type GetTopSellingProductsParams struct {
 }
 
 type GetTopSellingProductsRow struct {
-	ProductName   string `db:"product_name" json:"product_name"`
-	TotalQuantity int64  `db:"total_quantity" json:"total_quantity"`
+	ProductID     pgtype.UUID `db:"product_id" json:"product_id"`
+	ProductName   string      `db:"product_name" json:"product_name"`
+	TotalQuantity int64       `db:"total_quantity" json:"total_quantity"`
 }
 
 func (q *Queries) GetTopSellingProducts(ctx context.Context, arg GetTopSellingProductsParams) ([]GetTopSellingProductsRow, error) {
@@ -739,7 +741,7 @@ func (q *Queries) GetTopSellingProducts(ctx context.Context, arg GetTopSellingPr
 	var items []GetTopSellingProductsRow
 	for rows.Next() {
 		var i GetTopSellingProductsRow
-		if err := rows.Scan(&i.ProductName, &i.TotalQuantity); err != nil {
+		if err := rows.Scan(&i.ProductID, &i.ProductName, &i.TotalQuantity); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

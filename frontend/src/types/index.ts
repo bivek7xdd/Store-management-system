@@ -68,6 +68,8 @@ export interface Supplier {
   phone_number: string;
   email: string;
   store_id?: string;
+  product_count?: number;
+  low_stock_count?: number;
 }
 
 export interface OfflineStatus {

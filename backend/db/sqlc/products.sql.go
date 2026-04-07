@@ -218,6 +218,40 @@ func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, erro
 	return i, err
 }
 
+const getSupplierStats = `-- name: GetSupplierStats :one
+SELECT 
+    COUNT(*) as product_count,
+    COALESCE(SUM(stock_quantity), 0)::int as total_stock,
+    COALESCE(SUM(price * stock_quantity), 0)::numeric as total_value,
+    COUNT(*) FILTER (WHERE stock_quantity <= low_stock_threshold) as low_stock_count
+FROM products
+WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued'
+`
+
+type GetSupplierStatsParams struct {
+	StoreID    pgtype.UUID `db:"store_id" json:"store_id"`
+	SupplierID pgtype.UUID `db:"supplier_id" json:"supplier_id"`
+}
+
+type GetSupplierStatsRow struct {
+	ProductCount  int64          `db:"product_count" json:"product_count"`
+	TotalStock    int32          `db:"total_stock" json:"total_stock"`
+	TotalValue    pgtype.Numeric `db:"total_value" json:"total_value"`
+	LowStockCount int64          `db:"low_stock_count" json:"low_stock_count"`
+}
+
+func (q *Queries) GetSupplierStats(ctx context.Context, arg GetSupplierStatsParams) (GetSupplierStatsRow, error) {
+	row := q.db.QueryRow(ctx, getSupplierStats, arg.StoreID, arg.SupplierID)
+	var i GetSupplierStatsRow
+	err := row.Scan(
+		&i.ProductCount,
+		&i.TotalStock,
+		&i.TotalValue,
+		&i.LowStockCount,
+	)
+	return i, err
+}
+
 const listProducts = `-- name: ListProducts :many
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND status != 'discontinued'
@@ -282,6 +316,55 @@ type ListProductsByCategoryParams struct {
 
 func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error) {
 	rows, err := q.db.Query(ctx, listProductsByCategory, arg.StoreID, arg.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Barcode,
+			&i.Price,
+			&i.CostPrice,
+			&i.MarketPrice,
+			&i.StockQuantity,
+			&i.LowStockThreshold,
+			&i.ExpiresAt,
+			&i.Status,
+			&i.CategoryID,
+			&i.SupplierID,
+			&i.StoreID,
+			&i.ImageUrl,
+			&i.IsTracked,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProductsBySupplier = `-- name: ListProductsBySupplier :many
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued'
+ORDER BY created_at DESC
+`
+
+type ListProductsBySupplierParams struct {
+	StoreID    pgtype.UUID `db:"store_id" json:"store_id"`
+	SupplierID pgtype.UUID `db:"supplier_id" json:"supplier_id"`
+}
+
+func (q *Queries) ListProductsBySupplier(ctx context.Context, arg ListProductsBySupplierParams) ([]Product, error) {
+	rows, err := q.db.Query(ctx, listProductsBySupplier, arg.StoreID, arg.SupplierID)
 	if err != nil {
 		return nil, err
 	}

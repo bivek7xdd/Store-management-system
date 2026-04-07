@@ -151,22 +151,39 @@ export default function Suppliers() {
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-teal-500 transition-colors opacity-100 group-hover:opacity-0" />
                                 </div>
-                                <div className="space-y-2 text-sm">
-                                    {supplier.address && (
-                                        <p className="text-gray-600 line-clamp-1">{supplier.address}</p>
-                                    )}
-                                    {supplier.phone_number && (
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <Phone className="h-3.5 w-3.5" />
-                                            <span>{supplier.phone_number}</span>
+                                <div className="space-y-4 text-sm mt-4">
+                                    <div className="flex flex-wrap gap-2">
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 text-gray-700 rounded-lg font-medium border border-gray-100">
+                                            <span className="text-teal-600 font-bold">{supplier.product_count || 0}</span>
+                                            <span className="text-[10px] uppercase tracking-wider text-gray-400">Products</span>
                                         </div>
-                                    )}
-                                    {supplier.email && (
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <Mail className="h-3.5 w-3.5" />
-                                            <span className="truncate">{supplier.email}</span>
-                                        </div>
-                                    )}
+                                        {(supplier.low_stock_count ?? 0) > 0 && (
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 rounded-lg font-medium border border-red-100 animate-pulse">
+                                                <span className="font-bold">{supplier.low_stock_count}</span>
+                                                <span className="text-[10px] uppercase tracking-wider text-red-400 font-semibold">Low Stock</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5 border-t border-gray-50 pt-3">
+                                        {supplier.address && (
+                                            <p className="text-gray-500 line-clamp-1 flex items-center gap-2">
+                                                <span className="h-1 w-1 rounded-full bg-gray-300" />
+                                                {supplier.address}
+                                            </p>
+                                        )}
+                                        {supplier.phone_number && (
+                                            <div className="flex items-center gap-2 text-gray-500">
+                                                <Phone className="h-3.5 w-3.5 text-gray-400" />
+                                                <span>{supplier.phone_number}</span>
+                                            </div>
+                                        )}
+                                        {supplier.email && (
+                                            <div className="flex items-center gap-2 text-gray-500">
+                                                <Mail className="h-3.5 w-3.5 text-gray-400" />
+                                                <span className="truncate">{supplier.email}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </Link>
                         </div>

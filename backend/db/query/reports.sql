@@ -78,6 +78,7 @@ ORDER BY DATE(sale_date);
 
 -- name: GetTopSellingProducts :many
 SELECT 
+    p.id as product_id,
     p.name as product_name,
     SUM(si.quantity)::BIGINT as total_quantity
 FROM sale_items si

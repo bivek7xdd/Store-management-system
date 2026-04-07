@@ -80,6 +80,7 @@ export interface ReportStats {
             predicted_sales: number;
         }>;
         top_products: Array<{
+            product_id: string;
             product_name: string;
             total_quantity: number;
         }>;

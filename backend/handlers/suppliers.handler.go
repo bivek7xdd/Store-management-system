@@ -185,3 +185,55 @@ func DeleteSupplier(c *gin.Context) {
 
 	utils.SuccessResponse(c, "Supplier deleted successfully", nil)
 }
+
+func GetSupplierStats(c *gin.Context) {
+	storeId := c.MustGet("store_id").(pgtype.UUID)
+	idStr := c.Param("id")
+
+	supplierUUID, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid supplier ID", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+	defer cancel()
+
+	stats, err := utils.Queries.GetSupplierStats(ctx, db.GetSupplierStatsParams{
+		SupplierID: pgtype.UUID{Bytes: supplierUUID, Valid: true},
+		StoreID:    storeId,
+	})
+	if err != nil {
+		log.Println("error getting supplier stats:", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to get supplier stats", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Supplier stats fetched successfully", stats)
+}
+
+func GetSupplierProducts(c *gin.Context) {
+	storeId := c.MustGet("store_id").(pgtype.UUID)
+	idStr := c.Param("id")
+
+	supplierUUID, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid supplier ID", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+	defer cancel()
+
+	products, err := utils.Queries.ListProductsBySupplier(ctx, db.ListProductsBySupplierParams{
+		SupplierID: pgtype.UUID{Bytes: supplierUUID, Valid: true},
+		StoreID:    storeId,
+	})
+	if err != nil {
+		log.Println("error getting supplier products:", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to get supplier products", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Supplier products fetched successfully", products)
+}

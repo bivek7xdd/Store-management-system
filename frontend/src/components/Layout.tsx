@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/accordion";
 import { useQuery } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
-import { CreateCategoryDialog, CreateSupplierDialog } from "./CreateInventoryDialogs";
 import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
 import { MarketSidebarItem } from "./MarketSidebarItem";

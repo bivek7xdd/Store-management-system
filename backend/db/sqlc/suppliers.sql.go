@@ -68,18 +68,39 @@ func (q *Queries) DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) 
 }
 
 const getAllSuppliers = `-- name: GetAllSuppliers :many
-SELECT id, name, address, phone_number, email, store_id, created_at, updated_at FROM suppliers WHERE store_id = $1 ORDER BY created_at DESC
+SELECT 
+    s.id, s.name, s.address, s.phone_number, s.email, s.store_id, s.created_at, s.updated_at,
+    COUNT(p.id) as product_count,
+    COUNT(p.id) FILTER (WHERE p.stock_quantity <= p.low_stock_threshold) as low_stock_count
+FROM suppliers s
+LEFT JOIN products p ON s.id = p.supplier_id AND p.status != 'discontinued'
+WHERE s.store_id = $1
+GROUP BY s.id
+ORDER BY s.created_at DESC
 `
 
-func (q *Queries) GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]Supplier, error) {
+type GetAllSuppliersRow struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	Name          pgtype.Text        `db:"name" json:"name"`
+	Address       pgtype.Text        `db:"address" json:"address"`
+	PhoneNumber   pgtype.Text        `db:"phone_number" json:"phone_number"`
+	Email         pgtype.Text        `db:"email" json:"email"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ProductCount  int64              `db:"product_count" json:"product_count"`
+	LowStockCount int64              `db:"low_stock_count" json:"low_stock_count"`
+}
+
+func (q *Queries) GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]GetAllSuppliersRow, error) {
 	rows, err := q.db.Query(ctx, getAllSuppliers, storeID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Supplier
+	var items []GetAllSuppliersRow
 	for rows.Next() {
-		var i Supplier
+		var i GetAllSuppliersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -89,6 +110,8 @@ func (q *Queries) GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]S
 			&i.StoreID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProductCount,
+			&i.LowStockCount,
 		); err != nil {
 			return nil, err
 		}

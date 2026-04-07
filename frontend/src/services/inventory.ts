@@ -161,6 +161,41 @@ export const inventoryService = {
         return suppliers.find(s => s.id === id);
     },
 
+    getSupplierStats: async (id: string) => {
+        if (isOnline()) {
+            const response = await api.get<{ data: { product_count: number, total_stock: number, total_value: number, low_stock_count: number } }>(`suppliers/${id}/stats`);
+            return response.data.data;
+        }
+        // Offline calculation
+        const products = await db.products.where('supplier_id').equals(id).toArray();
+        return {
+            product_count: products.length,
+            total_stock: products.reduce((acc, p) => acc + p.stock_quantity, 0),
+            total_value: products.reduce((acc, p) => {
+                const price = typeof p.price === 'number' ? p.price : (p.price.Valid ? Number(p.price.Int64) : 0);
+                return acc + (price * p.stock_quantity);
+            }, 0),
+            low_stock_count: products.filter(p => {
+                const threshold = typeof p.low_stock_threshold === 'number'
+                    ? p.low_stock_threshold
+                    : (p.low_stock_threshold && 'Int32' in p.low_stock_threshold && p.low_stock_threshold.Valid ? p.low_stock_threshold.Int32 : 10);
+                return p.stock_quantity <= (threshold || 10);
+            }).length
+        };
+    },
+
+    getSupplierProducts: async (id: string) => {
+        if (isOnline()) {
+            const response = await api.get<{ data: Product[] }>(`suppliers/${id}/products`);
+            const products = response.data.data || [];
+            if (products.length > 0) {
+                await db.products.bulkPut(products);
+            }
+            return products;
+        }
+        return await db.products.where('supplier_id').equals(id).toArray();
+    },
+
     // Products
     getProducts: async (limit = 50, offset = 0) => {
         // Server-First: Try to fetch from server if online to ensure latest data

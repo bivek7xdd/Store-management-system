@@ -11,7 +11,15 @@ INSERT INTO suppliers (
 
 
 -- name: GetAllSuppliers :many
-SELECT * FROM suppliers WHERE store_id = $1 ORDER BY created_at DESC;
+SELECT 
+    s.*,
+    COUNT(p.id) as product_count,
+    COUNT(p.id) FILTER (WHERE p.stock_quantity <= p.low_stock_threshold) as low_stock_count
+FROM suppliers s
+LEFT JOIN products p ON s.id = p.supplier_id AND p.status != 'discontinued'
+WHERE s.store_id = $1
+GROUP BY s.id
+ORDER BY s.created_at DESC;
 
 -- name: GetSupplier :one
 SELECT * FROM suppliers WHERE id = $1 AND store_id = $2;
