@@ -1,6 +1,7 @@
 import Dexie, { Table } from 'dexie';
 import { Product, Category, Supplier } from '../types';
 import { Notification } from '../services/notifications';
+import { Debt } from '../services/debts';
 
 export interface SaleItem {
     product_id: string;
@@ -43,15 +44,17 @@ export class StoreDatabase extends Dexie {
     sales!: Table<Sale, number>;
     customers!: Table<Customer, string>;
     notifications!: Table<Notification, string>;
+    debts!: Table<Debt, string>;
     constructor() {
         super('store-manager-db');
-        this.version(5).stores({
+        this.version(6).stores({
             products: 'id, name, barcode, category_id', // frequently queried fields
             categories: 'id, name',
             suppliers: 'id, name',
             sales: '++id, offlineId, synced, sale_date, customer_id',
             customers: 'id, name, phone',
-            notifications: 'id, reference_id, type, status, created_at'
+            notifications: 'id, reference_id, type, status, created_at',
+            debts: 'id, customer_id, status'
         });
     }
 }
