@@ -178,7 +178,7 @@ export default function Layout({ children }: LayoutProps) {
 
                 if (item.label === "Market") {
                   return (
-                    <MarketSidebarItem key={item.path} isActive={isActive} />
+                    <MarketSidebarItem key={item.path} isActive={isActive} isOnline={isOnline} />
                   );
                 }
 
@@ -313,21 +313,28 @@ export default function Layout({ children }: LayoutProps) {
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.path;
+                  const isOfflineDisabled = !isOnline && (item.label === "Reports" || item.label === "Market");
+
                   return (
                     <li key={item.path}>
                       <Link
-                        to={item.path}
-                        onClick={() => setMobileMenuOpen(false)}
+                        to={isOfflineDisabled ? "#" : item.path}
+                        onClick={(e) => {
+                          if (isOfflineDisabled) e.preventDefault();
+                          else setMobileMenuOpen(false);
+                        }}
                         className={cn(
                           "flex items-center gap-3 rounded-xl p-4 text-base font-medium transition-all",
                           isActive
                             ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                          isOfflineDisabled && "opacity-50 cursor-not-allowed pointer-events-none"
                         )}
                         style={isActive ? {} : {}}
                       >
                         <Icon className="h-5 w-5 shrink-0" />
                         {item.label}
+                        {isOfflineDisabled && <span className="ml-auto text-[10px] uppercase font-bold text-red-500">Offline</span>}
                       </Link>
                     </li>
                   );

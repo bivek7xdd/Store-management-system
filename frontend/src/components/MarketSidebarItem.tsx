@@ -12,7 +12,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 
-export function MarketSidebarItem({ isActive }: { isActive: boolean }) {
+export function MarketSidebarItem({ isActive, isOnline = true }: { isActive: boolean; isOnline?: boolean }) {
     const location = useLocation();
 
     const marketLinks = [
@@ -20,19 +20,23 @@ export function MarketSidebarItem({ isActive }: { isActive: boolean }) {
         { icon: MapPin, label: "Find Suppliers", path: "/market/discovery" },
     ];
 
+    const isOfflineDisabled = !isOnline;
+
     return (
-        <Accordion type="single" collapsible className="w-full" data-tour="sidebar-market">
+        <Accordion type="single" collapsible={!isOfflineDisabled} className={cn("w-full", isOfflineDisabled && "opacity-50 cursor-not-allowed pointer-events-none")} data-tour="sidebar-market">
             <AccordionItem value="market" className="border-0">
                 <AccordionTrigger
+                    onClick={(e) => isOfflineDisabled && e.preventDefault()}
                     className={cn(
                         "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:no-underline",
-                        isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        isActive && !isOfflineDisabled ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     )}
                 >
                     <div className="flex items-center gap-3">
-                        <TrendingUp className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                        <TrendingUp className={cn("h-5 w-5", isActive && !isOfflineDisabled ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                         Market
                     </div>
+                    {isOfflineDisabled && <span className="ml-[10px] text-[10px] uppercase font-bold text-red-500 rounded px-1">Offline</span>}
                 </AccordionTrigger>
                 <AccordionContent className="pb-0 pl-11 pr-2">
                     <div className="flex flex-col gap-1 pt-1 pb-2">
