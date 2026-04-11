@@ -30,7 +30,6 @@ import React from "react";
 import LandingPage from "./pages/LandingPage";
 import Settings from "./pages/Settings";
 import DevOfflineHandler from "./components/DevOfflineHandler";
-import { WalkthroughProvider } from "./contexts/WalkthroughContext";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -90,7 +89,6 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                  <WalkthroughProvider>
                     <Routes>
                       {/* Public routes */}
                       <Route path="/login" element={<Login />} />
@@ -208,7 +206,6 @@ const App = () => {
                       {/* Catch-all route for 404 */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
-                  </WalkthroughProvider>
                 </BrowserRouter>
               </TooltipProvider>
             </NotificationProvider>

@@ -28,7 +28,6 @@ import {
   Plus,
   Box,
   Truck,
-  HelpCircle,
 } from "lucide-react";
 import {
   Accordion,
@@ -41,9 +40,12 @@ import { inventoryService } from "@/services/inventory";
 import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
 import { MarketSidebarItem } from "./MarketSidebarItem";
-import { useWalkthrough } from "@/contexts/WalkthroughContext";
 import NotificationBell from "./NotificationBell";
 import { FeatureTooltip } from "./FeatureTooltip";
+import categoryPreferencesService from "@/services/categoryPreferences";
+import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -62,7 +64,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { startTour } = useWalkthrough();
+  const queryClient = useQueryClient();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -83,6 +85,42 @@ export default function Layout({ children }: LayoutProps) {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
+
+  // Globally auto-create categories that were explicitly chosen during signup.
+  useEffect(() => {
+    const prefs = categoryPreferencesService.retrieve();
+    if (prefs && prefs.product_subcategories && prefs.product_subcategories.length > 0) {
+      const allSubs = BUSINESS_CATEGORIES.flatMap(cat =>
+        cat.subcategories.map(sub => ({
+          id: sub.id,
+          name: sub.name,
+          parentName: cat.name
+        }))
+      );
+
+      const selectedIDs = prefs.product_subcategories;
+      const selected = allSubs.filter(sub => selectedIDs.includes(sub.id));
+
+      if (selected.length > 0) {
+        const autoCreate = async () => {
+          try {
+            const promises = selected.map(sub => inventoryService.createCategory({
+              name: sub.name,
+              description: `${sub.parentName} Category`
+            }));
+            await Promise.all(promises);
+            categoryPreferencesService.clear();
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+          } catch (err) {
+            console.error("Failed to auto-create categories", err);
+          }
+        };
+        autoCreate();
+      } else {
+        categoryPreferencesService.clear();
+      }
+    }
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,26 +211,6 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
                 );
               })}
-            </div>
-
-            {/* Start Tour Button */}
-            <div className="mt-auto pt-4">
-              <FeatureTooltip
-                featureKey="tour_nudge"
-                title="New here?"
-                description="Take a 2-minute tour to see how StoreHub can help you manage your inventory, sales, and debts."
-                placement="right"
-                delay={5000}
-              >
-                <button
-                  onClick={startTour}
-                  data-tour="start-tour-btn"
-                  className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-                >
-                  <HelpCircle className="h-5 w-5 shrink-0" />
-                  Start Tour
-                </button>
-              </FeatureTooltip>
             </div>
 
             {/* Notifications & User Menu */}
