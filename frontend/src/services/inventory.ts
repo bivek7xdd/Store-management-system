@@ -278,7 +278,19 @@ export const inventoryService = {
 
     createProduct: async (data: CreateProductData) => {
         console.log('[Inventory] createProduct called');
-        // No offline queueing. Direct API call.
+        if (!isOnline()) {
+            const tempProduct = {
+                id: `temp-${Date.now()}`,
+                store_id: 'temp',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                ...data
+            } as unknown as Product;
+            await db.products.put(tempProduct);
+            return tempProduct;
+        }
+        
+        // Direct API call.
         const response = await api.post<{ data: Product }>('products/create', data);
         await db.products.put(response.data.data);
         return response.data.data;
@@ -286,6 +298,17 @@ export const inventoryService = {
 
     updateProduct: async (id: string, data: UpdateProductData) => {
         console.log('[Inventory] updateProduct called, id:', id);
+        
+        if (!isOnline()) {
+            const existing = await db.products.get(id);
+            if (existing) {
+                const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as unknown as Product;
+                await db.products.put(updated);
+                return updated;
+            }
+            throw new Error('Offline and product not found locally');
+        }
+
         const response = await api.put<{ data: Product }>(`products/${id}`, data);
         await db.products.put(response.data.data);
         return response.data.data;
