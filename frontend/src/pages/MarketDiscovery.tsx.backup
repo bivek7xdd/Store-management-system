@@ -771,7 +771,7 @@ export default function MarketDiscovery() {
     }, [userLocation, searchQuery, GEOAPIFY_API_KEY]);
 
     /**
-     * Search for suppliers using ONLY Serper Places API
+     * Search for suppliers using enhanced Geoapify search with better filtering
      */
     const searchWholesaleSuppliers = useCallback(async () => {
         if (!searchQuery.trim()) {
@@ -784,67 +784,231 @@ export default function MarketDiscovery() {
             return;
         }
 
+        if (!GEOAPIFY_API_KEY) {
+            setError("Geoapify API key is not configured");
+            return;
+        }
+
         setIsSearching(true);
         setError(null);
         setPlaces([]);
         setSelectedPlace(null);
 
         try {
-            // Use Serper API through our backend
-            const discoveredSuppliers = await inventoryService.findSuppliers(
-                searchQuery,
-                "Nepal" // Default location
-            );
+            let allResults: any[] = [];
 
-            if (discoveredSuppliers.length === 0) {
-                toast.info("No suppliers found. Try different keywords.");
-                setPlaces([]);
-                return;
+            // STRATEGY 1: Use enhanced business-focused geocoding search
+            const businessResults = await searchWithPlacesAPI();
+            allResults.push(...businessResults);
+
+            // STRATEGY 2: Use expanded radius text search
+            const expandedResults = await searchWithExpandedRadius();
+            allResults.push(...expandedResults);
+
+            // STRATEGY 3: Original targeted search strategies - WHOLESALE FOCUSED
+            const baseSearchStrategies = [
+                `${searchQuery} wholesale`,
+                `${searchQuery} wholesaler`,
+                `${searchQuery} distributor`,
+                `${searchQuery} supplier`,
+                `${searchQuery} trading`,
+                `${searchQuery} importer`,
+            ];
+
+            // Add product-specific WHOLESALE search terms
+            const productSpecificTerms: { [key: string]: string[] } = {
+                'heater': ['solar heater wholesale Nepal', 'water heater distributor Kathmandu', 'heating equipment supplier', 'electrical appliances wholesale'],
+                'paint': ['paint wholesale Nepal', 'paint distributor Kathmandu', 'coating supplier', 'paint trading Nepal'],
+                'cement': ['cement wholesale Nepal', 'building materials distributor Kathmandu', 'construction materials supplier', 'cement trading Nepal'],
+                'rice': ['rice wholesale Nepal', 'grain supplier Kathmandu', 'food distributor Nepal', 'rice trading Nepal', 'rice mill wholesale'],
+                'hardware': ['hardware wholesale Nepal', 'tools distributor Kathmandu', 'building supplies wholesale', 'hardware supplier Nepal'],
+                'electrical': ['electrical supplies wholesale Nepal', 'electronics distributor Kathmandu', 'electrical equipment supplier', 'electronics trading Nepal'],
+            };
+
+            let searchStrategies = [...baseSearchStrategies];
+
+            // Add specific terms if the search query matches known products
+            Object.entries(productSpecificTerms).forEach(([product, terms]) => {
+                if (searchQuery.toLowerCase().includes(product)) {
+                    searchStrategies = [...searchStrategies, ...terms];
+                }
+            });
+
+            // Try each search strategy
+            for (const searchText of searchStrategies.slice(0, 8)) {
+                try {
+                    const params = new URLSearchParams({
+                        text: searchText,
+                        filter: `circle:${userLocation.lng},${userLocation.lat},25000`,
+                        bias: `circle:${userLocation.lng},${userLocation.lat},5000`,
+                        limit: "8",
+                        apiKey: GEOAPIFY_API_KEY,
+                    });
+
+                    const response = await fetch(`https://api.geoapify.com/v1/geocode/search?${params.toString()}`);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.features) {
+                            allResults.push(...data.features);
+                        }
+                    }
+                } catch (error) {
+                    console.log(`Search failed for "${searchText}":`, error);
+                }
             }
 
-            // Convert DiscoveredSupplier to PlaceResult format
-            const processedPlaces: PlaceResult[] = discoveredSuppliers.map((supplier) => {
-                const distance = userLocation
-                    ? calculateDistance(
+            // Remove duplicates based on coordinates (within 50m radius)
+            const uniqueResults = allResults.filter((result, index, arr) => {
+                return !arr.slice(0, index).some(existing => {
+                    const distance = calculateDistance(
+                        result.properties.lat,
+                        result.properties.lon,
+                        existing.properties.lat,
+                        existing.properties.lon
+                    );
+                    return distance < 50; // Consider places within 50m as duplicates
+                });
+            });
+
+            const processedPlaces: PlaceResult[] = uniqueResults
+                .map((feature: any) => {
+                    const distance = calculateDistance(
                         userLocation.lat,
                         userLocation.lng,
-                        supplier.latitude,
-                        supplier.longitude
-                    )
-                    : 0;
+                        feature.properties.lat,
+                        feature.properties.lon
+                    );
 
-                return {
-                    id: supplier.place_id || `${supplier.latitude}-${supplier.longitude}`,
-                    displayName: supplier.name,
-                    formattedAddress: supplier.address,
-                    phone: supplier.phone,
-                    website: supplier.website,
-                    email: "",
-                    location: {
-                        lat: supplier.latitude,
-                        lng: supplier.longitude,
-                    },
-                    categories: supplier.category ? [supplier.category] : [],
-                    distance,
-                    relevanceScore: supplier.rating ? supplier.rating * 20 : 50,
-                    rating: supplier.rating,
-                    openingHours: [],
-                    businessStatus: "OPERATIONAL",
-                };
-            });
+                    const relevanceScore = calculateRelevanceScore(feature, searchQuery);
 
-            // Sort by rating and distance
-            processedPlaces.sort((a, b) => {
-                const ratingDiff = (b.rating || 0) - (a.rating || 0);
-                if (ratingDiff !== 0) return ratingDiff;
-                return (a.distance || 0) - (b.distance || 0);
-            });
+                    return {
+                        id: feature.properties.place_id || `${feature.properties.lat}-${feature.properties.lon}`,
+                        displayName: feature.properties.name || feature.properties.address_line1 || "Business",
+                        formattedAddress: feature.properties.formatted,
+                        phone: feature.properties.contact?.phone,
+                        website: feature.properties.website,
+                        email: feature.properties.contact?.email,
+                        location: {
+                            lat: feature.properties.lat,
+                            lng: feature.properties.lon,
+                        },
+                        categories: feature.properties.categories || [],
+                        distance,
+                        relevanceScore,
+                    };
+                })
+                // Filter out results with low relevance scores - stricter filtering for wholesale
+                .filter(place => (place.relevanceScore || 0) > 50)
+                // Sort by relevance score first (prioritize wholesale/B2B), then by distance
+                .sort((a, b) => {
+                    // Give much more weight to relevance score for wholesale search
+                    const relevanceDiff = (b.relevanceScore || 0) - (a.relevanceScore || 0);
+                    if (relevanceDiff !== 0) {
+                        return relevanceDiff;
+                    }
+                    return (a.distance || 0) - (b.distance || 0);
+                })
+                // Take top 18 results for more comprehensive coverage
+                .slice(0, 18);
+
+            if (processedPlaces.length === 0) {
+                // Fallback: Try a very broad search
+                console.log("No results found, trying fallback search...");
+
+                const fallbackTerms = [
+                    `${searchQuery} wholesale`,
+                    `${searchQuery} supplier`,
+                    `${searchQuery} distributor`,
+                    `${searchQuery} trading`,
+                    `wholesale`,
+                    `market`,
+                ];
+
+                for (const term of fallbackTerms) {
+                    try {
+                        const params = new URLSearchParams({
+                            text: term,
+                            filter: `circle:${userLocation.lng},${userLocation.lat},30000`, // 30km radius
+                            bias: `circle:${userLocation.lng},${userLocation.lat},10000`,
+                            limit: "10",
+                            apiKey: GEOAPIFY_API_KEY,
+                        });
+
+                        const response = await fetch(`https://api.geoapify.com/v1/geocode/search?${params.toString()}`);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.features && data.features.length > 0) {
+                                allResults.push(...data.features);
+                                break; // Stop after first successful fallback
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`Fallback search failed for "${term}":`, error);
+                    }
+                }
+
+                // Reprocess with fallback results
+                if (allResults.length > 0) {
+                    const fallbackResults = allResults
+                        .filter((result, index, arr) => {
+                            return !arr.slice(0, index).some(existing => {
+                                const distance = calculateDistance(
+                                    result.properties.lat,
+                                    result.properties.lon,
+                                    existing.properties.lat,
+                                    existing.properties.lon
+                                );
+                                return distance < 50;
+                            });
+                        })
+                        .map((feature: any) => {
+                            const distance = calculateDistance(
+                                userLocation.lat,
+                                userLocation.lng,
+                                feature.properties.lat,
+                                feature.properties.lon
+                            );
+
+                            const relevanceScore = calculateRelevanceScore(feature, searchQuery);
+
+                            return {
+                                id: feature.properties.place_id || `${feature.properties.lat}-${feature.properties.lon}`,
+                                displayName: feature.properties.name || feature.properties.address_line1 || "Business",
+                                formattedAddress: feature.properties.formatted,
+                                phone: feature.properties.contact?.phone,
+                                website: feature.properties.website,
+                                email: feature.properties.contact?.email,
+                                location: {
+                                    lat: feature.properties.lat,
+                                    lng: feature.properties.lon,
+                                },
+                                categories: feature.properties.categories || [],
+                                distance,
+                                relevanceScore,
+                            };
+                        })
+                        .filter(place => (place.relevanceScore || 0) > 20) // Moderate threshold for fallback
+                        .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0)) // Sort by relevance first even for fallback
+                        .slice(0, 10);
+
+                    if (fallbackResults.length > 0) {
+                        setPlaces(fallbackResults);
+                        toast.info(`Found ${fallbackResults.length} general business(es) near you. Results may be less specific to "${searchQuery}".`);
+                        return;
+                    }
+                }
+
+                toast.info(`No suppliers found for "${searchQuery}". Try a broader term like "hardware", "electrical", or "store".`);
+            } else {
+                toast.success(`Found ${processedPlaces.length} supplier(s) for "${searchQuery}" within ${Math.max(...processedPlaces.map(p => p.distance || 0)) > 1000 ? Math.round(Math.max(...processedPlaces.map(p => p.distance || 0)) / 1000) + 'km' : Math.round(Math.max(...processedPlaces.map(p => p.distance || 0))) + 'm'}`);
+            }
 
             setPlaces(processedPlaces);
-            toast.success(`Found ${processedPlaces.length} suppliers!`);
-        } catch (error: any) {
-            console.error("Search error:", error);
-            const errorMessage = error?.response?.data?.message || "Failed to search suppliers";
+        } catch (err) {
+            console.error("Search error:", err);
+            const errorMessage = err instanceof Error ? err.message : "Search failed";
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {

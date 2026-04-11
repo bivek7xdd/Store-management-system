@@ -20,6 +20,19 @@ export interface CreateProductData {
 
 export interface UpdateProductData extends Partial<CreateProductData> { }
 
+export interface DiscoveredSupplier {
+    name: string;
+    address: string;
+    phone: string;
+    website: string;
+    rating: number;
+    reviews: number;
+    category: string;
+    place_id: string;
+    latitude: number;
+    longitude: number;
+}
+
 const isOnline = () => navigator.onLine;
 
 export const inventoryService = {
@@ -194,6 +207,17 @@ export const inventoryService = {
             return products;
         }
         return await db.products.where('supplier_id').equals(id).toArray();
+    },
+
+    // Supplier Discovery
+    findSuppliers: async (query: string, location?: string) => {
+        const params = new URLSearchParams({ q: query });
+        if (location) {
+            params.append('location', location);
+        }
+        
+        const response = await api.get<{ data: DiscoveredSupplier[] }>(`market/suppliers?${params.toString()}`);
+        return response.data.data || [];
     },
 
     // Products

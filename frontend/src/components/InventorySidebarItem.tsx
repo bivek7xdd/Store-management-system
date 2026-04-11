@@ -5,6 +5,7 @@ import {
     Box,
     FolderOpen,
     Truck,
+    Search,
 } from "lucide-react";
 import {
     Accordion,
@@ -20,6 +21,7 @@ export function InventorySidebarItem({ isActive }: { isActive: boolean }) {
         { icon: Box, label: "All Products", path: "/inventory" },
         { icon: FolderOpen, label: "Categories", path: "/inventory/categories" },
         { icon: Truck, label: "Suppliers", path: "/inventory/suppliers" },
+        { icon: Search, label: "Find Suppliers", path: "/find-suppliers" },
     ];
 
     return (

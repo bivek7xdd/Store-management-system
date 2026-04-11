@@ -146,6 +146,7 @@ func main() {
 	marketRoutes.Use(utils.JWTMiddleware())
 	{
 		marketRoutes.GET("/prices", handlers.GetMarketPrices)
+		marketRoutes.GET("/suppliers", handlers.FindSuppliers)
 	}
 	PORT := os.Getenv("PORT")
 	if PORT == "" {

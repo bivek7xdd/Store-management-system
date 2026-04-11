@@ -34,6 +34,34 @@ type SerperOrganicResponse struct {
 	} `json:"organic"`
 }
 
+type SerperPlacesResponse struct {
+	Places []struct {
+		Title     string  `json:"title"`
+		Address   string  `json:"address"`
+		Phone     string  `json:"phone"`
+		Website   string  `json:"website"`
+		Rating    float64 `json:"rating"`
+		Reviews   int     `json:"reviews"`
+		Type      string  `json:"type"`
+		PlaceID   string  `json:"placeId"`
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	} `json:"places"`
+}
+
+type SupplierDiscoveryItem struct {
+	Name      string  `json:"name"`
+	Address   string  `json:"address"`
+	Phone     string  `json:"phone"`
+	Website   string  `json:"website"`
+	Rating    float64 `json:"rating"`
+	Reviews   int     `json:"reviews"`
+	Category  string  `json:"category"`
+	PlaceID   string  `json:"place_id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 type MarketPriceItem struct {
 	Title  string `json:"title"`
 	Link   string `json:"link"`
@@ -156,4 +184,80 @@ func cleanMarketTitle(title string, source string) string {
 	re := regexp.MustCompile(`(?i)(?:Buy\s+|Online\s+at\s+Best\s+Price\s+in\s+Nepal|at\s+Best\s+Price\s+in\s+Nepal|Price\s+in\s+Nepal|\| Daraz\.com\.np|\| Daraz|Nepal - Daraz)`)
 	cleaned = re.ReplaceAllString(cleaned, "")
 	return strings.TrimSpace(cleaned)
+}
+
+func FindSuppliers(c *gin.Context) {
+	query := c.Query("q")
+	location := c.Query("location")
+
+	if query == "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Query parameter 'q' is required", nil)
+		return
+	}
+
+	if location == "" {
+		location = "Nepal" // Default location
+	}
+
+	apiKey := os.Getenv("SERPER_API_KEY")
+	if apiKey == "" {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Serper API key not configured", fmt.Errorf("SERPER_API_KEY not set"))
+		return
+	}
+
+	// Build search query for wholesale suppliers
+	searchQuery := fmt.Sprintf("%s wholesale supplier", query)
+	payload := map[string]interface{}{
+		"q":        searchQuery,
+		"location": location,
+		"gl":       "np",
+	}
+	payloadBytes, _ := json.Marshal(payload)
+
+	req, err := http.NewRequest("POST", "https://google.serper.dev/places", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create request", err)
+		return
+	}
+
+	req.Header.Add("X-API-KEY", apiKey)
+	req.Header.Add("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch suppliers", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.ErrorResponse(c, resp.StatusCode, "Serper API error", fmt.Errorf("status: %d", resp.StatusCode))
+		return
+	}
+
+	var placesResp SerperPlacesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&placesResp); err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to parse response", err)
+		return
+	}
+
+	// Convert to supplier discovery items
+	results := []SupplierDiscoveryItem{}
+	for _, place := range placesResp.Places {
+		results = append(results, SupplierDiscoveryItem{
+			Name:      place.Title,
+			Address:   place.Address,
+			Phone:     place.Phone,
+			Website:   place.Website,
+			Rating:    place.Rating,
+			Reviews:   place.Reviews,
+			Category:  place.Type,
+			PlaceID:   place.PlaceID,
+			Latitude:  place.Latitude,
+			Longitude: place.Longitude,
+		})
+	}
+
+	utils.SuccessResponse(c, "Suppliers found successfully", results)
 }

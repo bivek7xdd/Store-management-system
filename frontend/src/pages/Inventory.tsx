@@ -281,7 +281,6 @@ export default function Inventory() {
   });
 
   // Get unique categories from products for filter (fallback to categories list)
-  const categoryNames = (categories || []).map((c: Category) => c.name);
 
   // Filter products (ensure products is always an array)
   const productsList = products || [];
@@ -893,9 +892,9 @@ export default function Inventory() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categoryNames.map((cat: string) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
+                {categories?.map((cat: Category) => (
+                  <SelectItem key={cat.id} value={cat.name}>
+                    {cat.name}
                   </SelectItem>
                 ))}
               </SelectContent>
