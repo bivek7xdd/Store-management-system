@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 3000, // Handle warnings for larger chunks
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -53,6 +56,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB - Increase limit to cache larger index JS file
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
