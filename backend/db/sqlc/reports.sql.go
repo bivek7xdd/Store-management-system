@@ -54,6 +54,7 @@ func (q *Queries) GetDailySales(ctx context.Context, arg GetDailySalesParams) ([
 
 const getDeadStock = `-- name: GetDeadStock :many
 SELECT 
+    p.id as product_id,
     p.name as product_name,
     c.name as category_name,
     p.stock_quantity,
@@ -81,6 +82,7 @@ type GetDeadStockParams struct {
 }
 
 type GetDeadStockRow struct {
+	ProductID         pgtype.UUID    `db:"product_id" json:"product_id"`
 	ProductName       string         `db:"product_name" json:"product_name"`
 	CategoryName      pgtype.Text    `db:"category_name" json:"category_name"`
 	StockQuantity     int32          `db:"stock_quantity" json:"stock_quantity"`
@@ -99,6 +101,7 @@ func (q *Queries) GetDeadStock(ctx context.Context, arg GetDeadStockParams) ([]G
 	for rows.Next() {
 		var i GetDeadStockRow
 		if err := rows.Scan(
+			&i.ProductID,
 			&i.ProductName,
 			&i.CategoryName,
 			&i.StockQuantity,

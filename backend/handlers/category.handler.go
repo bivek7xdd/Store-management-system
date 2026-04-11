@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	db "storemanagement/db/sqlc"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -96,6 +98,14 @@ func DeleteCategory(c *gin.Context) {
 	})
 	if err != nil {
 		log.Println("error deleting category", err)
+
+		// Check for foreign key violation (products still in this category)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			utils.ErrorResponse(c, http.StatusConflict, "Cannot delete this category because it still has products assigned to it. Please reassign or delete all products in this category first.", nil)
+			return
+		}
+
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Error deleting category", err)
 		return
 	}

@@ -10,6 +10,7 @@ export interface Insight {
 
 // ── Dead Stock ────────────────────────────────────────────────────────────────
 export interface DeadStockItem {
+    product_id: string;
     product_name: string;
     category_name: string;
     stock_quantity: number;

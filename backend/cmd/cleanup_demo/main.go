@@ -29,6 +29,8 @@ func main() {
 	_, err = utils.DBPool.Exec(ctx, "DELETE FROM sale_items WHERE sale_id IN (SELECT id FROM sales WHERE store_id = $1)", store.ID)
 	_, err = utils.DBPool.Exec(ctx, "DELETE FROM debts WHERE store_id = $1", store.ID)
 	_, err = utils.DBPool.Exec(ctx, "DELETE FROM sales WHERE store_id = $1", store.ID)
+	_, err = utils.DBPool.Exec(ctx, "DELETE FROM products WHERE store_id = $1", store.ID)
+	_, err = utils.DBPool.Exec(ctx, "DELETE FROM categories WHERE store_id = $1", store.ID)
 
 	fmt.Println("✅ Cleanup complete!")
 }

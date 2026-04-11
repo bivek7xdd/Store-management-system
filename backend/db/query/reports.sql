@@ -149,6 +149,7 @@ WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3;
 
 -- name: GetDeadStock :many
 SELECT 
+    p.id as product_id,
     p.name as product_name,
     c.name as category_name,
     p.stock_quantity,

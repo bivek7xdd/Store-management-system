@@ -44,12 +44,13 @@ export default function Categories() {
                 title: "Category Deleted",
                 description: "Category has been successfully deleted.",
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to delete category", error);
+            const message = error?.response?.data?.message || "Failed to delete category.";
             toast({
                 variant: 'destructive',
-                title: "Error",
-                description: "Failed to delete category.",
+                title: "Cannot Delete Category",
+                description: message,
             });
         } finally {
             setCategoryToDelete(null);

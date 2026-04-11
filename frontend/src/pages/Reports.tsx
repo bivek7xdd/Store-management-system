@@ -13,6 +13,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -42,7 +53,8 @@ import {
   Brain,
   Info,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { inventoryService } from "@/services/inventory";
 import { getReportStats } from "@/services/reportService";
 import type { Insight, ReportStats } from "@/services/reportService";
 import { toast } from "sonner";
@@ -200,6 +212,34 @@ function InsightsFeed({ insights }: { insights: Insight[] }) {
 
 // ── Feature 2: Dead Stock Cash Trap ──────────────────────────────────────────
 function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }) {
+  const [open, setOpen] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState<number>(20); // default 20%
+  const queryClient = useQueryClient();
+
+  const applyDiscountMutation = useMutation({
+    mutationFn: async () => {
+      const items = deadStock?.items || [];
+      const promises = items.map(item => {
+        const newPrice = item.cost_price * (1 - (discountPercent / 100));
+        // Using inventoryService to update price
+        return inventoryService.updateProduct(item.product_id, {
+          price: Math.max(newPrice, 0.01) // ensure it's not 0 or negative
+        });
+      });
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      toast.success(`${deadStock.items.length} items discounted!`);
+      queryClient.invalidateQueries({ queryKey: ["reportStats"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setOpen(false);
+    },
+    onError: () => {
+      toast.error("Failed to apply discounts.");
+    }
+  });
+
+  const navigate = useNavigate();
   if (!deadStock) return null;
 
   const total = deadStock.total_60d ?? 0;
@@ -228,10 +268,62 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
               </div>
               Dead Stock Cash Trap
             </CardTitle>
-            <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-800 dark:text-amber-400">
-              <Tag className="h-3 w-3" />
-              Create Discount
-            </Button>
+            
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-800 dark:text-amber-400">
+                  <Tag className="h-3 w-3" />
+                  Create Discount
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Discount Dead Stock</DialogTitle>
+                  <DialogDescription>
+                    You have {(deadStock?.items || []).length} items that haven't sold in 60+ days. Apply a bulk markdown to liquidate them and recover your capital.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label>Discount Percentage (%)</Label>
+                    <div className="flex items-center gap-2">
+                       <Input 
+                         type="number" 
+                         min={1} 
+                         max={99} 
+                         value={discountPercent} 
+                         onChange={(e) => setDiscountPercent(Number(e.target.value))} 
+                         className="w-full"
+                       />
+                       <span className="text-xl font-bold">%</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg space-y-2">
+                    <p className="font-semibold text-foreground">Items to be updated:</p>
+                    <ul className="list-disc pl-4 grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
+                      {(deadStock?.items || []).map((item, idx) => (
+                        <li key={idx} className="truncate">
+                          {item.product_name} 
+                          <span className="opacity-50 ml-1">(-{discountPercent}%)</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button 
+                    className="bg-amber-600 hover:bg-amber-700 text-white" 
+                    onClick={() => applyDiscountMutation.mutate()}
+                    disabled={applyDiscountMutation.isPending || !deadStock?.items?.length}
+                  >
+                    {applyDiscountMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Slash Prices
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
           </div>
         </CardHeader>
         <CardContent>

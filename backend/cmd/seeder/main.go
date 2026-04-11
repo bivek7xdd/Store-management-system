@@ -189,6 +189,13 @@ func main() {
 		}
 	}
 
+	// Manually age the dead stock so it shows up in reports
+	fmt.Println("🕰️ Aging the dead stock...")
+	_, err = conn.Exec(ctx, `UPDATE products SET created_at = NOW() - INTERVAL '130 days' WHERE name IN ('Antique Clock', 'Legacy DVD Player')`)
+	if err != nil {
+		log.Printf("Failed to age dead stock: %v", err)
+	}
+
 	// 6. Seed Customers
 	fmt.Println("👥 Seeding Customers...")
 	customerNames := []string{"Bivek Shrestha", "Anish Magar", "Sita Rai", "Ram Prasad", "Gita Thapa", "Niraj Kumar", "Pooja Sharma"}

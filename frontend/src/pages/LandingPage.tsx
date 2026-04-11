@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
   Play,
@@ -6,21 +6,12 @@ import {
   Search,
   Bell,
   ChevronRight,
-  Check,
-  Plus,
-  MoreHorizontal,
-  Send,
-  ArrowDownLeft,
   ArrowUpRight,
-  Landmark,
-  CreditCard,
   FileText,
   Home,
   ListChecks,
   Wallet,
   Settings as SettingsIcon,
-  BellRing,
-  Route,
   Package,
   TrendingUp,
   Users,
@@ -38,22 +29,31 @@ import "@fontsource/inter/700.css";
 import "@fontsource/instrument-serif/400.css";
 import "@fontsource/instrument-serif/400-italic.css";
 
+const prefersReducedMotion =
+  typeof window !== "undefined"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
+
 const fade = (delay: number, y = 16) => ({
-  initial: { opacity: 0, y },
+  initial: { opacity: 0, y: prefersReducedMotion ? 0 : y },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
-  transition: { duration: 0.6, delay, ease: "easeOut" as const },
+  transition: {
+    duration: prefersReducedMotion ? 0 : 0.6,
+    delay: prefersReducedMotion ? 0 : delay,
+    ease: [0.16, 1, 0.3, 1] as const,
+  },
 });
 
 /* ── Navbar ── */
 function Navbar() {
   return (
-    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-8 py-3 font-body backdrop-blur-3xl bg-white/[0.08] border-t border-white/30 border-x border-white/10 border-b border-white/5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.1)] transition-all w-[90%] max-w-6xl mx-auto">
+    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-8 py-3 font-sans backdrop-blur-3xl bg-white/[0.08] [border:1px_solid_rgba(255,255,255,0.12)] rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-all w-[90%] max-w-6xl mx-auto">
       <div className="flex items-center gap-2 group cursor-pointer">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-teal-700 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
           SH
         </div>
-        <span className="text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
+        <span className="text-xl font-bold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">
           StoreHub
         </span>
       </div>
@@ -62,7 +62,7 @@ function Navbar() {
           <a
             key={l}
             href={`#${l.toLowerCase()}`}
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-all hover:scale-105 active:scale-95"
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-105 active:scale-95"
           >
             {l}
           </a>
@@ -71,12 +71,12 @@ function Navbar() {
       <div className="flex items-center gap-6">
         <Link
           to="/login"
-          className="text-sm font-semibold hover:text-primary transition-colors pr-2"
+          className="text-sm font-semibold hover:text-primary transition-colors duration-200 pr-2"
         >
           Sign In
         </Link>
         <Link to="/register">
-          <Button className="rounded-full px-7 h-11 text-sm font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+          <Button className="rounded-full px-7 h-11 text-sm font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-105 active:scale-95">
             Join Now
           </Button>
         </Link>
@@ -98,9 +98,8 @@ function DashboardPreview() {
   ];
 
   const workflowItems = [
-    { icon: Route, label: "Stock Routes" },
     { icon: Wallet, label: "Re-orders" },
-    { icon: BellRing, label: "Alerts" },
+    { icon: BarChart3, label: "Analytics" },
   ];
 
   const transactions = [
@@ -283,9 +282,9 @@ function AnimatedSection({
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 1, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+      initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 30 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
     >
       {children}
@@ -298,43 +297,51 @@ function FeatureStackCard({
   items,
   index,
   total,
-  className = "",
 }: {
-  items: any[];
+  items: { icon: React.ElementType; title: string; desc: string; colSpan?: string }[];
   index: number;
   total: number;
-  className?: string;
 }) {
+  /* Each card gets a staggered top offset so previous cards peek out from below */
+  const topOffset = 80 + index * 16; // 80px, 96px, 112px …
   return (
-    <div className="sticky top-40 mb-20 w-full px-4 text-white">
+    <div
+      className="sticky w-full px-4 text-white"
+      style={{ top: `${topOffset}px`, zIndex: 10 + index }}
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
+        initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.97 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: false, amount: 0.1 }}
-        transition={{ duration: 0.8 }}
-        className="w-full bg-[#0c0c0e/90] backdrop-blur-[64px] rounded-[4rem] border border-white/10 shadow-[0_0_80px_-20px_rgba(59,130,246,0.3)] overflow-hidden relative group"
+        viewport={{ once: false, amount: 0.05 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full bg-slate-800/70 backdrop-blur-[64px] rounded-[4rem] border border-white/[0.08] shadow-[0_0_60px_-10px_rgba(20,184,166,0.2),0_40px_80px_-20px_rgba(0,0,0,0.4)] overflow-hidden relative group mb-6"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-600/10 opacity-60" />
+        {/* Soft ambient gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/[0.08] via-slate-700/20 to-cyan-900/10" />
+        {/* Subtle top sheen */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        {/* Large decorative index */}
+        <div className="absolute -right-4 -top-6 text-[12rem] font-black text-white/[0.04] select-none leading-none pointer-events-none">
+          0{index + 1}
+        </div>
 
         <div className="relative z-10 w-full p-10 md:p-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 w-full">
             {items.map((f, i) => (
               <div
                 key={i}
-                className="flex flex-col justify-center p-12 rounded-[3.5rem] bg-white/[0.03] border border-white/5 hover:border-primary/50 transition-all duration-700 relative overflow-hidden group/card shadow-2xl"
+                className="flex flex-col justify-center p-10 md:p-12 rounded-[2.5rem] bg-white/[0.04] border border-white/[0.07] hover:border-primary/35 hover:bg-white/[0.07] transition-all duration-500 relative overflow-hidden group/card"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center mb-10 text-white shadow-2xl shadow-primary/40 relative z-10">
-                  <f.icon className="w-10 h-10" />
+                {/* Per-card hover glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.12] via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 rounded-[2.5rem]" />
+                {/* Icon */}
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/90 to-teal-600 flex items-center justify-center mb-8 text-white shadow-lg shadow-primary/20 relative z-10">
+                  <f.icon className="w-8 h-8" />
                 </div>
-                <h3
-                  className={`text-5xl font-black mb-6 tracking-tighter uppercase relative z-10 ${className || "text-white"}`}
-                >
+                <h3 className="text-4xl md:text-5xl font-black mb-5 tracking-tighter uppercase relative z-10 text-white/95">
                   {f.title}
                 </h3>
-                <p
-                  className={`leading-relaxed text-2xl font-medium tracking-tight relative z-10 ${className || "text-zinc-300"}`}
-                >
+                <p className="leading-relaxed text-lg md:text-xl font-medium tracking-tight relative z-10 text-slate-300/80">
                   {f.desc}
                 </p>
               </div>
@@ -476,15 +483,15 @@ export default function LandingPage() {
           {/* Headline */}
           <motion.h1
             {...fade(0.1)}
-            className="text-center font-display text-6xl md:text-8xl lg:text-9xl leading-[0.85] tracking-tighter max-w-5xl px-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground via-foreground to-foreground/40 pb-4"
+            className="text-center text-6xl md:text-8xl lg:text-9xl leading-[0.85] tracking-tighter max-w-5xl px-4 bg-clip-text text-transparent bg-gradient-to-b from-foreground via-foreground to-foreground/40 pb-4"
           >
             The Future of <br />
-            <span className="italic font-serif text-primary relative">
+            <span className="italic text-primary relative">
               Smarter
               <motion.span
-                initial={{ width: 0 }}
+                initial={{ width: prefersReducedMotion ? "100%" : 0 }}
                 whileInView={{ width: "100%" }}
-                transition={{ duration: 1, delay: 0.5 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 1, delay: prefersReducedMotion ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute bottom-2 left-0 h-[2px] bg-primary/40 rounded-full"
               />
             </span>{" "}
@@ -554,31 +561,47 @@ export default function LandingPage() {
       {/* ── FEATURES ── */}
       <section
         id="features"
-        className="py-32 px-6 md:px-12 lg:px-20 relative bg-muted/20"
+        className="py-32 px-6 md:px-12 lg:px-20 relative"
+        style={{ background: "linear-gradient(180deg, hsl(var(--muted)/0.3) 0%, hsl(var(--background)) 100%)" }}
       >
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
+        {/* Decorative orbs – isolated overflow-hidden so they don't affect sticky */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+          <div className="absolute top-[-20%] left-[10%] w-[500px] h-[500px] bg-primary/[0.06] blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[5%] w-[400px] h-[400px] bg-teal-400/[0.05] blur-[100px] rounded-full" />
+          {/* Subtle dot grid */}
+          <div
+            className="absolute inset-0 opacity-[0.025]"
+            style={{
+              backgroundImage: "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
+        </div>
+
         <div className="max-w-7xl mx-auto relative z-10">
           <AnimatedSection className="text-center mb-24">
-            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
               Features
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-semibold tracking-tight mb-6 text-zinc-500">
+            <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-foreground">
               Everything you need
             </h2>
-            <p className="text-zinc-400 text-xl max-w-2xl mx-auto leading-relaxed">
+            <p className="text-muted-foreground text-xl max-w-2xl mx-auto leading-relaxed">
               Built for scale, speed, and simplicity. Manage your entire retail
               empire from a single intuitive command center.
             </p>
           </AnimatedSection>
 
-          <div className="flex flex-col items-center ">
+          {/* Cards need enough scroll height – spacer at bottom is handled by the last card's mb */}
+          <div className="flex flex-col items-center" style={{ paddingBottom: `${featureGroups.length * 120}px` }}>
             {featureGroups.map((group, index) => (
               <FeatureStackCard
-                className="text-zinc-400"
                 key={index}
-                items={group.items}
                 index={index}
                 total={featureGroups.length}
+                items={group.items}
               />
             ))}
           </div>
@@ -588,21 +611,30 @@ export default function LandingPage() {
       {/* ── TESTIMONIALS ── */}
       <section
         id="testimonials"
-        className="py-32 px-6 md:px-12 lg:px-20 bg-background relative overflow-hidden"
+        className="py-32 px-6 md:px-12 lg:px-20 relative overflow-hidden"
+        style={{ background: "linear-gradient(160deg, hsl(var(--background)) 0%, hsl(183 70% 42% / 0.04) 50%, hsl(var(--background)) 100%)" }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-background pointer-events-none" />
-        <div className="max-w-7xl mx-auto">
+        {/* Ambient glows */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div className="absolute left-[-15%] top-[20%] w-[600px] h-[600px] bg-primary/[0.05] blur-[140px] rounded-full pointer-events-none" />
+        <div className="absolute right-[-10%] bottom-[10%] w-[500px] h-[500px] bg-teal-400/[0.04] blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <AnimatedSection className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-display font-semibold tracking-tight mb-4 text-gray-800">
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Testimonials
+            </div>
+            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 text-foreground">
               Loved by Retailers
             </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               See why business owners across the globe are switching to
               StoreHub.
             </p>
           </AnimatedSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
                 name: "Sarah Jenkins",
@@ -622,28 +654,34 @@ export default function LandingPage() {
             ].map((t, i) => (
               <AnimatedSection
                 key={i}
-                delay={i * 0.1}
-                className="p-10 rounded-[2.5rem] bg-secondary/20 backdrop-blur-md border border-white/5 relative group hover:bg-secondary/30 transition-all duration-500"
+                delay={i * 0.12}
+                className="p-8 rounded-3xl bg-background border border-border hover:border-primary/30 relative group hover:shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.15)] transition-all duration-500"
               >
-                <div className="flex gap-1 mb-6">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="w-5 h-5 fill-black text-black" />
-                  ))}
-                </div>
-                <p className="text-xl font-medium leading-relaxed mb-8 text-foreground/90">
-                  "{t.text}"
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-white/20 to-zinc-500 flex items-center justify-center font-bold text-zinc-900 shadow-lg">
-                    {t.name[0]}
+                {/* Hover glow */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                {/* Decorative quote */}
+                <div className="absolute top-6 right-8 text-7xl font-black text-primary/10 leading-none select-none pointer-events-none">&ldquo;</div>
+                <div className="relative z-10">
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-bold text-base text-foreground">
-                      {t.name}
-                    </p>
-                    <p className="text-sm text-zinc-400 font-medium tracking-wide uppercase">
-                      {t.role}
-                    </p>
+                  <p className="text-base font-medium leading-relaxed mb-8 text-foreground/80">
+                    &ldquo;{t.text}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-3 pt-4 border-t border-border/60">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/40 to-teal-600/60 flex items-center justify-center font-bold text-white shadow-md text-sm">
+                      {t.name[0]}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">
+                        {t.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-medium tracking-wide uppercase">
+                        {t.role}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </AnimatedSection>
@@ -655,28 +693,27 @@ export default function LandingPage() {
       {/* ── CTA ── */}
       <section className="py-32 px-6">
         <AnimatedSection className="max-w-6xl mx-auto rounded-[4rem] bg-foreground text-background p-16 md:p-28 text-center relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-transparent to-purple-600/30 opacity-20" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-transparent to-teal-900/40 opacity-30" />
           <div className="relative z-10">
-            <h2 className="text-5xl md:text-8xl font-display font-bold mb-8 tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-white via-primary to-emerald-400">
+            <h2 className="text-5xl md:text-8xl font-bold mb-8 tracking-tighter leading-none text-white">
               Ready to scale <br />
               your empire?
             </h2>
-            <p className="text-white/60 text-xl md:text-2xl mb-14 max-w-2xl mx-auto font-body leading-relaxed">
-              Join the world's fastest-growing retail brands using StoreHub to
+            <p className="text-white/60 text-xl md:text-2xl mb-14 max-w-2xl mx-auto leading-relaxed">
+              Join thousands of growing retail brands using StoreHub to
               automate their success.
             </p>
             <Link to="/register">
               <Button
                 size="lg"
-                variant="secondary"
-                className="rounded-full px-12 h-20 text-xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-transform bg-primary text-primary-foreground hover:bg-primary/90 border-0"
+                className="rounded-full px-12 h-20 text-xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-transform duration-200 bg-primary text-primary-foreground hover:bg-primary/90 border-0"
               >
                 Start Free Trial Now
               </Button>
             </Link>
           </div>
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/40 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2 animate-pulse" />
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/20 blur-[150px] rounded-full translate-y-1/2 -translate-x-1/2 animate-pulse" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/30 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-500/15 blur-[150px] rounded-full translate-y-1/2 -translate-x-1/2" />
         </AnimatedSection>
       </section>
 
@@ -704,7 +741,7 @@ export default function LandingPage() {
             </a>
           </div>
           <p className="text-xs text-muted-foreground">
-            © 2025 StoreHub Inc. All rights reserved.
+            © 2026 StoreHub Inc. All rights reserved.
           </p>
         </div>
       </footer>
