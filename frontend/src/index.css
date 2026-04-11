@@ -64,7 +64,18 @@ All colors MUST be HSL.
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+  }
+
+  button, 
+  a.button-like,
+  [role="button"] {
+    @apply transition-all duration-300 ease-premium active:scale-[0.98];
+  }
+
+  /* High quality focus rings */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
 }
 

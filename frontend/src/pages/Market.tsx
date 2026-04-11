@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Calendar, ArrowUp, Lightbulb, Users, Loader2, RefreshCw, AlertCircle, ExternalLink, Package } from "lucide-react";
+import { TrendingUp, Lightbulb, Users, Loader2, RefreshCw, AlertCircle, ExternalLink, Package } from "lucide-react";
 import { toast } from "sonner";
 
 const colors = {
@@ -10,7 +10,6 @@ const colors = {
   primaryDark: "#115e59",
 };
 
-const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || "";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,54 +30,10 @@ export default function Market() {
   const [marketPricesMap, setMarketPricesMap] = useState<Record<string, MarketPriceItem[]>>({});
   const [pricesLoading, setPricesLoading] = useState<Record<string, boolean>>({});
 
-  // News State
-  const [news, setNews] = useState<any[]>([]);
-  const [newsLoading, setNewsLoading] = useState(false);
-  const [newsCategory, setNewsCategory] = useState("All");
-
-  // Determine available categories based on user profile
-  const [newsCategories, setNewsCategories] = useState<string[]>(["All"]);
-
-  // Initialize Category based on user's actual product categories from their store
+  // Initialize data based on user profile
   useEffect(() => {
     getUserLocation();
-
-    const fetchUserCategories = async () => {
-      try {
-        const categories = await inventoryService.getCategories();
-
-        if (categories && categories.length > 0) {
-          const categoryNames = categories.map(c => c.name);
-          setNewsCategories(["All", ...categoryNames]);
-          setNewsCategory(categoryNames[0]);
-        } else if (user?.product_subcategories && user.product_subcategories.length > 0) {
-          setNewsCategories(["All", ...user.product_subcategories]);
-          setNewsCategory(user.product_subcategories[0]);
-        } else if (user?.business_category) {
-          const matchedCategory = BUSINESS_CATEGORIES.find(c => c.id === user.business_category);
-          if (matchedCategory) {
-            setNewsCategories(["All", matchedCategory.name]);
-            setNewsCategory(matchedCategory.name);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        if (user?.product_subcategories && user.product_subcategories.length > 0) {
-          setNewsCategories(["All", ...user.product_subcategories]);
-        }
-      }
-    };
-
-    if (user) {
-      fetchUserCategories();
-    }
   }, [user]);
-
-  // Fetch news when category changes
-  useEffect(() => {
-    setNews([]);
-    fetchMarketNews();
-  }, [newsCategory, user?.id]);
 
   // Initial fetch for tracked products and prices
   useEffect(() => {
@@ -111,74 +66,6 @@ export default function Market() {
     }
   };
 
-  const fetchMarketNews = async () => {
-    setNewsLoading(true);
-    try {
-      let query = "Business Nepal";
-
-      if (newsCategory === "All") {
-        if (user?.product_subcategories && user.product_subcategories.length > 0) {
-          const subcats = user.product_subcategories.slice(0, 2).join(" OR ");
-          query = `${subcats} market Nepal`;
-        } else if (user?.business_category) {
-          const categoryObj = BUSINESS_CATEGORIES.find(c => c.id === user.business_category);
-          if (categoryObj) {
-            query = `${categoryObj.name} business Nepal`;
-          }
-        }
-      } else {
-        const categoryObj = BUSINESS_CATEGORIES.find(c => c.name === newsCategory);
-        if (categoryObj) {
-          switch (categoryObj.id) {
-            case 'groceries': query = "Food price Nepal OR Agriculture Nepal"; break;
-            case 'electronics': query = "Technology market Nepal OR Mobile phones Nepal"; break;
-            case 'apparel-fashion': query = "Textile market Nepal OR Fashion Nepal"; break;
-            case 'hardware-tools': query = "Construction materials Nepal OR Hardware price"; break;
-            case 'automotive': query = "Vehicle market Nepal OR Auto parts Nepal"; break;
-            case 'home-garden': query = "Furniture market Nepal OR Home decor Nepal"; break;
-            default: query = `${categoryObj.name} market Nepal`;
-          }
-        } else {
-          const catLower = newsCategory.toLowerCase();
-          if (catLower.includes("dairy")) query = "Milk price Nepal OR Dairy industry Nepal";
-          else if (catLower.includes("produce") || catLower.includes("vegetable") || catLower.includes("fruit")) query = "Vegetable price Kalimati Nepal OR Fruit market Nepal";
-          else if (catLower.includes("meat") || catLower.includes("poultry") || catLower.includes("chicken")) query = "Chicken price Nepal OR Meat market Nepal";
-          else if (catLower.includes("beverage") || catLower.includes("drink")) query = "Beverage industry Nepal OR Liquor market Nepal";
-          else if (catLower.includes("bakery") || catLower.includes("bread")) query = "Bakery business Nepal OR Wheat price Nepal";
-          else if (catLower.includes("mobile") || catLower.includes("phone")) query = "Mobile phone tax Nepal OR Smartphone market Nepal";
-          else if (catLower.includes("computer") || catLower.includes("laptop")) query = "Computer market Nepal OR IT hardware Nepal";
-          else if (catLower.includes("furniture")) query = "Furniture price Nepal OR Timber market";
-          else query = `${newsCategory} market Nepal`;
-        }
-      }
-
-      const response = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&apiKey=${NEWS_API_KEY}`);
-
-      let articles: any[] = [];
-      if (response.ok) {
-        const data = await response.json();
-        if (data.articles && data.articles.length > 0) {
-          articles = data.articles.slice(0, 6).map((article: any, index: number) => ({
-            id: index,
-            title: article.title,
-            description: article.description || article.content,
-            date: article.publishedAt,
-            category: newsCategory === "All" ? "Business" : newsCategory,
-            source: article.source.name,
-            url: article.url,
-            image: article.urlToImage
-          }));
-        }
-      }
-
-      setNews(articles);
-    } catch (err) {
-      console.error("News API Error:", err);
-      setNews([]);
-    } finally {
-      setNewsLoading(false);
-    }
-  };
 
   const getUserLocation = () => {
     setLoading(true);
@@ -334,7 +221,7 @@ export default function Market() {
                   <h3 className="font-medium text-gray-900">No tracked products</h3>
                   <p className="text-sm text-gray-500 mt-1">Select up to 6 products from your inventory to track prices here.</p>
                 </div>
-                <Button variant="outline" size="sm" className="mt-2 text-teal-600 border-teal-200 hover:bg-teal-50" asChild>
+                <Button variant="subtle" size="sm" className="mt-2" asChild>
                   <a href="/inventory">Go to Inventory</a>
                 </Button>
               </div>
@@ -428,41 +315,6 @@ export default function Market() {
         )}
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Latest Market News</h2>
-          <Button variant="outline" size="sm" onClick={fetchMarketNews} disabled={newsLoading}>
-            <RefreshCw className={`h-3 w-3 mr-2 ${newsLoading ? 'animate-spin' : ''}`} /> Refresh
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
-          {newsCategories.map((cat) => (
-            <Badge key={cat} variant={newsCategory === cat ? "default" : "outline"} className={`cursor-pointer max-w-fit px-3 py-1 ${newsCategory === cat ? "bg-teal-600 hover:bg-teal-700" : "hover:bg-gray-100"}`} onClick={() => setNewsCategory(cat)}>{cat}</Badge>
-          ))}
-        </div>
-        {newsLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-0 shadow-sm h-[200px] flex items-center justify-center bg-gray-50"><Loader2 className="h-8 w-8 text-gray-300 animate-spin" /></Card>
-            ))}
-          </div>
-        ) : news.length === 0 ? (
-          <Card className="border-0 shadow-sm"><CardContent className="py-12 text-center"><AlertCircle className="h-6 w-6 text-gray-400 mx-auto mb-2" /><h3 className="font-medium text-gray-900">No news found</h3><Button variant="outline" size="sm" onClick={fetchMarketNews} className="mt-2">Try Again</Button></CardContent></Card>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {news.map((insight) => (
-              <Card key={insight.id} className="border-0 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
-                {insight.image && <div className="h-32 w-full overflow-hidden bg-gray-100"><img src={insight.image} alt="" className="w-full h-full object-cover" /></div>}
-                <CardHeader className="pb-3 pt-4">
-                  <div className="flex items-start justify-between"><Badge variant="secondary" className="bg-teal-50 text-teal-700 border-teal-100">{insight.source}</Badge><div className="flex items-center gap-1 text-xs text-gray-400"><Calendar className="h-3 w-3" />{new Date(insight.date).toLocaleDateString()}</div></div>
-                  <CardTitle className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight mt-2"><a href={insight.url} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600">{insight.title}</a></CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between"><p className="text-xs text-gray-500 line-clamp-3 mb-3">{insight.description}</p><a href={insight.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-teal-600 flex items-center mt-auto">Read full article <ArrowUp className="h-3 w-3 ml-1 rotate-45" /></a></CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
 
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-6">

@@ -47,6 +47,7 @@ import { getReportStats } from "@/services/reportService";
 import type { Insight, ReportStats } from "@/services/reportService";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { FeatureTooltip } from "@/components/FeatureTooltip";
 import {
   BarChart,
   Bar,
@@ -227,7 +228,7 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
               </div>
               Dead Stock Cash Trap
             </CardTitle>
-            <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400">
+            <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-800 dark:text-amber-400">
               <Tag className="h-3 w-3" />
               Create Discount
             </Button>
@@ -582,12 +583,12 @@ export default function Reports() {
       animate={{ opacity: 1 }}
     >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="reports-header">
         <div className="space-y-1">
           <h1 className="text-2xl font-black tracking-tighter">Intelligence Hub</h1>
           <p className="text-sm font-medium text-muted-foreground">Actionable business intelligence for {dateRange}ly performance</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="reports-export">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-32 h-9 text-xs font-bold rounded-xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-0 shadow-sm">
               <Calendar className="h-3 w-3 mr-2" />
@@ -600,8 +601,17 @@ export default function Reports() {
               <SelectItem value="year">Yearly</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={handleExportPDF} className="h-9 w-9 border-0 bg-white/50 dark:bg-slate-900/50 rounded-xl shadow-sm"><FileText className="h-4 w-4" /></Button>
-          <Button variant="outline" size="icon" onClick={handleExportCSV} className="h-9 w-9 border-0 bg-white/50 dark:bg-slate-900/50 rounded-xl shadow-sm"><Download className="h-4 w-4" /></Button>
+          <FeatureTooltip
+            featureKey="reports_export"
+            title="Download Reports"
+            description="Generate professional PDF or CSV reports for your store's performance to share with your team or accountant."
+            placement="bottom"
+          >
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={handleExportPDF} className="h-9 w-9 border-0 bg-white/50 dark:bg-slate-900/50 rounded-xl shadow-sm"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handleExportCSV} className="h-9 w-9 border-0 bg-white/50 dark:bg-slate-900/50 rounded-xl shadow-sm"><Download className="h-4 w-4" /></Button>
+            </div>
+          </FeatureTooltip>
         </div>
       </div>
 
@@ -609,7 +619,7 @@ export default function Reports() {
       {insights && insights.length > 0 && <InsightsFeed insights={insights} />}
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-tour="reports-kpis">
         <KPICard icon={<TrendingUp className="h-4 w-4 text-emerald-500" />} label="Total Sales" value={`रू ${totalSalesVal}`} sub={`${sales.count} Transactions`} iconBg="bg-emerald-500/10" valueColor="text-emerald-600" />
         <KPICard icon={<Zap className="h-4 w-4 text-primary" />} label="Gross Profit" value={`रू ${profit.gross_profit}`} sub={`${profit.total_revenue > 0 ? Math.round((Number(profit.gross_profit) / Number(profit.total_revenue)) * 100) : 0}% Margin`} />
         <KPICard icon={<Package className="h-4 w-4 text-sky-500" />} label="Inventory Value" value={`रू ${inventory.total_value}`} sub={`${inventory.total_products} Skus`} iconBg="bg-sky-500/10" />

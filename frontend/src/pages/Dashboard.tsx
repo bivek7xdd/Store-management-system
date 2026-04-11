@@ -236,6 +236,37 @@ export default function Dashboard() {
         </motion.div>
       )}
 
+      {/* Global Empty State for New Users */}
+      {!loading && !error && stats && stats.inventory.total_products === 0 && stats.sales.count === 0 && (
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-sm border-dashed border-2">
+            <CardContent className="py-12">
+              <PremiumEmptyState
+                icon={LayoutDashboard}
+                title="Welcome to StoreHub"
+                description="Your business command center is ready. To get started, add your products to inventory and start making sales."
+                action={
+                  <div className="flex gap-3">
+                    <Button asChild style={{ background: colors.primaryDark }}>
+                      <Link to="/inventory">
+                        <Package className="mr-2 h-4 w-4" />
+                        Add Products
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link to="/sales">
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Go to POS
+                      </Link>
+                    </Button>
+                  </div>
+                }
+              />
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Summary Cards */}
       <motion.div
         variants={itemVariants}
@@ -390,8 +421,8 @@ export default function Dashboard() {
               </Button>
               <Button
                 asChild
-                variant="outline"
-                className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
+                variant="secondary"
+                className="w-full h-12 shadow-sm"
               >
                 <Link to="/inventory">
                   <Plus className="mr-2 h-5 w-5" />
@@ -400,8 +431,8 @@ export default function Dashboard() {
               </Button>
               <Button
                 asChild
-                variant="outline"
-                className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
+                variant="secondary"
+                className="w-full h-12 shadow-sm"
               >
                 <Link to="/debtors">
                   <Users className="mr-2 h-5 w-5" />
@@ -410,8 +441,8 @@ export default function Dashboard() {
               </Button>
               <Button
                 asChild
-                variant="outline"
-                className="w-full h-12 rounded-xl font-medium border-gray-200 hover:bg-gray-50"
+                variant="secondary"
+                className="w-full h-12 shadow-sm"
               >
                 <Link to="/reports">
                   <FileText className="mr-2 h-5 w-5" />

@@ -174,7 +174,7 @@ export default function Debtors() {
   return (
     <div className="min-h-full bg-[#f8fafc] -m-6 p-6 space-y-8 pb-20 lg:pb-12 animate-in fade-in duration-500">
       {/* Hero Header Section */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 px-8 py-10 shadow-2xl shadow-slate-200">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 px-8 py-10 shadow-2xl shadow-slate-200" data-tour="debtors-summary">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
         <div className="absolute bottom-0 left-0 -ml-16 -mb-16 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
 

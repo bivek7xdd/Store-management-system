@@ -39,6 +39,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Product, Category } from "@/types";
 import { ProductSkeleton } from "@/components/ProductSkeleton";
 import { PremiumEmptyState } from "@/components/PremiumEmptyState";
+import { FeatureTooltip } from "@/components/FeatureTooltip";
 
 const colors = {
   primary: "#0d9488",
@@ -871,13 +872,20 @@ export default function Inventory() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-10 rounded-lg border-gray-200"
               />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                onClick={() => setSearchScannerOpen(true)}
+              <FeatureTooltip
+                featureKey="inventory_scanner"
+                title="Try the Scanner!"
+                description="Scan product barcodes directly with your camera to find them in your inventory instantly."
               >
-                <Scan className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-              </button>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  onClick={() => setSearchScannerOpen(true)}
+                  data-tour="inventory-scanner"
+                >
+                  <Scan className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                </button>
+              </FeatureTooltip>
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="rounded-lg border-gray-200">

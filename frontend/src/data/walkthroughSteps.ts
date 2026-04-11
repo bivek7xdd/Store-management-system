@@ -48,6 +48,15 @@ export const walkthroughSteps: WalkthroughStep[] = [
         page: "/inventory",
     },
     {
+        target: '[data-tour="inventory-scanner"]',
+        placement: "bottom",
+        title: "Barcode Scanner",
+        content:
+            "Use your camera to scan barcodes and find products instantly. Works for both searching and adding new items.",
+        disableBeacon: true,
+        page: "/inventory",
+    },
+    {
         target: '[data-tour="inventory-filters"]',
         placement: "bottom",
         title: "Search and Filter",
@@ -92,9 +101,27 @@ export const walkthroughSteps: WalkthroughStep[] = [
     {
         target: '[data-tour="reports-header"]',
         placement: "bottom",
-        title: "Reports and Analytics",
+        title: "Intelligence Hub",
         content:
-            "View sales trends, inventory breakdowns, and debtor reports. Export as PDF or CSV anytime.",
+            "Your business nerve center. View sales trends, inventory breakdowns, and advanced analytics.",
+        disableBeacon: true,
+        page: "/reports",
+    },
+    {
+        target: '[data-tour="reports-kpis"]',
+        placement: "bottom",
+        title: "Key Performance Indicators",
+        content:
+            "Track your Total Sales, Gross Profit, Inventory Value, and Receivables in real-time.",
+        disableBeacon: true,
+        page: "/reports",
+    },
+    {
+        target: '[data-tour="reports-export"]',
+        placement: "left",
+        title: "Export Data",
+        content:
+            "Generate professional PDF reports or CSV exports for your accounting and tax needs.",
         disableBeacon: true,
         page: "/reports",
     },
@@ -124,6 +151,15 @@ export const walkthroughSteps: WalkthroughStep[] = [
         title: "Supplier Discovery",
         content:
             "Find wholesale suppliers and distributors for any product near your location using our interactive map.",
+        disableBeacon: true,
+        page: "/market/discovery",
+    },
+    {
+        target: '[data-tour="market-discovery-map"]',
+        placement: "top",
+        title: "Interactive Map",
+        content:
+            "Visualize supplier locations, see their distance from your store, and get driving directions instantly.",
         disableBeacon: true,
         page: "/market/discovery",
     },

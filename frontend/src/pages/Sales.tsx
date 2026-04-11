@@ -10,6 +10,7 @@ import { inventoryService } from "@/services/inventory";
 import { salesService, CreateSaleData } from "@/services/sales";
 import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
+import { FeatureTooltip } from "@/components/FeatureTooltip";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
 import { Product, OfflineStatus } from "@/types";
@@ -379,25 +380,32 @@ export default function Sales() {
 
       {/* Offline Mode Banner */}
       {!offlineStatus.isOnline && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
-          <WifiOff className="h-5 w-5 text-orange-600" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-orange-800">
-              Working offline
-            </p>
-            <p className="text-xs text-orange-600">
-              {cachedProductsCount > 0
-                ? `${cachedProductsCount} products available from cache. Sales will sync when connection is restored.`
-                : "No cached products available. Connect to internet to load product data."
-              }
-            </p>
+        <FeatureTooltip
+          featureKey="sales_offline"
+          title="Offline Mode is Active"
+          description="You can continue making sales even without internet. StoreHub caches your products and will automatically sync your sales when you're back online."
+          placement="bottom"
+        >
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
+            <WifiOff className="h-5 w-5 text-orange-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-800">
+                Working offline
+              </p>
+              <p className="text-xs text-orange-600">
+                {cachedProductsCount > 0
+                  ? `${cachedProductsCount} products available from cache. Sales will sync when connection is restored.`
+                  : "No cached products available. Connect to internet to load product data."
+                }
+              </p>
+            </div>
+            {offlineStatus.pendingSales > 0 && (
+              <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                {offlineStatus.pendingSales} pending
+              </Badge>
+            )}
           </div>
-          {offlineStatus.pendingSales > 0 && (
-            <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-              {offlineStatus.pendingSales} pending
-            </Badge>
-          )}
-        </div>
+        </FeatureTooltip>
       )}
 
       {/* Sync Progress Banner */}

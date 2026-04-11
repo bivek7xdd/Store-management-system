@@ -1178,7 +1178,7 @@ export default function MarketDiscovery() {
     return (
         <div className="space-y-6 pb-20 lg:pb-6">
             {/* Header */}
-            <div>
+            <div data-tour="market-discovery-header">
                 <h1 className="text-3xl font-bold text-gray-900">Market Discovery</h1>
                 <p className="text-gray-500 mt-1">
                     Find wholesale suppliers and distributors near you

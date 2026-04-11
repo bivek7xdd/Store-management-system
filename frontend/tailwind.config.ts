@@ -71,6 +71,10 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      spacing: {
+        "4.5": "1.125rem",
+        "13": "3.25rem",
+      },
       keyframes: {
         "accordion-down": {
           from: {
@@ -92,6 +96,11 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      transitionTimingFunction: {
+        "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "out-quart": "cubic-bezier(0.25, 1, 0.5, 1)",
+        "premium": "cubic-bezier(0.21, 0.47, 0.32, 0.98)",
       },
     },
   },
