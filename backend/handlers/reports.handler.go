@@ -359,7 +359,7 @@ func GetReportStats(c *gin.Context) {
 
 	// ── Feature 3: Product Velocity insights ────────────────────────────────────
 	velocityItems, err := utils.Queries.GetProductVelocity(ctx, storeID)
-	if err != nil {
+	if err != nil || velocityItems == nil {
 		velocityItems = []db.GetProductVelocityRow{}
 	}
 

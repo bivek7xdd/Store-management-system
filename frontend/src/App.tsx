@@ -27,6 +27,7 @@ import SupplierDetails from "./pages/SupplierDetails";
 import MarketDiscovery from "./pages/MarketDiscovery";
 import React from "react";
 import LandingPage from "./pages/LandingPage";
+import Settings from "./pages/Settings";
 import DevOfflineHandler from "./components/DevOfflineHandler";
 import { WalkthroughProvider } from "./contexts/WalkthroughContext";
 
@@ -185,6 +186,13 @@ const App = () => {
                         <ProtectedRoute>
                           <Layout>
                             <MarketDiscovery />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/settings" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Settings />
                           </Layout>
                         </ProtectedRoute>
                       } />

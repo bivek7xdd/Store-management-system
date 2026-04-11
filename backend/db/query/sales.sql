@@ -5,9 +5,10 @@ INSERT INTO sales (
     discount_applied,
     receipt_url,
     store_id,
-    customer_id
+    customer_id,
+    sale_date
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING *;
 
@@ -47,3 +48,7 @@ SELECT si.id, si.sale_id, si.product_id, si.quantity, si.unit_price::float as un
 FROM sale_items si
 JOIN products p ON si.product_id = p.id
 WHERE si.sale_id = $1;
+-- name: UpdateSaleAmount :exec
+UPDATE sales
+SET total_amount = $1
+WHERE id = $2;

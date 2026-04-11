@@ -96,6 +96,7 @@ type Querier interface {
 	UpdatePasswordByEmail(ctx context.Context, arg UpdatePasswordByEmailParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
+	UpdateSaleAmount(ctx context.Context, arg UpdateSaleAmountParams) error
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)
 	UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerParams) (StoreOwner, error)
 	UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) (Supplier, error)

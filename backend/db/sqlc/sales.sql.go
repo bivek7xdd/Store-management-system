@@ -18,20 +18,22 @@ INSERT INTO sales (
     discount_applied,
     receipt_url,
     store_id,
-    customer_id
+    customer_id,
+    sale_date
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING id, sales_type, total_amount, discount_applied, receipt_url, sale_date, store_id, customer_id
 `
 
 type CreateSaleParams struct {
-	SalesType       SalesTypes     `db:"sales_type" json:"sales_type"`
-	TotalAmount     pgtype.Numeric `db:"total_amount" json:"total_amount"`
-	DiscountApplied pgtype.Numeric `db:"discount_applied" json:"discount_applied"`
-	ReceiptUrl      pgtype.Text    `db:"receipt_url" json:"receipt_url"`
-	StoreID         pgtype.UUID    `db:"store_id" json:"store_id"`
-	CustomerID      pgtype.UUID    `db:"customer_id" json:"customer_id"`
+	SalesType       SalesTypes         `db:"sales_type" json:"sales_type"`
+	TotalAmount     pgtype.Numeric     `db:"total_amount" json:"total_amount"`
+	DiscountApplied pgtype.Numeric     `db:"discount_applied" json:"discount_applied"`
+	ReceiptUrl      pgtype.Text        `db:"receipt_url" json:"receipt_url"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
+	SaleDate        pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
 }
 
 func (q *Queries) CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error) {
@@ -42,6 +44,7 @@ func (q *Queries) CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, e
 		arg.ReceiptUrl,
 		arg.StoreID,
 		arg.CustomerID,
+		arg.SaleDate,
 	)
 	var i Sale
 	err := row.Scan(
@@ -242,4 +245,20 @@ func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSal
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSaleAmount = `-- name: UpdateSaleAmount :exec
+UPDATE sales
+SET total_amount = $1
+WHERE id = $2
+`
+
+type UpdateSaleAmountParams struct {
+	TotalAmount pgtype.Numeric `db:"total_amount" json:"total_amount"`
+	ID          pgtype.UUID    `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateSaleAmount(ctx context.Context, arg UpdateSaleAmountParams) error {
+	_, err := q.db.Exec(ctx, updateSaleAmount, arg.TotalAmount, arg.ID)
+	return err
 }

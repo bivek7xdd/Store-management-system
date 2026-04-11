@@ -46,7 +46,10 @@ func main() {
 		{
 			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
 			protected.POST("/store-info", handlers.CreateStoreInfoHandler)
-
+			protected.GET("/store", handlers.GetStoreInfoHandler)
+			protected.PUT("/profile", handlers.UpdateUserHandler)
+			protected.PUT("/password", handlers.UpdatePasswordHandler)
+			protected.PUT("/store", handlers.UpdateStoreHandler)
 		}
 
 	}

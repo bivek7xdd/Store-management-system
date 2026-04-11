@@ -330,24 +330,32 @@ function VelocityTable({ items }: { items: ReportStats["velocity"] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {items.slice(0, 10).map((item, i) => {
-                const u = urgency(item.estimated_days_to_stockout);
-                return (
-                  <tr key={i} className={cn("transition-colors", u.bg)}>
-                    <td className="px-4 py-3 font-medium">{item.product_name}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{item.stock_quantity}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.avg_daily_sales).toFixed(1)}</td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
-                      {item.estimated_days_to_stockout > 365 ? "365+" : item.estimated_days_to_stockout}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold", u.badge)}>
-                        {u.label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {(items || []).length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground italic">
+                    No velocity data available for this period. 
+                  </td>
+                </tr>
+              ) : (
+                items.slice(0, 10).map((item, i) => {
+                  const u = urgency(item.estimated_days_to_stockout);
+                  return (
+                    <tr key={i} className={cn("transition-colors", u.bg)}>
+                      <td className="px-4 py-3 font-medium">{item.product_name}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{item.stock_quantity}</td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.avg_daily_sales).toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums">
+                        {item.estimated_days_to_stockout > 365 ? "365+" : item.estimated_days_to_stockout}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold", u.badge)}>
+                          {u.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -455,3 +455,169 @@ func ResetPasswordHandler(c *gin.Context) {
 
 	utils.SuccessResponse(c, "Password reset successfully", nil)
 }
+
+/*
+* * * ---------------------------------------------------- Handlers for Account Management (Settings) * * * ----------------------------------------
+*/
+
+type UpdateUserParams struct {
+	Name           string `json:"name"`
+	Phone          string `json:"phone"`
+	ProfilePicture string `json:"profile_picture"`
+}
+
+func UpdateUserHandler(c *gin.Context) {
+	userId, _ := c.Get("user_id")
+	userUUID, ok := userId.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID format", nil)
+		return
+	}
+
+	var req UpdateUserParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	// Validate inputs
+	if offending := utils.ValidateUserInputFields(map[string]string{
+		"name":  req.Name,
+		"phone": req.Phone,
+	}); offending != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid characters in %s", offending), nil)
+		return
+	}
+
+	arg := db.UpdateStoreOwnerParams{
+		ID:             userUUID,
+		Name:           pgtype.Text{String: req.Name, Valid: req.Name != ""},
+		Phone:          pgtype.Text{String: req.Phone, Valid: req.Phone != ""},
+		ProfilePicture: pgtype.Text{String: req.ProfilePicture, Valid: req.ProfilePicture != ""},
+	}
+
+	updatedUser, err := utils.Queries.UpdateStoreOwner(context.Background(), arg)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update profile", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Profile updated successfully", updatedUser)
+}
+
+type UpdatePasswordParams struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
+}
+
+func UpdatePasswordHandler(c *gin.Context) {
+	userId, _ := c.Get("user_id")
+	userUUID, ok := userId.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID format", nil)
+		return
+	}
+
+	var req UpdatePasswordParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	// Get current user to verify password
+	user, err := utils.Queries.GetStoreOwnerById(context.Background(), userUUID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "User not found", err)
+		return
+	}
+
+	// Verify current password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.CurrentPassword))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Incorrect current password", nil)
+		return
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 10)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to hash password", err)
+		return
+	}
+
+	// Update password
+	updateArg := db.UpdateStoreOwnerParams{
+		ID:       userUUID,
+		Password: pgtype.Text{String: string(hashedPassword), Valid: true},
+	}
+
+	_, err = utils.Queries.UpdateStoreOwner(context.Background(), updateArg)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update password", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Password updated successfully", nil)
+}
+
+type UpdateStoreParams struct {
+	Name         string `json:"name"`
+	Address      string `json:"address"`
+	CurrencyCode string `json:"currency_code"`
+}
+
+func UpdateStoreHandler(c *gin.Context) {
+	storeId, _ := c.Get("store_id")
+	storeUUID, ok := storeId.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid store ID format", nil)
+		return
+	}
+
+	var req UpdateStoreParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	// Validate inputs
+	if offending := utils.ValidateUserInputFields(map[string]string{
+		"name":    req.Name,
+		"address": req.Address,
+	}); offending != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid characters in %s", offending), nil)
+		return
+	}
+
+	arg := db.UpdateStoreInfoParams{
+		ID:           storeUUID,
+		Name:         pgtype.Text{String: req.Name, Valid: req.Name != ""},
+		Address:      pgtype.Text{String: req.Address, Valid: req.Address != ""},
+		CurrencyCode: pgtype.Text{String: req.CurrencyCode, Valid: req.CurrencyCode != ""},
+	}
+
+	updatedStore, err := utils.Queries.UpdateStoreInfo(context.Background(), arg)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update store info", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Store info updated successfully", updatedStore)
+}
+
+func GetStoreInfoHandler(c *gin.Context) {
+	storeId, _ := c.Get("store_id")
+	storeUUID, ok := storeId.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid store ID format", nil)
+		return
+	}
+
+	store, err := utils.Queries.GetStoreInfo(context.Background(), storeUUID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "Store not found", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Store fetched successfully", store)
+}

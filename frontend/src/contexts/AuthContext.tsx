@@ -12,6 +12,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone: string;
   store_name: string;
   business_category?: string;
   product_subcategories?: string[];
@@ -24,6 +25,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
+  updateUser: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -132,6 +134,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isAuthenticated: !!token && !!user,
     loading,
+    updateUser: (userData: Partial<User>) => {
+      setUser((prev) => {
+        if (!prev) return null;
+        const newUser = { ...prev, ...userData };
+        localStorage.setItem("user", JSON.stringify(newUser));
+        return newUser;
+      });
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
