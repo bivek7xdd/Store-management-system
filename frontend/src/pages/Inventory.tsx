@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,7 +93,13 @@ export default function Inventory() {
   const [barcodeValue, setBarcodeValue] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoryFilter, stockFilter]);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -309,6 +315,12 @@ export default function Inventory() {
 
     return matchesSearch && matchesCategory && matchesStock;
   });
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handleEditClick = (product: Product) => {
     setEditingProduct(product);
@@ -916,7 +928,7 @@ export default function Inventory() {
       {/* Products Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="inventory-grid">
         {
-          filteredProducts.map((product: Product) => {
+          paginatedProducts.map((product: Product) => {
             const stockQuantity = product.stock_quantity;
             const lowThreshold = getInt32Value(product.low_stock_threshold);
             const isLowStock = stockQuantity < lowThreshold;
@@ -932,7 +944,7 @@ export default function Inventory() {
             const barcode = getTextValue(product.barcode);
 
             return (
-              <Card key={product.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card key={product.id} className="border-0 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -978,7 +990,7 @@ export default function Inventory() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 flex flex-col">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-500">Stock</span>
@@ -988,12 +1000,6 @@ export default function Inventory() {
                       <span className="text-gray-500">Price</span>
                       <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
                     </div>
-                    {marketPrice > 0 && (
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-500">Market Price</span>
-                        <span className="font-medium text-gray-700">रू {marketPrice}</span>
-                      </div>
-                    )}
                     {expiryDate && (
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-500">Expiry</span>
@@ -1009,7 +1015,7 @@ export default function Inventory() {
                       </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="grid grid-cols-2 gap-2 mt-auto pt-4">
                     <Button
                       variant="outline"
                       className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
@@ -1033,6 +1039,30 @@ export default function Inventory() {
           })
         }
       </div >
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="rounded-lg border-gray-200"
+          >
+            Previous
+          </Button>
+          <span className="text-sm font-medium text-gray-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="rounded-lg border-gray-200"
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       {filteredProducts.length === 0 && (
         <Card className="border-0 shadow-sm border-dashed border-2">

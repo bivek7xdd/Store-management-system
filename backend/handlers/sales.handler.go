@@ -111,6 +111,7 @@ func CreateSale(c *gin.Context) {
 		DiscountApplied: discountNum,
 		StoreID:         storeID,
 		CustomerID:      customerID,
+		SaleDate:        pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	}
 
 	var saleItems []db.CreateSaleItemParams
