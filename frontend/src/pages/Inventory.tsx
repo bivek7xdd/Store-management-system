@@ -30,6 +30,12 @@ import {
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
@@ -644,21 +650,77 @@ export default function Inventory() {
             accept=".csv, .xlsx, .xls"
             onChange={handleImport}
           />
-          <Button variant="outline" size="sm" onClick={handleImportClick} className="rounded-lg border-gray-200">
-            <Upload className="mr-2 h-4 w-4" />
-            Import CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport} className="rounded-lg border-gray-200">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleImportClick} 
+                    className="rounded-lg border-gray-200"
+                    disabled={!offlineStatus.isOnline}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import CSV
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!offlineStatus.isOnline && (
+                <TooltipContent>
+                  <p>Import requires internet connection</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleExport} 
+                    className="rounded-lg border-gray-200"
+                    disabled={!offlineStatus.isOnline}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!offlineStatus.isOnline && (
+                <TooltipContent>
+                  <p>Export requires internet connection</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      className="rounded-lg" 
+                      style={{ background: colors.primaryDark }}
+                      disabled={!offlineStatus.isOnline}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Product
+                    </Button>
+                  </DialogTrigger>
+                </span>
+              </TooltipTrigger>
+              {!offlineStatus.isOnline && (
+                <TooltipContent>
+                  <p>Adding products requires internet connection</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
           <Dialog open={addDialogOpen} onOpenChange={handleDialogChange}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="rounded-lg" style={{ background: colors.primaryDark }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Product
-              </Button>
-            </DialogTrigger>
             <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold">
@@ -1068,22 +1130,50 @@ export default function Inventory() {
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-2 mt-auto pt-4">
-                    <Button
-                      variant="outline"
-                      className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
-                      onClick={() => handleEditClick(product)}
-                    >
-                      <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="rounded-lg border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
-                      onClick={() => handleDeleteClick(product)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              variant="outline"
+                              className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
+                              onClick={() => handleEditClick(product)}
+                              disabled={!offlineStatus.isOnline}
+                            >
+                              <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
+                              Edit
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!offlineStatus.isOnline && (
+                          <TooltipContent>
+                            <p>Editing products requires internet connection</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              variant="outline"
+                              className="rounded-lg border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
+                              onClick={() => handleDeleteClick(product)}
+                              disabled={!offlineStatus.isOnline}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!offlineStatus.isOnline && (
+                          <TooltipContent>
+                            <p>Deleting products requires internet connection</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </CardContent>
               </Card>
