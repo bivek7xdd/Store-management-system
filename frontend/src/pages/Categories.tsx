@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
+import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Plus, FolderOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, FolderOpen, MoreVertical, Pencil, Trash2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryDialog } from "@/components/CreateInventoryDialogs";
 import { CategorySkeleton } from "@/components/CategorySkeleton";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { OfflineStatus } from "@/types";
+import { toast } from "sonner";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,11 +27,25 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "@/components/ui/use-toast";
+
 export default function Categories() {
     const { isAuthenticated, loading: authLoading } = useAuth();
     const queryClient = useQueryClient();
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+    const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
+
+    // Initialize sync service and listen for status changes
+    useEffect(() => {
+        const cleanup = syncService.init();
+        const unsubscribe = syncService.onStatusChange((status) => {
+            setOfflineStatus(status);
+        });
+
+        return () => {
+            cleanup();
+            unsubscribe();
+        };
+    }, []);
 
     const { data: categories, isLoading, error } = useQuery({
         queryKey: ["categories"],
@@ -40,18 +58,11 @@ export default function Categories() {
         try {
             await inventoryService.deleteCategory(categoryToDelete);
             await queryClient.invalidateQueries({ queryKey: ["categories"] });
-            toast({
-                title: "Category Deleted",
-                description: "Category has been successfully deleted.",
-            });
+            toast.success("Category deleted successfully");
         } catch (error: any) {
             console.error("Failed to delete category", error);
             const message = error?.response?.data?.message || "Failed to delete category.";
-            toast({
-                variant: 'destructive',
-                title: "Cannot Delete Category",
-                description: message,
-            });
+            toast.error(message);
         } finally {
             setCategoryToDelete(null);
         }
@@ -97,13 +108,40 @@ export default function Categories() {
                     <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
                     <p className="text-gray-500 mt-1">Manage your product categories</p>
                 </div>
-                <CategoryDialog>
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Category
-                    </Button>
-                </CategoryDialog>
+                <div className="flex items-center gap-4">
+                    {/* Offline Status Indicator */}
+                    <OfflineIndicator
+                        isOnline={offlineStatus.isOnline}
+                        pendingSales={offlineStatus.pendingSales}
+                        pendingCategories={offlineStatus.pendingCategories}
+                        pendingSuppliers={offlineStatus.pendingSuppliers}
+                        isSyncing={offlineStatus.isSyncing}
+                        syncError={offlineStatus.syncError}
+                        lastSyncTime={offlineStatus.lastSyncTime}
+                    />
+                    <CategoryDialog>
+                        <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Category
+                        </Button>
+                    </CategoryDialog>
+                </div>
             </div>
+
+            {/* Offline Mode Banner */}
+            {!offlineStatus.isOnline && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
+                    <WifiOff className="h-5 w-5 text-orange-600" />
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-orange-800">
+                            Working offline
+                        </p>
+                        <p className="text-xs text-orange-600">
+                            Changes will be saved locally and synced when connection is restored.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Existing Categories Grid */}
             <div className="space-y-4">

@@ -1,6 +1,7 @@
 import { db } from '../db/db';
 import api from './api';
 import { OfflineStatus, SyncProgress } from '../types';
+import { Category, Supplier } from '../types';
 
 // Check if user is authenticated before attempting sync
 const isAuthenticated = (): boolean => {
@@ -21,6 +22,8 @@ const syncEvents = new SyncEventEmitter();
 let syncStatus: OfflineStatus = {
   isOnline: navigator.onLine,
   pendingSales: 0,
+  pendingCategories: 0,
+  pendingSuppliers: 0,
   lastSyncTime: null,
   isSyncing: false,
   syncError: null,
@@ -54,6 +57,26 @@ const updatePendingSalesCount = async () => {
     updateSyncStatus({ pendingSales: count });
   } catch (error) {
     console.error('Failed to count pending sales:', error);
+  }
+};
+
+// Get pending categories count
+const updatePendingCategoriesCount = async () => {
+  try {
+    const count = await db.categories.where('synced').notEqual(1).count();
+    updateSyncStatus({ pendingCategories: count });
+  } catch (error) {
+    console.error('Failed to count pending categories:', error);
+  }
+};
+
+// Get pending suppliers count
+const updatePendingSuppliersCount = async () => {
+  try {
+    const count = await db.suppliers.where('synced').notEqual(1).count();
+    updateSyncStatus({ pendingSuppliers: count });
+  } catch (error) {
+    console.error('Failed to count pending suppliers:', error);
   }
 };
 
@@ -261,6 +284,180 @@ export const syncService = {
     }
   },
 
+  syncCategories: async (retryAttempt = 0): Promise<boolean> => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
+    if (!navigator.onLine) {
+      console.log('Offline: Skipping category sync');
+      return false;
+    }
+
+    try {
+      const unsyncedCategories = await db.categories.where('synced').notEqual(1).toArray();
+
+      if (unsyncedCategories.length === 0) {
+        console.log('No unsynced categories found');
+        return true;
+      }
+
+      console.log(`Syncing ${unsyncedCategories.length} categories...`);
+
+      let syncedCount = 0;
+      const errors: string[] = [];
+
+      for (const category of unsyncedCategories) {
+        try {
+          // Handle deletion (synced = -1)
+          if (category.synced === -1) {
+            if (!category.id.startsWith('temp-cat-')) {
+              await api.delete(`categories?category_id=${category.id}`);
+            }
+            await db.categories.delete(category.id);
+            syncedCount++;
+            continue;
+          }
+
+          // Handle create or update
+          const payload = {
+            name: category.name,
+            description: category.description,
+          };
+
+          if (category.id.startsWith('temp-cat-')) {
+            // Create new category
+            const response = await api.post('categories/create', payload);
+            const createdCategory = response.data?.data || response.data;
+            
+            if (createdCategory && createdCategory.id) {
+              await db.categories.delete(category.id);
+              await db.categories.put({ ...createdCategory, synced: 1 });
+            }
+          } else {
+            // Update existing category
+            const response = await api.put(`categories/${category.id}`, payload);
+            const updatedCategory = response.data?.data || response.data;
+            await db.categories.put({ ...updatedCategory, synced: 1 });
+          }
+
+          syncedCount++;
+        } catch (error: any) {
+          const errorMsg = `Failed to sync category ${category.id}: ${error.message}`;
+          console.warn(errorMsg);
+          errors.push(errorMsg);
+        }
+      }
+
+      const success = errors.length === 0;
+      console.log(`Category sync completed: ${syncedCount}/${unsyncedCategories.length} successful`);
+      
+      await updatePendingCategoriesCount();
+      return success;
+    } catch (error) {
+      console.error('Category sync failed:', error);
+
+      // Implement retry logic
+      if (retryAttempt < RETRY_CONFIG.maxRetries) {
+        const retryDelay = calculateRetryDelay(retryAttempt);
+        console.log(`Retrying category sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
+
+        await delay(retryDelay);
+        return syncService.syncCategories(retryAttempt + 1);
+      }
+
+      return false;
+    }
+  },
+
+  syncSuppliers: async (retryAttempt = 0): Promise<boolean> => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
+    if (!navigator.onLine) {
+      console.log('Offline: Skipping supplier sync');
+      return false;
+    }
+
+    try {
+      const unsyncedSuppliers = await db.suppliers.where('synced').notEqual(1).toArray();
+
+      if (unsyncedSuppliers.length === 0) {
+        console.log('No unsynced suppliers found');
+        return true;
+      }
+
+      console.log(`Syncing ${unsyncedSuppliers.length} suppliers...`);
+
+      let syncedCount = 0;
+      const errors: string[] = [];
+
+      for (const supplier of unsyncedSuppliers) {
+        try {
+          // Handle deletion (synced = -1)
+          if (supplier.synced === -1) {
+            if (!supplier.id.startsWith('temp-sup-')) {
+              await api.delete(`suppliers/${supplier.id}`);
+            }
+            await db.suppliers.delete(supplier.id);
+            syncedCount++;
+            continue;
+          }
+
+          // Handle create or update
+          const payload = {
+            name: supplier.name,
+            address: supplier.address,
+            phone_number: supplier.phone_number,
+            email: supplier.email,
+          };
+
+          if (supplier.id.startsWith('temp-sup-')) {
+            // Create new supplier
+            const response = await api.post('suppliers/create', payload);
+            const createdSupplier = response.data?.data || response.data;
+            
+            if (createdSupplier && createdSupplier.id) {
+              await db.suppliers.delete(supplier.id);
+              await db.suppliers.put({ ...createdSupplier, synced: 1 });
+            }
+          } else {
+            // Update existing supplier
+            const response = await api.put(`suppliers/${supplier.id}`, payload);
+            const updatedSupplier = response.data?.data || response.data;
+            await db.suppliers.put({ ...updatedSupplier, synced: 1 });
+          }
+
+          syncedCount++;
+        } catch (error: any) {
+          const errorMsg = `Failed to sync supplier ${supplier.id}: ${error.message}`;
+          console.warn(errorMsg);
+          errors.push(errorMsg);
+        }
+      }
+
+      const success = errors.length === 0;
+      console.log(`Supplier sync completed: ${syncedCount}/${unsyncedSuppliers.length} successful`);
+      
+      await updatePendingSuppliersCount();
+      return success;
+    } catch (error) {
+      console.error('Supplier sync failed:', error);
+
+      // Implement retry logic
+      if (retryAttempt < RETRY_CONFIG.maxRetries) {
+        const retryDelay = calculateRetryDelay(retryAttempt);
+        console.log(`Retrying supplier sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
+
+        await delay(retryDelay);
+        return syncService.syncSuppliers(retryAttempt + 1);
+      }
+
+      return false;
+    }
+  },
+
   // Manual sync trigger
   triggerSync: async (): Promise<boolean> => {
     if (!isAuthenticated()) {
@@ -273,9 +470,11 @@ export const syncService = {
     }
 
     const salesSuccess = await syncService.syncSales();
+    const categoriesSuccess = await syncService.syncCategories();
+    const suppliersSuccess = await syncService.syncSuppliers();
     const productsSuccess = await syncService.syncProducts();
 
-    return salesSuccess && productsSuccess;
+    return salesSuccess && categoriesSuccess && suppliersSuccess && productsSuccess;
   },
 
   // Initialize sync service
@@ -305,8 +504,10 @@ export const syncService = {
     // Initial status setup
     updateSyncStatus({ isOnline: navigator.onLine });
 
-    // Update pending sales count on init
+    // Update pending counts on init
     updatePendingSalesCount();
+    updatePendingCategoriesCount();
+    updatePendingSuppliersCount();
 
     // Initial sync check on load if online and authenticated
     if (navigator.onLine && isAuthenticated()) {
@@ -320,6 +521,10 @@ export const syncService = {
     };
   },
 
-  // Update pending sales count (useful after creating offline sales)
-  updatePendingSalesCount,
+  // Update pending counts (useful after creating offline items)
+  updatePendingCounts: async () => {
+    await updatePendingSalesCount();
+    await updatePendingCategoriesCount();
+    await updatePendingSuppliersCount();
+  },
 };

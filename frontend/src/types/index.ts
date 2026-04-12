@@ -59,6 +59,9 @@ export interface Category {
   name: string;
   description: string;
   store_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  synced?: number; // 0 = not synced, 1 = synced
 }
 
 export interface Supplier {
@@ -70,11 +73,16 @@ export interface Supplier {
   store_id?: string;
   product_count?: number;
   low_stock_count?: number;
+  created_at?: string;
+  updated_at?: string;
+  synced?: number; // 0 = not synced, 1 = synced
 }
 
 export interface OfflineStatus {
   isOnline: boolean;
   pendingSales: number;
+  pendingCategories: number;
+  pendingSuppliers: number;
   lastSyncTime: Date | null;
   isSyncing: boolean;
   syncError: string | null;

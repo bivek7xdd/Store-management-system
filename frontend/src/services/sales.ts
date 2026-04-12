@@ -8,8 +8,8 @@ export interface SaleItemReq {
     product_id: string;
     quantity: number;
     unit_price: number;
-    total_price: number; // Added total_price to match db schema
-    product_name: string; // Added product_name to match db schema
+    total_price: number;
+    product_name: string;
 }
 
 export interface CreateSaleData {
@@ -115,20 +115,11 @@ export const salesService = {
     },
 
     getSales: async () => {
-        // For offline first, we should return local sales?
-        // Or hybrid?
-        // If we want a full history, we need to sync server -> local.
-        // For now, let's try getting from API if online, else local.
+
         try {
             if (navigator.onLine) {
                 const response = await api.get('sales');
-                // Ideally, we would cache these too.
-                // But `sales` table in Dexie might conflict with server IDs if not careful (using ++id).
-                // Strategy: Use Dexie mainly for unsynced sales queue, and API for history.
-                // Or: Separate table for history?
-                // Given the instructions, the priority is "handle inventory and POS logic when internet is down".
-                // Reading PAST sales history offline might be secondary.
-                // Let's return API data if online.
+            
                 return response.data.data;
             }
             // Offline: Return only local unsynced sales? Or all local sales?

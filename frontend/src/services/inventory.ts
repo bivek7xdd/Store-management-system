@@ -53,19 +53,38 @@ export const inventoryService = {
     },
 
     createCategory: async (data: Omit<Category, 'id' | 'store_id'>) => {
-        const response = await api.post<{ data: Category }>('categories/create', data);
+        // Offline-first: Save locally first
+        const tempId = `temp-cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const localCategory: Category = {
+            id: tempId,
+            ...data,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            synced: 0
+        };
+        
+        await db.categories.put(localCategory);
 
-        // Handle both standard response structure (data) and potential non-standard ones
-        // @ts-ignore - Handle fallback for different response structures
-        const createdCategory = response.data.data || response.data.category || response.data;
-
-        if (!createdCategory || !createdCategory.id) {
-            console.error('[Inventory] Invalid category response:', response.data);
-            throw new Error('Created category invalid or missing ID');
+        // If online, sync immediately
+        if (isOnline()) {
+            try {
+                const response = await api.post('categories/create', data);
+                // @ts-ignore - Handle various response structures
+                const createdCategory = response.data?.data || response.data?.category || response.data;
+                
+                if (createdCategory && createdCategory.id) {
+                    // Replace temp ID with server ID
+                    await db.categories.delete(tempId);
+                    await db.categories.put({ ...createdCategory, synced: 1 });
+                    return createdCategory;
+                }
+            } catch (error) {
+                console.warn('[Inventory] Failed to sync category, keeping local', error);
+                // Keep local version with synced=0
+            }
         }
 
-        await db.categories.put(createdCategory);
-        return createdCategory;
+        return localCategory;
     },
 
     getCategory: async (id: string) => {
@@ -121,14 +140,58 @@ export const inventoryService = {
     },
 
     updateCategory: async (id: string, data: Partial<Omit<Category, 'id' | 'store_id'>>) => {
-        const response = await api.put<{ data: Category }>(`categories/${id}`, data);
-        const updatedCategory = response.data.data;
-        await db.categories.put(updatedCategory);
+        // Check if this is a temp/offline category
+        const existing = await db.categories.get(id);
+        
+        if (existing && id.startsWith('temp-cat-')) {
+            // Still a temp category, just update locally
+            const updated = { ...existing, ...data, updated_at: new Date().toISOString(), synced: 0 };
+            await db.categories.put(updated);
+            return updated;
+        }
+
+        // If offline, update locally and mark as needing sync
+        if (!isOnline()) {
+            if (existing) {
+                const updated = { ...existing, ...data, updated_at: new Date().toISOString(), synced: 0 };
+                await db.categories.put(updated);
+                return updated;
+            }
+            throw new Error('Category not found locally');
+        }
+
+        // Online: update on server
+        const response = await api.put(`categories/${id}`, data);
+        // @ts-ignore - Handle response structure
+        const updatedCategory = response.data?.data || response.data;
+        await db.categories.put({ ...updatedCategory, synced: 1 });
         return updatedCategory;
     },
 
     deleteCategory: async (id: string) => {
-        await api.delete(`categories?category_id=${id}`);
+        // Check if this is a temp/offline category
+        if (id.startsWith('temp-cat-')) {
+            // Just delete locally
+            await db.categories.delete(id);
+            return;
+        }
+
+        // If offline, mark as deleted locally (soft delete with flag)
+        if (!isOnline()) {
+            const existing = await db.categories.get(id);
+            if (existing) {
+                // Mark for deletion by setting a flag
+                await db.categories.put({ ...existing, synced: -1 }); // -1 = marked for deletion
+            }
+            return;
+        }
+
+        // Online: delete from server
+        try {
+            await api.delete(`categories?category_id=${id}`);
+        } catch (error) {
+            console.warn('[Inventory] Failed to delete category on server', error);
+        }
         await db.categories.delete(id);
     },
 
@@ -149,20 +212,93 @@ export const inventoryService = {
     },
 
     createSupplier: async (data: Omit<Supplier, 'id' | 'store_id'>) => {
-        const response = await api.post<{ data: Supplier }>('suppliers/create', data);
-        await db.suppliers.put(response.data.data);
-        return response.data.data;
+        // Offline-first: Save locally first
+        const tempId = `temp-sup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const localSupplier: Supplier = {
+            id: tempId,
+            ...data,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            synced: 0
+        };
+        
+        await db.suppliers.put(localSupplier);
+
+        // If online, sync immediately
+        if (isOnline()) {
+            try {
+                const response = await api.post('suppliers/create', data);
+                // @ts-ignore - Handle various response structures
+                const createdSupplier = response.data?.data || response.data;
+                
+                if (createdSupplier && createdSupplier.id) {
+                    // Replace temp ID with server ID
+                    await db.suppliers.delete(tempId);
+                    await db.suppliers.put({ ...createdSupplier, synced: 1 });
+                    return createdSupplier;
+                }
+            } catch (error) {
+                console.warn('[Inventory] Failed to sync supplier, keeping local', error);
+                // Keep local version with synced=0
+            }
+        }
+
+        return localSupplier;
     },
 
     updateSupplier: async (id: string, data: Partial<Omit<Supplier, 'id' | 'store_id'>>) => {
-        const response = await api.put<{ data: Supplier }>(`suppliers/${id}`, data);
-        const updatedSupplier = response.data.data;
-        await db.suppliers.put(updatedSupplier);
+        // Check if this is a temp/offline supplier
+        const existing = await db.suppliers.get(id);
+        
+        if (existing && id.startsWith('temp-sup-')) {
+            // Still a temp supplier, just update locally
+            const updated = { ...existing, ...data, updated_at: new Date().toISOString(), synced: 0 };
+            await db.suppliers.put(updated);
+            return updated;
+        }
+
+        // If offline, update locally and mark as needing sync
+        if (!isOnline()) {
+            if (existing) {
+                const updated = { ...existing, ...data, updated_at: new Date().toISOString(), synced: 0 };
+                await db.suppliers.put(updated);
+                return updated;
+            }
+            throw new Error('Supplier not found locally');
+        }
+
+        // Online: update on server
+        const response = await api.put(`suppliers/${id}`, data);
+        // @ts-ignore - Handle response structure
+        const updatedSupplier = response.data?.data || response.data;
+        await db.suppliers.put({ ...updatedSupplier, synced: 1 });
         return updatedSupplier;
     },
 
     deleteSupplier: async (id: string) => {
-        await api.delete(`suppliers/${id}`);
+        // Check if this is a temp/offline supplier
+        if (id.startsWith('temp-sup-')) {
+            // Just delete locally
+            await db.suppliers.delete(id);
+            return;
+        }
+
+        // If offline, mark as deleted locally (soft delete with flag)
+        if (!isOnline()) {
+            const existing = await db.suppliers.get(id);
+            if (existing) {
+                // Mark for deletion by setting a flag
+                await db.suppliers.put({ ...existing, synced: -1 }); // -1 = marked for deletion
+            }
+            return;
+        }
+
+        // Online: delete from server
+        try {
+            await api.delete(`suppliers/${id}`);
+        } catch (error) {
+            console.warn('[Inventory] Failed to delete supplier on server', error);
+        }
         await db.suppliers.delete(id);
     },
 

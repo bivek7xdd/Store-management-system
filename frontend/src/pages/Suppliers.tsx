@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
+import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Plus, Truck, ChevronRight, Phone, Mail, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, Truck, ChevronRight, Phone, Mail, MoreHorizontal, Pencil, Trash2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SupplierDialog } from "@/components/CreateInventoryDialogs";
 import { SupplierSkeleton } from "@/components/SupplierSkeleton";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { OfflineStatus } from "@/types";
+import { toast } from "sonner";
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,16 +27,26 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner"; // Assuming sonner is used as in other files
-// If use-toast is used, import that instead. The refactored SupplierDialog uses sonner.
-// Checking CategoryDetails.tsx, it uses use-toast. But CreateInventoryDialogs uses sonner.
-// Ideally consistent. I'll stick to sonner for now as per SupplierDialog.
 
 export default function Suppliers() {
     const { isAuthenticated, loading: authLoading } = useAuth();
     const queryClient = useQueryClient();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [supplierToDelete, setSupplierToDelete] = useState<string | null>(null);
+    const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
+
+    // Initialize sync service and listen for status changes
+    useEffect(() => {
+        const cleanup = syncService.init();
+        const unsubscribe = syncService.onStatusChange((status) => {
+            setOfflineStatus(status);
+        });
+
+        return () => {
+            cleanup();
+            unsubscribe();
+        };
+    }, []);
 
     const { data: suppliers, isLoading, error } = useQuery({
         queryKey: ["suppliers"],
@@ -94,13 +109,40 @@ export default function Suppliers() {
                     <h1 className="text-2xl font-bold text-gray-900">Suppliers</h1>
                     <p className="text-gray-500 mt-1">Manage your product suppliers</p>
                 </div>
-                <SupplierDialog onSuccess={() => queryClient.invalidateQueries({ queryKey: ["suppliers"] })}>
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Supplier
-                    </Button>
-                </SupplierDialog>
+                <div className="flex items-center gap-4">
+                    {/* Offline Status Indicator */}
+                    <OfflineIndicator
+                        isOnline={offlineStatus.isOnline}
+                        pendingSales={offlineStatus.pendingSales}
+                        pendingCategories={offlineStatus.pendingCategories}
+                        pendingSuppliers={offlineStatus.pendingSuppliers}
+                        isSyncing={offlineStatus.isSyncing}
+                        syncError={offlineStatus.syncError}
+                        lastSyncTime={offlineStatus.lastSyncTime}
+                    />
+                    <SupplierDialog onSuccess={() => queryClient.invalidateQueries({ queryKey: ["suppliers"] })}>
+                        <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Supplier
+                        </Button>
+                    </SupplierDialog>
+                </div>
             </div>
+
+            {/* Offline Mode Banner */}
+            {!offlineStatus.isOnline && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
+                    <WifiOff className="h-5 w-5 text-orange-600" />
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-orange-800">
+                            Working offline
+                        </p>
+                        <p className="text-xs text-orange-600">
+                            Changes will be saved locally and synced when connection is restored.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Suppliers Grid */}
             {suppliers && suppliers.length > 0 ? (

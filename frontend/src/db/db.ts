@@ -47,10 +47,10 @@ export class StoreDatabase extends Dexie {
     debts!: Table<Debt, string>;
     constructor() {
         super('store-manager-db');
-        this.version(6).stores({
+        this.version(7).stores({
             products: 'id, name, barcode, category_id', // frequently queried fields
-            categories: 'id, name',
-            suppliers: 'id, name',
+            categories: 'id, name, synced',
+            suppliers: 'id, name, synced',
             sales: '++id, offlineId, synced, sale_date, customer_id',
             customers: 'id, name, phone',
             notifications: 'id, reference_id, type, status, created_at',
