@@ -696,31 +696,31 @@ export default function Inventory() {
               )}
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <DialogTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      className="rounded-lg" 
-                      style={{ background: colors.primaryDark }}
-                      disabled={!offlineStatus.isOnline}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Product
-                    </Button>
-                  </DialogTrigger>
-                </span>
-              </TooltipTrigger>
-              {!offlineStatus.isOnline && (
-                <TooltipContent>
-                  <p>Adding products requires internet connection</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
           <Dialog open={addDialogOpen} onOpenChange={handleDialogChange}>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        className="rounded-lg" 
+                        style={{ background: colors.primaryDark }}
+                        disabled={!offlineStatus.isOnline}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Product
+                      </Button>
+                    </DialogTrigger>
+                  </span>
+                </TooltipTrigger>
+                {!offlineStatus.isOnline && (
+                  <TooltipContent>
+                    <p>Adding products requires internet connection</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
             <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold">
