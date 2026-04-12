@@ -22,6 +22,7 @@ const syncEvents = new SyncEventEmitter();
 let syncStatus: OfflineStatus = {
   isOnline: navigator.onLine,
   pendingSales: 0,
+  pendingProducts: 0,
   pendingCategories: 0,
   pendingSuppliers: 0,
   lastSyncTime: null,
@@ -57,6 +58,16 @@ const updatePendingSalesCount = async () => {
     updateSyncStatus({ pendingSales: count });
   } catch (error) {
     console.error('Failed to count pending sales:', error);
+  }
+};
+
+// Get pending products count
+const updatePendingProductsCount = async () => {
+  try {
+    const count = await db.products.where('synced').notEqual(1).count();
+    updateSyncStatus({ pendingProducts: count });
+  } catch (error) {
+    console.error('Failed to count pending products:', error);
   }
 };
 
@@ -258,13 +269,71 @@ export const syncService = {
     }
 
     try {
-      console.log('Syncing products for offline use...');
+      // First, upload any locally modified products
+      const unsyncedProducts = await db.products.where('synced').notEqual(1).toArray();
+      
+      if (unsyncedProducts.length > 0) {
+        console.log(`Syncing ${unsyncedProducts.length} local products to server...`);
+        
+        for (const product of unsyncedProducts) {
+          try {
+            // Handle deletion (synced = -1)
+            if ((product as any).synced === -1) {
+              if (!product.id.startsWith('temp-')) {
+                await api.delete(`products/${product.id}`);
+              }
+              await db.products.delete(product.id);
+              continue;
+            }
+
+            // Handle create or update
+            const payload = {
+              name: product.name,
+              price: product.price,
+              stock_quantity: product.stock_quantity,
+              category_id: product.category_id,
+              supplier_id: product.supplier_id,
+              barcode: product.barcode,
+              cost_price: product.cost_price,
+              market_price: product.market_price,
+              low_stock_threshold: product.low_stock_threshold,
+              expires_at: product.expires_at,
+              status: product.status,
+              image_url: product.image_url,
+              is_tracked: product.is_tracked,
+            };
+
+            if (product.id.startsWith('temp-')) {
+              // Create new product
+              const response = await api.post('products/create', payload);
+              const createdProduct = response.data?.data || response.data;
+              
+              if (createdProduct && createdProduct.id) {
+                await db.products.delete(product.id);
+                await db.products.put({ ...createdProduct, synced: 1 });
+              }
+            } else {
+              // Update existing product
+              const response = await api.put(`products/${product.id}`, payload);
+              const updatedProduct = response.data?.data || response.data;
+              await db.products.put({ ...updatedProduct, synced: 1 });
+            }
+          } catch (error: any) {
+            console.warn(`Failed to sync product ${product.id}:`, error.message);
+          }
+        }
+      }
+
+      // Then, download latest products from server
+      console.log('Syncing products from server for offline use...');
       const response = await api.get('products?limit=1000');
       const products = response.data.data || [];
 
       if (products.length > 0) {
-        await db.products.bulkPut(products);
-        console.log(`Cached ${products.length} products`);
+        // Mark all server products as synced
+        const syncedProducts = products.map(p => ({ ...p, synced: 1 }));
+        await db.products.bulkPut(syncedProducts);
+        console.log(`Cached ${products.length} products from server`);
       }
 
       return true;
@@ -506,6 +575,7 @@ export const syncService = {
 
     // Update pending counts on init
     updatePendingSalesCount();
+    updatePendingProductsCount();
     updatePendingCategoriesCount();
     updatePendingSuppliersCount();
 
@@ -524,6 +594,7 @@ export const syncService = {
   // Update pending counts (useful after creating offline items)
   updatePendingCounts: async () => {
     await updatePendingSalesCount();
+    await updatePendingProductsCount();
     await updatePendingCategoriesCount();
     await updatePendingSuppliersCount();
   },

@@ -6,6 +6,7 @@ import { Wifi, WifiOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 export interface OfflineIndicatorProps {
   isOnline: boolean;
   pendingSales: number;
+  pendingProducts?: number;
   pendingCategories?: number;
   pendingSuppliers?: number;
   isSyncing: boolean;
@@ -17,6 +18,7 @@ export interface OfflineIndicatorProps {
 export function OfflineIndicator({
   isOnline,
   pendingSales,
+  pendingProducts = 0,
   pendingCategories = 0,
   pendingSuppliers = 0,
   isSyncing,
@@ -75,13 +77,14 @@ export function OfflineIndicator({
       </Badge>
 
       {/* Pending Items Counter */}
-      {(pendingSales > 0 || pendingCategories > 0 || pendingSuppliers > 0) && (
+      {(pendingSales > 0 || pendingProducts > 0 || pendingCategories > 0 || pendingSuppliers > 0) && (
         <Badge 
           variant="secondary"
           className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border-blue-200"
         >
           <span className="text-xs font-medium">
             {pendingSales} sale{pendingSales !== 1 ? 's' : ''}
+            {pendingProducts > 0 && `, ${pendingProducts} product${pendingProducts !== 1 ? 's' : ''}`}
             {pendingCategories > 0 && `, ${pendingCategories} categor${pendingCategories !== 1 ? 'ies' : 'y'}`}
             {pendingSuppliers > 0 && `, ${pendingSuppliers} supplier${pendingSuppliers !== 1 ? 's' : ''}`}
           </span>

@@ -16,6 +16,7 @@ export interface Product {
   is_tracked?: boolean;
   created_at: { Time: string; Valid: boolean };
   updated_at: { Time: string; Valid: boolean };
+  synced?: number; // 0 = not synced, 1 = synced, -1 = marked for deletion
 }
 
 export interface Sale {
@@ -81,6 +82,7 @@ export interface Supplier {
 export interface OfflineStatus {
   isOnline: boolean;
   pendingSales: number;
+  pendingProducts: number;
   pendingCategories: number;
   pendingSuppliers: number;
   lastSyncTime: Date | null;

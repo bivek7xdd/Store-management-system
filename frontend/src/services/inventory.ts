@@ -420,34 +420,76 @@ export const inventoryService = {
                 store_id: 'temp',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
+                synced: 0, // Mark as needing sync
                 ...data
             } as unknown as Product;
             await db.products.put(tempProduct);
             return tempProduct;
         }
         
-        // Direct API call.
-        const response = await api.post<{ data: Product }>('products/create', data);
-        await db.products.put(response.data.data);
-        return response.data.data;
+        try {
+            // Direct API call.
+            const response = await api.post('products/create', data);
+            const createdProduct = response.data?.data || response.data;
+            await db.products.put({ ...createdProduct, synced: 1 });
+            return createdProduct;
+        } catch (error) {
+            console.warn('[Inventory] Failed to create product on server, saving locally', error);
+            // If server creation fails, save locally with synced=0
+            const tempProduct = {
+                id: `temp-${Date.now()}`,
+                store_id: 'temp',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                synced: 0,
+                ...data
+            } as unknown as Product;
+            await db.products.put(tempProduct);
+            return tempProduct;
+        }
     },
 
     updateProduct: async (id: string, data: UpdateProductData) => {
         console.log('[Inventory] updateProduct called, id:', id);
         
+        // Check if this is a temp/offline product
+        const existing = await db.products.get(id);
+        
+        if (existing && id.startsWith('temp-')) {
+            // Still a temp product, just update locally
+            const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as unknown as Product;
+            await db.products.put(updated);
+            return updated;
+        }
+
+        // If offline, update locally and mark as needing sync
         if (!isOnline()) {
-            const existing = await db.products.get(id);
             if (existing) {
-                const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as unknown as Product;
+                const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as any;
+                updated.synced = 0; // Mark as needing sync
                 await db.products.put(updated);
                 return updated;
             }
             throw new Error('Offline and product not found locally');
         }
 
-        const response = await api.put<{ data: Product }>(`products/${id}`, data);
-        await db.products.put(response.data.data);
-        return response.data.data;
+        // Online: update on server
+        try {
+            const response = await api.put(`products/${id}`, data);
+            const updatedProduct = response.data?.data || response.data;
+            await db.products.put({ ...updatedProduct, synced: 1 });
+            return updatedProduct;
+        } catch (error) {
+            console.warn('[Inventory] Failed to update product on server, saving locally', error);
+            // If server update fails, save locally with synced=0
+            if (existing) {
+                const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as any;
+                updated.synced = 0;
+                await db.products.put(updated);
+                return updated;
+            }
+            throw error;
+        }
     },
 
     deleteProduct: async (id: string) => {

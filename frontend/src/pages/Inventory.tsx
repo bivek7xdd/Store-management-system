@@ -30,16 +30,18 @@ import {
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan } from "lucide-react";
+import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, CreateProductData, UpdateProductData } from "@/services/inventory";
+import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
-import { Product, Category } from "@/types";
+import { Product, Category, OfflineStatus } from "@/types";
 import { ProductSkeleton } from "@/components/ProductSkeleton";
 import { PremiumEmptyState } from "@/components/PremiumEmptyState";
 import { FeatureTooltip } from "@/components/FeatureTooltip";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 const colors = {
   primary: "#0d9488",
@@ -94,8 +96,22 @@ export default function Inventory() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
   const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize sync service and listen for status changes
+  useEffect(() => {
+    const cleanup = syncService.init();
+    const unsubscribe = syncService.onStatusChange((status) => {
+      setOfflineStatus(status);
+    });
+
+    return () => {
+      cleanup();
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -605,7 +621,18 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
           <p className="text-gray-500 mt-1">Manage your products and stock levels</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {/* Offline Status Indicator */}
+          <OfflineIndicator
+            isOnline={offlineStatus.isOnline}
+            pendingSales={offlineStatus.pendingSales}
+            pendingProducts={offlineStatus.pendingProducts}
+            pendingCategories={offlineStatus.pendingCategories}
+            pendingSuppliers={offlineStatus.pendingSuppliers}
+            isSyncing={offlineStatus.isSyncing}
+            syncError={offlineStatus.syncError}
+            lastSyncTime={offlineStatus.lastSyncTime}
+          />
           <input
             type="file"
             ref={fileInputRef}
@@ -782,7 +809,13 @@ export default function Inventory() {
                   style={{ background: colors.primaryDark }}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? (editingProduct ? "Updating..." : "Adding...") : (editingProduct ? "Update Product" : "Add Product")}
+                  {isSubmitting ? (
+                    editingProduct ? "Updating..." : "Adding..."
+                  ) : !offlineStatus.isOnline ? (
+                    editingProduct ? "Save Offline" : "Add Offline"
+                  ) : (
+                    editingProduct ? "Update Product" : "Add Product"
+                  )}
                 </Button>
               </form>
             </DialogContent>
@@ -870,6 +903,21 @@ export default function Inventory() {
           </Dialog>
         </div>
       </div>
+
+      {/* Offline Mode Banner */}
+      {!offlineStatus.isOnline && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
+          <WifiOff className="h-5 w-5 text-orange-600" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-800">
+              Working offline
+            </p>
+            <p className="text-xs text-orange-600">
+              Product changes will be saved locally and synced when connection is restored.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <Card className="border-0 shadow-sm" data-tour="inventory-filters">
