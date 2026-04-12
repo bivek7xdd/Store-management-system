@@ -206,11 +206,10 @@ func FindSuppliers(c *gin.Context) {
 	}
 
 	// Build search query for wholesale suppliers
-	searchQuery := fmt.Sprintf("%s wholesale supplier", query)
+	searchQuery := fmt.Sprintf("%s wholesale supplier in %s", query, location)
 	payload := map[string]interface{}{
-		"q":        searchQuery,
-		"location": location,
-		"gl":       "np",
+		"q":  searchQuery,
+		"gl": "np",
 	}
 	payloadBytes, _ := json.Marshal(payload)
 

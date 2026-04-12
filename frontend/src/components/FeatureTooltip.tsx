@@ -6,7 +6,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface FeatureTooltipProps {
     featureKey: string;
@@ -67,7 +67,6 @@ export function FeatureTooltip({
                         
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-2 text-teal-400">
-                                <Sparkles className="h-4 w-4" />
                                 <span className="text-[10px] font-black uppercase tracking-wider">New Feature</span>
                                 <button 
                                     onClick={handleDismiss}
