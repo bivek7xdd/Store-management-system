@@ -25,7 +25,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CategoryDetails from "./pages/CategoryDetails";
 import SupplierDetails from "./pages/SupplierDetails";
 import MarketDiscovery from "./pages/MarketDiscovery";
-import FindSuppliers from "./pages/FindSuppliers";
+
 import React from "react";
 import LandingPage from "./pages/LandingPage";
 import Settings from "./pages/Settings";
@@ -188,13 +188,7 @@ const App = () => {
                           </Layout>
                         </ProtectedRoute>
                       } />
-                      <Route path="/find-suppliers" element={
-                        <ProtectedRoute>
-                          <Layout>
-                            <FindSuppliers />
-                          </Layout>
-                        </ProtectedRoute>
-                      } />
+
                       <Route path="/settings" element={
                         <ProtectedRoute>
                           <Layout>
