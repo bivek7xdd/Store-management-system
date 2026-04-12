@@ -211,7 +211,10 @@ export default function Inventory() {
   const updateProductMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductData }) => {
       console.log('[Component] updateProductMutation starting...');
-      return inventoryService.updateProduct(id, data);
+      console.log('[Component] isOnline:', navigator.onLine);
+      const result = inventoryService.updateProduct(id, data);
+      console.log('[Component] updateProduct returned promise');
+      return result;
     },
     onMutate: async ({ id, data }) => {
       console.log('[Mutation] updateProduct onMutate - doing optimistic update');
@@ -247,14 +250,15 @@ export default function Inventory() {
 
       toast.error("Failed to update product");
     },
-    onSuccess: () => {
-      console.log('[Mutation] updateProduct onSuccess');
-      toast.success("Product updated successfully!");
+    onSuccess: (data) => {
+      console.log('[Mutation] updateProduct onSuccess', data);
+      console.log('[Mutation] isSubmitting should be false now');
+      toast.success(navigator.onLine ? "Product updated successfully!" : "Product saved offline!");
       setAddDialogOpen(false);
       setEditingProduct(null);
     },
     onSettled: () => {
-      console.log('[Mutation] updateProduct onSettled');
+      console.log('[Mutation] updateProduct onSettled - mutation complete');
       // Refetch to ensure we have latest data
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },

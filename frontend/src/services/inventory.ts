@@ -451,33 +451,42 @@ export const inventoryService = {
 
     updateProduct: async (id: string, data: UpdateProductData) => {
         console.log('[Inventory] updateProduct called, id:', id);
+        console.log('[Inventory] isOnline:', isOnline());
         
         // Check if this is a temp/offline product
         const existing = await db.products.get(id);
+        console.log('[Inventory] existing product:', existing ? 'found' : 'not found');
         
         if (existing && id.startsWith('temp-')) {
+            console.log('[Inventory] Updating temp product locally');
             // Still a temp product, just update locally
             const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as unknown as Product;
             await db.products.put(updated);
+            console.log('[Inventory] Temp product updated successfully');
             return updated;
         }
 
         // If offline, update locally and mark as needing sync
         if (!isOnline()) {
+            console.log('[Inventory] Offline - updating locally only');
             if (existing) {
                 const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as any;
                 updated.synced = 0; // Mark as needing sync
                 await db.products.put(updated);
+                console.log('[Inventory] Offline update successful, synced=0');
                 return updated;
             }
+            console.error('[Inventory] Offline and product not found locally');
             throw new Error('Offline and product not found locally');
         }
 
         // Online: update on server
+        console.log('[Inventory] Online - updating on server');
         try {
             const response = await api.put(`products/${id}`, data);
             const updatedProduct = response.data?.data || response.data;
             await db.products.put({ ...updatedProduct, synced: 1 });
+            console.log('[Inventory] Server update successful');
             return updatedProduct;
         } catch (error) {
             console.warn('[Inventory] Failed to update product on server, saving locally', error);
@@ -486,6 +495,7 @@ export const inventoryService = {
                 const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as any;
                 updated.synced = 0;
                 await db.products.put(updated);
+                console.log('[Inventory] Fallback to local save successful');
                 return updated;
             }
             throw error;
