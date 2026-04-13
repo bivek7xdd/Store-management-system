@@ -1,11 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Store, AlertCircle, Lock, ArrowLeft, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Store, AlertCircle, Lock, ArrowLeft, Eye, EyeOff, CheckCircle, KeyRound } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
-import SpaceBackground from "@/components/SpaceBackground";
 import api from "@/services/api";
 
 const ResetPassword = () => {
@@ -21,53 +17,51 @@ const ResetPassword = () => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   const email = location.state?.email || "";
 
   useEffect(() => {
-    // If no email, redirect to forgot password
     if (!email) {
       navigate("/forgot-password");
       return;
     }
 
-    // Left Content Animation
-    if (contentRef.current) {
-      gsap.from(contentRef.current.children, {
-        y: 20,
+    const tl = gsap.timeline();
+    tl.fromTo(
+      containerRef.current,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.6 }
+    ).fromTo(
+      formRef.current,
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      "-=0.3"
+    );
+
+    if (heroRef.current) {
+      gsap.from(heroRef.current.children, {
+        y: 25,
         opacity: 0,
-        duration: 1,
-        stagger: 0.1,
+        duration: 0.8,
+        stagger: 0.12,
         delay: 0.2,
-        ease: "power2.out"
+        ease: "power3.out",
       });
     }
 
-    // Form Entry Animation
-    if (formRef.current) {
-      gsap.fromTo(formRef.current,
-        { x: 50, opacity: 0 },
-        { x: 0, opacity: 1, duration: 1, delay: 0.5, ease: "power3.out" }
-      );
-    }
-
-    // Focus first input
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
   }, [email, navigate]);
 
   const handleOtpChange = (index: number, value: string) => {
-    // Allow only numbers
     if (!/^\d*$/.test(value)) return;
-
     const newOtp = [...otp];
     newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
-
-    // Move to next input if value is entered
     if (value && index < 5 && inputRefs.current[index + 1]) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -84,14 +78,9 @@ const ResetPassword = () => {
     const pastedData = e.clipboardData.getData("text").slice(0, 6).split("");
     if (pastedData.every(char => /^\d$/.test(char))) {
       const newOtp = [...otp];
-      pastedData.forEach((char, index) => {
-        if (index < 6) newOtp[index] = char;
-      });
+      pastedData.forEach((char, index) => { if (index < 6) newOtp[index] = char; });
       setOtp(newOtp);
-
-      // Focus the input after the last pasted character
-      const nextIndex = Math.min(pastedData.length, 5);
-      inputRefs.current[nextIndex]?.focus();
+      inputRefs.current[Math.min(pastedData.length, 5)]?.focus();
     }
   };
 
@@ -100,146 +89,134 @@ const ResetPassword = () => {
     setError("");
 
     const otpValue = otp.join("");
-    if (otpValue.length !== 6) {
-      setError("Please enter the complete 6-digit code");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    if (otpValue.length !== 6) { setError("Please enter the complete 6-digit code"); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match"); return; }
 
     setLoading(true);
-
     try {
-      await api.post("/users/reset-password", {
-        email,
-        otp: otpValue,
-        password
-      });
+      await api.post("/users/reset-password", { email, otp: otpValue, password });
       setSuccess(true);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to reset password. Please try again.");
-      // Shake animation for error
+      const msg = err.response?.data?.message || "Failed to reset password. Please try again.";
+      setError(msg);
       if (formRef.current) {
-        gsap.from(formRef.current, { x: 5, duration: 0.1, repeat: 3, yoyo: true });
+        gsap.fromTo(formRef.current, { x: -8 }, { x: 0, duration: 0.4, ease: "elastic.out(1,0.3)" });
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const colors = {
-    primary: "#0d9488",
-    primaryGlow: "rgba(13, 148, 136, 0.5)",
-  };
-
+  // Success screen
   if (success) {
     return (
-      <SpaceBackground className="flex items-center justify-center">
-        <div className="w-full max-w-md p-8 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl text-center"
-          style={{ background: "rgba(15, 23, 42, 0.7)" }}>
-          <div className="flex justify-center mb-6">
-            <div className="h-16 w-16 rounded-full bg-teal-500/20 flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-teal-400" />
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#000000] font-sans p-6">
+        <div className="w-full max-w-[400px] text-center">
+          <div className="w-16 h-16 rounded-[2px] bg-[#181818] border border-[#303030] flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-[#DA291C]" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Password Reset Successful</h2>
-          <p className="text-gray-400 mb-6">
-            Your password has been reset successfully. You can now sign in with your new password.
+          <div className="w-8 h-1 bg-[#DA291C] mx-auto mb-6" />
+          <h2 className="text-[24px] font-medium text-white mb-3 tracking-tight">Password Reset Successful</h2>
+          <p className="text-[#8F8F8F] text-[13px] leading-[1.6] tracking-[0.195px] mb-8">
+            Your password has been updated. You can now sign in with your new credentials.
           </p>
-          <Button
+          <button
             onClick={() => navigate("/login")}
-            className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: `linear-gradient(135deg, ${colors.primary} 0%, #059669 100%)`,
-              boxShadow: `0 0 20px ${colors.primaryGlow}`
-            }}
+            className="w-full h-[44px] rounded-[2px] bg-[#DA291C] text-white font-normal uppercase tracking-[1.28px] text-[14px] transition-colors hover:bg-[#B01E0A] flex items-center justify-center gap-2"
           >
+            <KeyRound className="w-4 h-4" />
             Sign In
-          </Button>
+          </button>
         </div>
-      </SpaceBackground>
+      </div>
     );
   }
 
   return (
-    <SpaceBackground className="flex">
-      {/* Left Panel - Hero Content */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 relative z-10">
-        <div ref={contentRef} className="text-white">
-          <div className="flex items-center gap-3 mb-10">
-            <div
-              className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-md"
-              style={{ background: "rgba(255, 255, 255, 0.1)" }}
-            >
-              <Store className="h-8 w-8 text-teal-400" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">StoreHub</span>
-          </div>
+    <div
+      ref={containerRef}
+      className="min-h-screen flex w-full bg-[#000000] font-sans text-white selection:bg-[#DA291C] selection:text-white"
+    >
+      {/* Left Cinematic Panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-[#000000] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#0A0A0A] to-[#111111] z-0" />
 
-          <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight shadow-teal-500/20 drop-shadow-lg">
-            Create Your<br />
-            <span className="text-teal-400">New Password</span>
-          </h1>
+        {/* Top accent */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#DA291C] z-20" />
 
-          <p className="text-lg text-gray-300 max-w-md leading-relaxed">
-            Enter the 6-digit code sent to your email and choose a new secure password.
-          </p>
+        {/* Corner brackets */}
+        <div className="absolute top-8 right-8 w-16 h-16 border-t border-r border-[#303030] z-20" />
+        <div className="absolute bottom-8 left-8 w-16 h-16 border-b border-l border-[#303030] z-20" />
 
-          {/* Info Box */}
-          <div className="mt-12 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-            <p className="text-sm text-gray-400">
-              <span className="text-teal-400 font-medium">Code sent to:</span><br />
-              {email}
+        {/* Logo top left */}
+        <div className="absolute top-12 left-14 z-20 flex items-center gap-3">
+          <Store className="w-7 h-7 text-white" />
+          <span className="text-[14px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+        </div>
+
+        {/* Hero content centered */}
+        <div className="absolute inset-0 flex items-center justify-center z-20 px-14">
+          <div className="max-w-lg w-full" ref={heroRef}>
+            <div className="w-12 h-1 bg-[#DA291C] mb-8" />
+            <h1 className="text-[26px] md:text-[34px] font-medium leading-[1.15] text-white mb-6">
+              Create Your<br />New Password
+            </h1>
+            <p className="text-[#8F8F8F] text-[13px] leading-[1.6] tracking-[0.195px] max-w-sm mb-10">
+              Enter the 6-digit code sent to your email and choose a strong new password.
             </p>
+
+            {/* Email chip */}
+            <div className="p-4 rounded-[2px] bg-[#181818] border border-[#303030]">
+              <p className="text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Code sent to</p>
+              <p className="text-[14px] text-white font-medium">{email}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Right Panel - Reset Password Form */}
-      <div className="flex-1 flex items-center justify-center p-8 relative z-10 backdrop-blur-sm lg:backdrop-blur-none bg-black/30 lg:bg-transparent">
-        <div
-          ref={formRef}
-          className="w-full max-w-md p-8 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl"
-          style={{
-            background: "rgba(15, 23, 42, 0.7)",
-          }}
-        >
-          <div className="text-center mb-8">
-            <div className="lg:hidden flex justify-center mb-4">
-              <div className="h-12 w-12 rounded-xl bg-teal-500/20 flex items-center justify-center">
-                <Store className="h-6 w-6 text-teal-400" />
-              </div>
-            </div>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 bg-teal-500/10 border border-teal-500/20">
-              <Lock className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-medium text-teal-300">Set New Password</span>
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-2">Reset Password</h2>
-            <p className="text-gray-400">Enter the code and your new password</p>
+      {/* Right Form Panel */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-[#000000] relative">
+        {/* Mobile top bar */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-[#DA291C] lg:hidden" />
+
+        {/* Mobile logo */}
+        <div className="absolute top-8 left-6 md:left-10 lg:hidden flex items-center gap-3">
+          <Store className="w-6 h-6 text-white" />
+          <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+        </div>
+
+        <div ref={formRef} className="w-full max-w-[400px] mt-12 lg:mt-0">
+
+          {/* Header */}
+          <div className="mb-10">
+            <p className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px] mb-3">Password Recovery</p>
+            <h2 className="text-[28px] font-medium text-white tracking-tight leading-[1.2] mb-3">
+              Reset Password
+            </h2>
+            <p className="text-[#8F8F8F] text-[13px] leading-[1.6] tracking-[0.195px]">
+              Enter the 6-digit code and your new password
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Error */}
             {error && (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm">
-                <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                <span>{error}</span>
+              <div className="flex items-start gap-3 p-3 bg-[#F13A2C]/10 border-l-2 border-[#F13A2C]">
+                <AlertCircle className="h-4 w-4 text-[#F13A2C] shrink-0 mt-0.5" />
+                <span className="text-[13px] text-[#F13A2C] tracking-[0.195px]">{error}</span>
               </div>
             )}
 
             {/* OTP Input */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Enter 6-Digit Code</Label>
-              <div className="flex justify-between gap-2">
+              <label className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">
+                Enter 6-Digit Code
+              </label>
+              <div className="flex justify-between gap-2 mt-3">
                 {otp.map((digit, index) => (
-                  <Input
+                  <input
                     key={index}
                     ref={el => inputRefs.current[index] = el}
                     type="text"
@@ -249,7 +226,10 @@ const ResetPassword = () => {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={index === 0 ? handlePaste : undefined}
-                    className="w-12 h-14 text-center text-xl font-bold rounded-xl border-white/10 bg-white/5 text-white focus:border-teal-500 focus:ring-teal-500 transition-all"
+                    className={`w-12 h-14 text-center text-[20px] font-medium bg-transparent border rounded-[2px] text-white transition-all outline-none
+                      ${digit ? 'border-[#DA291C] bg-[#DA291C]/5' : 'border-[#303030] hover:border-[#555555]'}
+                      focus:border-[#1EAEDB] focus:ring-2 focus:ring-[#1EAEDB]/20 caret-[#1EAEDB]`}
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
                   />
                 ))}
               </div>
@@ -257,83 +237,90 @@ const ResetPassword = () => {
 
             {/* New Password */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">New Password</Label>
+              <label htmlFor="password" className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">
+                New Password
+              </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
+                <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Min. 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="h-12 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:bg-white/10 transition-colors"
+                  className="w-full h-[44px] bg-transparent border border-[#CCCCCC] rounded-[2px] pl-10 pr-10 text-[16px] text-white placeholder:text-[#666666] focus:outline-none focus:ring-2 focus:ring-[#1EAEDB]/50 focus:border-[#1EAEDB] transition-all disabled:opacity-50"
                 />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666]" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-white transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-gray-300">Confirm New Password</Label>
+              <label htmlFor="confirmPassword" className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">
+                Confirm New Password
+              </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
+                <input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Re-enter your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="h-12 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:bg-white/10 transition-colors"
+                  className="w-full h-[44px] bg-transparent border border-[#CCCCCC] rounded-[2px] pl-10 pr-10 text-[16px] text-white placeholder:text-[#666666] focus:outline-none focus:ring-2 focus:ring-[#1EAEDB]/50 focus:border-[#1EAEDB] transition-all disabled:opacity-50"
                 />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666]" />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-white transition-colors"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <Button
+            {/* Submit */}
+            <button
               type="submit"
-              className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                background: `linear-gradient(135deg, ${colors.primary} 0%, #059669 100%)`,
-                boxShadow: `0 0 20px ${colors.primaryGlow}`
-              }}
               disabled={loading || otp.some(d => !d)}
+              className="w-full h-[44px] rounded-[2px] bg-[#DA291C] text-white font-normal uppercase tracking-[1.28px] text-[14px] transition-colors hover:bg-[#B01E0A] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Resetting...
-                </span>
+                </>
               ) : (
-                "Reset Password"
+                <>
+                  <KeyRound className="w-4 h-4" />
+                  Reset Password
+                </>
               )}
-            </Button>
-          </form>
+            </button>
 
-          <div className="mt-8 pt-6 border-t border-white/10 text-center">
-            <Link to="/forgot-password" className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-teal-400 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Request New Code
-            </Link>
-          </div>
+            <div className="text-center pt-4 border-t border-[#1A1A1A]">
+              <Link
+                to="/forgot-password"
+                className="inline-flex items-center gap-2 text-[13px] text-[#8F8F8F] hover:text-white transition-colors tracking-[0.195px]"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Request New Code
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
-    </SpaceBackground>
+    </div>
   );
 };
 

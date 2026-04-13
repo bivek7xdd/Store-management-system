@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, Check, Shield, RotateCcw } from "lucide-react";
 import gsap from "gsap";
 import api from "@/services/api";
@@ -15,68 +12,43 @@ const OTP = () => {
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const formRef = useRef<HTMLDivElement>(null);
-    const bgShapesRef = useRef<HTMLDivElement>(null);
 
-    // Get email from router state or default
     const email = location.state?.email || "your email";
 
     useEffect(() => {
-        // Animation sequence
         const tl = gsap.timeline();
-
-        // Background shapes animation
-        if (bgShapesRef.current) {
-            const shapes = bgShapesRef.current.children;
-            gsap.to(shapes, {
-                y: "random(-100, 100)",
-                x: "random(-100, 100)",
-                rotation: "random(-45, 45)",
-                duration: 4,
-                repeat: -1,
-                yoyo: true,
-                ease: "sine.inOut",
-                stagger: {
-                    amount: 2,
-                    from: "random"
-                }
-            });
-
-            // Initial fade in for shapes
-            gsap.fromTo(shapes,
-                { opacity: 0, scale: 0 },
-                { opacity: 0.8, scale: 1, duration: 1.5, stagger: 0.2, ease: "back.out(1.7)" }
-            );
-        }
-
         tl.fromTo(
             containerRef.current,
             { opacity: 0 },
-            { opacity: 1, duration: 0.5 }
-        )
-            .fromTo(
-                formRef.current,
-                { y: 20, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
-                "-=0.3"
-            );
+            { opacity: 1, duration: 0.6 }
+        ).fromTo(
+            formRef.current,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+            "-=0.3"
+        );
 
-        // Focus first input
         if (inputRefs.current[0]) {
             inputRefs.current[0].focus();
         }
     }, []);
 
-    const handleChange = (index: number, value: string) => {
-        // Allow only numbers
-        if (!/^\d*$/.test(value)) return;
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const timer = setInterval(() => {
+            setResendCooldown(prev => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [resendCooldown]);
 
+    const handleChange = (index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
         const newOtp = [...otp];
         newOtp[index] = value.substring(value.length - 1);
         setOtp(newOtp);
-
-        // Move to next input if value is entered
         if (value && index < 5 && inputRefs.current[index + 1]) {
             inputRefs.current[index + 1]?.focus();
         }
@@ -97,8 +69,6 @@ const OTP = () => {
                 if (index < 6) newOtp[index] = char;
             });
             setOtp(newOtp);
-
-            // Focus the input after the last pasted character
             const nextIndex = Math.min(pastedData.length, 5);
             inputRefs.current[nextIndex]?.focus();
         }
@@ -125,135 +95,191 @@ const OTP = () => {
                 description: "Account verified successfully! Please log in.",
             });
 
-            // Set flag to show tour after the first login following registration
             localStorage.setItem("storehub_tour_pending", "true");
-
             navigate("/login", { state: { message: "Account verified successfully! Please log in." } });
 
         } catch (error: any) {
             setIsSubmitting(false);
-            console.error("OTP Verification failed:", error);
 
             const errorMessage = error.response?.data?.error || "Verification failed. Invalid or expired OTP.";
-
             toast({
                 variant: "destructive",
                 title: "Verification Failed",
                 description: errorMessage,
             });
 
-            // Optional: Shake animation for error
             if (formRef.current) {
-                gsap.from(formRef.current, { x: 5, duration: 0.1, repeat: 3, yoyo: true });
+                gsap.fromTo(formRef.current, { x: -8 }, { x: 0, duration: 0.4, ease: "elastic.out(1,0.3)" });
             }
+
+            // Clear OTP inputs on error
+            setOtp(["", "", "", "", "", ""]);
+            inputRefs.current[0]?.focus();
         }
     };
+
+    const handleResend = async () => {
+        if (resendCooldown > 0) return;
+        try {
+            await api.post("/users/resend-otp", { userEmail: email });
+            setResendCooldown(60);
+            toast({ title: "Code Resent", description: "A new verification code has been sent to your email." });
+        } catch {
+            toast({ variant: "destructive", title: "Error", description: "Failed to resend code. Please try again." });
+        }
+    };
+
+    const isComplete = otp.every(d => d !== "");
 
     return (
         <div
             ref={containerRef}
-            className="min-h-screen flex items-center justify-center p-4 bg-gray-50 relative overflow-hidden"
-            style={{ background: "linear-gradient(180deg, #fffcf5 0%, #fef9f0 50%, #fdf6e8 100%)" }}
+            className="min-h-screen flex w-full bg-[#000000] font-sans text-white selection:bg-[#DA291C] selection:text-white"
         >
-            {/* Background Floating Shapes */}
-            <div ref={bgShapesRef} className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[10%] left-[10%] w-64 h-64 rounded-full bg-teal-500/20 blur-3xl" />
-                <div className="absolute top-[60%] right-[10%] w-72 h-72 rounded-full bg-emerald-500/20 blur-3xl" />
-                <div className="absolute bottom-[10%] left-[20%] w-48 h-48 rounded-full bg-orange-400/20 blur-3xl" />
+            {/* Left Cinematic Panel */}
+            <div className="hidden lg:flex lg:w-1/2 relative bg-[#000000] overflow-hidden">
+                <div className="absolute inset-0 bg-[hsla(0,0%,4%,0.85)] z-10 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#0A0A0A] to-[#111111] z-0" />
 
-                {/* Decorative Elements */}
-                <div className="absolute top-[15%] left-[15%] text-teal-600/40 transform rotate-12">
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
+                {/* Geometric accent */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-[#DA291C] z-20" />
+
+                {/* Shield Icon centered */}
+                <div className="absolute inset-0 flex items-center justify-center z-20">
+                    <div className="text-center">
+                        <div className="w-24 h-24 rounded-[2px] border border-[#303030] bg-[#181818] flex items-center justify-center mx-auto mb-8">
+                            <Shield className="w-10 h-10 text-[#DA291C]" />
+                        </div>
+                        <div className="w-8 h-1 bg-[#DA291C] mx-auto mb-6" />
+                        <h1 className="text-[28px] font-medium text-white tracking-tight leading-[1.2] mb-4">
+                            Two-Factor<br />Verification
+                        </h1>
+                        <p className="text-[#8F8F8F] text-[13px] leading-[1.6] tracking-[0.195px] max-w-[260px] mx-auto">
+                            Your security is our priority. Enter the code we sent to complete identity verification.
+                        </p>
+                    </div>
                 </div>
-                <div className="absolute bottom-[20%] right-[15%] text-emerald-600/40 transform -rotate-12">
-                    <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /></svg>
+
+                {/* Bottom brand */}
+                <div className="absolute bottom-12 left-14 z-20">
+                    <span className="text-[12px] font-medium tracking-[1.5px] text-[#8F8F8F] uppercase">StoreHub</span>
                 </div>
-                <div className="absolute top-[40%] right-[25%] text-yellow-500/40">
-                    <svg width="50" height="50" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="4" /></svg>
-                </div>
+
+                {/* Subtle corner lines */}
+                <div className="absolute top-8 right-8 w-16 h-16 border-t border-r border-[#303030] z-20" />
+                <div className="absolute bottom-8 left-8 w-16 h-16 border-b border-l border-[#303030] z-20" />
             </div>
 
-            <div
-                ref={formRef}
-                className="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl p-8 border border-teal-100 relative z-10"
-            >
-                <div className="text-center mb-8">
-                    <div className="mx-auto w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mb-4">
-                        <Shield className="w-8 h-8 text-teal-600" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify your Account</h1>
-                    <p className="text-gray-500">
-                        We have sent a 6-digit code to<br />
-                        <span className="font-medium text-gray-900">{email}</span>
-                    </p>
+            {/* Right Form Panel */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-[#000000] relative">
+                {/* Top accent bar */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-[#DA291C] lg:hidden" />
+
+                {/* Mobile Logo */}
+                <div className="absolute top-8 left-6 md:left-10 lg:hidden flex items-center gap-3">
+                    <Shield className="w-5 h-5 text-[#DA291C]" />
+                    <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="space-y-4">
-                        <Label className="text-sm font-medium text-gray-700 text-center block">
-                            Enter Confirmation Code
-                        </Label>
-                        <div className="flex justify-between gap-2">
-                            {otp.map((digit, index) => (
-                                <Input
-                                    key={index}
-                                    ref={el => inputRefs.current[index] = el}
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={(e) => handleChange(index, e.target.value)}
-                                    onKeyDown={(e) => handleKeyDown(index, e)}
-                                    onPaste={index === 0 ? handlePaste : undefined}
-                                    className="w-12 h-14 text-center text-xl font-bold rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500 transition-all duration-200 bg-white/50 focus:bg-white"
-                                />
-                            ))}
-                        </div>
-                    </div>
+                <div ref={formRef} className="w-full max-w-[400px] mt-12 lg:mt-0">
 
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting || otp.some(d => !d)}
-                        className="w-full h-12 rounded-xl text-base font-semibold shadow-lg transition-all hover:translate-y-[-1px] active:translate-y-0"
-                        style={{
-                            background: "linear-gradient(135deg, #115e59, #0d9488)",
-                            opacity: (isSubmitting || otp.some(d => !d)) ? 0.7 : 1
-                        }}
-                    >
-                        {isSubmitting ? (
-                            <span className="flex items-center gap-2">
-                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Verifying...
-                            </span>
-                        ) : (
-                            <>
-                                <Check className="w-4 h-4 mr-2" />
-                                Verify Account
-                            </>
-                        )}
-                    </Button>
-
-                    <div className="text-center space-y-4">
-                        <p className="text-sm text-gray-500">
-                            Didn't receive the code?{" "}
-                            <button
-                                type="button"
-                                className="font-medium text-teal-600 hover:text-teal-700 hover:underline inline-flex items-center gap-1"
-                            >
-                                <RotateCcw className="w-3 h-3" />
-                                Resend
-                            </button>
+                    {/* Header */}
+                    <div className="mb-10">
+                        <p className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px] mb-3">Account Verification</p>
+                        <h2 className="text-[28px] font-medium text-white tracking-tight leading-[1.2] mb-4">
+                            Verify Your Email
+                        </h2>
+                        <p className="text-[#8F8F8F] text-[13px] leading-[1.6] tracking-[0.195px]">
+                            We've sent a 6-digit code to
                         </p>
-
-                        <Link
-                            to="/register"
-                            className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-1" />
-                            Back to Register
-                        </Link>
+                        <p className="text-white text-[14px] font-medium mt-1 tracking-[0.195px]">{email}</p>
                     </div>
-                </form>
+
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* OTP Input Grid */}
+                        <div className="space-y-3">
+                            <label className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">
+                                Enter Confirmation Code
+                            </label>
+                            <div className="flex justify-between gap-2 mt-3">
+                                {otp.map((digit, index) => (
+                                    <input
+                                        key={index}
+                                        ref={el => inputRefs.current[index] = el}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={digit}
+                                        onChange={(e) => handleChange(index, e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(index, e)}
+                                        onPaste={index === 0 ? handlePaste : undefined}
+                                        className={`w-12 h-14 text-center text-[20px] font-medium bg-transparent border rounded-[2px] text-white transition-all outline-none
+                                            ${digit
+                                                ? 'border-[#DA291C] bg-[#DA291C]/5'
+                                                : 'border-[#303030] hover:border-[#555555]'
+                                            }
+                                            focus:border-[#1EAEDB] focus:ring-2 focus:ring-[#1EAEDB]/20
+                                            caret-[#1EAEDB]`}
+                                        style={{ fontVariantNumeric: 'tabular-nums' }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || !isComplete}
+                            className="w-full h-[44px] rounded-[2px] bg-[#DA291C] text-white font-normal uppercase tracking-[1.28px] text-[14px] transition-colors hover:bg-[#B01E0A] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Verifying...
+                                </>
+                            ) : (
+                                <>
+                                    <Check className="w-4 h-4" />
+                                    Verify Account
+                                </>
+                            )}
+                        </button>
+
+                        {/* Resend + Back */}
+                        <div className="space-y-5">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 h-px bg-[#1A1A1A]" />
+                                <span className="text-[11px] text-[#8F8F8F] uppercase tracking-[1px]">or</span>
+                                <div className="flex-1 h-px bg-[#1A1A1A]" />
+                            </div>
+
+                            <div className="text-center">
+                                <p className="text-[13px] text-[#8F8F8F] tracking-[0.195px]">
+                                    Didn't receive the code?
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleResend}
+                                    disabled={resendCooldown > 0}
+                                    className="mt-2 inline-flex items-center gap-2 text-[13px] text-white hover:text-[#1EAEDB] transition-colors disabled:text-[#8F8F8F] disabled:cursor-not-allowed uppercase tracking-[1px] font-normal"
+                                >
+                                    <RotateCcw className="w-3 h-3" />
+                                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                                </button>
+                            </div>
+
+                            <div className="text-center pt-2 border-t border-[#1A1A1A]">
+                                <Link
+                                    to="/register"
+                                    className="inline-flex items-center gap-2 text-[13px] text-[#8F8F8F] hover:text-white transition-colors tracking-[0.195px]"
+                                >
+                                    <ArrowLeft className="w-3.5 h-3.5" />
+                                    Back to Register
+                                </Link>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );

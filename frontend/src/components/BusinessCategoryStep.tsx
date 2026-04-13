@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Check, ChevronRight, SkipForward, Plus, X, PenLine } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { BUSINESS_CATEGORIES, getIconComponent } from '@/data/businessCategories';
-import { EnhancedSignupFormData, ValidationErrors, ProductSubcategory } from '@/types/enhanced-signup';
+import { EnhancedSignupFormData, ValidationErrors } from '@/types/enhanced-signup';
 
 interface BusinessCategoryStepProps {
   formData: EnhancedSignupFormData;
@@ -72,13 +70,13 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
   };
 
   return (
-    <div className="step-container space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h3 className="text-xl font-bold mb-2" style={{ color: '#1a1a1a', fontFamily: "'Playfair Display', serif" }}>
+        <h3 className="text-[20px] font-medium text-white mb-2 tracking-tight">
           Choose Your Business Category
         </h3>
-        <p style={{ color: '#888', fontSize: '0.9rem' }}>
+        <p className="text-[#8F8F8F] text-[13px] tracking-[0.195px]">
           Select the category that best describes your business to help us customize your experience
         </p>
       </div>
@@ -88,28 +86,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
         <button
           type="button"
           onClick={onSkipCategories}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '0.5rem',
-            border: 'none',
-            background: 'transparent',
-            color: '#999',
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            fontFamily: "'Inter', sans-serif",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)';
-            e.currentTarget.style.color = '#666';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#999';
-          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-[2px] text-[#8F8F8F] text-[12px] uppercase font-normal tracking-[1px] hover:bg-[#303030] hover:text-white transition-all"
         >
           <SkipForward className="w-4 h-4" />
           Skip for now
@@ -119,7 +96,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
       {/* Business Category Selection */}
       {!formData.business_category ? (
         <div className="space-y-4">
-          <h4 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#1a1a1a' }}>
+          <h4 className="text-[12px] font-normal text-[#8F8F8F] tracking-[1px] uppercase">
             Select Your Primary Business Category
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -131,53 +108,19 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                   key={category.id}
                   type="button"
                   onClick={() => onCategorySelect(category.id)}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: '0.75rem',
-                    border: '1px solid #e5e0d1',
-                    background: 'rgba(255, 255, 255, 0.5)',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    fontFamily: "'Inter', sans-serif",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)';
-                    e.currentTarget.style.borderColor = 'rgba(184, 151, 103, 0.4)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(184, 151, 103, 0.12)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
-                    e.currentTarget.style.borderColor = '#e5e0d1';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                  className="p-4 rounded-[2px] border border-[#303030] bg-[#181818] text-left transition-all hover:bg-[#303030] hover:border-[#CCCCCC] group"
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      style={{
-                        flexShrink: 0,
-                        width: '2.5rem',
-                        height: '2.5rem',
-                        borderRadius: '0.5rem',
-                        background: 'rgba(184, 151, 103, 0.12)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <IconComponent className="w-5 h-5" style={{ color: '#b89767' }} />
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 w-10 h-10 rounded-[2px] bg-[#303030] flex items-center justify-center group-hover:bg-[#181818] transition-colors">
+                      <IconComponent className="w-5 h-5 text-[#8F8F8F] group-hover:text-white transition-colors" />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h5 style={{ fontWeight: 600, color: '#1a1a1a', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                        {category.name}
-                      </h5>
-                      <p style={{ fontSize: '0.8rem', color: '#888', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-white mb-1 text-[14px]">{category.name}</h5>
+                      <p className="text-[12px] text-[#8F8F8F] overflow-hidden line-clamp-2">
                         {category.description}
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4" style={{ color: '#ccc', flexShrink: 0 }} />
+                    <ChevronRight className="w-5 h-5 text-[#303030] shrink-0 group-hover:text-white transition-colors" />
                   </div>
                 </button>
               );
@@ -187,98 +130,37 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
             <button
               type="button"
               onClick={handleOtherCategoryClick}
-              style={{
-                padding: '1rem',
-                borderRadius: '0.75rem',
-                border: '1px dashed #d4cbb8',
-                background: 'rgba(255, 255, 255, 0.3)',
-                textAlign: 'left',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                fontFamily: "'Inter', sans-serif",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(217, 185, 155, 0.08)';
-                e.currentTarget.style.borderColor = 'rgba(217, 185, 155, 0.6)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.borderColor = '#d4cbb8';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+              className="p-4 rounded-[2px] border border-dashed border-[#303030] bg-transparent text-left transition-all hover:bg-[#181818] hover:border-[#8F8F8F] group"
             >
-              <div className="flex items-start gap-3">
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: '2.5rem',
-                    height: '2.5rem',
-                    borderRadius: '0.5rem',
-                    background: 'rgba(217, 185, 155, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <PenLine className="w-5 h-5" style={{ color: '#c4956a' }} />
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 w-10 h-10 rounded-[2px] bg-[#303030] flex items-center justify-center group-hover:bg-[#404040] transition-colors">
+                  <PenLine className="w-5 h-5 text-[#8F8F8F] group-hover:text-white transition-colors" />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h5 style={{ fontWeight: 600, color: '#1a1a1a', marginBottom: '0.25rem', fontSize: '0.9rem' }}>Other</h5>
-                  <p style={{ fontSize: '0.8rem', color: '#888' }}>Don't see your category? Type it in!</p>
+                <div className="flex-1 min-w-0">
+                  <h5 className="font-medium text-white mb-1 text-[14px]">Other</h5>
+                  <p className="text-[12px] text-[#8F8F8F]">Don't see your category? Type it in!</p>
                 </div>
-                <ChevronRight className="w-4 h-4" style={{ color: '#ccc', flexShrink: 0 }} />
+                <ChevronRight className="w-5 h-5 text-[#303030] shrink-0 group-hover:text-white transition-colors" />
               </div>
             </button>
           </div>
         </div>
       ) : isOtherCategory ? (
         /* Custom "Other" Category */
-        <div className="space-y-4">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '1rem',
-              borderRadius: '0.75rem',
-              background: 'rgba(217, 185, 155, 0.08)',
-              border: '1px solid rgba(217, 185, 155, 0.25)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
-              <div
-                style={{
-                  width: '2.5rem',
-                  height: '2.5rem',
-                  borderRadius: '0.5rem',
-                  background: 'rgba(217, 185, 155, 0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <PenLine className="w-5 h-5" style={{ color: '#c4956a' }} />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 rounded-[2px] bg-[#181818] border border-[#303030]">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-10 h-10 rounded-[2px] bg-[#303030] flex items-center justify-center">
+                <PenLine className="w-5 h-5 text-white" />
               </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontWeight: 600, color: '#1a1a1a', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Custom Category</h4>
+              <div className="flex-1 mr-4">
+                <h4 className="font-normal text-[#8F8F8F] text-[12px] uppercase tracking-[1px] mb-2">Custom Category</h4>
                 <input
                   type="text"
                   placeholder="Enter your business category..."
                   value={formData.custom_category || ''}
                   onChange={handleCustomCategoryInputChange}
-                  style={{
-                    height: '2.25rem',
-                    width: '100%',
-                    borderRadius: '0.5rem',
-                    background: 'rgba(255, 255, 255, 0.6)',
-                    border: '1px solid #d4cbb8',
-                    color: '#1a1a1a',
-                    fontSize: '0.85rem',
-                    padding: '0 0.75rem',
-                    outline: 'none',
-                    fontFamily: "'Inter', sans-serif",
-                  }}
+                  className="w-full h-[40px] rounded-[2px] bg-transparent border border-[#CCCCCC] focus:border-[#1EAEDB] focus:ring-1 focus:ring-[#1EAEDB] text-[15px] text-white px-3 outline-none transition-all placeholder:text-[#666666]"
                 />
               </div>
             </div>
@@ -288,72 +170,38 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                 onCategorySelect('');
                 setShowCustomCategoryInput(false);
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#999',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontFamily: "'Inter', sans-serif",
-                marginLeft: '0.5rem',
-              }}
+              className="text-[#8F8F8F] text-[12px] hover:text-white uppercase tracking-[1px] transition-colors whitespace-nowrap ml-4"
             >
               Change
             </button>
           </div>
 
           {/* Custom Subcategory Section */}
-          <div className="space-y-3">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#1a1a1a' }}>
-                Add your product categories
-              </h4>
-              <Badge
-                variant="secondary"
-                style={{
-                  background: 'rgba(184, 151, 103, 0.1)',
-                  color: '#b89767',
-                  border: '1px solid rgba(184, 151, 103, 0.2)',
-                }}
-              >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[14px] font-medium text-white">Add your product categories</h4>
+              <Badge className="bg-[#181818] border-[#303030] text-[#8F8F8F] hover:bg-[#181818] rounded-[2px]">
                 {formData.custom_subcategories?.length || 0} added
               </Badge>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
+            <p className="text-[13px] text-[#8F8F8F]">
               Add the product types you sell. This helps us set up your inventory categories.
             </p>
 
             {/* Custom Subcategories List */}
             {formData.custom_subcategories && formData.custom_subcategories.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+              <div className="flex flex-wrap gap-2 mb-4">
                 {formData.custom_subcategories.map((subcategory, index) => (
                   <div
                     key={index}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.4rem 0.75rem',
-                      borderRadius: '0.5rem',
-                      background: 'rgba(217, 185, 155, 0.1)',
-                      border: '1px solid rgba(217, 185, 155, 0.3)',
-                      color: '#b89767',
-                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-[2px] bg-[#181818] border border-[#303030] text-white"
                   >
-                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{subcategory}</span>
+                    <span className="text-[13px]">{subcategory}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveCustomSubcategory(subcategory)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        opacity: 0.6,
-                        color: '#b89767',
-                        display: 'flex',
-                        padding: 0,
-                      }}
+                      className="text-[#8F8F8F] hover:text-[#DA291C] transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -364,7 +212,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
 
             {/* Add Input */}
             {showAddSubcategoryInput ? (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Enter product category name..."
@@ -372,36 +220,13 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                   onChange={(e) => setCustomSubcategoryInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   autoFocus
-                  style={{
-                    flex: 1,
-                    height: '2.5rem',
-                    borderRadius: '0.5rem',
-                    background: 'rgba(255, 255, 255, 0.6)',
-                    border: '1px solid #d4cbb8',
-                    color: '#1a1a1a',
-                    padding: '0 0.75rem',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                    fontFamily: "'Inter', sans-serif",
-                  }}
+                  className="flex-1 h-[40px] rounded-[2px] bg-transparent border border-[#CCCCCC] focus:border-[#1EAEDB] focus:ring-1 focus:ring-[#1EAEDB] text-[14px] text-white px-3 outline-none transition-all placeholder:text-[#666666]"
                 />
                 <button
                   type="button"
                   onClick={handleAddCustomSubcategory}
                   disabled={!customSubcategoryInput.trim()}
-                  style={{
-                    height: '2.5rem',
-                    padding: '0 1rem',
-                    borderRadius: '0.5rem',
-                    background: '#b89767',
-                    color: 'white',
-                    border: 'none',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    opacity: customSubcategoryInput.trim() ? 1 : 0.5,
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: '0.85rem',
-                  }}
+                  className="h-[40px] px-4 rounded-[2px] bg-[#DA291C] text-white text-[12px] uppercase tracking-[1px] disabled:opacity-50 hover:bg-[#B01E0A] transition-colors"
                 >
                   Add
                 </button>
@@ -411,16 +236,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                     setShowAddSubcategoryInput(false);
                     setCustomSubcategoryInput('');
                   }}
-                  style={{
-                    height: '2.5rem',
-                    padding: '0 0.75rem',
-                    background: 'none',
-                    border: 'none',
-                    color: '#999',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="h-[40px] px-3 text-[#8F8F8F] hover:text-white transition-colors flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -429,32 +245,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAddSubcategoryInput(true)}
-                style={{
-                  width: '100%',
-                  height: '3rem',
-                  borderRadius: '0.75rem',
-                  border: '1px dashed #d4cbb8',
-                  background: 'rgba(255, 255, 255, 0.3)',
-                  color: '#888',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.9rem',
-                  fontFamily: "'Inter', sans-serif",
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(184, 151, 103, 0.06)';
-                  e.currentTarget.style.borderColor = 'rgba(184, 151, 103, 0.4)';
-                  e.currentTarget.style.color = '#666';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                  e.currentTarget.style.borderColor = '#d4cbb8';
-                  e.currentTarget.style.color = '#888';
-                }}
+                className="w-full h-[48px] rounded-[2px] border border-dashed border-[#303030] text-[#8F8F8F] hover:bg-[#181818] hover:text-white transition-colors flex items-center justify-center gap-2 text-[13px]"
               >
                 <Plus className="w-4 h-4" />
                 Add Product Category
@@ -464,21 +255,14 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
 
           {/* Summary */}
           {formData.custom_subcategories && formData.custom_subcategories.length > 0 && (
-            <div
-              style={{
-                padding: '1rem',
-                borderRadius: '0.75rem',
-                background: 'rgba(184, 151, 103, 0.06)',
-                border: '1px solid rgba(184, 151, 103, 0.15)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Check className="w-4 h-4" style={{ color: '#b89767' }} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#1a1a1a' }}>
+            <div className="p-4 rounded-[2px] bg-[#181818] border border-[#303030]">
+              <div className="flex items-center gap-2 mb-2">
+                <Check className="w-4 h-4 text-[#DA291C]" />
+                <span className="text-[13px] font-medium text-white">
                   {formData.custom_subcategories.length} custom {formData.custom_subcategories.length === 1 ? 'category' : 'categories'} added
                 </span>
               </div>
-              <p style={{ fontSize: '0.8rem', color: '#999' }}>
+              <p className="text-[12px] text-[#8F8F8F]">
                 We'll create these categories in your inventory system to help you organize your products.
               </p>
             </div>
@@ -486,87 +270,42 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
         </div>
       ) : (
         /* Predefined Category - Subcategory Selection */
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Selected Category Display */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '1rem',
-              borderRadius: '0.75rem',
-              background: 'rgba(184, 151, 103, 0.06)',
-              border: '1px solid rgba(184, 151, 103, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div
-                style={{
-                  width: '2.5rem',
-                  height: '2.5rem',
-                  borderRadius: '0.5rem',
-                  background: 'rgba(184, 151, 103, 0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+          <div className="flex items-center justify-between p-4 rounded-[2px] bg-[#181818] border border-[#303030]">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-[2px] bg-[#303030] flex items-center justify-center">
                 {React.createElement(getIconComponent(selectedCategory!.icon), {
-                  className: 'w-5 h-5',
-                  style: { color: '#b89767' },
+                  className: 'w-5 h-5 text-white',
                 })}
               </div>
               <div>
-                <h4 style={{ fontWeight: 600, color: '#1a1a1a', fontSize: '0.9rem' }}>{selectedCategory!.name}</h4>
-                <p style={{ fontSize: '0.8rem', color: '#b89767' }}>{selectedCategory!.description}</p>
+                <h4 className="font-medium text-white text-[14px] mb-1">{selectedCategory!.name}</h4>
+                <p className="text-[12px] text-[#8F8F8F]">{selectedCategory!.description}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => onCategorySelect('')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#999',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontFamily: "'Inter', sans-serif",
-              }}
+              className="text-[#8F8F8F] text-[12px] hover:text-white uppercase tracking-[1px] transition-colors"
             >
               Change
             </button>
           </div>
 
           {/* Subcategory Selection */}
-          <div className="space-y-3">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#1a1a1a' }}>
-                What products do you sell?
-              </h4>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Badge
-                  variant="secondary"
-                  style={{
-                    background: 'rgba(184, 151, 103, 0.1)',
-                    color: '#b89767',
-                    border: '1px solid rgba(184, 151, 103, 0.2)',
-                  }}
-                >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[14px] font-medium text-white">What products do you sell?</h4>
+              <div className="flex items-center gap-3">
+                <Badge className="bg-[#181818] border-[#303030] text-[#8F8F8F] hover:bg-[#181818] rounded-[2px]">
                   {selectedSubcategoriesCount} selected
                 </Badge>
                 {formData.product_subcategories.length < totalSubcategories && (
                   <button
                     type="button"
                     onClick={onSelectAllSubcategories}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#b89767',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 500,
-                      fontFamily: "'Inter', sans-serif",
-                    }}
+                    className="text-[#1EAEDB] text-[12px] uppercase tracking-[1px] hover:text-white transition-colors"
                   >
                     Select all
                   </button>
@@ -574,7 +313,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
               </div>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: '#888', marginBottom: '1rem' }}>
+            <p className="text-[13px] text-[#8F8F8F]">
               Select all product types that apply to your business.
             </p>
 
@@ -587,38 +326,22 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                     key={subcategory.id}
                     type="button"
                     onClick={() => onSubcategoryToggle(subcategory.id)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '0.5rem',
-                      border: `1px solid ${isSelected ? 'rgba(184, 151, 103, 0.4)' : '#e5e0d1'}`,
-                      background: isSelected ? 'rgba(184, 151, 103, 0.08)' : 'rgba(255, 255, 255, 0.4)',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      fontFamily: "'Inter', sans-serif",
-                    }}
+                    className={`p-3 rounded-[2px] border text-left transition-all flex items-center gap-3 ${
+                      isSelected 
+                        ? 'border-[#DA291C] bg-[#DA291C]/10' 
+                        : 'border-[#303030] bg-[#181818] hover:border-[#8F8F8F]'
+                    }`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div
-                        style={{
-                          flexShrink: 0,
-                          width: '1.5rem',
-                          height: '1.5rem',
-                          borderRadius: '4px',
-                          border: `2px solid ${isSelected ? '#b89767' : '#ccc'}`,
-                          background: isSelected ? '#b89767' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        {isSelected && <Check className="w-3 h-3" style={{ color: 'white' }} />}
-                      </div>
-                      <span style={{ fontWeight: 500, color: isSelected ? '#1a1a1a' : '#666', fontSize: '0.9rem' }}>
-                        {subcategory.name}
-                      </span>
+                    <div
+                      className={`shrink-0 w-5 h-5 rounded-[2px] border-2 flex items-center justify-center transition-colors ${
+                        isSelected ? 'border-[#DA291C] bg-[#DA291C]' : 'border-[#666666] bg-transparent'
+                      }`}
+                    >
+                      {isSelected && <Check className="w-3 h-3 text-white" />}
                     </div>
+                    <span className={`text-[13px] ${isSelected ? 'text-white font-medium' : 'text-[#8F8F8F]'}`}>
+                      {subcategory.name}
+                    </span>
                   </button>
                 );
               })}
@@ -626,28 +349,19 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
 
             {/* Custom Subcategories */}
             {formData.custom_subcategories && formData.custom_subcategories.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <h5 style={{ fontSize: '0.85rem', fontWeight: 500, color: '#999', marginBottom: '0.5rem' }}>Custom categories:</h5>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div className="pt-4">
+                <h5 className="text-[12px] font-normal text-[#8F8F8F] tracking-[1px] uppercase mb-3">Custom categories:</h5>
+                <div className="flex flex-wrap gap-2">
                   {formData.custom_subcategories.map((subcategory, index) => (
                     <div
                       key={index}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '0.5rem',
-                        background: 'rgba(217, 185, 155, 0.1)',
-                        border: '1px solid rgba(217, 185, 155, 0.3)',
-                        color: '#b89767',
-                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-[2px] bg-[#181818] border border-[#303030] text-white"
                     >
-                      <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{subcategory}</span>
+                      <span className="text-[13px]">{subcategory}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveCustomSubcategory(subcategory)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6, color: '#b89767', display: 'flex', padding: 0 }}
+                        className="text-[#8F8F8F] hover:text-[#DA291C] transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -658,9 +372,9 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
             )}
 
             {/* Add Other */}
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e0d1' }}>
+            <div className="pt-4 border-t border-[#303030]">
               {showAddSubcategoryInput ? (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Enter custom product category..."
@@ -668,36 +382,13 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                     onChange={(e) => setCustomSubcategoryInput(e.target.value)}
                     onKeyPress={handleKeyPress}
                     autoFocus
-                    style={{
-                      flex: 1,
-                      height: '2.5rem',
-                      borderRadius: '0.5rem',
-                      background: 'rgba(255, 255, 255, 0.6)',
-                      border: '1px solid #d4cbb8',
-                      color: '#1a1a1a',
-                      padding: '0 0.75rem',
-                      fontSize: '0.85rem',
-                      outline: 'none',
-                      fontFamily: "'Inter', sans-serif",
-                    }}
+                    className="flex-1 h-[40px] rounded-[2px] bg-transparent border border-[#CCCCCC] focus:border-[#1EAEDB] focus:ring-1 focus:ring-[#1EAEDB] text-[14px] text-white px-3 outline-none transition-all placeholder:text-[#666666]"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomSubcategory}
                     disabled={!customSubcategoryInput.trim()}
-                    style={{
-                      height: '2.5rem',
-                      padding: '0 1rem',
-                      borderRadius: '0.5rem',
-                      background: '#b89767',
-                      color: 'white',
-                      border: 'none',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      opacity: customSubcategoryInput.trim() ? 1 : 0.5,
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: '0.85rem',
-                    }}
+                    className="h-[40px] px-4 rounded-[2px] bg-[#DA291C] text-white text-[12px] uppercase tracking-[1px] disabled:opacity-50 hover:bg-[#B01E0A] transition-colors"
                   >
                     Add
                   </button>
@@ -707,7 +398,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                       setShowAddSubcategoryInput(false);
                       setCustomSubcategoryInput('');
                     }}
-                    style={{ height: '2.5rem', padding: '0 0.75rem', background: 'none', border: 'none', color: '#999', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    className="h-[40px] px-3 text-[#8F8F8F] hover:text-white transition-colors flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -716,30 +407,7 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAddSubcategoryInput(true)}
-                  style={{
-                    width: '100%',
-                    height: '2.5rem',
-                    borderRadius: '0.5rem',
-                    border: '1px dashed #d4cbb8',
-                    background: 'rgba(255, 255, 255, 0.3)',
-                    color: '#888',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.85rem',
-                    fontFamily: "'Inter', sans-serif",
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(184, 151, 103, 0.06)';
-                    e.currentTarget.style.borderColor = 'rgba(184, 151, 103, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                    e.currentTarget.style.borderColor = '#d4cbb8';
-                  }}
+                  className="w-full h-[40px] rounded-[2px] border border-dashed border-[#303030] text-[#8F8F8F] hover:bg-[#181818] hover:text-white transition-colors flex items-center justify-center gap-2 text-[13px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add Other Product Category
@@ -750,21 +418,14 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
 
           {/* Selection Summary */}
           {selectedSubcategoriesCount > 0 && (
-            <div
-              style={{
-                padding: '1rem',
-                borderRadius: '0.75rem',
-                background: 'rgba(184, 151, 103, 0.06)',
-                border: '1px solid rgba(184, 151, 103, 0.15)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Check className="w-4 h-4" style={{ color: '#b89767' }} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#1a1a1a' }}>
+            <div className="p-4 rounded-[2px] bg-[#181818] border border-[#303030]">
+              <div className="flex items-center gap-2 mb-2">
+                <Check className="w-4 h-4 text-[#DA291C]" />
+                <span className="text-[13px] font-medium text-white">
                   {selectedSubcategoriesCount} product {selectedSubcategoriesCount === 1 ? 'category' : 'categories'} selected
                 </span>
               </div>
-              <p style={{ fontSize: '0.8rem', color: '#999' }}>
+              <p className="text-[12px] text-[#8F8F8F]">
                 We'll create these categories in your inventory system to help you organize your products.
               </p>
             </div>
@@ -774,15 +435,8 @@ const BusinessCategoryStep: React.FC<BusinessCategoryStepProps> = ({
 
       {/* Validation Errors */}
       {validationErrors.business_category && (
-        <div
-          style={{
-            padding: '0.75rem',
-            borderRadius: '0.5rem',
-            background: 'rgba(220, 38, 38, 0.06)',
-            border: '1px solid rgba(220, 38, 38, 0.15)',
-          }}
-        >
-          <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>{validationErrors.business_category.message}</p>
+        <div className="flex items-start gap-3 p-3 bg-[#F13A2C]/10 border-l-2 border-[#F13A2C]">
+          <p className="text-[#F13A2C] text-[13px] tracking-[0.195px]">{validationErrors.business_category.message}</p>
         </div>
       )}
     </div>

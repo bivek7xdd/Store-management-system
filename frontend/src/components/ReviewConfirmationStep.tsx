@@ -40,50 +40,17 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
 
   const categoryDetails = getBusinessCategoryDetails();
 
-  const sectionStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.4)',
-    border: '1px solid #e5e0d1',
-    borderRadius: '0.75rem',
-    padding: '1rem',
-  };
-
-  const sectionHeaderStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '0.75rem',
-  };
-
-  const editBtnStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.25rem',
-    background: 'none',
-    border: 'none',
-    color: '#b89767',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-    fontWeight: 500,
-    padding: '0.25rem 0.5rem',
-    borderRadius: '0.375rem',
-    transition: 'all 0.2s ease',
-    fontFamily: "'Inter', sans-serif",
-  };
-
   return (
-    <div className="step-container space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
-        <div
-          className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3"
-          style={{ background: 'rgba(184, 151, 103, 0.12)' }}
-        >
-          <Lock className="w-6 h-6" style={{ color: '#b89767' }} />
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-[2px] bg-[#303030] mb-4">
+          <Lock className="w-5 h-5 text-white" />
         </div>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#1a1a1a', marginBottom: '0.5rem', fontFamily: "'Playfair Display', serif" }}>
+        <h3 className="text-[20px] font-medium text-white mb-2 tracking-tight">
           Review & Confirm
         </h3>
-        <p style={{ fontSize: '0.85rem', color: '#888' }}>
+        <p className="text-[#8F8F8F] text-[13px] tracking-[0.195px]">
           Please review your information and confirm your password to complete setup
         </p>
       </div>
@@ -91,92 +58,86 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
       {/* Review Sections */}
       <div className="space-y-4">
         {/* Account Information */}
-        <div style={sectionStyle}>
-          <div style={sectionHeaderStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User className="w-4 h-4" style={{ color: '#b89767' }} />
-              <h4 style={{ fontWeight: 500, color: '#1a1a1a', fontSize: '0.9rem' }}>Account Information</h4>
+        <div className="bg-[#181818] border border-[#303030] rounded-[2px] p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#303030]">
+            <div className="flex items-center gap-3">
+              <User className="w-4 h-4 text-[#8F8F8F]" />
+              <h4 className="font-normal text-[#8F8F8F] text-[12px] uppercase tracking-[1px]">Account Information</h4>
             </div>
             <button
               type="button"
-              style={editBtnStyle}
+              className="flex items-center gap-2 text-[#8F8F8F] hover:text-white transition-colors text-[12px] uppercase tracking-[1px]"
               onClick={() => onEditStep(1)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
               <Edit2 className="w-3 h-3" />
               Edit
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ fontSize: '0.85rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <span style={{ color: '#999' }}>Full Name</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.name || 'Not provided'}</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Full Name</span>
+              <p className="text-[13px] text-white font-medium">{formData.name || 'Not provided'}</p>
             </div>
             <div>
-              <span style={{ color: '#999' }}>Email</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.email || 'Not provided'}</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Email</span>
+              <p className="text-[13px] text-white font-medium">{formData.email || 'Not provided'}</p>
             </div>
             <div>
-              <span style={{ color: '#999' }}>Phone</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.phone || 'Not provided'}</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Phone</span>
+              <p className="text-[13px] text-white font-medium">{formData.phone || 'Not provided'}</p>
             </div>
             <div>
-              <span style={{ color: '#999' }}>Password</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>••••••••</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Password</span>
+              <p className="text-[13px] text-white font-medium">••••••••</p>
             </div>
           </div>
         </div>
 
         {/* Store Information */}
-        <div style={sectionStyle}>
-          <div style={sectionHeaderStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Store className="w-4 h-4" style={{ color: '#b89767' }} />
-              <h4 style={{ fontWeight: 500, color: '#1a1a1a', fontSize: '0.9rem' }}>Store Information</h4>
+        <div className="bg-[#181818] border border-[#303030] rounded-[2px] p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#303030]">
+            <div className="flex items-center gap-3">
+              <Store className="w-4 h-4 text-[#8F8F8F]" />
+              <h4 className="font-normal text-[#8F8F8F] text-[12px] uppercase tracking-[1px]">Store Information</h4>
             </div>
             <button
               type="button"
-              style={editBtnStyle}
+              className="flex items-center gap-2 text-[#8F8F8F] hover:text-white transition-colors text-[12px] uppercase tracking-[1px]"
               onClick={() => onEditStep(2)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
               <Edit2 className="w-3 h-3" />
               Edit
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ fontSize: '0.85rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <span style={{ color: '#999' }}>Store Name</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.store_name || 'Not provided'}</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Store Name</span>
+              <p className="text-[13px] text-white font-medium">{formData.store_name || 'Not provided'}</p>
             </div>
             <div>
-              <span style={{ color: '#999' }}>Currency</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.currency_code || 'NPR'}</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Currency</span>
+              <p className="text-[13px] text-white font-medium">{formData.currency_code || 'NPR'}</p>
             </div>
             <div className="sm:col-span-2">
-              <span style={{ color: '#999' }}>Address</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{formData.store_address || 'Not provided'}</p>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Address</span>
+              <p className="text-[13px] text-white font-medium">{formData.store_address || 'Not provided'}</p>
             </div>
           </div>
         </div>
 
         {/* Business Categories */}
-        <div style={sectionStyle}>
-          <div style={sectionHeaderStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Tag className="w-4 h-4" style={{ color: '#b89767' }} />
-              <h4 style={{ fontWeight: 500, color: '#1a1a1a', fontSize: '0.9rem' }}>Business Categories</h4>
+        <div className="bg-[#181818] border border-[#303030] rounded-[2px] p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#303030]">
+            <div className="flex items-center gap-3">
+              <Tag className="w-4 h-4 text-[#8F8F8F]" />
+              <h4 className="font-normal text-[#8F8F8F] text-[12px] uppercase tracking-[1px]">Business Categories</h4>
             </div>
             <button
               type="button"
-              style={editBtnStyle}
+              className="flex items-center gap-2 text-[#8F8F8F] hover:text-white transition-colors text-[12px] uppercase tracking-[1px]"
               onClick={() => onEditStep(3)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(184, 151, 103, 0.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
             >
               <Edit2 className="w-3 h-3" />
               Edit
@@ -184,36 +145,26 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
           </div>
 
           {formData.skip_categories ? (
-            <div style={{ fontSize: '0.85rem' }}>
-              <span style={{ color: '#999' }}>Configuration</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>Skipped - can be configured later</p>
+            <div>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Configuration</span>
+              <p className="text-[13px] text-[#8F8F8F] font-medium">Skipped - can be configured later</p>
             </div>
           ) : formData.business_category === 'other' ? (
-            <div className="space-y-3" style={{ fontSize: '0.85rem' }}>
+            <div className="space-y-4">
               <div>
-                <span style={{ color: '#999' }}>Primary Category</span>
-                <p style={{ color: '#1a1a1a', fontWeight: 500 }}>
+                <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Primary Category</span>
+                <p className="text-[13px] text-white font-medium">
                   {formData.custom_category || 'Custom Category (not specified)'}
                 </p>
               </div>
               {formData.custom_subcategories && formData.custom_subcategories.length > 0 && (
                 <div>
-                  <span style={{ color: '#999' }}>Product Types</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
+                  <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-2">Product Types</span>
+                  <div className="flex flex-wrap gap-2">
                     {formData.custom_subcategories.map((sub, index) => (
                       <span
                         key={index}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          background: 'rgba(217, 185, 155, 0.12)',
-                          color: '#b89767',
-                          border: '1px solid rgba(217, 185, 155, 0.25)',
-                        }}
+                        className="inline-flex items-center px-2 py-1 rounded-[2px] text-[11px] font-medium bg-[#303030] text-white"
                       >
                         {sub}
                       </span>
@@ -223,29 +174,19 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               )}
             </div>
           ) : categoryDetails ? (
-            <div className="space-y-3" style={{ fontSize: '0.85rem' }}>
+            <div className="space-y-4">
               <div>
-                <span style={{ color: '#999' }}>Primary Category</span>
-                <p style={{ color: '#1a1a1a', fontWeight: 500 }}>{categoryDetails.category.name}</p>
+                <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Primary Category</span>
+                <p className="text-[13px] text-white font-medium">{categoryDetails.category.name}</p>
               </div>
               {(categoryDetails.selectedSubcategories.length > 0 || (formData.custom_subcategories && formData.custom_subcategories.length > 0)) && (
                 <div>
-                  <span style={{ color: '#999' }}>Product Types</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
+                  <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-2">Product Types</span>
+                  <div className="flex flex-wrap gap-2">
                     {categoryDetails.selectedSubcategories.map((sub) => (
                       <span
                         key={sub.id}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          background: 'rgba(184, 151, 103, 0.1)',
-                          color: '#b89767',
-                          border: '1px solid rgba(184, 151, 103, 0.2)',
-                        }}
+                        className="inline-flex items-center px-2 py-1 rounded-[2px] text-[11px] font-medium bg-[#303030] text-white"
                       >
                         {sub.name}
                       </span>
@@ -253,17 +194,7 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
                     {formData.custom_subcategories && formData.custom_subcategories.map((sub, index) => (
                       <span
                         key={`custom-${index}`}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          background: 'rgba(217, 185, 155, 0.12)',
-                          color: '#c4956a',
-                          border: '1px solid rgba(217, 185, 155, 0.25)',
-                        }}
+                        className="inline-flex items-center px-2 py-1 rounded-[2px] text-[11px] font-medium bg-transparent border border-[#303030] text-white"
                       >
                         {sub}
                       </span>
@@ -273,19 +204,19 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               )}
             </div>
           ) : (
-            <div style={{ fontSize: '0.85rem' }}>
-              <span style={{ color: '#999' }}>Configuration</span>
-              <p style={{ color: '#1a1a1a', fontWeight: 500 }}>No categories selected</p>
+            <div>
+              <span className="block text-[11px] text-[#8F8F8F] uppercase tracking-[1px] mb-1">Configuration</span>
+              <p className="text-[13px] text-[#8F8F8F] font-medium">No categories selected</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Password Confirmation */}
-      <div style={sectionStyle}>
-        <div style={{ marginBottom: '0.75rem' }}>
-          <h4 style={{ fontWeight: 500, color: '#1a1a1a', marginBottom: '0.25rem', fontSize: '0.9rem' }}>Final Security Check</h4>
-          <p style={{ fontSize: '0.85rem', color: '#888' }}>
+      <div className="bg-[#181818] border border-[#303030] rounded-[2px] p-4">
+        <div className="mb-4 pb-3 border-b border-[#303030]">
+          <h4 className="font-normal text-white text-[14px]">Final Security Check</h4>
+          <p className="text-[12px] text-[#8F8F8F] mt-1">
             Please confirm your password to complete account creation
           </p>
         </div>
@@ -293,11 +224,11 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
         <div className="space-y-2">
           <label
             htmlFor="final-password-confirm"
-            style={{ fontSize: '0.85rem', fontWeight: 500, color: '#444' }}
+            className="text-[11px] font-normal text-[#8F8F8F] uppercase tracking-[1px]"
           >
             Confirm Password
           </label>
-          <div style={{ position: 'relative' }}>
+          <div className="relative">
             <input
               id="final-password-confirm"
               type={showConfirmPassword ? 'text' : 'password'}
@@ -305,46 +236,14 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
               onChange={(e) => onInputChange('confirmPassword', e.target.value)}
               onBlur={() => onFieldBlur('confirmPassword')}
               placeholder="Re-enter your password"
-              style={{
-                width: '100%',
-                height: '2.75rem',
-                paddingLeft: '1rem',
-                paddingRight: '3rem',
-                background: 'rgba(255, 255, 255, 0.5)',
-                border: `1px solid ${validationErrors.confirmPassword ? 'rgba(220, 38, 38, 0.5)' : '#d4cbb8'}`,
-                borderRadius: '0.75rem',
-                color: '#1a1a1a',
-                fontSize: '0.9rem',
-                fontFamily: "'Inter', sans-serif",
-                outline: 'none',
-                transition: 'all 0.25s ease',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#b89767';
-                e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.02), 0 0 0 3px rgba(184, 151, 103, 0.15)';
-              }}
-              onBlurCapture={(e) => {
-                e.currentTarget.style.borderColor = '#d4cbb8';
-                e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.02)';
-              }}
+              className={`w-full h-[44px] bg-transparent border ${
+                validationErrors.confirmPassword ? 'border-[#F13A2C] focus:border-[#F13A2C]' : 'border-[#CCCCCC] focus:border-[#1EAEDB]'
+              } rounded-[2px] pl-3 pr-10 text-[16px] text-white focus:outline-none focus:ring-2 focus:ring-[#1EAEDB]/50 transition-all`}
             />
             <button
               type="button"
               onClick={onToggleConfirmPassword}
-              style={{
-                position: 'absolute',
-                right: '0.75rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                color: '#999',
-                cursor: 'pointer',
-                padding: '0.25rem',
-                display: 'flex',
-                alignItems: 'center',
-              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-white transition-colors focus:outline-none"
             >
               {showConfirmPassword ? (
                 <EyeOff className="w-4 h-4" />
@@ -354,26 +253,11 @@ const ReviewConfirmationStep: React.FC<ReviewConfirmationStepProps> = ({
             </button>
           </div>
           {validationErrors.confirmPassword && (
-            <p style={{ fontSize: '0.85rem', color: '#dc2626', marginTop: '0.25rem' }}>
+            <p className="text-[13px] text-[#F13A2C] mt-2">
               {validationErrors.confirmPassword.message}
             </p>
           )}
         </div>
-      </div>
-
-      {/* Summary */}
-      <div
-        style={{
-          textAlign: 'center',
-          padding: '1rem',
-          background: 'rgba(184, 151, 103, 0.06)',
-          border: '1px solid rgba(184, 151, 103, 0.15)',
-          borderRadius: '0.75rem',
-        }}
-      >
-        <p style={{ fontSize: '0.85rem', color: '#b89767' }}>
-          Ready to create your StoreHub account? Click "Create Account" to complete setup.
-        </p>
       </div>
     </div>
   );

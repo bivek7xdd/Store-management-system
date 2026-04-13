@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Assuming you have this or use Input
 import { Plus, Search, MapPin, Star, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { inventoryService, DiscoveredSupplier } from "@/services/inventory";

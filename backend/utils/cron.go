@@ -42,10 +42,6 @@ func runExpiryCheck() {
 		return
 	}
 
-	// Note: OTP cleanup is no longer needed here.
-	// When Redis is available, OTPs auto-expire via TTL (10 min).
-	// When Redis is unavailable (Postgres fallback), the otp_tokens table
-	// still accumulates rows, so we clean them up defensively.
 	if !redis.IsRedisAvailable() {
 		err = Queries.DeleteExpiredOTPs(ctx)
 		if err != nil {

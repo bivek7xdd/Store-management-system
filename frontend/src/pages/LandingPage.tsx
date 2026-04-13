@@ -50,9 +50,7 @@ function Navbar() {
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-8 py-3 font-sans backdrop-blur-3xl bg-white/[0.08] [border:1px_solid_rgba(255,255,255,0.12)] rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_0_0_1px_rgba(255,255,255,0.06)] transition-all w-[90%] max-w-6xl mx-auto">
       <div className="flex items-center gap-2 group cursor-pointer">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-teal-700 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
-          SH
-        </div>
+
         <span className="text-xl font-bold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary">
           StoreHub
         </span>
@@ -85,7 +83,6 @@ function Navbar() {
   );
 }
 
-/* ── Dashboard Preview (coded) ── */
 function DashboardPreview() {
   const sidebarItems = [
     { icon: Home, label: "Home", active: true },
@@ -637,17 +634,17 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                name: "Sarah Jenkins",
+                name: "Ravi Kumar",
                 role: "Boutique Owner",
                 text: "StoreHub changed my life. I used to spend hours on spreadsheets; now everything is automated.",
               },
               {
-                name: "David Chen",
+                name: "Sita Rai",
                 role: "Retail Operations",
                 text: "The reporting features are second to none. It's the most polished inventory tool I've ever used.",
               },
               {
-                name: "Michael Ross",
+                name: "Ajay Gurung",
                 role: "Store Manager",
                 text: "The mobile experience is incredible. I can check stock while I'm on the floor without missing a beat.",
               },
