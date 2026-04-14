@@ -16,12 +16,12 @@ Ferrari-inspired Chiaroscuro theme. Reference: `DESIGN.md`
 
 ## Core App Pages
 
-- [ ] `Dashboard.tsx`
+- [x] `Dashboard.tsx`
 - [ ] `Inventory.tsx`
 - [ ] `Sales.tsx`
 - [ ] `SalesHistory.tsx`
 - [ ] `Reports.tsx`
-- [ ] `Debtors.tsx`
+- [x] `Debtors.tsx`
 - [ ] `Settings.tsx`
 
 ---

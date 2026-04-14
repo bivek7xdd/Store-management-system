@@ -1,28 +1,11 @@
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  AlertTriangle,
-  Calendar,
-  Plus,
-  ShoppingCart,
-  FileText,
-  ArrowRight,
-  RefreshCw,
-  Package,
-  DollarSign,
-  CheckCircle,
-  Info,
-  BarChart3,
-  Receipt,
-  LayoutDashboard,
+  TrendingUp, TrendingDown, Users, AlertTriangle, Calendar,
+  Plus, ShoppingCart, FileText, ArrowRight, RefreshCw, Package,
+  DollarSign, CheckCircle, Info, BarChart3, Receipt, LayoutDashboard,
 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getReportStats, ReportStats } from "@/services/reportService";
 import { inventoryService } from "@/services/inventory";
@@ -30,52 +13,64 @@ import { Product } from "@/types";
 import { CountUp } from "@/components/CountUp";
 import { PremiumEmptyState } from "@/components/PremiumEmptyState";
 
-const colors = {
-  primary: "#0d9488",
-  primaryDark: "#115e59",
-  primaryLight: "#14b8a6",
-};
-
 const RANGE_OPTIONS = [
   { label: "Today", value: "today" },
-  { label: "This Week", value: "week" },
-  { label: "This Month", value: "month" },
-  { label: "This Year", value: "year" },
+  { label: "Week", value: "week" },
+  { label: "Month", value: "month" },
+  { label: "Year", value: "year" },
 ];
 
 function StatSkeleton() {
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-9 w-9 rounded-lg" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-3 w-24" />
-      </CardContent>
-    </Card>
+    <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-3 w-24 bg-[#1A1A1A]" />
+        <Skeleton className="h-8 w-8 rounded-[2px] bg-[#1A1A1A]" />
+      </div>
+      <Skeleton className="h-7 w-28 bg-[#1A1A1A] mb-2" />
+      <Skeleton className="h-3 w-20 bg-[#1A1A1A]" />
+    </div>
   );
 }
 
 function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {Array.from({ length: rows }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between rounded-xl border border-gray-100 p-4"
-        >
+        <div key={i} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3">
           <div className="space-y-2">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-32 bg-[#1A1A1A]" />
+            <Skeleton className="h-2.5 w-20 bg-[#1A1A1A]" />
           </div>
-          <Skeleton className="h-6 w-12 rounded-full" />
+          <Skeleton className="h-5 w-10 rounded-[2px] bg-[#1A1A1A]" />
         </div>
       ))}
     </div>
   );
 }
+
+// Reusable section card
+function SectionCard({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-[#1A1A1A]">
+        <Icon className="w-4 h-4 text-[#DA291C]" />
+        <h3 className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">{title}</h3>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.21, 0.47, 0.32, 0.98] as const } },
+};
+
+const stagger = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
 
 export default function Dashboard() {
   const today = new Date().toLocaleDateString("en-NP");
@@ -86,920 +81,447 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(
-    async (isRefresh = false) => {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-      setError(null);
-      try {
-        const [reportStats, allProducts] = await Promise.all([
-          getReportStats(range),
-          inventoryService.getProducts(200, 0),
-        ]);
-        setStats(reportStats);
-        setProducts(allProducts);
-      } catch (err) {
-        setError("Failed to load dashboard data. Please try again.");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [range],
-  );
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    try {
+      const [reportStats, allProducts] = await Promise.all([
+        getReportStats(range),
+        inventoryService.getProducts(200, 0),
+      ]);
+      setStats(reportStats);
+      setProducts(allProducts);
+    } catch {
+      setError("Failed to load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [range]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Derived product alerts from real products
   const lowStockItems = products.filter((p) => {
-    const threshold =
-      typeof p.low_stock_threshold === "number"
-        ? p.low_stock_threshold
-        : ((p.low_stock_threshold as { Int32: number; Valid: boolean })
-            ?.Int32 ?? 0);
+    const threshold = typeof p.low_stock_threshold === "number"
+      ? p.low_stock_threshold
+      : ((p.low_stock_threshold as { Int32: number; Valid: boolean })?.Int32 ?? 0);
     return p.stock_quantity <= threshold && threshold > 0;
   });
 
   const nearExpiryItems = products.filter((p) => {
     const expiresAt = p.expires_at;
     if (!expiresAt || !expiresAt.Valid) return false;
-    const daysUntilExpiry = Math.floor(
-      (new Date(expiresAt.Time).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-    );
-    return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+    const days = Math.floor((new Date(expiresAt.Time).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return days <= 30 && days > 0;
   });
 
-  const rangeLabel =
-    RANGE_OPTIONS.find((r) => r.value === range)?.label ?? "Today";
+  const rangeLabel = RANGE_OPTIONS.find(r => r.value === range)?.label ?? "Today";
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        duration: 0.4,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: [0.21, 0.47, 0.32, 0.98] as const,
-      },
-    },
-  };
+  const saleTypeColor = (type: string) => ({
+    cash: { dot: "bg-emerald-500", text: "text-emerald-400", badge: "border-emerald-800 bg-emerald-900/30 text-emerald-400" },
+    credit: { dot: "bg-amber-500", text: "text-amber-400", badge: "border-amber-800 bg-amber-900/30 text-amber-400" },
+    online: { dot: "bg-blue-500", text: "text-blue-400", badge: "border-blue-800 bg-blue-900/30 text-blue-400" },
+  }[type] ?? { dot: "bg-[#555]", text: "text-[#8F8F8F]", badge: "border-[#303030] bg-[#1A1A1A] text-[#8F8F8F]" });
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="space-y-6 pb-20 lg:pb-6"
-    >
+    <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-5 pb-24 lg:pb-8">
+
       {/* Header */}
-      <motion.div
-        variants={itemVariants}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
+      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">
-            Welcome back! Here's your store overview
-          </p>
+          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Overview</p>
+          <h1 className="text-[22px] font-medium text-white tracking-tight">Dashboard</h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Range Selector */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1">
+          <div className="flex items-center gap-0.5 bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-0.5">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setRange(opt.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-[2px] text-[11px] font-normal uppercase tracking-[0.8px] transition-all ${
                   range === opt.value
-                    ? "text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-[#DA291C] text-white"
+                    : "text-[#666666] hover:text-[#CCCCCC]"
                 }`}
-                style={
-                  range === opt.value ? { background: colors.primary } : {}
-                }
               >
                 {opt.label}
               </button>
             ))}
           </div>
-          {/* Refresh Button */}
+          {/* Refresh */}
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="h-8 w-8 rounded-full flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="h-8 w-8 rounded-[2px] flex items-center justify-center border border-[#1A1A1A] bg-[#111111] hover:bg-[#1A1A1A] transition-colors disabled:opacity-50"
           >
-            <RefreshCw
-              className={`h-4 w-4 text-gray-500 ${refreshing ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`h-3.5 w-3.5 text-[#666666] ${refreshing ? "animate-spin" : ""}`} />
           </button>
-          <div
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
-            style={{
-              background: `${colors.primary}10`,
-              color: colors.primaryDark,
-            }}
-          >
-            <span className="font-medium">{today}</span>
+          {/* Date */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[2px] border border-[#1A1A1A] bg-[#111111]">
+            <span className="text-[12px] text-[#8F8F8F]">{today}</span>
           </div>
         </div>
       </motion.div>
 
-      {/* Error State */}
+      {/* Error */}
       {error && (
-        <motion.div
-          variants={itemVariants}
-          className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"
-        >
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span className="flex-1">{error}</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-red-200 text-red-600 hover:bg-red-100"
+        <motion.div variants={fadeUp} className="flex items-center gap-3 p-3 bg-[#DA291C]/10 border-l-2 border-[#DA291C]">
+          <AlertTriangle className="h-4 w-4 text-[#DA291C] shrink-0" />
+          <span className="flex-1 text-[13px] text-[#DA291C]">{error}</span>
+          <button
             onClick={() => fetchData()}
+            className="text-[11px] uppercase tracking-[1px] text-[#DA291C] border border-[#DA291C]/30 px-2 py-1 rounded-[2px] hover:bg-[#DA291C]/10 transition-colors"
           >
             Retry
-          </Button>
+          </button>
         </motion.div>
       )}
 
-      {/* Global Empty State for New Users */}
+      {/* Empty State for New Users */}
       {!loading && !error && stats && stats.inventory.total_products === 0 && stats.sales.count === 0 && (
-        <motion.div variants={itemVariants}>
-          <Card className="border-0 shadow-sm border-dashed border-2">
-            <CardContent className="py-12">
-              <PremiumEmptyState
-                icon={LayoutDashboard}
-                title="Welcome to StoreHub"
-                description="Your business command center is ready. To get started, add your products to inventory and start making sales."
-                action={
-                  <div className="flex gap-3">
-                    <Button asChild style={{ background: colors.primaryDark }}>
-                      <Link to="/inventory">
-                        <Package className="mr-2 h-4 w-4" />
-                        Add Products
-                      </Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link to="/sales">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Go to POS
-                      </Link>
-                    </Button>
-                  </div>
-                }
-              />
-            </CardContent>
-          </Card>
+        <motion.div variants={fadeUp} className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-12 text-center">
+          <LayoutDashboard className="w-10 h-10 text-[#303030] mx-auto mb-4" />
+          <h3 className="text-[16px] font-medium text-white mb-2">Welcome to StoreHub</h3>
+          <p className="text-[13px] text-[#8F8F8F] mb-6 max-w-sm mx-auto leading-relaxed">
+            Your business command center is ready. Add products and start recording sales.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link to="/inventory" className="h-[36px] px-4 rounded-[2px] bg-[#DA291C] text-white text-[12px] uppercase tracking-[1px] flex items-center gap-2 hover:bg-[#B01E0A] transition-colors">
+              <Package className="w-3.5 h-3.5" /> Add Products
+            </Link>
+            <Link to="/sales" className="h-[36px] px-4 rounded-[2px] border border-[#303030] text-[#8F8F8F] text-[12px] uppercase tracking-[1px] flex items-center gap-2 hover:text-white hover:border-[#8F8F8F] transition-colors">
+              <ShoppingCart className="w-3.5 h-3.5" /> Go to POS
+            </Link>
+          </div>
         </motion.div>
       )}
 
-      {/* Summary Cards */}
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        data-tour="dashboard-cards"
-      >
+      {/* Stat Cards */}
+      <motion.div variants={fadeUp} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="dashboard-cards">
         {loading ? (
-          <>
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
-          </>
+          <><StatSkeleton /><StatSkeleton /><StatSkeleton /><StatSkeleton /></>
         ) : (
           <>
-            {/* Sales Card */}
-            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.02] transition-colors" />
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  {rangeLabel} Sales
-                </CardTitle>
-                <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform"
-                  style={{ background: `${colors.primary}15` }}
-                >
-                  <TrendingUp
-                    className="h-5 w-5"
-                    style={{ color: colors.primary }}
-                  />
+            {/* Sales */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">{rangeLabel} Sales</p>
+                <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-[#DA291C]" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
-                  रू <CountUp to={stats?.sales?.total ?? 0} />
-                </div>
-                {stats?.sales?.growth !== undefined ? (
-                  <p
-                    className={`text-xs font-medium mt-1 flex items-center gap-1 ${
-                      stats.sales.growth >= 0
-                        ? "text-emerald-600"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {stats.sales.growth >= 0 ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    {stats.sales.growth >= 0 ? "+" : ""}
-                    {stats.sales.growth.toFixed(1)}% vs previous period
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-500 mt-1">
-                    <CountUp to={stats?.sales?.count ?? 0} /> transactions
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Total Debtors */}
-            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.02] transition-colors" />
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Outstanding Debts
-                </CardTitle>
-                <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform"
-                  style={{ background: `${colors.primary}15` }}
-                >
-                  <Users
-                    className="h-5 w-5"
-                    style={{ color: colors.primary }}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
-                  रू <CountUp to={stats?.debts?.total_outstanding ?? 0} />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  <CountUp to={stats?.debts?.total_debtors ?? 0} /> customers
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                रू <CountUp to={stats?.sales?.total ?? 0} />
+              </div>
+              {stats?.sales?.growth !== undefined ? (
+                <p className={`text-[12px] flex items-center gap-1 ${stats.sales.growth >= 0 ? "text-emerald-400" : "text-[#DA291C]"}`}>
+                  {stats.sales.growth >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {stats.sales.growth >= 0 ? "+" : ""}{stats.sales.growth.toFixed(1)}% vs prev. period
                 </p>
-              </CardContent>
-            </Card>
+              ) : (
+                <p className="text-[12px] text-[#555555]"><CountUp to={stats?.sales?.count ?? 0} /> transactions</p>
+              )}
+            </div>
+
+            {/* Debts */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Outstanding Debts</p>
+                <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-amber-400" />
+                </div>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                रू <CountUp to={stats?.debts?.total_outstanding ?? 0} />
+              </div>
+              <p className="text-[12px] text-[#555555]"><CountUp to={stats?.debts?.total_debtors ?? 0} /> customers</p>
+            </div>
 
             {/* Low Stock */}
-            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-amber-500/0 group-hover:bg-amber-500/[0.02] transition-colors" />
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Low Stock Items
-                </CardTitle>
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-amber-50 group-hover:scale-110 transition-transform">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Low Stock</p>
+                <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
-                  <CountUp to={stats?.inventory?.low_stock ?? lowStockItems.length} />
-                </div>
-                <p className="text-xs text-amber-600 font-medium mt-1">
-                  Require attention
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                <CountUp to={stats?.inventory?.low_stock ?? lowStockItems.length} />
+              </div>
+              <p className="text-[12px] text-amber-400">Require attention</p>
+            </div>
 
             {/* Near Expiry */}
-            <Card className="border-0 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/[0.02] transition-colors" />
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Near Expiry
-                </CardTitle>
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-red-50 group-hover:scale-110 transition-transform">
-                  <Calendar className="h-5 w-5 text-red-500" />
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Near Expiry</p>
+                <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+                  <Calendar className="h-4 w-4 text-[#DA291C]" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
-                  <CountUp to={nearExpiryItems.length} />
-                </div>
-                <p className="text-xs text-red-600 font-medium mt-1">
-                  Within 30 days
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                <CountUp to={nearExpiryItems.length} />
+              </div>
+              <p className="text-[12px] text-[#DA291C]">Within 30 days</p>
+            </div>
           </>
         )}
       </motion.div>
 
       {/* Quick Actions */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-sm" data-tour="quick-actions">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Button
-                asChild
-                className="w-full h-12 rounded-xl font-semibold shadow-sm"
-                style={{ background: colors.primaryDark }}
-              >
-                <Link to="/sales">
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  New Sale
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="secondary"
-                className="w-full h-12 shadow-sm"
-              >
-                <Link to="/inventory">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Add Product
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="secondary"
-                className="w-full h-12 shadow-sm"
-              >
-                <Link to="/debtors">
-                  <Users className="mr-2 h-5 w-5" />
-                  View Debtors
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="secondary"
-                className="w-full h-12 shadow-sm"
-              >
-                <Link to="/reports">
-                  <FileText className="mr-2 h-5 w-5" />
-                  View Reports
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <motion.div variants={fadeUp} data-tour="quick-actions">
+        <SectionCard title="Quick Actions" icon={ShoppingCart}>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <Link to="/sales" className="h-[40px] rounded-[2px] bg-[#DA291C] text-white text-[12px] uppercase tracking-[1px] flex items-center justify-center gap-2 hover:bg-[#B01E0A] transition-colors font-normal">
+              <ShoppingCart className="h-3.5 w-3.5" /> New Sale
+            </Link>
+            <Link to="/inventory" className="h-[40px] rounded-[2px] border border-[#303030] text-[#8F8F8F] text-[12px] uppercase tracking-[1px] flex items-center justify-center gap-2 hover:text-white hover:border-[#555555] transition-colors">
+              <Plus className="h-3.5 w-3.5" /> Add Product
+            </Link>
+            <Link to="/debtors" className="h-[40px] rounded-[2px] border border-[#303030] text-[#8F8F8F] text-[12px] uppercase tracking-[1px] flex items-center justify-center gap-2 hover:text-white hover:border-[#555555] transition-colors">
+              <Users className="h-3.5 w-3.5" /> View Debtors
+            </Link>
+            <Link to="/reports" className="h-[40px] rounded-[2px] border border-[#303030] text-[#8F8F8F] text-[12px] uppercase tracking-[1px] flex items-center justify-center gap-2 hover:text-white hover:border-[#555555] transition-colors">
+              <FileText className="h-3.5 w-3.5" /> View Reports
+            </Link>
+          </div>
+        </SectionCard>
       </motion.div>
 
       {/* Smart Insights */}
       <AnimatePresence mode="wait">
-        {loading || (stats?.insights && stats.insights.length > 0) ? (
-          <motion.div
-            key="insights"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-          >
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                  Smart Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="space-y-3">
-                    {[1, 2].map((i) => (
-                      <Skeleton key={i} className="h-14 w-full rounded-xl" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {stats!.insights.map((insight, i) => (
-                      <div
-                        key={i}
-                        className={`rounded-xl border p-4 flex items-start gap-3 transition-colors ${
-                          insight.type === "success"
-                            ? "border-emerald-100 bg-emerald-50 hover:bg-emerald-100/50"
-                            : insight.type === "warning"
-                              ? "border-amber-100 bg-amber-50 hover:bg-amber-100/50"
-                              : "border-blue-100 bg-blue-50 hover:bg-blue-100/50"
-                        }`}
-                      >
-                        <div className="mt-0.5">
-                          {insight.type === "success" ? (
-                            <CheckCircle className="h-5 w-5 text-emerald-600" />
-                          ) : insight.type === "warning" ? (
-                            <AlertTriangle className="h-5 w-5 text-amber-500" />
-                          ) : (
-                            <Info className="h-5 w-5 text-blue-500" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p
-                            className={`text-sm font-medium ${
-                              insight.type === "success"
-                                ? "text-emerald-800"
-                                : insight.type === "warning"
-                                  ? "text-amber-800"
-                                  : "text-blue-800"
-                            }`}
-                          >
-                            {insight.message}
-                          </p>
+        {(loading || (stats?.insights && stats.insights.length > 0)) && (
+          <motion.div variants={fadeUp} key="insights" initial="hidden" animate="visible" exit="hidden">
+            <SectionCard title="Smart Insights" icon={Info}>
+              {loading ? (
+                <div className="space-y-2">
+                  {[1, 2].map(i => <Skeleton key={i} className="h-12 w-full bg-[#1A1A1A] rounded-[2px]" />)}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {stats!.insights.map((insight, i) => {
+                    const colors = insight.type === "success"
+                      ? { border: "border-l-emerald-500", bg: "bg-emerald-900/10", icon: <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />, text: "text-emerald-300" }
+                      : insight.type === "warning"
+                        ? { border: "border-l-amber-500", bg: "bg-amber-900/10", icon: <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />, text: "text-amber-300" }
+                        : { border: "border-l-blue-500", bg: "bg-blue-900/10", icon: <Info className="h-4 w-4 text-blue-400 shrink-0" />, text: "text-blue-300" };
+                    return (
+                      <div key={i} className={`border-l-2 p-3 flex items-start gap-3 ${colors.border} ${colors.bg}`}>
+                        {colors.icon}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[13px] ${colors.text}`}>{insight.message}</p>
                           {insight.details && insight.details.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-[11px] text-[#555555] mt-0.5">
                               {insight.details.slice(0, 3).join(", ")}
-                              {insight.details.length > 3
-                                ? ` +${insight.details.length - 3} more`
-                                : ""}
+                              {insight.details.length > 3 ? ` +${insight.details.length - 3} more` : ""}
                             </p>
                           )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </SectionCard>
           </motion.div>
-        ) : (
-          !loading &&
-          stats?.sales?.total === 0 && (
-            <motion.div
-              key="empty"
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <Card className="border-0 shadow-sm border-dashed border-2">
-                <CardContent className="pt-6 text-center">
-                  <PremiumEmptyState
-                    icon={LayoutDashboard}
-                    title="No insights yet"
-                    description="When you start making sales and tracking inventory, smart insights will appear here to help you grow."
-                    action={
-                      <Button asChild style={{ background: colors.primaryDark }}>
-                        <Link to="/sales">Create your first sale</Link>
-                      </Button>
-                    }
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
-          )
         )}
       </AnimatePresence>
 
-      {/* Payment Breakdown + Profit */}
-      <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-blue-50">
-                <BarChart3 className="h-4 w-4 text-blue-500" />
-              </div>
-              Payment Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {[
-                  {
-                    label: "Cash",
-                    value: stats?.sales?.cash ?? 0,
-                    color: "bg-emerald-500",
-                  },
-                  {
-                    label: "Credit",
-                    value: stats?.sales?.credit ?? 0,
-                    color: "bg-amber-500",
-                  },
-                  {
-                    label: "Online",
-                    value: stats?.sales?.online ?? 0,
-                    color: "bg-blue-500",
-                  },
-                ].map(({ label, value, color }) => {
-                  const total = stats?.sales?.total ?? 1;
-                  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-                  return (
-                    <div key={label}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">
-                          {label}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          रू{" "}
-                          {value.toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })}{" "}
-                          ({pct}%)
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${color}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-emerald-50">
-                <DollarSign className="h-4 w-4 text-emerald-600" />
-              </div>
-              Profit Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {[
-                  {
-                    label: "Total Revenue",
-                    value: stats?.profit?.total_revenue ?? 0,
-                    cls: "text-gray-900",
-                  },
-                  {
-                    label: "Total Cost",
-                    value: stats?.profit?.total_cost ?? 0,
-                    cls: "text-red-500",
-                  },
-                  {
-                    label: "Gross Profit",
-                    value: stats?.profit?.gross_profit ?? 0,
-                    cls: "text-emerald-600 font-bold",
-                  },
-                ].map(({ label, value, cls }) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3"
-                  >
-                    <span className="text-sm text-gray-600">{label}</span>
-                    <span className={`text-sm ${cls}`}>
-                      रू{" "}
-                      {value.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Alerts Section */}
-      <motion.div
-        variants={itemVariants}
-        className="grid gap-4 lg:grid-cols-2"
-        data-tour="dashboard-alerts"
-      >
-        {/* Low Stock Alerts */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-amber-50">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-              </div>
-              Low Stock Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <ListSkeleton />
-            ) : lowStockItems.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                All items are well stocked!
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {lowStockItems.slice(0, 3).map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center justify-between rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
-                      <p className="text-sm text-gray-500">
-                        Stock: {product.stock_quantity} units
-                      </p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="bg-amber-50 text-amber-600 border-amber-200"
-                    >
-                      Low
-                    </Badge>
-                  </div>
-                ))}
-                {lowStockItems.length > 3 && (
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="w-full text-sm"
-                    style={{ color: colors.primary }}
-                  >
-                    <Link to="/inventory" className="flex items-center gap-1">
-                      View all {lowStockItems.length} items
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Near Expiry Alerts */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-red-50">
-                <Calendar className="h-4 w-4 text-red-500" />
-              </div>
-              Near Expiry Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <ListSkeleton />
-            ) : nearExpiryItems.length === 0 ? (
-              <p className="text-sm text-gray-500">No products expiring soon</p>
-            ) : (
-              <div className="space-y-3">
-                {nearExpiryItems.slice(0, 3).map((product) => {
-                  const expiresAt = product.expires_at!;
-                  const daysUntilExpiry = Math.floor(
-                    (new Date(expiresAt.Time).getTime() - Date.now()) /
-                      (1000 * 60 * 60 * 24),
-                  );
-                  return (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-sm text-gray-500">
-                          Expires:{" "}
-                          {new Date(expiresAt.Time).toLocaleDateString("en-NP")}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="bg-red-50 text-red-600 border-red-200"
-                      >
-                        {daysUntilExpiry}d
-                      </Badge>
-                    </div>
-                  );
-                })}
-                {nearExpiryItems.length > 3 && (
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="w-full text-sm"
-                    style={{ color: colors.primary }}
-                  >
-                    <Link to="/inventory" className="flex items-center gap-1">
-                      View all {nearExpiryItems.length} items
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Top Selling Products + Top Debtors */}
-      <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div
-                className="h-8 w-8 rounded-lg flex items-center justify-center"
-                style={{ background: `${colors.primary}15` }}
-              >
-                <Package className="h-4 w-4" style={{ color: colors.primary }} />
-              </div>
-              Top Selling Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <ListSkeleton />
-            ) : !stats?.sales?.top_products?.length ? (
-              <p className="text-sm text-gray-500">
-                No sales data for this period.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {stats.sales.top_products.slice(0, 5).map((product, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                        style={{ background: colors.primary }}
-                      >
-                        {i + 1}
+      {/* Payment Breakdown + Profit Side by Side */}
+      <motion.div variants={fadeUp} className="grid gap-3 lg:grid-cols-2">
+        <SectionCard title="Payment Breakdown" icon={BarChart3}>
+          {loading ? (
+            <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-9 w-full bg-[#1A1A1A] rounded-[2px]" />)}</div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { label: "Cash", value: stats?.sales?.cash ?? 0, bar: "bg-emerald-500" },
+                { label: "Credit", value: stats?.sales?.credit ?? 0, bar: "bg-amber-500" },
+                { label: "Online", value: stats?.sales?.online ?? 0, bar: "bg-blue-500" },
+              ].map(({ label, value, bar }) => {
+                const total = stats?.sales?.total ?? 1;
+                const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+                return (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[12px] text-[#8F8F8F]">{label}</span>
+                      <span className="text-[12px] text-white">
+                        रू {value.toLocaleString(undefined, { maximumFractionDigits: 0 })} ({pct}%)
                       </span>
-                      <p className="font-medium text-gray-900 text-sm">
-                        {product.product_name}
-                      </p>
                     </div>
-                    <Badge variant="outline" className="text-gray-600">
-                      {product.total_quantity} sold
-                    </Badge>
+                    <div className="h-1.5 rounded-full bg-[#1A1A1A] overflow-hidden">
+                      <div className={`h-full rounded-full ${bar} transition-all`} style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                );
+              })}
+            </div>
+          )}
+        </SectionCard>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-red-50">
-                <Users className="h-4 w-4 text-red-500" />
-              </div>
-              Top Debtors
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <ListSkeleton />
-            ) : !stats?.debts?.top_debtors?.length ? (
-              <p className="text-sm text-gray-500">No outstanding debts.</p>
-            ) : (
-              <div className="space-y-3">
-                {stats.debts.top_debtors.slice(0, 5).map((debtor, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">
-                        {debtor.customer_name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {debtor.customer_phone}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-red-600 text-sm">
-                        रू {debtor.total_debt.toLocaleString()}
-                      </p>
-                      <p className="text-[10px] text-gray-400">awaiting pay</p>
-                    </div>
+        <SectionCard title="Profit Summary" icon={DollarSign}>
+          {loading ? (
+            <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full bg-[#1A1A1A] rounded-[2px]" />)}</div>
+          ) : (
+            <div className="space-y-2">
+              {[
+                { label: "Total Revenue", value: stats?.profit?.total_revenue ?? 0, cls: "text-white" },
+                { label: "Total Cost", value: stats?.profit?.total_cost ?? 0, cls: "text-[#DA291C]" },
+                { label: "Gross Profit", value: stats?.profit?.gross_profit ?? 0, cls: "text-emerald-400 font-medium" },
+              ].map(({ label, value, cls }) => (
+                <div key={label} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] px-3 py-2.5">
+                  <span className="text-[12px] text-[#8F8F8F]">{label}</span>
+                  <span className={`text-[13px] ${cls}`}>
+                    रू {value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+      </motion.div>
+
+      {/* Alerts */}
+      <motion.div variants={fadeUp} className="grid gap-3 lg:grid-cols-2" data-tour="dashboard-alerts">
+        {/* Low Stock */}
+        <SectionCard title="Low Stock Alerts" icon={AlertTriangle}>
+          {loading ? <ListSkeleton /> : lowStockItems.length === 0 ? (
+            <p className="text-[13px] text-[#555555]">All items are well stocked.</p>
+          ) : (
+            <div className="space-y-2">
+              {lowStockItems.slice(0, 3).map(product => (
+                <div key={product.id} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
+                  <div>
+                    <p className="text-[13px] text-white font-medium">{product.name}</p>
+                    <p className="text-[11px] text-[#555555]">Stock: {product.stock_quantity} units</p>
                   </div>
-                ))}
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="w-full text-sm"
-                  style={{ color: colors.primary }}
-                >
-                  <Link to="/debtors" className="flex items-center gap-1">
-                    View all debtors
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <span className="text-[10px] uppercase tracking-[1px] px-2 py-1 rounded-[2px] bg-amber-900/30 text-amber-400 border border-amber-800">Low</span>
+                </div>
+              ))}
+              {lowStockItems.length > 3 && (
+                <Link to="/inventory" className="flex items-center justify-center gap-1.5 text-[12px] text-[#8F8F8F] hover:text-white transition-colors pt-1">
+                  View all {lowStockItems.length} items <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </div>
+          )}
+        </SectionCard>
+
+        {/* Near Expiry */}
+        <SectionCard title="Near Expiry Products" icon={Calendar}>
+          {loading ? <ListSkeleton /> : nearExpiryItems.length === 0 ? (
+            <p className="text-[13px] text-[#555555]">No products expiring soon.</p>
+          ) : (
+            <div className="space-y-2">
+              {nearExpiryItems.slice(0, 3).map(product => {
+                const expiresAt = product.expires_at!;
+                const days = Math.floor((new Date(expiresAt.Time).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                return (
+                  <div key={product.id} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
+                    <div>
+                      <p className="text-[13px] text-white font-medium">{product.name}</p>
+                      <p className="text-[11px] text-[#555555]">Expires: {new Date(expiresAt.Time).toLocaleDateString("en-NP")}</p>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-[1px] px-2 py-1 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] border border-[#DA291C]/30">{days}d</span>
+                  </div>
+                );
+              })}
+              {nearExpiryItems.length > 3 && (
+                <Link to="/inventory" className="flex items-center justify-center gap-1.5 text-[12px] text-[#8F8F8F] hover:text-white transition-colors pt-1">
+                  View all {nearExpiryItems.length} items <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </div>
+          )}
+        </SectionCard>
+      </motion.div>
+
+      {/* Top Selling + Top Debtors */}
+      <motion.div variants={fadeUp} className="grid gap-3 lg:grid-cols-2">
+        <SectionCard title="Top Selling Products" icon={Package}>
+          {loading ? <ListSkeleton /> : !stats?.sales?.top_products?.length ? (
+            <p className="text-[13px] text-[#555555]">No sales data for this period.</p>
+          ) : (
+            <div className="space-y-2">
+              {stats.sales.top_products.slice(0, 5).map((product, i) => (
+                <div key={i} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="h-6 w-6 rounded-[2px] flex items-center justify-center text-[11px] font-bold text-white bg-[#DA291C]">{i + 1}</span>
+                    <p className="text-[13px] text-white">{product.product_name}</p>
+                  </div>
+                  <span className="text-[11px] text-[#8F8F8F] border border-[#303030] px-2 py-0.5 rounded-[2px]">{product.total_quantity} sold</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Top Debtors" icon={Users}>
+          {loading ? <ListSkeleton /> : !stats?.debts?.top_debtors?.length ? (
+            <p className="text-[13px] text-[#555555]">No outstanding debts.</p>
+          ) : (
+            <div className="space-y-2">
+              {stats.debts.top_debtors.slice(0, 5).map((debtor, i) => (
+                <div key={i} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
+                  <div>
+                    <p className="text-[13px] text-white font-medium">{debtor.customer_name}</p>
+                    <p className="text-[11px] text-[#555555]">{debtor.customer_phone}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[13px] font-medium text-[#DA291C]">रू {debtor.total_debt.toLocaleString()}</p>
+                    <p className="text-[10px] text-[#555555]">awaiting pay</p>
+                  </div>
+                </div>
+              ))}
+              <Link to="/debtors" className="flex items-center justify-center gap-1.5 text-[12px] text-[#8F8F8F] hover:text-white transition-colors pt-1">
+                View all debtors <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          )}
+        </SectionCard>
       </motion.div>
 
       {/* Recent Transactions */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <div
-                className="h-8 w-8 rounded-lg flex items-center justify-center"
-                style={{ background: `${colors.primary}15` }}
-              >
-                <Receipt className="h-4 w-4" style={{ color: colors.primary }} />
-              </div>
-              Recent Transactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <ListSkeleton rows={5} />
-            ) : !stats?.sales?.recent?.length ? (
-              <p className="text-sm text-gray-500">No recent transactions.</p>
-            ) : (
-              <div className="space-y-3">
-                {stats.sales.recent.map((sale) => (
-                  <div
-                    key={sale.id}
-                    className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
-                  >
+      <motion.div variants={fadeUp}>
+        <SectionCard title="Recent Transactions" icon={Receipt}>
+          {loading ? <ListSkeleton rows={5} /> : !stats?.sales?.recent?.length ? (
+            <p className="text-[13px] text-[#555555]">No recent transactions.</p>
+          ) : (
+            <div className="space-y-2">
+              {stats.sales.recent.map(sale => {
+                const c = saleTypeColor(sale.sales_type);
+                return (
+                  <div key={sale.id} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                          sale.sales_type === "cash"
-                            ? "bg-emerald-50"
-                            : sale.sales_type === "credit"
-                              ? "bg-amber-50"
-                              : "bg-blue-50"
-                        }`}
-                      >
-                        <ShoppingCart
-                          className={`h-4 w-4 ${
-                            sale.sales_type === "cash"
-                              ? "text-emerald-600"
-                              : sale.sales_type === "credit"
-                                ? "text-amber-600"
-                                : "text-blue-600"
-                          }`}
-                        />
-                      </div>
+                      <div className={`h-2 w-2 rounded-full shrink-0 ${c.dot}`} />
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">
-                          {sale.customer_name || "Walk-in Customer"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(sale.sale_date).toLocaleString("en-NP", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })}
+                        <p className="text-[13px] text-white">{sale.customer_name || "Walk-in Customer"}</p>
+                        <p className="text-[11px] text-[#555555]">
+                          {new Date(sale.sale_date).toLocaleString("en-NP", { dateStyle: "medium", timeStyle: "short" })}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900 text-sm">
-                        रू{" "}
-                        {sale.total_amount.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })}
+                      <p className="text-[13px] font-medium text-white">
+                        रू {sale.total_amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       </p>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${
-                          sale.sales_type === "cash"
-                            ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                            : sale.sales_type === "credit"
-                              ? "bg-amber-50 text-amber-600 border-amber-200"
-                              : "bg-blue-50 text-blue-600 border-blue-200"
-                        }`}
-                      >
+                      <span className={`text-[10px] uppercase tracking-[0.8px] px-1.5 py-0.5 rounded-[2px] border ${c.badge}`}>
                         {sale.sales_type}
-                      </Badge>
+                      </span>
                     </div>
                   </div>
-                ))}
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="w-full text-sm"
-                  style={{ color: colors.primary }}
-                >
-                  <Link to="/reports" className="flex items-center gap-1">
-                    View all transactions
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                );
+              })}
+              <Link to="/reports" className="flex items-center justify-center gap-1.5 text-[12px] text-[#8F8F8F] hover:text-white transition-colors pt-1">
+                View all transactions <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          )}
+        </SectionCard>
       </motion.div>
+
     </motion.div>
   );
 }
