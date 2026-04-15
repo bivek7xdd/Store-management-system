@@ -157,8 +157,8 @@ export default function Debtors() {
         <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Total Outstanding</p>
-            <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
-              <Wallet className="h-4 w-4 text-[#DA291C]" />
+            <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-amber-400" />
             </div>
           </div>
           <p className="text-[24px] font-medium text-white">रू {totalOutstanding.toLocaleString()}</p>
@@ -276,7 +276,7 @@ export default function Debtors() {
 
                   {/* Customer */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`h-7 w-7 rounded-[2px] flex items-center justify-center text-[11px] font-bold text-white shrink-0 ${isFullyPaid ? "bg-[#303030]" : "bg-[#DA291C]"}`}>
+                    <div className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[11px] font-bold text-white shrink-0 bg-[#303030]">
                       {(debtor.customer_name || "U").charAt(0).toUpperCase()}
                     </div>
                     <p className="text-[13px] text-white font-medium truncate">{debtor.customer_name || "Unknown"}</p>
@@ -290,7 +290,7 @@ export default function Debtors() {
 
                   {/* Outstanding */}
                   <div>
-                    <p className={`text-[13px] font-medium ${isFullyPaid ? "text-emerald-400" : "text-[#DA291C]"}`}>
+                    <p className={`text-[13px] font-medium ${isFullyPaid ? "text-emerald-400" : "text-white"}`}>
                       {isFullyPaid ? "Settled" : `रू ${outstanding.toLocaleString()}`}
                     </p>
                     {!isFullyPaid && (
@@ -307,8 +307,8 @@ export default function Debtors() {
                   <div className="flex items-center gap-1.5">
                     {debtor.due_date ? (
                       <>
-                        <Calendar className={`h-3 w-3 shrink-0 ${isOverdue ? "text-[#DA291C]" : "text-[#555555]"}`} />
-                        <p className={`text-[12px] ${isOverdue ? "text-[#DA291C]" : "text-[#AAAAAA]"}`}>
+                        <Calendar className={`h-3 w-3 shrink-0 ${isOverdue ? "text-[#F13A2C]" : "text-[#555555]"}`} />
+                        <p className={`text-[12px] ${isOverdue ? "text-[#F13A2C]" : "text-[#AAAAAA]"}`}>
                           {new Date(debtor.due_date).toLocaleDateString("en-NP")}
                           {isOverdue && <span className="ml-1 text-[10px] uppercase tracking-[0.5px]">(overdue)</span>}
                         </p>

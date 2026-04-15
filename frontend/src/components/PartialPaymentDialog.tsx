@@ -2,15 +2,12 @@ import { useState } from "react";
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Debt } from "@/services/debts";
-import { Banknote, Wallet, AlertCircle } from "lucide-react";
+import { Banknote, AlertCircle, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PartialPaymentDialogProps {
     debt: Debt | null;
@@ -18,6 +15,8 @@ interface PartialPaymentDialogProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (amount: number) => Promise<void>;
 }
+
+const inputCls = "w-full h-[44px] bg-transparent border border-[#303030] rounded-[2px] px-3 text-[16px] font-bold text-white placeholder:text-[#555555] focus:outline-none focus:border-[#1EAEDB] transition-colors";
 
 export function PartialPaymentDialog({ debt, open, onOpenChange, onSubmit }: PartialPaymentDialogProps) {
     const [amount, setAmount] = useState("");
@@ -44,86 +43,95 @@ export function PartialPaymentDialog({ debt, open, onOpenChange, onSubmit }: Par
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] overflow-hidden border-0 shadow-2xl p-0">
-                <div className="bg-gradient-to-br from-teal-500 to-teal-700 p-6 text-white text-center">
-                    <div className="h-16 w-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30">
-                        <Banknote className="h-8 w-8 text-white" />
+            <DialogContent className="sm:max-w-[420px] p-0 border border-[#1A1A1A] bg-[#0A0A0A] rounded-[2px] shadow-2xl shadow-black/60 overflow-hidden gap-0">
+                {/* Header */}
+                <div className="px-6 pt-6 pb-5 border-b border-[#1A1A1A]">
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="h-8 w-8 rounded-[2px] bg-emerald-900/20 border border-emerald-800/30 flex items-center justify-center">
+                            <Banknote className="h-4 w-4 text-emerald-400" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-[15px] font-medium text-white uppercase tracking-[0.5px]">Record Payment</DialogTitle>
+                            <p className="text-[12px] text-[#888888]">
+                                Partial payment for <span className="text-white font-medium">{debt.customer_name}</span>
+                            </p>
+                        </div>
                     </div>
-                    <DialogTitle className="text-2xl font-bold">Record Payment</DialogTitle>
-                    <DialogDescription className="text-teal-50/80 mt-1">
-                        Recording payment for <span className="font-semibold text-white">{debt.customer_name}</span>
-                    </DialogDescription>
                 </div>
 
-                <form onSubmit={handleFormSubmit} className="p-6 space-y-6">
-                    <div className="flex gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                        <div className="flex-1">
-                            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Outstanding</Label>
-                            <p className="text-xl font-bold text-gray-900">रू {outstanding.toLocaleString()}</p>
+                <form onSubmit={handleFormSubmit} className="px-6 py-6 space-y-6">
+                    {/* Summary Info */}
+                    <div className="grid grid-cols-2 gap-px bg-[#1A1A1A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+                        <div className="bg-[#111111] p-4 text-center">
+                            <p className="text-[10px] font-medium text-[#555555] uppercase tracking-[1px] mb-1">Outstanding</p>
+                            <p className="text-[16px] font-medium text-white">रू {outstanding.toLocaleString()}</p>
                         </div>
-                        <div className="h-10 w-px bg-gray-200" />
-                        <div className="flex-1 text-right">
-                            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Total Paid</Label>
-                            <p className="text-xl font-bold text-teal-600">रू {parseFloat(debt.amount_paid).toLocaleString()}</p>
+                        <div className="bg-[#111111] p-4 text-center">
+                            <p className="text-[10px] font-medium text-[#555555] uppercase tracking-[1px] mb-1">Total Paid</p>
+                            <p className="text-[16px] font-medium text-emerald-400">रू {parseFloat(debt.amount_paid).toLocaleString()}</p>
                         </div>
                     </div>
 
+                    {/* Input Section */}
                     <div className="space-y-3">
-                        <Label htmlFor="amount" className="text-sm font-semibold text-gray-700">Payment Amount (रू)</Label>
+                        <label className="flex items-center gap-1.5 text-[11px] font-normal text-[#888888] uppercase tracking-[1px]">
+                            <Banknote className="h-3 w-3" />
+                            Payment Amount (रू)
+                        </label>
                         <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">रू</div>
-                            <Input
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#555555] text-sm">रू</span>
+                            <input
                                 id="amount"
                                 type="number"
                                 step="any"
-                                placeholder="Enter amount"
+                                placeholder="0.00"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="h-14 pl-10 rounded-2xl border-gray-200 text-lg font-bold focus:ring-teal-500/20 focus:border-teal-500"
+                                className={cn(inputCls, "pl-10")}
                                 required
                                 max={outstanding}
                             />
                         </div>
-                        <div className="flex justify-between gap-2 pt-1">
+
+                        {/* Quick Presets */}
+                        <div className="grid grid-cols-4 gap-1.5 mt-2">
                             {[0.25, 0.5, 0.75, 1].map((pct) => (
-                                <Button
+                                <button
                                     key={pct}
                                     type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 text-xs rounded-lg border-gray-100 font-medium text-gray-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 transition-all"
                                     onClick={() => setAmount((outstanding * pct).toFixed(2))}
+                                    className="h-8 rounded-[2px] border border-[#303030] text-[11px] font-normal text-[#AAAAAA] hover:text-white hover:bg-[#1A1A1A] hover:border-[#555555] transition-all uppercase tracking-[0.5px]"
                                 >
                                     {pct * 100}%
-                                </Button>
+                                </button>
                             ))}
                         </div>
                     </div>
 
+                    {/* Excess Warning */}
                     {parseFloat(amount) > outstanding && (
-                        <div className="flex items-start gap-2 p-3 bg-amber-50 text-amber-700 rounded-xl text-xs border border-amber-100">
-                            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                            <p>Warning: Payment amount exceeds the outstanding balance.</p>
+                        <div className="flex items-start gap-2 p-3 bg-[#DA291C]/10 border border-[#DA291C]/20 rounded-[2px]">
+                            <AlertCircle className="h-4 w-4 text-[#DA291C] shrink-0 mt-0.5" />
+                            <p className="text-[12px] text-[#DA291C] font-medium">Payment amount exceeds the outstanding balance.</p>
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-2">
-                        <Button
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-2 border-t border-[#1A1A1A]">
+                        <button
                             type="button"
-                            variant="ghost"
-                            className="flex-1 h-12 rounded-xl text-gray-500 font-semibold"
                             onClick={() => onOpenChange(false)}
-                            disabled={loading}
+                            className="flex-1 h-[40px] rounded-[2px] border border-[#303030] text-[12px] text-[#888888] hover:text-white uppercase tracking-[1px] transition-colors"
                         >
                             Cancel
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                             type="submit"
-                            className="flex-1 h-12 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold shadow-lg shadow-teal-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                             disabled={loading || !amount || parseFloat(amount) <= 0}
+                            className="flex-[2] h-[40px] rounded-[2px] bg-white text-black hover:bg-[#F2F2F2] font-medium text-[12px] uppercase tracking-[1px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? "Recording..." : "Verify Payment"}
-                        </Button>
+                        </button>
                     </div>
                 </form>
             </DialogContent>
