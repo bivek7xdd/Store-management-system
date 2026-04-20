@@ -18,7 +18,7 @@ Ferrari-inspired Chiaroscuro theme. Reference: `DESIGN.md`
 
 - [x] `Dashboard.tsx`
 - [ ] `Inventory.tsx`
-- [ ] `Sales.tsx`
+- [x] `Sales.tsx`
 - [ ] `SalesHistory.tsx`
 - [ ] `Reports.tsx`
 - [x] `Debtors.tsx`

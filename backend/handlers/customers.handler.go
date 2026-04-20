@@ -29,3 +29,57 @@ func ListCustomers(c *gin.Context) {
 
 	utils.SuccessResponse(c, "Customers fetched successfully", customers)
 }
+
+func SearchCustomers(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+	query := c.Query("q")
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	searchQuery := "%" + query + "%"
+	customers, err := utils.Queries.SearchCustomers(ctx, db.SearchCustomersParams{
+		StoreID: storeID,
+		Name:    searchQuery,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to search customers", err)
+		return
+	}
+
+	if customers == nil {
+		customers = []db.Customer{}
+	}
+
+	utils.SuccessResponse(c, "Customers found successfully", customers)
+}
+
+type CreateCustomerRequest struct {
+	Name  string `json:"name" binding:"required"`
+	Phone string `json:"phone" binding:"required"`
+}
+
+func CreateCustomer(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	var req CreateCustomerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request payload", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	customer, err := utils.Queries.CreateCustomer(ctx, db.CreateCustomerParams{
+		Name:    req.Name,
+		Phone:   req.Phone,
+		StoreID: storeID,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create customer", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Customer created successfully", customer)
+}

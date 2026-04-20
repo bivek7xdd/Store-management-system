@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, CreditCard, Banknote, Loader2, WifiOff, Database, AlertCircle, PartyPopper } from "lucide-react";
+import { Search, Plus, Minus, ShoppingCart, Trash2, Scan, Loader2, WifiOff, Database, PartyPopper, UserCheck, User as UserIcon, Split, Calculator } from "lucide-react";
 import { inventoryService } from "@/services/inventory";
 import { salesService, CreateSaleData } from "@/services/sales";
 import { syncService } from "@/services/syncService";
@@ -14,11 +8,15 @@ import { FeatureTooltip } from "@/components/FeatureTooltip";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
 import { Product, OfflineStatus } from "@/types";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { db } from "@/db/db";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import confetti from "canvas-confetti";
-import { Settings2 } from "lucide-react";
+import { CustomerSelection } from "@/components/pos/CustomerSelection";
+import { SplitPaymentDialog, PaymentEntry } from "@/components/pos/SplitPaymentDialog";
+import { customerService } from "@/services/customerService";
+import { Customer } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface CartItem {
   productId: string;
@@ -28,10 +26,7 @@ interface CartItem {
   stock: number;
 }
 
-const colors = {
-  primary: "#0d9488",
-  primaryDark: "#115e59",
-};
+const inputCls = "w-full h-11 bg-[#111111] border border-[#1A1A1A] rounded-[2px] transition-colors focus:outline-none focus:border-[#303030] text-white px-4 text-[13px] placeholder:text-[#444444]";
 
 export default function Sales() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -39,10 +34,13 @@ export default function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [payments, setPayments] = useState<PaymentEntry[]>([]);
+  const [showSplitPaymentModal, setShowSplitPaymentModal] = useState(false);
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
   const [discountValue, setDiscountValue] = useState("");
+  const [loyaltyApplied, setLoyaltyApplied] = useState(false);
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [debtNote, setDebtNote] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -66,9 +64,7 @@ export default function Sales() {
     : (parseFloat(discountValue) || 0);
 
   const finalTotal = Math.max(0, subtotal - discountAmount);
-  const change = amountReceived ? parseFloat(amountReceived) - finalTotal : 0;
 
-  // Initialize sync service and listen for status changes
   useEffect(() => {
     const cleanup = syncService.init();
     const unsubscribe = syncService.onStatusChange((status) => {
@@ -81,7 +77,6 @@ export default function Sales() {
     };
   }, []);
 
-  // Get cached products count for offline indicator
   useEffect(() => {
     const getCachedProductsCount = async () => {
       try {
@@ -91,11 +86,9 @@ export default function Sales() {
         console.error('Failed to get cached products count:', error);
       }
     };
-
     getCachedProductsCount();
   }, []);
 
-  // Search products when searchTerm changes
   useEffect(() => {
     const search = async () => {
       if (!searchTerm) {
@@ -106,10 +99,8 @@ export default function Sales() {
       try {
         let results;
         if (offlineStatus.isOnline) {
-          // Online: Use inventory service
           results = await inventoryService.searchProducts(searchTerm);
         } else {
-          // Offline: Search cached products
           const cachedProducts = await db.products
             .where('name')
             .startsWithIgnoreCase(searchTerm)
@@ -120,7 +111,6 @@ export default function Sales() {
         setProducts(results || []);
       } catch (error) {
         console.error("Search error:", error);
-        // Fallback to cached products if online search fails
         if (offlineStatus.isOnline) {
           try {
             const cachedProducts = await db.products
@@ -129,7 +119,7 @@ export default function Sales() {
               .limit(20)
               .toArray();
             setProducts(cachedProducts || []);
-            toast.info("Showing cached products (network error)");
+            toast.info("Showing cached products (Network Error)");
           } catch (fallbackError) {
             console.error("Fallback search error:", fallbackError);
             setProducts([]);
@@ -143,6 +133,32 @@ export default function Sales() {
     const timer = setTimeout(search, 300);
     return () => clearTimeout(timer);
   }, [searchTerm, offlineStatus.isOnline]);
+
+  useEffect(() => {
+    if (selectedCustomer && selectedCustomer.name !== 'Guest') {
+      const isEligible = customerService.isEligibleForLoyaltyDiscount(selectedCustomer.purchase_count);
+      if (isEligible && !loyaltyApplied) {
+        setDiscountType('percent');
+        setDiscountValue('7');
+        setLoyaltyApplied(true);
+        toast.success(`Loyalty Reward: 7% discount auto-applied for ${selectedCustomer.name}!`, {
+            icon: '🎁',
+            duration: 5000
+        });
+      }
+    } else {
+        if (loyaltyApplied) {
+            setDiscountValue("");
+            setLoyaltyApplied(false);
+        }
+    }
+  }, [selectedCustomer]);
+
+  useEffect(() => {
+    if (discountValue === "" && loyaltyApplied) {
+        setLoyaltyApplied(false);
+    }
+  }, [discountValue]);
 
   const addToCart = (product: Product) => {
     const existing = cart.find((item) => item.productId === product.id);
@@ -186,7 +202,6 @@ export default function Sales() {
       if (offlineStatus.isOnline) {
         results = await inventoryService.searchProducts(barcode);
       } else {
-        // Offline: Search cached products
         const allProducts = await db.products.toArray();
         results = allProducts.filter(p => {
           const barcodeStr = typeof p.barcode === 'string'
@@ -197,13 +212,12 @@ export default function Sales() {
       }
 
       if (results && results.length > 0) {
-        // If multiple matches (rare for barcodes), add the first one or show list
         if (results.length === 1) {
           addToCart(results[0]);
           setSearchTerm("");
         } else {
           setSearchTerm(barcode);
-          toast.info(`Found ${results.length} products with this barcode`);
+          toast.info(`Found ${results.length} matched products`);
         }
       } else {
         toast.error(`Product with barcode ${barcode} not found`);
@@ -243,43 +257,47 @@ export default function Sales() {
       toast.error("Cart is empty");
       return;
     }
-
-    // Validate and trim customer details
-    const trimmedCustomerName = customerName.trim();
-    const trimmedCustomerPhone = customerPhone.trim();
-
-    // Check if partial payment (credit) but no customer details
-    if (change < 0 && (!trimmedCustomerName || !trimmedCustomerPhone)) {
-      toast.error("Please enter valid customer details for partial payment / credit sales");
+    if (!selectedCustomer) {
+      setShowCustomerModal(true);
+      toast.error("Identify the customer first");
       return;
     }
+    setPayments([{ type: 'cash', amount: finalTotal }]);
+    setShowSplitPaymentModal(true);
+  };
 
-    // Validate numeric inputs to prevent NaN or invalid values in saleData
+  const finalizeCheckout = async (confirmedPayments: PaymentEntry[]) => {
     const parsedDiscountValue = parseFloat(discountValue) || 0;
-    const parsedAmountReceived = amountReceived ? parseFloat(amountReceived) : 0;
+    const totalPaid = confirmedPayments.reduce((sum, p) => sum + p.amount, 0);
+    
     if (isNaN(parsedDiscountValue) || parsedDiscountValue < 0) {
-      toast.error("Invalid discount value. Please enter a valid number.");
+      toast.error("Invalid discount value");
       return;
     }
-    if (isNaN(parsedAmountReceived) || parsedAmountReceived < 0) {
-      toast.error("Amount received cannot be negative");
-      return;
-    }
-    if (isNaN(subtotal) || subtotal < 0) {
-      toast.error("Invalid cart subtotal. Please check cart items.");
-      return;
-    }
-
     setIsProcessing(true);
     try {
+      let salesType: 'cash' | 'credit' | 'online' | 'mixed' = 'cash';
+      if (confirmedPayments.length > 1) {
+        salesType = 'mixed';
+      } else if (confirmedPayments.length === 1) {
+        salesType = confirmedPayments[0].type;
+      }
+      if (totalPaid < finalTotal) {
+        salesType = 'credit';
+      }
+
       const saleData: CreateSaleData = {
-        sales_type: change < 0 ? "credit" : "cash",
-        amount_paid: parsedAmountReceived,
+        sales_type: salesType,
+        amount_paid: totalPaid,
         total_amount: finalTotal,
+        payments: confirmedPayments.map(p => ({
+            amount: p.amount,
+            payment_type: p.type,
+            provider: p.provider
+        })),
         note: debtNote,
         discount_applied: discountAmount,
-        customer_name: trimmedCustomerName,
-        customer_phone: trimmedCustomerPhone,
+        customer_id: selectedCustomer!.id,
         items: cart.map(item => ({
           product_id: item.productId,
           quantity: item.quantity,
@@ -289,12 +307,8 @@ export default function Sales() {
         }))
       };
 
-      console.log("Creating sale with data:", saleData);  // This should now print if validation passes
-      console.log("Offline status:", offlineStatus.isOnline);  // Additional debug log
-
       await salesService.createSale(saleData);
 
-      // Show appropriate success message based on online status
       if (offlineStatus.isOnline) {
         toast.success("Sale completed successfully!");
         if (showConfetti) {
@@ -302,49 +316,59 @@ export default function Sales() {
             particleCount: 150,
             spread: 70,
             origin: { y: 0.6 },
-            colors: ["#0d9488", "#14b8a6", "#3b82f6"],
+            colors: ["#DA291C", "#FFFFFF", "#F6E500"],
           });
         }
       } else {
-        toast.success("Sale saved offline! Will sync when connection is restored.");
+        toast.success("Sale saved offline! Will sync automatically.");
       }
 
-      // Reset form state after successful checkout
       setCart([]);
-      setCustomerName("");
-      setCustomerPhone("");
+      setSelectedCustomer(null);
       setDiscountValue("");
       setAmountReceived("");
       setDebtNote("");
       setSearchTerm("");
       setProducts([]);
 
-      // Fetch notifications after sale to update low stock alerts, etc.
       if (offlineStatus.isOnline) {
         fetchNotifications();
       }
     } catch (error: any) {
-      console.error("Checkout error:", error);  // Enhanced logging for debugging
-      console.error("Error response:", error.response?.data);  // Log backend error details
+      console.error("Checkout error:", error);
       toast.error(error.response?.data?.message || "Failed to complete sale");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const handleGuestCheckout = async () => {
+    const guest = await customerService.getGuestCustomer();
+    if (guest) {
+      setSelectedCustomer(guest);
+      setShowCustomerModal(false);
+      toast.success("Guest Checkout Active");
+    } else {
+      toast.error("Guest account not initialized.");
+    }
+  };
 
-  if (authLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
+  if (authLoading) return (
+    <div className="flex flex-col items-center justify-center p-24 gap-4">
+      <Loader2 className="animate-spin text-[#DA291C] h-8 w-8" />
+      <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#555555]">Initializing Terminal</span>
+    </div>
+  );
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between" data-tour="sales-header">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sales / POS</h1>
-          <p className="text-gray-500 mt-1">Create new sales and manage transactions</p>
+          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Terminal</p>
+          <h1 className="text-[24px] font-bold text-white tracking-tight">Sales / POS</h1>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Offline Status Indicator */}
+        <div className="flex items-center gap-3">
           <OfflineIndicator
             isOnline={offlineStatus.isOnline}
             pendingSales={offlineStatus.pendingSales}
@@ -352,23 +376,23 @@ export default function Sales() {
             syncError={offlineStatus.syncError}
             lastSyncTime={offlineStatus.lastSyncTime}
           />
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={() => setShowConfetti(!showConfetti)}
-            className={`h-9 w-9 rounded-full ${showConfetti ? "text-teal-600 bg-teal-50" : "text-gray-400 bg-gray-50"}`}
-            title={showConfetti ? "Celebrations On" : "Celebrations Off"}
+            className={cn(
+              "h-9 w-9 rounded-[2px] border flex items-center justify-center transition-all",
+              showConfetti ? "text-[#DA291C] border-[#DA291C]/30 bg-[#DA291C]/5" : "text-[#555555] border-[#1A1A1A] hover:text-white"
+            )}
+            title="Celebration Effects"
           >
-            <PartyPopper className={`h-4 w-4 ${showConfetti ? "fill-teal-600" : ""}`} />
-          </Button>
-          <Button
+            <PartyPopper className={`h-4 w-4 ${showConfetti ? "fill-[#DA291C]/10" : ""}`} />
+          </button>
+          <button
             onClick={() => setScannerOpen(true)}
-            className="rounded-lg gap-2"
-            style={{ background: colors.primaryDark }}
+            className="h-9 px-4 rounded-[2px] bg-white text-black text-[12px] font-bold uppercase tracking-[1px] flex items-center gap-2 hover:bg-[#F2F2F2] transition-colors"
           >
             <Scan className="h-4 w-4" />
-            <span className="hidden sm:inline">Scan Barcode</span>
-          </Button>
+            <span className="hidden sm:inline">Scanner</span>
+          </button>
         </div>
       </div>
 
@@ -380,388 +404,339 @@ export default function Sales() {
 
       {/* Offline Mode Banner */}
       {!offlineStatus.isOnline && (
-        <FeatureTooltip
-          featureKey="sales_offline"
-          title="Offline Mode is Active"
-          description="You can continue making sales even without internet. StoreHub caches your products and will automatically sync your sales when you're back online."
-          placement="bottom"
-        >
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
-            <WifiOff className="h-5 w-5 text-orange-600" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-orange-800">
-                Working offline
-              </p>
-              <p className="text-xs text-orange-600">
-                {cachedProductsCount > 0
-                  ? `${cachedProductsCount} products available from cache. Sales will sync when connection is restored.`
-                  : "No cached products available. Connect to internet to load product data."
-                }
-              </p>
-            </div>
-            {offlineStatus.pendingSales > 0 && (
-              <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-                {offlineStatus.pendingSales} pending
-              </Badge>
-            )}
+        <div className="border border-[#F13A2C]/30 bg-[#F13A2C]/5 rounded-[2px] p-4 flex items-center gap-4">
+          <WifiOff className="h-5 w-5 text-[#F13A2C]" />
+          <div className="flex-1">
+            <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Offline Persistence Active</p>
+            <p className="text-[11px] text-[#F13A2C] uppercase tracking-[0.5px] mt-0.5 opacity-80">
+              {cachedProductsCount > 0
+                ? `${cachedProductsCount} products indexed locally. Sales will sync on restoration.`
+                : "No local cache detected. Internet required for product indexing."
+              }
+            </p>
           </div>
-        </FeatureTooltip>
+          {offlineStatus.pendingSales > 0 && (
+            <div className="px-2 py-0.5 bg-[#F13A2C] text-white text-[10px] font-bold uppercase tracking-[1px] rounded-[2px]">
+              {offlineStatus.pendingSales} Queue
+            </div>
+          )}
+        </div>
       )}
 
       {/* Sync Progress Banner */}
       {offlineStatus.isSyncing && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
-          <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+        <div className="border border-blue-500/30 bg-blue-500/5 rounded-[2px] p-4 flex items-center gap-4">
+          <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-800">
-              Syncing sales data...
-            </p>
-            <p className="text-xs text-blue-600">
-              Uploading offline sales to server
+            <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Data Synchronization in Progress</p>
+            <p className="text-[11px] text-blue-400 uppercase tracking-[0.5px] mt-0.5 opacity-80">
+              Uploading terminal transaction queue to central server...
             </p>
           </div>
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Product Search */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card className="border-0 shadow-sm" data-tour="sales-search">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-gray-900">Product Search</CardTitle>
-                {!offlineStatus.isOnline && cachedProductsCount > 0 && (
-                  <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                    <Database className="h-3 w-3" />
-                    Cached data
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by name or scan barcode..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-12 h-12 rounded-xl border-gray-200"
-                />
-                {isSearching && (
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                  </div>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
-                  onClick={() => setScannerOpen(true)}
-                >
-                  <Scan className="h-4 w-4 text-gray-400" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Left Side: Search & Results */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-6">
+            <label className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px] mb-3 block">Product Search Terminal</label>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#444444]" />
+              <input
+                placeholder="INPUT PRODUCT NAME OR SCAN SERIAL..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={cn(inputCls, "h-14 pl-12 pr-12 text-[15px] focus:border-[#DA291C]")}
+              />
+              {isSearching && (
+                <div className="absolute right-14 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#DA291C]" />
+                </div>
+              )}
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 text-[#555555] hover:text-[#DA291C] transition-colors"
+                onClick={() => setScannerOpen(true)}
+              >
+                <Scan className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
 
           {searchTerm && (
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-4">
-                <div className="grid gap-2 max-h-96 overflow-y-auto">
-                  {products.length === 0 && !isSearching ? (
-                    <div className="text-center py-8">
-                      <p className="text-sm text-gray-500">
-                        {!offlineStatus.isOnline && cachedProductsCount === 0
-                          ? "No cached products available. Connect to internet to load products."
-                          : "No products found"
-                        }
-                      </p>
-                      {!offlineStatus.isOnline && cachedProductsCount > 0 && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          Searching in {cachedProductsCount} cached products
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    products.map((product) => (
-                      <button
-                        key={product.id}
-                        onClick={() => addToCart(product)}
-                        disabled={product.stock_quantity <= 0}
-                        className={`flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all text-left ${product.stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+              <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between">
+                <p className="text-[11px] font-bold text-[#AAAAAA] uppercase tracking-[1px]">Results Archive</p>
+                {!offlineStatus.isOnline && cachedProductsCount > 0 && (
+                  <div className="flex items-center gap-1.5 text-[10px] text-[#555555] uppercase font-bold tracking-[0.5px]">
+                    <Database className="h-3 w-3" />
+                    Local Vault Data
+                  </div>
+                )}
+              </div>
+              <div className="divide-y divide-[#1A1A1A] max-h-[500px] overflow-y-auto custom-scrollbar">
+                {products.length === 0 && !isSearching ? (
+                  <div className="text-center py-16">
+                    <p className="text-[12px] font-medium text-[#444444] uppercase tracking-[2px]">No Matches In Archive</p>
+                  </div>
+                ) : (
+                  products.map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock_quantity <= 0}
+                      className="w-full flex items-center justify-between p-5 hover:bg-[#1A1A1A] transition-all text-left group disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 bg-[#0A0A0A] border border-[#303030] rounded-[2px] flex items-center justify-center">
+                           <p className="text-[14px] font-black text-white">{product.name.charAt(0).toUpperCase()}</p>
+                        </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-gray-900">{product.name}</p>
+                            <p className="font-bold text-[14px] text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</p>
                             {!offlineStatus.isOnline && (
-                              <Badge variant="outline" className="text-xs px-1 py-0">
-                                Cached
-                              </Badge>
+                              <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#555555] uppercase rounded-[1px]">Vault</div>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500">
-                            Stock: {product.stock_quantity} • रू {typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0}
+                          <p className="text-[11px] text-[#555555] font-medium uppercase tracking-[0.5px] mt-0.5">
+                            Index: {product.stock_quantity} UNIT • रू {(typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0).toLocaleString()}
                           </p>
                         </div>
-                        <div
-                          className="h-9 w-9 rounded-lg flex items-center justify-center"
-                          style={{ background: `${colors.primary}15` }}
-                        >
-                          <Plus className="h-5 w-5" style={{ color: colors.primary }} />
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                      </div>
+                      <div className="h-9 w-9 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center group-hover:bg-[#DA291C] group-hover:border-[#DA291C] transition-all">
+                        <Plus className="h-4 w-4 text-[#AAAAAA] group-hover:text-white" />
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Cart & Checkout */}
-        <div className="space-y-4">
-          <Card className="border-0 shadow-sm" data-tour="sales-cart">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                  <div
-                    className="h-8 w-8 rounded-lg flex items-center justify-center"
-                    style={{ background: `${colors.primary}15` }}
-                  >
-                    <ShoppingCart className="h-4 w-4" style={{ color: colors.primary }} />
-                  </div>
-                  Cart
-                </CardTitle>
-                <Badge variant="secondary" className="bg-gray-100 text-gray-600">{cart.length} items</Badge>
+        {/* Right Side: Cart & Checkout */}
+        <div className="space-y-6">
+          {/* Cart Section */}
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+            <div className="p-6 border-b border-[#1A1A1A] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-white/5 border border-white/10 rounded-[2px] flex items-center justify-center">
+                  <ShoppingCart className="h-4 w-4 text-white" />
+                </div>
+                <p className="text-[13px] font-bold text-white uppercase tracking-[1px]">Active Cart</p>
               </div>
-            </CardHeader>
-            <CardContent>
+              <div className="h-6 px-2 bg-[#1A1A1A] rounded-[2px] flex items-center">
+                <span className="text-[10px] font-bold text-[#AAAAAA] uppercase tracking-[1px]">{cart.length} UNITS</span>
+              </div>
+            </div>
+            
+            <div className="px-6 py-6 border-b border-[#1A1A1A] min-h-[160px]">
               {cart.length === 0 ? (
-                <div className="text-center py-8">
-                  <ShoppingCart className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                  <p className="text-sm text-gray-500">Cart is empty</p>
+                <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                  <ShoppingCart className="h-8 w-8 text-[#1A1A1A] mb-4" />
+                  <p className="text-[10px] font-bold text-[#444444] uppercase tracking-[2px]">Empty Terminal Cart</p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
                   {cart.map((item) => (
-                    <div
-                      key={item.productId}
-                      className="flex items-center justify-between p-3 rounded-xl bg-gray-50"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-500">
-                          रू {item.price} × {item.quantity}
+                    <div key={item.productId} className="flex items-center justify-between p-3 rounded-[2px] bg-[#0A0A0A] border border-transparent hover:border-[#303030] transition-colors group">
+                      <div className="flex-1 min-w-0 pr-4">
+                        <p className="font-bold text-[12px] text-white uppercase tracking-tight truncate">{item.name}</p>
+                        <p className="text-[10px] text-[#555555] font-medium uppercase tracking-[0.5px]">
+                          रू {item.price.toLocaleString()} × {item.quantity}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 w-8 p-0 rounded-lg border-gray-200"
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
                           onClick={() => updateQuantity(item.productId, -1)}
+                          className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-white"
                         >
                           <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="text-sm font-semibold w-8 text-center text-gray-900">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 w-8 p-0 rounded-lg border-gray-200"
+                        </button>
+                        <span className="text-[12px] font-bold text-white w-5 text-center">{item.quantity}</span>
+                        <button
                           onClick={() => updateQuantity(item.productId, 1)}
+                          className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-white"
                         >
                           <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 rounded-lg hover:bg-red-50"
+                        </button>
+                        <button
                           onClick={() => removeFromCart(item.productId)}
+                          className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[#555555] hover:text-[#DA291C]"
                         >
-                          <Trash2 className="h-3 w-3 text-red-500" />
-                        </Button>
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
+            </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>Subtotal:</span>
-                  <span>रू {subtotal.toLocaleString()}</span>
-                </div>
-                {discountAmount > 0 && (
-                  <div className="flex items-center justify-between text-sm text-red-500">
-                    <span>Discount:</span>
-                    <span>- रू {discountAmount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-700">Total:</span>
-                  <span className="text-2xl font-bold" style={{ color: colors.primaryDark }}>
-                    रू {finalTotal.toLocaleString()}
-                  </span>
-                </div>
+            <div className="p-6 bg-[#0D0D0D] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px]">Subtotal Archive</span>
+                <span className="text-[13px] font-bold text-[#AAAAAA]">रू {subtotal.toLocaleString()}</span>
               </div>
-            </CardContent>
-          </Card>
+              {discountAmount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-[1.5px]">Loyalty Deduction</span>
+                  <span className="text-[13px] font-bold text-emerald-500">- रू {discountAmount.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="pt-3 border-t border-[#1A1A1A] flex items-center justify-between">
+                <span className="text-[12px] font-bold text-white uppercase tracking-[1px]">Gross Total</span>
+                <span className="text-[24px] font-bold text-white tracking-tight">रू {finalTotal.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
 
-          <Card className="border-0 shadow-sm" data-tour="sales-payment">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-gray-900">Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Discount Section */}
+          {/* Customer Selection Identity */}
+          <div className={cn(
+            "bg-[#111111] border rounded-[2px] overflow-hidden transition-all duration-300",
+            selectedCustomer ? "border-[#DA291C]/30" : "border-[#1A1A1A]"
+          )}>
+            <div className="p-4 border-b border-[#1A1A1A] flex items-center justify-between">
+              <p className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px]">Identity Verification</p>
+              {selectedCustomer && (
+                 <button 
+                  onClick={() => setShowCustomerModal(true)}
+                  className="text-[9px] font-bold text-[#DA291C] uppercase tracking-[1px] hover:underline"
+                 >
+                  Shift
+                 </button>
+              )}
+            </div>
+            <div className="p-5">
+              {selectedCustomer ? (
+                <div className="flex items-center gap-4 animate-in fade-in zoom-in-95 duration-500">
+                  <div className="h-10 w-10 bg-[#0A0A0A] border border-[#DA291C]/20 rounded-[2px] flex items-center justify-center">
+                    <UserCheck className="h-5 w-5 text-[#DA291C]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-[13px] text-white uppercase tracking-tight truncate">{selectedCustomer.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[10px] text-[#555555] font-medium tracking-[0.5px] uppercase">{selectedCustomer.phone}</p>
+                      <div className="h-3 px-1.5 bg-[#DA291C] text-white text-[8px] font-black uppercase flex items-center rounded-[1px]">
+                        {selectedCustomer.loyalty_status}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowCustomerModal(true)}
+                  className="w-full h-12 border border-dashed border-[#303030] hover:border-[#DA291C] hover:bg-[#DA291C]/5 transition-all text-[#555555] hover:text-[#DA291C] rounded-[2px] text-[11px] font-bold uppercase tracking-[2px] flex items-center justify-center gap-2"
+                >
+                  <UserIcon className="h-4 w-4" />
+                  Select Entity
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Payment Terminal Section */}
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-6 space-y-6">
+            <p className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px]">Settlement Parameters</p>
+            
+            <div className="space-y-4">
+              {/* Discount Entry */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Discount</Label>
+                <label className="text-[10px] font-bold text-[#444444] uppercase tracking-[1px]">Adjustment Type</label>
                 <div className="flex gap-2">
-                  <div className="flex bg-gray-100 rounded-lg p-1 h-12 w-32 shrink-0">
+                  <div className="flex h-11 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] p-1 flex-1 max-w-[120px]">
                     <button
-                      className={`flex-1 rounded-md text-xs font-medium transition-all ${discountType === 'percent' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                      className={cn(
+                        "flex-1 rounded-[1px] text-[10px] font-bold transition-all uppercase",
+                        discountType === 'percent' ? 'bg-[#DA291C] text-white' : 'text-[#444444] hover:text-white'
+                      )}
                       onClick={() => setDiscountType('percent')}
                     >
-                      %
+                      % Rate
                     </button>
                     <button
-                      className={`flex-1 rounded-md text-xs font-medium transition-all ${discountType === 'amount' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                      className={cn(
+                        "flex-1 rounded-[1px] text-[10px] font-bold transition-all uppercase",
+                        discountType === 'amount' ? 'bg-[#DA291C] text-white' : 'text-[#444444] hover:text-white'
+                      )}
                       onClick={() => setDiscountType('amount')}
                     >
-                      Fixed
+                      Flat
                     </button>
                   </div>
-                  <Input
+                  <input
                     type="number"
-                    placeholder={discountType === 'percent' ? "e.g. 10" : "e.g. 500"}
+                    placeholder="0.00"
                     value={discountValue}
                     onChange={(e) => setDiscountValue(e.target.value)}
-                    className="h-12 rounded-xl border-gray-200"
+                    className={cn(inputCls, "flex-1 text-center font-bold text-[14px]")}
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="amountReceived" className="text-sm font-medium text-gray-700">Amount Received (रू)</Label>
-                <div className="relative">
-                  <Input
-                    id="amountReceived"
-                    type="number"
-                    min={0}
-                    placeholder="Enter amount given by customer"
-                    value={amountReceived}
-                    onChange={(e) => setAmountReceived(e.target.value)}
-                    className={`h-12 rounded-xl border-gray-200 pl-4 font-semibold text-lg ${parseFloat(amountReceived) < 0 ? "border-red-500 bg-red-50" : ""}`}
-                  />
-                  {amountReceived && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400"
-                      onClick={() => setAmountReceived("")}
-                    >
-                      Clear
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {amountReceived && (
-                <div className={`p-4 rounded-xl border flex justify-between items-center ${parseFloat(amountReceived) < 0 ? "bg-red-50 border-red-100" : (change >= 0 ? "bg-teal-50 border-teal-100" : "bg-orange-50 border-orange-100")}`}>
-                  <div>
-                    <p className={`text-xs font-medium uppercase tracking-wider ${parseFloat(amountReceived) < 0 ? "text-red-600" : (change >= 0 ? "text-teal-600" : "text-orange-600")}`}>
-                      {parseFloat(amountReceived) < 0 ? "Error" : (change >= 0 ? "Change to Return" : "Remaining Due / Debt")}
-                    </p>
-                    <p className={`text-xl font-bold ${parseFloat(amountReceived) < 0 ? "text-red-700" : (change >= 0 ? "text-teal-700" : "text-orange-700")}`}>
-                      {parseFloat(amountReceived) < 0 ? "Invalid Amount" : `रू ${Math.abs(change).toLocaleString()}`}
-                    </p>
-                  </div>
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${parseFloat(amountReceived) < 0 ? "bg-red-100" : (change >= 0 ? "bg-teal-100" : "bg-orange-100")}`}>
-                    {parseFloat(amountReceived) < 0 ? <AlertCircle className="h-5 w-5 text-red-600" /> : <Banknote className={`h-5 w-5 ${change >= 0 ? "text-teal-600" : "text-orange-600"}`} />}
-                  </div>
-                </div>
-              )}
-
-              {/* Dynamic Customer Form for Credit/Debt */}
-              {change < 0 && (
-                <div className="space-y-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center gap-2 text-orange-600 bg-orange-50 p-3 rounded-lg text-sm">
-                    <CreditCard className="h-4 w-4" />
-                    <span>Partial payment detected. Please enter debtor details.</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName" className="text-sm font-medium">Customer Name*</Label>
-                    <Input
-                      id="customerName"
-                      placeholder="Enter customer name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      className="rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customerPhone" className="text-sm font-medium">Phone Number*</Label>
-                    <Input
-                      id="customerPhone"
-                      placeholder="98XXXXXXXX"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="debtNote" className="text-sm font-medium">Note (Optional)</Label>
-                    <Input
-                      id="debtNote"
-                      placeholder="e.g. Promised to pay next week..."
-                      value={debtNote}
-                      onChange={(e) => setDebtNote(e.target.value)}
-                      className="rounded-lg"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-3 gap-2">
-                {[finalTotal, 50, 100, 500, 1000].map((denom, i) => (
-                  <Button
-                    key={`${denom}-${i}`}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg border-gray-200 text-xs font-medium hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
-                    onClick={() => setAmountReceived(denom.toString())}
+              {/* Quick Cash Presets */}
+            <div className="grid grid-cols-2 gap-2">
+                {[500, 1000].map((denom) => (
+                  <button
+                    key={denom}
+                    className="h-10 border border-[#1A1A1A] hover:border-[#303030] text-[#555555] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] transition-all flex items-center justify-center gap-2"
+                    onClick={() => {
+                        setPayments([{ type: 'cash', amount: denom }]);
+                        finalizeCheckout([{ type: 'cash', amount: denom }]);
+                    }}
                   >
-                    {denom === finalTotal ? "Exact" : `रू ${denom}`}
-                  </Button>
+                    रू {denom} Cash
+                  </button>
                 ))}
+                <button
+                  onClick={handleCheckout}
+                  className="col-span-2 h-10 border border-[#DA291C]/30 bg-[#DA291C]/5 text-[#DA291C] hover:bg-[#DA291C] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] transition-all flex items-center justify-center gap-2"
+                >
+                  <Split className="h-4 w-4" />
+                  Split Settlement
+                </button>
               </div>
 
-              <Button
-                className="w-full h-12 rounded-xl font-semibold text-base mt-4"
-                style={{ background: colors.primaryDark }}
-                onClick={handleCheckout}
+              <button
                 disabled={cart.length === 0 || isProcessing}
+                onClick={handleCheckout}
+                className="w-full h-16 bg-[#DA291C] hover:bg-[#B01E0A] text-white rounded-[2px] font-black text-[14px] uppercase tracking-[2px] flex items-center justify-center gap-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed group shadow-xl shadow-[#DA291C]/5"
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Processing...
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Archive Recording...
                   </>
                 ) : (
                   <>
-                    {change < 0 ? "Confirm Credit Sale" : "Complete Sale"}
-                    {!offlineStatus.isOnline && (
-                      <span className="ml-2 text-xs opacity-75">(Offline)</span>
-                    )}
+                    Authorize Settlement
+                    <Calculator className="h-5 w-5 opacity-50 group-hover:opacity-100 transition-all group-hover:scale-110" />
                   </>
                 )}
-              </Button>
-            </CardContent>
-          </Card>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+
+      <CustomerSelection 
+        open={showCustomerModal} 
+        onOpenChange={setShowCustomerModal}
+        onSelect={(customer) => {
+          setSelectedCustomer(customer);
+          setShowCustomerModal(false);
+          toast.success(`Identity Verified: ${customer.name}`);
+        }}
+        onGuestCheckout={handleGuestCheckout}
+      />
+      <SplitPaymentDialog
+        key={showSplitPaymentModal ? 'open' : 'closed'}
+        open={showSplitPaymentModal}
+        onOpenChange={setShowSplitPaymentModal}
+        totalDue={finalTotal}
+        onConfirm={finalizeCheckout}
+        initialPayments={payments}
+      />
     </div>
   );
 }

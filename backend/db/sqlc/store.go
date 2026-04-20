@@ -42,10 +42,10 @@ func (store *Store) ExecTx(ctx context.Context, fn func(*Queries) error) error {
 	return tx.Commit(ctx)
 }
 
-// CreateSaleTxParams contains input parameters for the transfer transaction
 type CreateSaleTxParams struct {
 	CreateSaleParams CreateSaleParams
 	Items            []CreateSaleItemParams
+	Payments         []CreatePaymentRecordParams
 	CreateDebtParams *CreateDebtParams // Optional, nil if no debt
 }
 
@@ -92,7 +92,16 @@ func (store *Store) CreateSaleTx(ctx context.Context, arg CreateSaleTxParams) (C
 			q.CheckAndNotifyLowStock(ctx, arg.CreateSaleParams.StoreID, product)
 		}
 
-		// 4. Create Debt if needed
+		// 4. Create Payment Records
+		for _, payment := range arg.Payments {
+			payment.SaleID = result.Sale.ID
+			_, err = q.CreatePaymentRecord(ctx, payment)
+			if err != nil {
+				return err
+			}
+		}
+
+		// 5. Create Debt if needed
 		if arg.CreateDebtParams != nil {
 			// Link debt to the created sale ID
 			arg.CreateDebtParams.SaleID.Bytes = result.Sale.ID.Bytes
@@ -101,6 +110,18 @@ func (store *Store) CreateSaleTx(ctx context.Context, arg CreateSaleTxParams) (C
 			_, err = q.CreateDebt(ctx, *arg.CreateDebtParams)
 			if err != nil {
 				return err
+			}
+		}
+
+		// 6. Update Customer Loyalty
+		if arg.CreateSaleParams.CustomerID.Valid {
+			err = q.IncrementCustomerPurchaseCount(ctx, IncrementCustomerPurchaseCountParams{
+				ID:      arg.CreateSaleParams.CustomerID,
+				StoreID: arg.CreateSaleParams.StoreID,
+			})
+			if err != nil {
+				// Log but don't fail sale for loyalty tracking
+				fmt.Printf("Warning: failed to increment purchase count: %v\n", err)
 			}
 		}
 

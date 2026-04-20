@@ -13,16 +13,15 @@ export interface SaleItemReq {
 }
 
 export interface CreateSaleData {
-    sales_type: 'cash' | 'credit' | 'online';
+    sales_type: 'cash' | 'credit' | 'online' | 'mixed';
     amount_paid: number;
-    total_amount: number; // Added total_amount to match Sale interface
+    total_amount: number;
+    payments: any[];
     note?: string;
     discount_applied: number;
-    customer_id?: string;
-    customer_name?: string;
-    customer_phone?: string;
+    customer_id: string;
     items: SaleItemReq[];
-    sale_date?: string; // Optional override
+    sale_date?: string;
 }
 
 // Re-export types if needed by components

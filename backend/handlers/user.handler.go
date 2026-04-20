@@ -100,7 +100,7 @@ func RegisterUserHandler(c *gin.Context) {
 		}
 
 		// 2. Create Store Info
-		_, txErr = q.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
+		store, txErr := q.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
 			OwnerID:      createdUser.ID,
 			Name:         req.StoreName,
 			Address:      req.StoreAddress,
@@ -108,6 +108,16 @@ func RegisterUserHandler(c *gin.Context) {
 		})
 		if txErr != nil {
 			return fmt.Errorf("failed to create store info: %w", txErr)
+		}
+
+		// 3. Seed Default 'Guest' Customer
+		_, txErr = q.CreateCustomer(context.Background(), db.CreateCustomerParams{
+			Name:    "Guest",
+			Phone:   "0000000000",
+			StoreID: pgtype.UUID{Bytes: store.ID.Bytes, Valid: true},
+		})
+		if txErr != nil {
+			return fmt.Errorf("failed to seed guest customer: %w", txErr)
 		}
 
 		return nil
@@ -222,12 +232,27 @@ func CreateStoreInfoHandler(c *gin.Context) {
 		return
 	}
 
-	info, err := utils.Queries.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
-		OwnerID:      userUUID,
-		Name:         req.Name,
-		Address:      req.Address,
-		CurrencyCode: req.CurrencyCode,
+	var info db.StoreInfo
+	err = utils.Store.ExecTx(context.Background(), func(q *db.Queries) error {
+		var txErr error
+		info, txErr = q.CreateStoreInfo(context.Background(), db.CreateStoreInfoParams{
+			OwnerID:      userUUID,
+			Name:         req.Name,
+			Address:      req.Address,
+			CurrencyCode: req.CurrencyCode,
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		_, txErr = q.CreateCustomer(context.Background(), db.CreateCustomerParams{
+			Name:    "Guest",
+			Phone:   "0000000000",
+			StoreID: pgtype.UUID{Bytes: info.ID.Bytes, Valid: true},
+		})
+		return txErr
 	})
+
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create store info", err)
 		return

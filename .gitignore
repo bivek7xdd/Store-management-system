@@ -4,3 +4,25 @@ readme-todo.todo
 .qoder
 CLAUDE.md
 specs
+.agent/
+
+# Node.js
+node_modules/
+dist/
+build/
+*.log
+.env*
+
+# Go
+*.exe
+*.test
+vendor/
+*.out
+
+# System
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/

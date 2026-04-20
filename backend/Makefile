@@ -10,6 +10,7 @@ dropdb:
 
 createdevdb:
 	docker exec -it sms createdb --username=root --owner=root atlas-dev
+	docker exec -it sms psql -U root -d atlas-dev -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
 
 dropdevdb:
 	docker exec -it sms dropdb atlas-dev

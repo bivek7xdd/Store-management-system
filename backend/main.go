@@ -106,6 +106,8 @@ func main() {
 	customerRoutes.Use(utils.JWTMiddleware())
 	{
 		customerRoutes.GET("", handlers.ListCustomers)
+		customerRoutes.GET("/search", handlers.SearchCustomers)
+		customerRoutes.POST("", handlers.CreateCustomer)
 	}
 
 	// Debt routes

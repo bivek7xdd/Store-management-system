@@ -11,26 +11,55 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import { useSidebar } from "@/hooks/useSidebar";
 
 export function SalesSidebarItem({ isActive }: { isActive: boolean }) {
     const location = useLocation();
+    const { isCollapsed } = useSidebar();
 
     const salesLinks = [
         { icon: ShoppingBag, label: "New Sale (POS)", path: "/sales" },
         { icon: History, label: "Sales History", path: "/sales/history" },
     ];
 
+    if (isCollapsed) {
+        return (
+            <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                    <Link
+                        to="/sales"
+                        className={cn(
+                            "flex items-center justify-center rounded-[2px] py-2.5 transition-all text-left",
+                            isActive ? "bg-[#1A1A1A] text-white" : "text-[#AAAAAA] hover:bg-[#111111] hover:text-white"
+                        )}
+                    >
+                        <ShoppingCart className={cn("h-[16px] w-[16px]", isActive ? "text-[#DA291C]" : "text-[#888888]")} />
+                    </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                    Sales
+                </TooltipContent>
+            </Tooltip>
+        );
+    }
+
     return (
         <Accordion type="single" collapsible className="w-full" data-tour="sidebar-sales">
             <AccordionItem value="sales" className="border-0">
                 <AccordionTrigger
                     className={cn(
-                        "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:no-underline",
-                        isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        "group flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] font-normal transition-all hover:no-underline",
+                        isActive ? "bg-[#1A1A1A] text-white" : "text-[#AAAAAA] hover:bg-[#111111] hover:text-white"
                     )}
                 >
                     <div className="flex items-center gap-3">
-                        <ShoppingCart className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                        <ShoppingCart className={cn("h-[16px] w-[16px]", isActive ? "text-[#DA291C]" : "text-[#888888] group-hover:text-white")} />
                         Sales
                     </div>
                 </AccordionTrigger>
@@ -45,13 +74,13 @@ export function SalesSidebarItem({ isActive }: { isActive: boolean }) {
                                     key={item.path}
                                     to={item.path}
                                     className={cn(
-                                        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                        "flex items-center gap-3 rounded-[2px] px-3 py-2 text-[12px] font-normal transition-colors",
                                         isLinkActive
-                                            ? "bg-primary/20 text-primary"
-                                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                            ? "text-white"
+                                            : "text-[#888888] hover:text-white"
                                     )}
                                 >
-                                    <Icon className={cn("h-4 w-4", isLinkActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                                    <Icon className={cn("h-3.5 w-3.5", isLinkActive ? "text-[#DA291C]" : "text-[#555555]")} />
                                     {item.label}
                                 </Link>
                             );

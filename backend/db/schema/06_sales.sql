@@ -1,5 +1,5 @@
 CREATE TYPE sales_types as ENUM(
-    'cash', 'credit', 'online'
+    'cash', 'credit', 'online', 'mixed'
 );
 
 CREATE TABLE IF NOT EXISTS sales(

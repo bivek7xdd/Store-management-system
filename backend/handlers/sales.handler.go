@@ -20,14 +20,18 @@ type saleItemReq struct {
 	UnitPrice float64 `json:"unit_price" binding:"required"`
 }
 
+type paymentReq struct {
+	Amount      float64 `json:"amount" binding:"required"`
+	PaymentType string  `json:"payment_type" binding:"required"`
+	Provider    string  `json:"provider"`
+}
+
 type createSaleReq struct {
-	SalesType       string        `json:"sales_type" binding:"required"`
-	AmountPaid      float64       `json:"amount_paid"`
+	SalesType       string        `json:"sales_type"`
+	Payments        []paymentReq  `json:"payments"`
 	Note            string        `json:"note"`
 	DiscountApplied float64       `json:"discount_applied"`
-	CustomerID      string        `json:"customer_id"`
-	CustomerName    string        `json:"customer_name"`
-	CustomerPhone   string        `json:"customer_phone"`
+	CustomerID      string        `json:"customer_id" binding:"required"`
 	Items           []saleItemReq `json:"items" binding:"required"`
 }
 
@@ -43,59 +47,50 @@ func CreateSale(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	// Calculate total amount
+	// Calculate total amount from items
 	var totalAmount float64
 	for _, item := range req.Items {
 		totalAmount += float64(item.Quantity) * item.UnitPrice
 	}
 	totalAmount -= req.DiscountApplied
 
-	// Validate AmountPaid
-	if req.AmountPaid < 0 {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Amount paid cannot be negative", nil)
-		return
+	// Calculate total payments received
+	var sumPayments float64
+	var paymentsParams []db.CreatePaymentRecordParams
+	for _, p := range req.Payments {
+		var amountNum pgtype.Numeric
+		amountNum.Scan(fmt.Sprintf("%f", p.Amount))
+		
+		paymentsParams = append(paymentsParams, db.CreatePaymentRecordParams{
+			Amount:      amountNum,
+			PaymentType: db.SalesTypes(p.PaymentType),
+			Provider:    pgtype.Text{String: p.Provider, Valid: p.Provider != ""},
+		})
+		sumPayments += p.Amount
 	}
 
 	// Determine effective sales type and debt status
 	isDebt := false
-	if req.AmountPaid < totalAmount {
+	effectiveSalesType := "cash"
+	if len(req.Payments) > 1 {
+		effectiveSalesType = "mixed"
+	} else if len(req.Payments) == 1 {
+		effectiveSalesType = req.Payments[0].PaymentType
+	}
+
+	if sumPayments < totalAmount {
 		isDebt = true
-		req.SalesType = "credit" // Force credit if partial payment
-		if req.CustomerName == "" && req.CustomerPhone == "" && req.CustomerID == "" {
-			utils.ErrorResponse(c, http.StatusBadRequest, "Customer details required for partial payment/credit", nil)
-			return
-		}
+		effectiveSalesType = "credit"
 	}
 
 	var customerID pgtype.UUID
-
-	// Handle Customer Creation/Lookup if needed
-	if req.SalesType == "credit" || req.CustomerPhone != "" || req.CustomerID != "" {
-		if req.CustomerID != "" {
-			custUUID, _ := uuid.Parse(req.CustomerID)
-			customerID = pgtype.UUID{Bytes: custUUID, Valid: true}
-		} else if req.CustomerPhone != "" {
-			// Look up customer by phone
-			cust, err := utils.Queries.GetCustomerByPhone(ctx, db.GetCustomerByPhoneParams{
-				Phone:   req.CustomerPhone,
-				StoreID: storeID,
-			})
-			if err == nil {
-				customerID = cust.ID
-			} else {
-				// Create new customer
-				newCust, err := utils.Queries.CreateCustomer(ctx, db.CreateCustomerParams{
-					Name:    req.CustomerName,
-					Phone:   req.CustomerPhone,
-					StoreID: storeID,
-				})
-				if err != nil {
-					utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create customer", err)
-					return
-				}
-				customerID = newCust.ID
-			}
+	if req.CustomerID != "" {
+		custUUID, err := uuid.Parse(req.CustomerID)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid customer ID", err)
+			return
 		}
+		customerID = pgtype.UUID{Bytes: custUUID, Valid: true}
 	}
 
 	var totalAmountNum pgtype.Numeric
@@ -106,7 +101,7 @@ func CreateSale(c *gin.Context) {
 
 	// Prepare Transaction Arguments
 	createSaleParams := db.CreateSaleParams{
-		SalesType:       db.SalesTypes(req.SalesType),
+		SalesType:       db.SalesTypes(effectiveSalesType),
 		TotalAmount:     totalAmountNum,
 		DiscountApplied: discountNum,
 		StoreID:         storeID,
@@ -143,7 +138,7 @@ func CreateSale(c *gin.Context) {
 		amountOwedNum.Scan(fmt.Sprintf("%f", totalAmount))
 
 		var amountPaidNum pgtype.Numeric
-		amountPaidNum.Scan(fmt.Sprintf("%f", req.AmountPaid))
+		amountPaidNum.Scan(fmt.Sprintf("%f", sumPayments))
 
 		// Default due date to 30 days from now
 		// TODO: Allow frontend to pass due date
@@ -165,9 +160,10 @@ func CreateSale(c *gin.Context) {
 	}
 
 	// Execute Transaction
-	result, err := utils.Store.CreateSaleTx(c.Request.Context(), db.CreateSaleTxParams{
+	result, err := utils.Store.CreateSaleTx(ctx, db.CreateSaleTxParams{
 		CreateSaleParams: createSaleParams,
 		Items:            saleItems,
+		Payments:         paymentsParams,
 		CreateDebtParams: createDebtParams,
 	})
 

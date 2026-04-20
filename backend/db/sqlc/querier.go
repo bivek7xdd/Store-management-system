@@ -17,6 +17,7 @@ type Querier interface {
 	CreateDebt(ctx context.Context, arg CreateDebtParams) (Debt, error)
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
+	CreatePaymentRecord(ctx context.Context, arg CreatePaymentRecordParams) (PaymentRecord, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error)
 	CreateSaleItem(ctx context.Context, arg CreateSaleItemParams) (SaleItem, error)
@@ -42,6 +43,7 @@ type Querier interface {
 	GetCategoryByStore(ctx context.Context, arg GetCategoryByStoreParams) (Category, error)
 	GetCategoryStats(ctx context.Context, arg GetCategoryStatsParams) (GetCategoryStatsRow, error)
 	GetCustomerByPhone(ctx context.Context, arg GetCustomerByPhoneParams) (Customer, error)
+	GetCustomerLoyaltyStatus(ctx context.Context, arg GetCustomerLoyaltyStatusParams) (GetCustomerLoyaltyStatusRow, error)
 	GetDailySales(ctx context.Context, arg GetDailySalesParams) ([]GetDailySalesRow, error)
 	GetDeadStock(ctx context.Context, arg GetDeadStockParams) ([]GetDeadStockRow, error)
 	GetDebt(ctx context.Context, arg GetDebtParams) (GetDebtRow, error)
@@ -53,6 +55,7 @@ type Querier interface {
 	GetInventoryStats(ctx context.Context, storeID pgtype.UUID) (GetInventoryStatsRow, error)
 	GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
 	GetNotifications(ctx context.Context, arg GetNotificationsParams) ([]Notification, error)
+	GetPaymentTotalsByStore(ctx context.Context, storeID pgtype.UUID) ([]GetPaymentTotalsByStoreRow, error)
 	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
 	GetProductPairFrequency(ctx context.Context, storeID pgtype.UUID) ([]GetProductPairFrequencyRow, error)
 	GetProductVelocity(ctx context.Context, storeID pgtype.UUID) ([]GetProductVelocityRow, error)
@@ -78,7 +81,9 @@ type Querier interface {
 	GetTotalSales(ctx context.Context, arg GetTotalSalesParams) (GetTotalSalesRow, error)
 	GetUnreadCount(ctx context.Context, storeID pgtype.UUID) (int64, error)
 	GetUnreadNotifications(ctx context.Context, storeID pgtype.UUID) ([]Notification, error)
+	IncrementCustomerPurchaseCount(ctx context.Context, arg IncrementCustomerPurchaseCountParams) error
 	ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Customer, error)
+	ListPaymentsBySale(ctx context.Context, saleID pgtype.UUID) ([]PaymentRecord, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
 	ListProductsBySupplier(ctx context.Context, arg ListProductsBySupplierParams) ([]Product, error)
@@ -89,8 +94,10 @@ type Querier interface {
 	MarkAllNotificationsAsRead(ctx context.Context, storeID pgtype.UUID) error
 	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (Notification, error)
 	RecordDebtPayment(ctx context.Context, arg RecordDebtPaymentParams) (Debt, error)
+	SearchCustomers(ctx context.Context, arg SearchCustomersParams) ([]Customer, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
+	UpdateCustomerLoyalty(ctx context.Context, arg UpdateCustomerLoyaltyParams) error
 	UpdateDebt(ctx context.Context, arg UpdateDebtParams) (Debt, error)
 	UpdateEmailVerification(ctx context.Context, email string) error
 	UpdatePasswordByEmail(ctx context.Context, arg UpdatePasswordByEmailParams) error

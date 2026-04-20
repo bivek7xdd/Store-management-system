@@ -19,7 +19,7 @@ INSERT INTO customers (
 ) VALUES (
     $1, $2, $3
 )
-RETURNING id, name, phone, created_at, store_id
+RETURNING id, name, phone, loyalty_status, purchase_count, loyalty_points, last_purchase_at, created_at, store_id
 `
 
 type CreateCustomerParams struct {
@@ -35,6 +35,10 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		&i.ID,
 		&i.Name,
 		&i.Phone,
+		&i.LoyaltyStatus,
+		&i.PurchaseCount,
+		&i.LoyaltyPoints,
+		&i.LastPurchaseAt,
 		&i.CreatedAt,
 		&i.StoreID,
 	)
@@ -42,7 +46,7 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 }
 
 const getCustomerByPhone = `-- name: GetCustomerByPhone :one
-SELECT id, name, phone, created_at, store_id FROM customers
+SELECT id, name, phone, loyalty_status, purchase_count, loyalty_points, last_purchase_at, created_at, store_id FROM customers
 WHERE phone = $1 AND store_id = $2
 `
 
@@ -58,14 +62,59 @@ func (q *Queries) GetCustomerByPhone(ctx context.Context, arg GetCustomerByPhone
 		&i.ID,
 		&i.Name,
 		&i.Phone,
+		&i.LoyaltyStatus,
+		&i.PurchaseCount,
+		&i.LoyaltyPoints,
+		&i.LastPurchaseAt,
 		&i.CreatedAt,
 		&i.StoreID,
 	)
 	return i, err
 }
 
+const getCustomerLoyaltyStatus = `-- name: GetCustomerLoyaltyStatus :one
+SELECT loyalty_status, purchase_count, loyalty_points 
+FROM customers
+WHERE id = $1 AND store_id = $2
+`
+
+type GetCustomerLoyaltyStatusParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+type GetCustomerLoyaltyStatusRow struct {
+	LoyaltyStatus LoyaltyStatus `db:"loyalty_status" json:"loyalty_status"`
+	PurchaseCount int32         `db:"purchase_count" json:"purchase_count"`
+	LoyaltyPoints int32         `db:"loyalty_points" json:"loyalty_points"`
+}
+
+func (q *Queries) GetCustomerLoyaltyStatus(ctx context.Context, arg GetCustomerLoyaltyStatusParams) (GetCustomerLoyaltyStatusRow, error) {
+	row := q.db.QueryRow(ctx, getCustomerLoyaltyStatus, arg.ID, arg.StoreID)
+	var i GetCustomerLoyaltyStatusRow
+	err := row.Scan(&i.LoyaltyStatus, &i.PurchaseCount, &i.LoyaltyPoints)
+	return i, err
+}
+
+const incrementCustomerPurchaseCount = `-- name: IncrementCustomerPurchaseCount :exec
+UPDATE customers
+SET purchase_count = purchase_count + 1,
+    last_purchase_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND store_id = $2
+`
+
+type IncrementCustomerPurchaseCountParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) IncrementCustomerPurchaseCount(ctx context.Context, arg IncrementCustomerPurchaseCountParams) error {
+	_, err := q.db.Exec(ctx, incrementCustomerPurchaseCount, arg.ID, arg.StoreID)
+	return err
+}
+
 const listCustomers = `-- name: ListCustomers :many
-SELECT id, name, phone, created_at, store_id FROM customers
+SELECT id, name, phone, loyalty_status, purchase_count, loyalty_points, last_purchase_at, created_at, store_id FROM customers
 WHERE store_id = $1
 ORDER BY name
 `
@@ -83,6 +132,10 @@ func (q *Queries) ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Cus
 			&i.ID,
 			&i.Name,
 			&i.Phone,
+			&i.LoyaltyStatus,
+			&i.PurchaseCount,
+			&i.LoyaltyPoints,
+			&i.LastPurchaseAt,
 			&i.CreatedAt,
 			&i.StoreID,
 		); err != nil {
@@ -94,4 +147,70 @@ func (q *Queries) ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Cus
 		return nil, err
 	}
 	return items, nil
+}
+
+const searchCustomers = `-- name: SearchCustomers :many
+SELECT id, name, phone, loyalty_status, purchase_count, loyalty_points, last_purchase_at, created_at, store_id FROM customers
+WHERE store_id = $1 AND (name ILIKE $2 OR phone ILIKE $2)
+ORDER BY name
+LIMIT 20
+`
+
+type SearchCustomersParams struct {
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+	Name    string      `db:"name" json:"name"`
+}
+
+func (q *Queries) SearchCustomers(ctx context.Context, arg SearchCustomersParams) ([]Customer, error) {
+	rows, err := q.db.Query(ctx, searchCustomers, arg.StoreID, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Customer
+	for rows.Next() {
+		var i Customer
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Phone,
+			&i.LoyaltyStatus,
+			&i.PurchaseCount,
+			&i.LoyaltyPoints,
+			&i.LastPurchaseAt,
+			&i.CreatedAt,
+			&i.StoreID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCustomerLoyalty = `-- name: UpdateCustomerLoyalty :exec
+UPDATE customers
+SET loyalty_status = $1,
+    loyalty_points = $2
+WHERE id = $3 AND store_id = $4
+`
+
+type UpdateCustomerLoyaltyParams struct {
+	LoyaltyStatus LoyaltyStatus `db:"loyalty_status" json:"loyalty_status"`
+	LoyaltyPoints int32         `db:"loyalty_points" json:"loyalty_points"`
+	ID            pgtype.UUID   `db:"id" json:"id"`
+	StoreID       pgtype.UUID   `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) UpdateCustomerLoyalty(ctx context.Context, arg UpdateCustomerLoyaltyParams) error {
+	_, err := q.db.Exec(ctx, updateCustomerLoyalty,
+		arg.LoyaltyStatus,
+		arg.LoyaltyPoints,
+		arg.ID,
+		arg.StoreID,
+	)
+	return err
 }

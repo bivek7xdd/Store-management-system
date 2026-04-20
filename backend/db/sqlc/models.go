@@ -55,6 +55,49 @@ func (ns NullDebtStatus) Value() (driver.Value, error) {
 	return string(ns.DebtStatus), nil
 }
 
+type LoyaltyStatus string
+
+const (
+	LoyaltyStatusRegular LoyaltyStatus = "regular"
+	LoyaltyStatusLoyal   LoyaltyStatus = "loyal"
+	LoyaltyStatusVip     LoyaltyStatus = "vip"
+)
+
+func (e *LoyaltyStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = LoyaltyStatus(s)
+	case string:
+		*e = LoyaltyStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for LoyaltyStatus: %T", src)
+	}
+	return nil
+}
+
+type NullLoyaltyStatus struct {
+	LoyaltyStatus LoyaltyStatus `json:"loyalty_status"`
+	Valid         bool          `json:"valid"` // Valid is true if LoyaltyStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullLoyaltyStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.LoyaltyStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.LoyaltyStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullLoyaltyStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.LoyaltyStatus), nil
+}
+
 type NotificationStatus string
 
 const (
@@ -192,6 +235,7 @@ const (
 	SalesTypesCash   SalesTypes = "cash"
 	SalesTypesCredit SalesTypes = "credit"
 	SalesTypesOnline SalesTypes = "online"
+	SalesTypesMixed  SalesTypes = "mixed"
 )
 
 func (e *SalesTypes) Scan(src interface{}) error {
@@ -239,11 +283,15 @@ type Category struct {
 }
 
 type Customer struct {
-	ID        pgtype.UUID        `db:"id" json:"id"`
-	Name      string             `db:"name" json:"name"`
-	Phone     string             `db:"phone" json:"phone"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	StoreID   pgtype.UUID        `db:"store_id" json:"store_id"`
+	ID             pgtype.UUID        `db:"id" json:"id"`
+	Name           string             `db:"name" json:"name"`
+	Phone          string             `db:"phone" json:"phone"`
+	LoyaltyStatus  LoyaltyStatus      `db:"loyalty_status" json:"loyalty_status"`
+	PurchaseCount  int32              `db:"purchase_count" json:"purchase_count"`
+	LoyaltyPoints  int32              `db:"loyalty_points" json:"loyalty_points"`
+	LastPurchaseAt pgtype.Timestamptz `db:"last_purchase_at" json:"last_purchase_at"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	StoreID        pgtype.UUID        `db:"store_id" json:"store_id"`
 }
 
 type Debt struct {
@@ -280,6 +328,15 @@ type OtpToken struct {
 	Purpose   string             `db:"purpose" json:"purpose"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	ExpiresAt pgtype.Timestamptz `db:"expires_at" json:"expires_at"`
+}
+
+type PaymentRecord struct {
+	ID          pgtype.UUID        `db:"id" json:"id"`
+	SaleID      pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	Amount      pgtype.Numeric     `db:"amount" json:"amount"`
+	PaymentType SalesTypes         `db:"payment_type" json:"payment_type"`
+	Provider    pgtype.Text        `db:"provider" json:"provider"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
 }
 
 type Product struct {

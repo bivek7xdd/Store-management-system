@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { SidebarProvider } from "./contexts/SidebarContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
@@ -25,6 +26,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CategoryDetails from "./pages/CategoryDetails";
 import SupplierDetails from "./pages/SupplierDetails";
 import MarketDiscovery from "./pages/MarketDiscovery";
+import Customers from "./pages/Customers";
 
 import React from "react";
 import LandingPage from "./pages/LandingPage";
@@ -85,7 +87,8 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <NotificationProvider>
-              <TooltipProvider>
+              <SidebarProvider>
+                <TooltipProvider>
                 <Toaster />
                 <Sonner />
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -167,6 +170,13 @@ const App = () => {
                           </Layout>
                         </ProtectedRoute>
                       } />
+                      <Route path="/customers" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Customers />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
                       <Route path="/reports" element={
                         <ProtectedRoute>
                           <Layout>
@@ -202,7 +212,8 @@ const App = () => {
                     </Routes>
                 </BrowserRouter>
               </TooltipProvider>
-            </NotificationProvider>
+            </SidebarProvider>
+          </NotificationProvider>
           </AuthProvider>
         </QueryClientProvider>
       </DevOfflineHandler>

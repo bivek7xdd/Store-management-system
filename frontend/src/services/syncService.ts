@@ -166,31 +166,24 @@ export const syncService = {
             current: `Syncing sale ${sale.id}...`
           });
 
-          // Trim and validate customer fields
-          const cleanedSale = {
-            ...sale,
-            customer_name: (sale.customer_name || '').trim(),
-            customer_phone: (sale.customer_phone || '').trim(),
-          };
-
           // Prepare payload matching CreateSaleData
           payload = {
-            sales_type: cleanedSale.sales_type,
-            amount_paid: cleanedSale.amount_paid,
-            total_amount: cleanedSale.total_amount,
-            note: cleanedSale.note,
-            discount_applied: cleanedSale.discount_applied,
-            customer_name: cleanedSale.customer_name,
-            customer_phone: cleanedSale.customer_phone,
-            items: cleanedSale.items,
+            sales_type: sale.sales_type,
+            amount_paid: sale.amount_paid,
+            total_amount: sale.total_amount,
+            payments: sale.payments,
+            note: sale.note,
+            discount_applied: sale.discount_applied,
+            customer_id: sale.customer_id,
+            items: sale.items,
           };
 
           console.log("Transformed sale data payload:", JSON.stringify(payload, null, 2));
 
-          // Validate key fields, including customer details for credit
-          if (payload.sales_type === 'credit' && (!payload.customer_name || !payload.customer_phone)) {
-            console.error("Customer details missing for credit sale:", payload);
-            throw new Error("Customer details required for credit sales");
+          // Validate key fields
+          if (!payload.customer_id) {
+            console.error("Customer ID missing for sale:", payload);
+            throw new Error("Customer identification required for all sales");
           }
 
           console.log(`Syncing sale ID ${sale.id}...`);

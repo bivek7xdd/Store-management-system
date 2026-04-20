@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Create enum type "product_status"
 CREATE TYPE "public"."product_status" AS ENUM ('active', 'out_of_stock', 'discontinued', 'expiring');
 -- Create enum type "sales_types"

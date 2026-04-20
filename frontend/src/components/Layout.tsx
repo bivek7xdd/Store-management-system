@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Wifi,
   WifiOff,
+  Wallet,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
@@ -35,6 +36,14 @@ import NotificationBell from "./NotificationBell";
 import categoryPreferencesService from "@/services/categoryPreferences";
 import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
 import { useQueryClient } from "@tanstack/react-query";
+import { SidebarToggle } from "./SidebarToggle";
+import { useSidebar } from "@/hooks/useSidebar";
+import { motion } from "framer-motion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -44,7 +53,8 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: Package, label: "Inventory", path: "/inventory" },
   { icon: ShoppingCart, label: "Sales", path: "/sales" },
-  { icon: Users, label: "Debtors", path: "/debtors" },
+  { icon: Users, label: "Customers", path: "/customers" },
+  { icon: Wallet, label: "Debtors", path: "/debtors" },
   { icon: BarChart3, label: "Reports", path: "/reports" },
   { icon: TrendingUp, label: "Market", path: "/market" },
 ];
@@ -54,6 +64,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
+  const { isCollapsed } = useSidebar();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -117,27 +128,45 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className={cn(
-        "hidden lg:fixed lg:inset-y-0 lg:flex lg:w-[240px] lg:flex-col border-r border-[#1A1A1A] bg-[#000000]",
-        !isOnline && "top-7"
-      )}>
+      <motion.aside
+        initial={false}
+        animate={{ width: isCollapsed ? 64 : 240 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className={cn(
+          "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-[#1A1A1A] bg-[#000000] z-40",
+          !isOnline && "top-7"
+        )}
+      >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 h-[64px] border-b border-[#1A1A1A] shrink-0">
-          <div className="w-7 h-7 flex items-center justify-center">
+        <div className={cn(
+          "flex items-center h-[64px] border-b border-[#1A1A1A] shrink-0 transition-all overflow-hidden",
+          isCollapsed ? "px-4 justify-center" : "px-6 gap-3"
+        )}>
+          <div className="w-7 h-7 flex items-center justify-center shrink-0">
             <Store className="w-6 h-6 text-[#DA291C]" />
           </div>
-          <div>
-            <h1 className="text-[14px] font-medium tracking-[0.5px] text-white">StoreHub</h1>
-            <p className="text-[11px] text-[#555555] tracking-[0.5px]">Management System</p>
-          </div>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col min-w-0"
+            >
+              <h1 className="text-[14px] font-medium tracking-[0.5px] text-white truncate">StoreHub</h1>
+              <p className="text-[11px] text-[#555555] tracking-[0.5px] truncate">Management System</p>
+            </motion.div>
+          )}
         </div>
 
         {/* Nav */}
-        <nav className="flex flex-1 flex-col px-3 pt-6 overflow-y-auto" data-tour="sidebar-nav">
-          <p className="px-3 mb-3 text-[10px] font-medium uppercase tracking-[1.5px] text-[#555555]">
+        <nav className="flex flex-1 flex-col pt-6 overflow-y-auto no-scrollbar" data-tour="sidebar-nav">
+          <p className={cn(
+            "px-6 mb-3 text-[10px] font-medium uppercase tracking-[1.5px] text-[#555555] transition-opacity",
+            isCollapsed && "opacity-0 invisible h-0 mb-0"
+          )}>
             Navigation
           </p>
-          <div className="flex flex-1 flex-col gap-0.5">
+          <div className={cn("flex flex-1 flex-col gap-0.5", isCollapsed ? "px-2" : "px-3")}>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
@@ -148,13 +177,14 @@ export default function Layout({ children }: LayoutProps) {
 
               const isOfflineDisabled = !isOnline && item.label === "Reports";
 
-              return (
+              const linkContent = (
                 <Link
                   key={item.path}
                   to={isOfflineDisabled ? "#" : item.path}
                   data-tour={`sidebar-${item.label.toLowerCase()}`}
                   className={cn(
-                    "flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] font-normal transition-all",
+                    "flex items-center gap-3 rounded-[2px] py-2.5 text-[13px] font-normal transition-all overflow-hidden",
+                    isCollapsed ? "px-2 justify-center" : "px-3",
                     isActive
                       ? "bg-[#1A1A1A] text-white"
                       : "text-[#AAAAAA] hover:bg-[#111111] hover:text-white",
@@ -166,34 +196,95 @@ export default function Layout({ children }: LayoutProps) {
                     "h-[16px] w-[16px] shrink-0",
                     isActive ? "text-[#DA291C]" : "text-[#888888]"
                   )} />
-                  {item.label}
-                  {isActive && !isOfflineDisabled && (
+                  {!isCollapsed && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="truncate"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                  {!isCollapsed && isActive && !isOfflineDisabled && (
                     <ChevronRight className="ml-auto h-3.5 w-3.5 text-[#555555]" />
                   )}
-                  {isOfflineDisabled && (
+                  {!isCollapsed && isOfflineDisabled && (
                     <span className="ml-auto text-[9px] uppercase font-bold text-[#DA291C]">Offline</span>
                   )}
                 </Link>
               );
+
+              if (isCollapsed) {
+                return (
+                  <Tooltip key={item.path} delayDuration={300}>
+                    <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                    <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return linkContent;
             })}
           </div>
 
           {/* User + Notifications */}
-          <div className="pt-3 pb-4 border-t border-[#1A1A1A] mt-4 flex items-center gap-2" data-tour="user-profile">
-            <NotificationBell />
+          <div className={cn(
+            "pt-3 pb-4 border-t border-[#1A1A1A] mt-auto flex flex-col gap-2",
+            isCollapsed ? "items-center px-2" : "px-3"
+          )} data-tour="user-profile">
+            <div className={cn("flex items-center gap-2", isCollapsed && "flex-col")}>
+              {isCollapsed ? (
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <div><NotificationBell /></div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                    Notifications
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <NotificationBell />
+              )}
+              
+              <div className={cn("hidden lg:block", !isCollapsed && "ml-auto")}>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <SidebarToggle />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                    {isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+            
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex-1 flex items-center gap-3 px-3 py-2 rounded-[2px] hover:bg-[#111111] transition-colors text-left">
-                  <div className="h-7 w-7 rounded-[2px] flex items-center justify-center text-white text-[12px] font-semibold bg-[#DA291C] shrink-0">
-                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[12px] font-medium text-white truncate">{user?.name}</span>
-                    <span className="text-[11px] text-[#888888] truncate">{user?.store_name}</span>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 bg-[#111111] border-[#303030] text-white">
+              <Tooltip delayDuration={300} disabled={!isCollapsed}>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <button className={cn(
+                      "flex items-center rounded-[2px] hover:bg-[#111111] transition-colors text-left overflow-hidden",
+                      isCollapsed ? "px-0 justify-center w-8 h-8" : "flex-1 px-3 py-2 gap-3"
+                    )}>
+                      <div className="h-7 w-7 rounded-[2px] flex items-center justify-center text-white text-[12px] font-semibold bg-[#DA291C] shrink-0">
+                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                      </div>
+                      {!isCollapsed && (
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[12px] font-medium text-white truncate">{user?.name}</span>
+                          <span className="text-[11px] text-[#888888] truncate">{user?.store_name}</span>
+                        </div>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                   Profile: {user?.name}
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align={isCollapsed ? "start" : "end"} side={isCollapsed ? "right" : "top"} className="w-52 bg-[#111111] border-[#303030] text-white">
                 <DropdownMenuLabel className="text-[#8F8F8F] text-[11px] uppercase tracking-[1px]">My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[#303030]" />
                 <DropdownMenuItem
@@ -214,7 +305,7 @@ export default function Layout({ children }: LayoutProps) {
             </DropdownMenu>
           </div>
         </nav>
-      </aside>
+      </motion.aside>
 
       {/* Mobile Header */}
       <div className={cn(
@@ -295,12 +386,17 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Main Content */}
-      <main className={cn(
-        "lg:pl-[240px]",
-        !isOnline ? "pt-[calc(56px+28px)] lg:pt-7" : "pt-[56px] lg:pt-0"
-      )}>
+      <motion.main
+        initial={false}
+        animate={{ paddingLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 ? (isCollapsed ? 64 : 240) : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className={cn(
+          "min-h-screen",
+          !isOnline ? "pt-[calc(56px+28px)] lg:pt-7" : "pt-[56px] lg:pt-0"
+        )}
+      >
         <div className="px-4 py-6 sm:px-6 lg:px-8 min-h-screen">{children}</div>
-      </main>
+      </motion.main>
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#1A1A1A] bg-[#000000]">

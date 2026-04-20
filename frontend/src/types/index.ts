@@ -24,10 +24,38 @@ export interface Sale {
   date: string;
   items: SaleItem[];
   total: number;
-  paymentType: "cash" | "credit";
-  customerName?: string;
-  customerPhone?: string;
+  paymentType: "cash" | "credit" | "online" | "mixed";
+  payments: PaymentRecord[];
+  customerId: string;
+  discountApplied: number;
   isPaid: boolean;
+  synced?: number;
+}
+
+export interface PaymentRecord {
+  id: string;
+  sale_id: string;
+  amount: number;
+  payment_type: "cash" | "credit" | "online";
+  provider?: string;
+  created_at: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  loyalty_status: 'regular' | 'loyal' | 'vip';
+  purchase_count: number;
+  loyalty_points: number;
+  last_purchase_at?: string;
+  credit_limit?: number;
+  current_debt?: number;
+  created_at: string;
+  store_id: string;
+  synced?: number;
 }
 
 export interface SaleItem {

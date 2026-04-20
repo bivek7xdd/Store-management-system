@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Wifi, WifiOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export interface OfflineIndicatorProps {
@@ -33,11 +32,11 @@ export function OfflineIndicator({
     const diffMins = Math.floor(diffMs / (1000 * 60));
     
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 60) return `${diffMins}M ago`;
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) return `${diffHours}H ago`;
     const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
+    return `${diffDays}D ago`;
   };
 
   const getStatusIcon = () => {
@@ -48,56 +47,47 @@ export function OfflineIndicator({
   };
 
   const getStatusText = () => {
-    if (isSyncing) return 'Syncing...';
-    if (syncError) return 'Sync failed';
+    if (isSyncing) return 'Syncing';
+    if (syncError) return 'Sync Error';
     if (isOnline) return 'Online';
     return 'Offline';
-  };
-
-  const getStatusVariant = () => {
-    if (isSyncing) return 'secondary';
-    if (syncError) return 'destructive';
-    if (isOnline) return 'default';
-    return 'outline';
   };
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {/* Connection Status Badge */}
-      <Badge 
-        variant={getStatusVariant()}
+      <div 
         className={cn(
-          'flex items-center gap-1.5 px-2 py-1',
-          !isOnline && 'border-orange-200 bg-orange-50 text-orange-700',
-          isOnline && !isSyncing && !syncError && 'border-green-200 bg-green-50 text-green-700'
+          'flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border transition-colors',
+          !isOnline && 'border-[#F13A2C]/30 bg-[#F13A2C]/10 text-[#F13A2C]',
+          isOnline && !isSyncing && !syncError && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+          isSyncing && 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+          syncError && 'border-[#F13A2C] bg-[#F13A2C]/20 text-[#F13A2C]'
         )}
       >
         {getStatusIcon()}
-        <span className="text-xs font-medium">{getStatusText()}</span>
-      </Badge>
+        <span className="text-[10px] font-bold uppercase tracking-[1px]">{getStatusText()}</span>
+      </div>
 
       {/* Pending Items Counter */}
       {(pendingSales > 0 || pendingProducts > 0 || pendingCategories > 0 || pendingSuppliers > 0) && (
-        <Badge 
-          variant="secondary"
-          className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border-blue-200"
+        <div 
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#303030] bg-[#111111] text-[#AAAAAA]"
         >
-          <span className="text-xs font-medium">
-            {pendingSales} sale{pendingSales !== 1 ? 's' : ''}
-            {pendingProducts > 0 && `, ${pendingProducts} product${pendingProducts !== 1 ? 's' : ''}`}
-            {pendingCategories > 0 && `, ${pendingCategories} categor${pendingCategories !== 1 ? 'ies' : 'y'}`}
-            {pendingSuppliers > 0 && `, ${pendingSuppliers} supplier${pendingSuppliers !== 1 ? 's' : ''}`}
+          <span className="text-[10px] font-bold uppercase tracking-[1px]">
+            {pendingSales > 0 && `${pendingSales} Sale${pendingSales !== 1 ? 's' : ''}`}
+            {pendingProducts > 0 && ` • ${pendingProducts} Product${pendingProducts !== 1 ? 's' : ''}`}
           </span>
-        </Badge>
+        </div>
       )}
 
       {/* Sync Status Details */}
       {(lastSyncTime || syncError) && (
-        <div className="hidden sm:flex items-center text-xs text-muted-foreground">
+        <div className="hidden sm:flex items-center text-[10px] font-medium uppercase tracking-[0.5px] text-[#555555]">
           {syncError ? (
-            <span className="text-red-600">Error: {syncError}</span>
+            <span className="text-[#F13A2C]">Error Encountered</span>
           ) : (
-            <span>Last sync: {formatLastSync(lastSyncTime)}</span>
+            <span>Synced: {formatLastSync(lastSyncTime)}</span>
           )}
         </div>
       )}
