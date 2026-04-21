@@ -19,6 +19,13 @@ import {
 
 import { useSidebar } from "@/hooks/useSidebar";
 
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 export function SalesSidebarItem({ isActive }: { isActive: boolean }) {
     const location = useLocation();
     const { isCollapsed } = useSidebar();
@@ -30,22 +37,44 @@ export function SalesSidebarItem({ isActive }: { isActive: boolean }) {
 
     if (isCollapsed) {
         return (
-            <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                    <Link
-                        to="/sales"
-                        className={cn(
-                            "flex items-center justify-center rounded-[2px] py-2.5 transition-all text-left",
-                            isActive ? "bg-[#1A1A1A] text-white" : "text-[#AAAAAA] hover:bg-[#111111] hover:text-white"
-                        )}
-                    >
-                        <ShoppingCart className={cn("h-[16px] w-[16px]", isActive ? "text-[#DA291C]" : "text-[#888888]")} />
-                    </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
-                    Sales
-                </TooltipContent>
-            </Tooltip>
+            <DropdownMenu>
+                <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                className={cn(
+                                    "flex items-center justify-center rounded-[2px] py-2.5 transition-all w-full",
+                                    isActive ? "bg-[#1A1A1A] text-white" : "text-[#AAAAAA] hover:bg-[#111111] hover:text-white"
+                                )}
+                            >
+                                <ShoppingCart className={cn("h-[16px] w-[16px]", isActive ? "text-[#DA291C]" : "text-[#888888]")} />
+                            </button>
+                        </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                        Sales
+                    </TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent side="right" align="start" sideOffset={10} className="bg-[#111111] border-[#1A1A1A] p-1 min-w-[160px]">
+                    {salesLinks.map((item) => {
+                        const isLinkActive = location.pathname === item.path;
+                        return (
+                            <DropdownMenuItem key={item.path} asChild>
+                                <Link
+                                    to={item.path}
+                                    className={cn(
+                                        "flex items-center gap-3 px-3 py-2 rounded-[2px] text-[12px] cursor-pointer transition-colors",
+                                        isLinkActive ? "bg-[#1A1A1A] text-white" : "text-[#AAAAAA] hover:bg-[#111111] hover:text-white focus:bg-[#111111] focus:text-white"
+                                    )}
+                                >
+                                    <item.icon className={cn("h-3.5 w-3.5", isLinkActive ? "text-[#DA291C]" : "text-[#555555]")} />
+                                    {item.label}
+                                </Link>
+                            </DropdownMenuItem>
+                        );
+                    })}
+                </DropdownMenuContent>
+            </DropdownMenu>
         );
     }
 
