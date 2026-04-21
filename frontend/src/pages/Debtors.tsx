@@ -199,20 +199,20 @@ export default function Debtors() {
             placeholder="Search by name or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#303030] transition-colors"
+            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#303030] transition-colors"
           />
         </div>
         <Select value={statusFilter} onValueChange={(v: "all" | "pending" | "paid") => setStatusFilter(v)}>
-          <SelectTrigger className="w-full sm:w-[160px] h-[38px] rounded-[2px] border border-[#1A1A1A] bg-[#111111] text-[#AAAAAA] text-[12px] focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="w-full sm:w-[160px] h-[38px] rounded-[2px] border border-[#1A1A1A] bg-[#111111] text-[#CCCCCC] text-[12px] focus:ring-0 focus:ring-offset-0">
             <div className="flex items-center gap-2">
               <Filter className="h-3.5 w-3.5 text-[#555555]" />
               <SelectValue placeholder="Status" />
             </div>
           </SelectTrigger>
           <SelectContent className="bg-[#111111] border-[#303030] rounded-[2px] text-white">
-            <SelectItem value="all" className="text-[13px] text-[#AAAAAA] focus:bg-[#1A1A1A] focus:text-white">All Accounts</SelectItem>
-            <SelectItem value="pending" className="text-[13px] text-[#AAAAAA] focus:bg-[#1A1A1A] focus:text-white">Unpaid Only</SelectItem>
-            <SelectItem value="paid" className="text-[13px] text-[#AAAAAA] focus:bg-[#1A1A1A] focus:text-white">Fully Settled</SelectItem>
+            <SelectItem value="all" className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white">All Accounts</SelectItem>
+            <SelectItem value="pending" className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white">Unpaid Only</SelectItem>
+            <SelectItem value="paid" className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white">Fully Settled</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -285,7 +285,7 @@ export default function Debtors() {
                   {/* Phone */}
                   <div className="flex items-center gap-1.5">
                     <Phone className="h-3 w-3 text-[#555555] shrink-0" />
-                    <p className="text-[12px] text-[#AAAAAA]">{debtor.customer_phone || "—"}</p>
+                    <p className="text-[12px] text-[#CCCCCC]">{debtor.customer_phone || "—"}</p>
                   </div>
 
                   {/* Outstanding */}
@@ -308,7 +308,7 @@ export default function Debtors() {
                     {debtor.due_date ? (
                       <>
                         <Calendar className={`h-3 w-3 shrink-0 ${isOverdue ? "text-[#F13A2C]" : "text-[#555555]"}`} />
-                        <p className={`text-[12px] ${isOverdue ? "text-[#F13A2C]" : "text-[#AAAAAA]"}`}>
+                        <p className={`text-[12px] ${isOverdue ? "text-[#F13A2C]" : "text-[#CCCCCC]"}`}>
                           {new Date(debtor.due_date).toLocaleDateString("en-NP")}
                           {isOverdue && <span className="ml-1 text-[10px] uppercase tracking-[0.5px]">(overdue)</span>}
                         </p>
@@ -324,7 +324,7 @@ export default function Debtors() {
                       <>
                         <button
                           onClick={() => { setSelectedDebt(debtor); setPartialPayOpen(true); }}
-                          className="h-7 px-2.5 rounded-[2px] text-[11px] text-[#AAAAAA] border border-[#303030] hover:text-white hover:border-[#555555] transition-colors uppercase tracking-[0.8px]"
+                          className="h-7 px-2.5 rounded-[2px] text-[11px] text-[#CCCCCC] border border-[#303030] hover:text-white hover:border-[#555555] transition-colors uppercase tracking-[0.8px]"
                         >
                           Partial
                         </button>
@@ -345,7 +345,7 @@ export default function Debtors() {
                       <DropdownMenuContent align="end" className="bg-[#111111] border-[#303030] rounded-[2px] text-white min-w-[160px]">
                         <DebtDialog debt={debtor} onSuccess={fetchDebts}>
                           <DropdownMenuItem
-                            className="text-[13px] text-[#AAAAAA] hover:text-white focus:bg-[#1A1A1A] focus:text-white cursor-pointer gap-2"
+                            className="text-[13px] text-[#CCCCCC] hover:text-white focus:bg-[#1A1A1A] focus:text-white cursor-pointer gap-2"
                             onSelect={(e) => e.preventDefault()}
                           >
                             <Pencil className="h-3.5 w-3.5" /> Edit Record
@@ -353,7 +353,7 @@ export default function Debtors() {
                         </DebtDialog>
                         {!isFullyPaid && (
                           <DropdownMenuItem
-                            className="text-[13px] text-[#AAAAAA] hover:text-white focus:bg-[#1A1A1A] focus:text-white cursor-pointer gap-2"
+                            className="text-[13px] text-[#CCCCCC] hover:text-white focus:bg-[#1A1A1A] focus:text-white cursor-pointer gap-2"
                             onSelect={() => handleSendSMSReminder(debtor)}
                           >
                             <MessageCircle className="h-3.5 w-3.5" /> Send SMS
@@ -388,7 +388,7 @@ export default function Debtors() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <div className="px-3 h-7 flex items-center text-[12px] text-[#AAAAAA] bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+              <div className="px-3 h-7 flex items-center text-[12px] text-[#CCCCCC] bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
                 {currentPage} / {totalPages}
               </div>
               <button
@@ -433,7 +433,7 @@ export default function Debtors() {
           </div>
           <div className="flex gap-2 p-4">
             <AlertDialogCancel asChild>
-              <button className="flex-1 h-[38px] rounded-[2px] border border-[#303030] text-[13px] text-[#AAAAAA] hover:text-white transition-colors uppercase tracking-[1px]">
+              <button className="flex-1 h-[38px] rounded-[2px] border border-[#303030] text-[13px] text-[#CCCCCC] hover:text-white transition-colors uppercase tracking-[1px]">
                 Cancel
               </button>
             </AlertDialogCancel>
@@ -462,14 +462,14 @@ export default function Debtors() {
                 <p className="text-[12px] text-[#555555]">This action cannot be undone</p>
               </div>
             </div>
-            <p className="text-[13px] text-[#AAAAAA] mt-3 leading-relaxed">
+            <p className="text-[13px] text-[#CCCCCC] mt-3 leading-relaxed">
               You are about to permanently remove the debt record for{" "}
               <span className="text-white font-medium">{debts.find(d => d.id === debtToDelete)?.customer_name}</span>.
             </p>
           </div>
           <div className="flex gap-2 p-4">
             <AlertDialogCancel asChild>
-              <button className="flex-1 h-[38px] rounded-[2px] border border-[#303030] text-[13px] text-[#AAAAAA] hover:text-white transition-colors uppercase tracking-[1px]">
+              <button className="flex-1 h-[38px] rounded-[2px] border border-[#303030] text-[13px] text-[#CCCCCC] hover:text-white transition-colors uppercase tracking-[1px]">
                 Cancel
               </button>
             </AlertDialogCancel>

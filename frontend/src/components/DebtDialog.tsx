@@ -31,8 +31,8 @@ function FieldLabel({ icon: Icon, label }: { icon: React.ElementType; label: str
     );
 }
 
-const inputCls = "w-full h-[38px] bg-transparent border border-[#303030] rounded-[2px] px-3 text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#1EAEDB] transition-colors";
-const textareaCls = "w-full bg-transparent border border-[#303030] rounded-[2px] px-3 py-2.5 text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#1EAEDB] transition-colors resize-none min-h-[80px]";
+const inputCls = "w-full h-[38px] bg-transparent border border-[#303030] rounded-[2px] px-3 text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#1EAEDB] transition-colors";
+const textareaCls = "w-full bg-transparent border border-[#303030] rounded-[2px] px-3 py-2.5 text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#1EAEDB] transition-colors resize-none min-h-[80px]";
 
 export function DebtDialog({ debt, onSuccess, children }: DebtDialogProps) {
     const [open, setOpen] = useState(false);
@@ -189,7 +189,7 @@ export function DebtDialog({ debt, onSuccess, children }: DebtDialogProps) {
                                                     <SelectItem
                                                         key={c.id}
                                                         value={c.id}
-                                                        className="text-[13px] text-[#AAAAAA] focus:bg-[#1A1A1A] focus:text-white"
+                                                        className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white"
                                                     >
                                                         {c.name}
                                                         {c.phone && <span className="text-[11px] text-[#555555] ml-2">({c.phone})</span>}
@@ -265,8 +265,8 @@ export function DebtDialog({ debt, onSuccess, children }: DebtDialogProps) {
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#111111] border-[#303030] rounded-[2px] text-white">
-                                    <SelectItem value="pending" className="text-[13px] text-[#AAAAAA] focus:bg-[#1A1A1A] focus:text-white">Pending Collection</SelectItem>
-                                    <SelectItem value="paid" className="text-[13px] text-[#AAAAAA] focus:bg-[#1A1A1A] focus:text-white">Fully Settled</SelectItem>
+                                    <SelectItem value="pending" className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white">Pending Collection</SelectItem>
+                                    <SelectItem value="paid" className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white">Fully Settled</SelectItem>
                                     <SelectItem value="written-off" className="text-[13px] text-[#DA291C] focus:bg-[#DA291C]/10 focus:text-[#DA291C]">Written Off</SelectItem>
                                 </SelectContent>
                             </Select>

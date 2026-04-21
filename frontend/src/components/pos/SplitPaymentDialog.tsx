@@ -18,7 +18,7 @@ interface SplitPaymentDialogProps {
   initialPayments?: PaymentEntry[];
 }
 
-const inputCls = "h-12 bg-transparent border border-[#303030] rounded-[2px] px-3 font-bold text-lg text-white placeholder:text-[#555555] focus:outline-none focus:border-[#DA291C] transition-colors";
+const inputCls = "h-12 bg-transparent border border-[#303030] rounded-[2px] px-3 font-bold text-lg text-white placeholder:text-[#888888] focus:outline-none focus:border-[#DA291C] transition-colors";
 
 export const SplitPaymentDialog: React.FC<SplitPaymentDialogProps> = ({
   open,
@@ -112,7 +112,7 @@ export const SplitPaymentDialog: React.FC<SplitPaymentDialogProps> = ({
                          {payment.type === 'online' && <Smartphone className="h-4 w-4" />}
                          {payment.type === 'credit' && <CreditCard className="h-4 w-4" />}
                       </div>
-                      <span className="font-bold text-[11px] uppercase tracking-[1.5px] text-[#AAAAAA]">{payment.type} Payment</span>
+                      <span className="font-bold text-[11px] uppercase tracking-[1.5px] text-[#CCCCCC]">{payment.type} Payment</span>
                    </div>
                    <button 
                     onClick={() => removePayment(index)}
@@ -183,7 +183,7 @@ export const SplitPaymentDialog: React.FC<SplitPaymentDialogProps> = ({
           <div className="flex gap-2 w-full sm:w-auto">
             <button 
                 onClick={() => onOpenChange(false)}
-                className="flex-1 sm:flex-none h-14 border border-[#303030] hover:border-[#555555] rounded-[2px] font-bold uppercase px-8 text-[12px] tracking-[1.5px] text-[#AAAAAA] hover:text-white transition-colors"
+                className="flex-1 sm:flex-none h-14 border border-[#303030] hover:border-[#555555] rounded-[2px] font-bold uppercase px-8 text-[12px] tracking-[1.5px] text-[#CCCCCC] hover:text-white transition-colors"
             >
                 Cancel
             </button>

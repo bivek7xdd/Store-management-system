@@ -26,7 +26,7 @@ interface CartItem {
   stock: number;
 }
 
-const inputCls = "w-full h-11 bg-[#111111] border border-[#1A1A1A] rounded-[2px] transition-colors focus:outline-none focus:border-[#303030] text-white px-4 text-[13px] placeholder:text-[#444444]";
+const inputCls = "w-full h-11 bg-[#111111] border border-[#1A1A1A] rounded-[2px] transition-colors focus:outline-none focus:border-[#303030] text-white px-4 text-[13px] placeholder:text-[#666666]";
 
 export default function Sales() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -356,7 +356,7 @@ export default function Sales() {
   if (authLoading) return (
     <div className="flex flex-col items-center justify-center p-24 gap-4">
       <Loader2 className="animate-spin text-[#DA291C] h-8 w-8" />
-      <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#555555]">Initializing Terminal</span>
+      <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#888888]">Initializing Terminal</span>
     </div>
   );
 
@@ -365,7 +365,7 @@ export default function Sales() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Terminal</p>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Terminal</p>
           <h1 className="text-[24px] font-bold text-white tracking-tight">Sales / POS</h1>
         </div>
         <div className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export default function Sales() {
             onClick={() => setShowConfetti(!showConfetti)}
             className={cn(
               "h-9 w-9 rounded-[2px] border flex items-center justify-center transition-all",
-              showConfetti ? "text-[#DA291C] border-[#DA291C]/30 bg-[#DA291C]/5" : "text-[#555555] border-[#1A1A1A] hover:text-white"
+              showConfetti ? "text-[#DA291C] border-[#DA291C]/30 bg-[#DA291C]/5" : "text-[#888888] border-[#1A1A1A] hover:text-white"
             )}
             title="Celebration Effects"
           >
@@ -440,9 +440,9 @@ export default function Sales() {
         {/* Left Side: Search & Results */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-6">
-            <label className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px] mb-3 block">Product Search Terminal</label>
+            <label className="text-[10px] font-bold text-[#888888] uppercase tracking-[1.5px] mb-3 block">Product Search Terminal</label>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#444444]" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#666666]" />
               <input
                 placeholder="INPUT PRODUCT NAME OR SCAN SERIAL..."
                 value={searchTerm}
@@ -455,7 +455,7 @@ export default function Sales() {
                 </div>
               )}
               <button
-                className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 text-[#555555] hover:text-[#DA291C] transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 text-[#888888] hover:text-[#DA291C] transition-colors"
                 onClick={() => setScannerOpen(true)}
               >
                 <Scan className="h-4 w-4" />
@@ -466,9 +466,9 @@ export default function Sales() {
           {searchTerm && (
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
               <div className="px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between">
-                <p className="text-[11px] font-bold text-[#AAAAAA] uppercase tracking-[1px]">Results Archive</p>
+                <p className="text-[11px] font-bold text-[#CCCCCC] uppercase tracking-[1px]">Results Archive</p>
                 {!offlineStatus.isOnline && cachedProductsCount > 0 && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-[#555555] uppercase font-bold tracking-[0.5px]">
+                  <div className="flex items-center gap-1.5 text-[10px] text-[#888888] uppercase font-bold tracking-[0.5px]">
                     <Database className="h-3 w-3" />
                     Local Vault Data
                   </div>
@@ -477,7 +477,7 @@ export default function Sales() {
               <div className="divide-y divide-[#1A1A1A] max-h-[500px] overflow-y-auto custom-scrollbar">
                 {products.length === 0 && !isSearching ? (
                   <div className="text-center py-16">
-                    <p className="text-[12px] font-medium text-[#444444] uppercase tracking-[2px]">No Matches In Archive</p>
+                    <p className="text-[12px] font-medium text-[#666666] uppercase tracking-[2px]">No Matches In Archive</p>
                   </div>
                 ) : (
                   products.map((product) => (
@@ -495,16 +495,16 @@ export default function Sales() {
                           <div className="flex items-center gap-2">
                             <p className="font-bold text-[14px] text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</p>
                             {!offlineStatus.isOnline && (
-                              <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#555555] uppercase rounded-[1px]">Vault</div>
+                              <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#888888] uppercase rounded-[1px]">Vault</div>
                             )}
                           </div>
-                          <p className="text-[11px] text-[#555555] font-medium uppercase tracking-[0.5px] mt-0.5">
+                          <p className="text-[11px] text-[#888888] font-medium uppercase tracking-[0.5px] mt-0.5">
                             Index: {product.stock_quantity} UNIT • रू {(typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
                       <div className="h-9 w-9 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center group-hover:bg-[#DA291C] group-hover:border-[#DA291C] transition-all">
-                        <Plus className="h-4 w-4 text-[#AAAAAA] group-hover:text-white" />
+                        <Plus className="h-4 w-4 text-[#CCCCCC] group-hover:text-white" />
                       </div>
                     </button>
                   ))
@@ -526,7 +526,7 @@ export default function Sales() {
                 <p className="text-[13px] font-bold text-white uppercase tracking-[1px]">Active Cart</p>
               </div>
               <div className="h-6 px-2 bg-[#1A1A1A] rounded-[2px] flex items-center">
-                <span className="text-[10px] font-bold text-[#AAAAAA] uppercase tracking-[1px]">{cart.length} UNITS</span>
+                <span className="text-[10px] font-bold text-[#CCCCCC] uppercase tracking-[1px]">{cart.length} UNITS</span>
               </div>
             </div>
             
@@ -534,7 +534,7 @@ export default function Sales() {
               {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-8 text-center">
                   <ShoppingCart className="h-8 w-8 text-[#1A1A1A] mb-4" />
-                  <p className="text-[10px] font-bold text-[#444444] uppercase tracking-[2px]">Empty Terminal Cart</p>
+                  <p className="text-[10px] font-bold text-[#666666] uppercase tracking-[2px]">Empty Terminal Cart</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
@@ -542,27 +542,27 @@ export default function Sales() {
                     <div key={item.productId} className="flex items-center justify-between p-3 rounded-[2px] bg-[#0A0A0A] border border-transparent hover:border-[#303030] transition-colors group">
                       <div className="flex-1 min-w-0 pr-4">
                         <p className="font-bold text-[12px] text-white uppercase tracking-tight truncate">{item.name}</p>
-                        <p className="text-[10px] text-[#555555] font-medium uppercase tracking-[0.5px]">
+                        <p className="text-[10px] text-[#888888] font-medium uppercase tracking-[0.5px]">
                           रू {item.price.toLocaleString()} × {item.quantity}
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           onClick={() => updateQuantity(item.productId, -1)}
-                          className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-white"
+                          className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-white"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
                         <span className="text-[12px] font-bold text-white w-5 text-center">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.productId, 1)}
-                          className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-white"
+                          className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-white"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
                         <button
                           onClick={() => removeFromCart(item.productId)}
-                          className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[#555555] hover:text-[#DA291C]"
+                          className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[#888888] hover:text-[#DA291C]"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -575,8 +575,8 @@ export default function Sales() {
 
             <div className="p-6 bg-[#0D0D0D] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px]">Subtotal Archive</span>
-                <span className="text-[13px] font-bold text-[#AAAAAA]">रू {subtotal.toLocaleString()}</span>
+                <span className="text-[10px] font-bold text-[#888888] uppercase tracking-[1.5px]">Subtotal Archive</span>
+                <span className="text-[13px] font-bold text-[#CCCCCC]">रू {subtotal.toLocaleString()}</span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex items-center justify-between">
@@ -597,7 +597,7 @@ export default function Sales() {
             selectedCustomer ? "border-[#DA291C]/30" : "border-[#1A1A1A]"
           )}>
             <div className="p-4 border-b border-[#1A1A1A] flex items-center justify-between">
-              <p className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px]">Identity Verification</p>
+              <p className="text-[10px] font-bold text-[#888888] uppercase tracking-[1.5px]">Identity Verification</p>
               {selectedCustomer && (
                  <button 
                   onClick={() => setShowCustomerModal(true)}
@@ -616,7 +616,7 @@ export default function Sales() {
                   <div className="flex-1">
                     <p className="font-bold text-[13px] text-white uppercase tracking-tight truncate">{selectedCustomer.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[10px] text-[#555555] font-medium tracking-[0.5px] uppercase">{selectedCustomer.phone}</p>
+                      <p className="text-[10px] text-[#888888] font-medium tracking-[0.5px] uppercase">{selectedCustomer.phone}</p>
                       <div className="h-3 px-1.5 bg-[#DA291C] text-white text-[8px] font-black uppercase flex items-center rounded-[1px]">
                         {selectedCustomer.loyalty_status}
                       </div>
@@ -626,7 +626,7 @@ export default function Sales() {
               ) : (
                 <button
                   onClick={() => setShowCustomerModal(true)}
-                  className="w-full h-12 border border-dashed border-[#303030] hover:border-[#DA291C] hover:bg-[#DA291C]/5 transition-all text-[#555555] hover:text-[#DA291C] rounded-[2px] text-[11px] font-bold uppercase tracking-[2px] flex items-center justify-center gap-2"
+                  className="w-full h-12 border border-dashed border-[#303030] hover:border-[#DA291C] hover:bg-[#DA291C]/5 transition-all text-[#888888] hover:text-[#DA291C] rounded-[2px] text-[11px] font-bold uppercase tracking-[2px] flex items-center justify-center gap-2"
                 >
                   <UserIcon className="h-4 w-4" />
                   Select Entity
@@ -637,18 +637,18 @@ export default function Sales() {
 
           {/* Payment Terminal Section */}
           <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-6 space-y-6">
-            <p className="text-[10px] font-bold text-[#555555] uppercase tracking-[1.5px]">Settlement Parameters</p>
+            <p className="text-[10px] font-bold text-[#888888] uppercase tracking-[1.5px]">Settlement Parameters</p>
             
             <div className="space-y-4">
               {/* Discount Entry */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[#444444] uppercase tracking-[1px]">Adjustment Type</label>
+                <label className="text-[10px] font-bold text-[#666666] uppercase tracking-[1px]">Adjustment Type</label>
                 <div className="flex gap-2">
                   <div className="flex h-11 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] p-1 flex-1 max-w-[120px]">
                     <button
                       className={cn(
                         "flex-1 rounded-[1px] text-[10px] font-bold transition-all uppercase",
-                        discountType === 'percent' ? 'bg-[#DA291C] text-white' : 'text-[#444444] hover:text-white'
+                        discountType === 'percent' ? 'bg-[#DA291C] text-white' : 'text-[#666666] hover:text-white'
                       )}
                       onClick={() => setDiscountType('percent')}
                     >
@@ -657,7 +657,7 @@ export default function Sales() {
                     <button
                       className={cn(
                         "flex-1 rounded-[1px] text-[10px] font-bold transition-all uppercase",
-                        discountType === 'amount' ? 'bg-[#DA291C] text-white' : 'text-[#444444] hover:text-white'
+                        discountType === 'amount' ? 'bg-[#DA291C] text-white' : 'text-[#666666] hover:text-white'
                       )}
                       onClick={() => setDiscountType('amount')}
                     >
@@ -679,7 +679,7 @@ export default function Sales() {
                 {[500, 1000].map((denom) => (
                   <button
                     key={denom}
-                    className="h-10 border border-[#1A1A1A] hover:border-[#303030] text-[#555555] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] transition-all flex items-center justify-center gap-2"
+                    className="h-10 border border-[#1A1A1A] hover:border-[#303030] text-[#888888] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] transition-all flex items-center justify-center gap-2"
                     onClick={() => {
                         setPayments([{ type: 'cash', amount: denom }]);
                         finalizeCheckout([{ type: 'cash', amount: denom }]);

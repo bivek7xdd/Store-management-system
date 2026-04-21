@@ -13,7 +13,7 @@ interface CustomerSelectionProps {
   onGuestCheckout: () => void;
 }
 
-const inputCls = "w-full h-12 bg-transparent border border-[#303030] rounded-[2px] px-4 text-[14px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#DA291C] transition-colors uppercase tracking-tight";
+const inputCls = "w-full h-12 bg-transparent border border-[#303030] rounded-[2px] px-4 text-[14px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#DA291C] transition-colors uppercase tracking-tight";
 
 export const CustomerSelection: React.FC<CustomerSelectionProps> = ({
   open,
@@ -203,7 +203,7 @@ export const CustomerSelection: React.FC<CustomerSelectionProps> = ({
         </div>
 
         <DialogFooter className="p-6 bg-[#0F0F0F] border-t border-[#1A1A1A]">
-          <p className="text-[10px] text-[#444444] font-medium uppercase tracking-[1px] text-center w-full">
+          <p className="text-[10px] text-[#666666] font-medium uppercase tracking-[1px] text-center w-full">
             Mandatory customer association ensures ecosystem integrity.
           </p>
         </DialogFooter>

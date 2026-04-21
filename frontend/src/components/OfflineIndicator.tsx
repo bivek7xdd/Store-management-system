@@ -72,7 +72,7 @@ export function OfflineIndicator({
       {/* Pending Items Counter */}
       {(pendingSales > 0 || pendingProducts > 0 || pendingCategories > 0 || pendingSuppliers > 0) && (
         <div 
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#303030] bg-[#111111] text-[#AAAAAA]"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] border border-[#303030] bg-[#111111] text-[#CCCCCC]"
         >
           <span className="text-[10px] font-bold uppercase tracking-[1px]">
             {pendingSales > 0 && `${pendingSales} Sale${pendingSales !== 1 ? 's' : ''}`}
@@ -83,7 +83,7 @@ export function OfflineIndicator({
 
       {/* Sync Status Details */}
       {(lastSyncTime || syncError) && (
-        <div className="hidden sm:flex items-center text-[10px] font-medium uppercase tracking-[0.5px] text-[#555555]">
+        <div className="hidden sm:flex items-center text-[10px] font-medium uppercase tracking-[0.5px] text-[#888888]">
           {syncError ? (
             <span className="text-[#F13A2C]">Error Encountered</span>
           ) : (
