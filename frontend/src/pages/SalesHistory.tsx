@@ -1,839 +1,603 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, ChevronRight, User, Phone, ArrowUpRight, ChevronDown, Loader2, Printer, FileText } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import {
+  Search, Calendar, ChevronDown, ChevronRight, ChevronLeft, User, Phone,
+  ArrowUpRight, Loader2, Printer, FileText, X, RefreshCw,
+  Banknote, CreditCard, Smartphone, Filter
+} from "lucide-react";
 import { salesService, Sale, SaleItem } from "@/services/sales";
 import { toast } from "sonner";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { startOfDay, subDays, startOfMonth, isAfter, isValid } from "date-fns";
+import { isAfter, isValid, startOfDay, subDays, startOfMonth, isSameDay, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const safeDate = (dateString: string | undefined): Date => {
-    if (!dateString) return new Date();
-    const date = new Date(dateString);
-    return isValid(date) ? date : new Date();
+  if (!dateString) return new Date();
+  const date = new Date(dateString);
+  return isValid(date) ? date : new Date();
 };
 
+const formatDate = (dateString: string | undefined) =>
+  safeDate(dateString).toLocaleDateString("en-NP", { day: "2-digit", month: "short", year: "numeric" });
+
+const formatTime = (dateString: string | undefined) =>
+  safeDate(dateString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+const TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof Banknote }> = {
+  cash:   { label: "Cash",   color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",  icon: Banknote },
+  credit: { label: "Credit", color: "text-amber-400 border-amber-500/30 bg-amber-500/10",        icon: CreditCard },
+  online: { label: "Online", color: "text-blue-400 border-blue-500/30 bg-blue-500/10",           icon: Smartphone },
+  mixed:  { label: "Mixed",  color: "text-purple-400 border-purple-500/30 bg-purple-500/10",     icon: ArrowUpRight },
+};
+
+// ---------- Sale Row ----------
 const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [items, setItems] = useState<SaleItem[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [loaded, setLoaded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [items, setItems] = useState<SaleItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
-    const handleOpenChange = async (open: boolean) => {
-        setIsOpen(open);
-        if (open && !loaded) {
-            setLoading(true);
-            try {
-                const data = await salesService.getSaleDetails(String(sale.id));
-                setItems(data.items || []);
-                setLoaded(true);
-            } catch (error) {
-                console.error(error);
-                toast.error("Failed to load details");
-            } finally {
-                setLoading(false);
-            }
-        }
-    };
+  const handleOpenChange = async (open: boolean) => {
+    setIsOpen(open);
+    if (open && !loaded) {
+      setLoading(true);
+      try {
+        const data = await salesService.getSaleDetails(String(sale.id));
+        setItems(data.items || []);
+        setLoaded(true);
+      } catch {
+        toast.error("Failed to load receipt details");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
-    const handlePrintThermal = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const printWindow = window.open('', '_blank', 'width=350,height=600');
-        if (!printWindow) return;
+  const handlePrintThermal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const printWindow = window.open("", "_blank", "width=350,height=600");
+    if (!printWindow) return;
+    const html = `<!DOCTYPE html><html><head><title>Receipt #${String(sale.id).slice(0,8)}</title>
+    <style>@page{size:80mm auto;margin:0}*{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;font-size:12px;line-height:1.4;width:80mm;padding:8mm 4mm;background:white;color:black}
+    .c{text-align:center}.b{font-weight:bold}.row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
+    .div{border-top:1px dashed #000;margin:8px 0}.ddiv{border-top:2px solid #000;margin:8px 0}
+    .gt{font-size:14px;font-weight:bold;padding:6px 0}</style></head><body>
+    <div class="c"><div class="b" style="font-size:18px">STOREHUB</div>
+    <div style="font-size:11px">Kathmandu, Nepal • VAT/PAN: 123456789</div></div>
+    <div class="ddiv"></div>
+    <div class="row"><span>Receipt #:</span><span>${String(sale.id).slice(0,8).toUpperCase()}</span></div>
+    <div class="row"><span>Date:</span><span>${formatDate(sale.sale_date)}</span></div>
+    <div class="row"><span>Time:</span><span>${formatTime(sale.sale_date)}</span></div>
+    <div class="row"><span>Type:</span><span>${sale.sales_type.toUpperCase()}</span></div>
+    ${sale.customer_name ? `<div class="row"><span>Customer:</span><span>${sale.customer_name}</span></div>` : ""}
+    <div class="div"></div>
+    <div class="row b"><span>ITEM</span><span>AMOUNT</span></div>
+    <div class="div"></div>
+    ${items.map(i => `<div style="margin:6px 0"><div>${i.product_name}</div>
+    <div class="row" style="padding-left:8px;color:#333"><span>${i.quantity} x Rs.${i.unit_price.toLocaleString()}</span><span>Rs.${i.total_price.toLocaleString()}</span></div></div>`).join("")}
+    <div class="div"></div>
+    <div class="row"><span>Subtotal:</span><span>Rs.${((sale.total_amount||0)+(sale.discount_applied||0)).toLocaleString()}</span></div>
+    ${sale.discount_applied > 0 ? `<div class="row"><span>Discount:</span><span>-Rs.${sale.discount_applied.toLocaleString()}</span></div>` : ""}
+    <div class="ddiv"></div>
+    <div class="row gt"><span>GRAND TOTAL:</span><span>Rs.${(sale.total_amount||0).toLocaleString()}</span></div>
+    <div class="ddiv"></div>
+    <div class="c" style="margin-top:16px;font-size:11px"><div class="b">Thank you for your purchase!</div><div>Please come again</div></div>
+    </body><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</script></html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
 
-        const receiptHTML = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Receipt #${String(sale.id).slice(0, 8)}</title>
-                <style>
-                    @page {
-                        size: 80mm auto;
-                        margin: 0;
-                    }
-                    * {
-                        margin: 0;
-                        padding: 0;
-                        box-sizing: border-box;
-                    }
-                    body {
-                        font-family: 'Courier New', Courier, monospace;
-                        font-size: 12px;
-                        line-height: 1.4;
-                        width: 80mm;
-                        padding: 8mm 4mm;
-                        background: white;
-                        color: black;
-                    }
-                    .receipt {
-                        width: 100%;
-                    }
-                    .center {
-                        text-align: center;
-                    }
-                    .bold {
-                        font-weight: bold;
-                    }
-                    .store-name {
-                        font-size: 18px;
-                        font-weight: bold;
-                        margin-bottom: 4px;
-                    }
-                    .store-info {
-                        font-size: 11px;
-                        color: #333;
-                    }
-                    .divider {
-                        border-top: 1px dashed #000;
-                        margin: 8px 0;
-                    }
-                    .double-divider {
-                        border-top: 2px solid #000;
-                        margin: 8px 0;
-                    }
-                    .receipt-info {
-                        display: flex;
-                        justify-content: space-between;
-                        font-size: 11px;
-                        margin: 4px 0;
-                    }
-                    .items-header {
-                        display: flex;
-                        justify-content: space-between;
-                        font-weight: bold;
-                        font-size: 11px;
-                        padding: 4px 0;
-                    }
-                    .item-row {
-                        margin: 6px 0;
-                    }
-                    .item-name {
-                        font-size: 12px;
-                        margin-bottom: 2px;
-                    }
-                    .item-detail {
-                        display: flex;
-                        justify-content: space-between;
-                        font-size: 11px;
-                        color: #333;
-                        padding-left: 8px;
-                    }
-                    .totals {
-                        margin-top: 8px;
-                    }
-                    .total-row {
-                        display: flex;
-                        justify-content: space-between;
-                        font-size: 12px;
-                        margin: 4px 0;
-                    }
-                    .grand-total {
-                        font-size: 14px;
-                        font-weight: bold;
-                        padding: 6px 0;
-                    }
-                    .footer {
-                        margin-top: 16px;
-                        text-align: center;
-                        font-size: 11px;
-                    }
-                    .barcode {
-                        font-family: 'Libre Barcode 39', cursive;
-                        font-size: 32px;
-                        margin: 8px 0;
-                    }
-                    @media print {
-                        body {
-                            print-color-adjust: exact;
-                            -webkit-print-color-adjust: exact;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="receipt">
-                    <div class="center">
-                        <div class="store-name">STOREHUB</div>
-                        <div class="store-info">Kathmandu, Nepal</div>
-                        <div class="store-info">Tel: 01-1234567</div>
-                        <div class="store-info">VAT/PAN: 123456789</div>
+  const handlePrintA4 = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const printWindow = window.open("", "_blank", "width=800,height=900");
+    if (!printWindow) return;
+    const html = `<!DOCTYPE html><html><head><title>Receipt #${String(sale.id).slice(0,8)}</title>
+    <style>@page{size:A4;margin:20mm}*{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:14px;line-height:1.6;background:#f5f5f5;padding:40px;color:#333}
+    .wrap{max-width:500px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);overflow:hidden}
+    .hdr{background:linear-gradient(135deg,#1a1a1a,#0a0a0a);color:white;padding:30px;text-align:center}
+    .hdr-title{font-size:28px;font-weight:bold;letter-spacing:2px;margin-bottom:8px}
+    .hdr-sub{font-size:13px;opacity:.7}
+    .body{padding:30px}.meta{display:flex;justify-content:space-between;padding-bottom:20px;border-bottom:2px solid #e5e7eb;margin-bottom:20px}
+    .meta-item{text-align:center}.meta-label{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .meta-value{font-size:14px;font-weight:600;color:#111}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px}
+    th{background:#f9fafb;padding:12px;text-align:left;font-size:12px;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #e5e7eb}
+    th:last-child{text-align:right}td{padding:14px 12px;border-bottom:1px solid #f3f4f6}
+    td:last-child{text-align:right;font-weight:600}
+    .totals{border-top:2px solid #e5e7eb;padding-top:16px}
+    .t-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px}
+    .gt{font-size:20px;font-weight:bold;padding:16px 0;border-top:2px solid #e5e7eb;margin-top:8px;color:#DA291C}
+    .footer{text-align:center;padding:24px 30px;background:#f9fafb;border-top:1px solid #e5e7eb}
+    @media print{body{background:white;padding:0}.wrap{box-shadow:none;max-width:100%}}</style></head><body>
+    <div class="wrap"><div class="hdr"><div class="hdr-title">STOREHUB</div>
+    <div class="hdr-sub">Kathmandu, Nepal • VAT/PAN: 123456789</div></div>
+    <div class="body"><div class="meta">
+    <div class="meta-item"><div class="meta-label">Receipt No.</div><div class="meta-value">#${String(sale.id).slice(0,8).toUpperCase()}</div></div>
+    <div class="meta-item"><div class="meta-label">Date</div><div class="meta-value">${formatDate(sale.sale_date)}</div></div>
+    <div class="meta-item"><div class="meta-label">Time</div><div class="meta-value">${formatTime(sale.sale_date)}</div></div>
+    <div class="meta-item"><div class="meta-label">Type</div><div class="meta-value">${sale.sales_type.toUpperCase()}</div></div>
+    </div><table><thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+    ${items.map(i => `<tr><td><div style="font-weight:500">${i.product_name}</div><div style="color:#6b7280;font-size:13px">${i.quantity} × Rs.${i.unit_price.toLocaleString()}</div></td><td>Rs.${i.total_price.toLocaleString()}</td></tr>`).join("")}
+    </tbody></table><div class="totals">
+    <div class="t-row"><span>Subtotal</span><span>Rs.${((sale.total_amount||0)+(sale.discount_applied||0)).toLocaleString()}</span></div>
+    ${sale.discount_applied > 0 ? `<div class="t-row" style="color:#dc2626"><span>Discount</span><span>-Rs.${sale.discount_applied.toLocaleString()}</span></div>` : ""}
+    <div class="t-row gt"><span>Grand Total</span><span>Rs.${(sale.total_amount||0).toLocaleString()}</span></div>
+    </div></div><div class="footer"><div style="font-size:16px;font-weight:600;margin-bottom:4px">Thank you for your purchase!</div>
+    <div style="font-size:13px;color:#6b7280">Goods once sold cannot be returned. Powered by StoreHub</div></div></div>
+    </body><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</script></html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const typeConf = TYPE_CONFIG[sale.sales_type] || TYPE_CONFIG["cash"];
+  const TypeIcon = typeConf.icon;
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={handleOpenChange} className="group">
+      <div className={cn(
+        "bg-[#111111] border rounded-[2px] overflow-hidden transition-all duration-200",
+        isOpen ? "border-[#303030]" : "border-[#1A1A1A] hover:border-[#252525]"
+      )}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center gap-4 p-5 text-left cursor-pointer">
+            {/* Type icon */}
+            <div className={cn("h-10 w-10 rounded-[2px] border flex items-center justify-center shrink-0", typeConf.color)}>
+              <TypeIcon className="h-4 w-4" />
+            </div>
+
+            {/* Main info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-bold text-[13px] text-white uppercase tracking-tight truncate">
+                  {sale.customer_name || "Walk-in Customer"}
+                </p>
+                <span className="text-[9px] font-bold text-[#888888] border border-[#303030] rounded-[1px] px-1.5 py-0.5 uppercase tracking-[0.5px]">
+                  #{String(sale.id).slice(0, 8)}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-[#888888]">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {formatDate(sale.sale_date)} · {formatTime(sale.sale_date)}
+                </span>
+                {sale.customer_phone && (
+                  <span className="flex items-center gap-1 hidden sm:flex">
+                    <Phone className="h-3 w-3" />
+                    {sale.customer_phone}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Amount + type badge */}
+            <div className="text-right shrink-0">
+              <p className="text-[18px] font-bold text-white tracking-tight">
+                रू {(sale.total_amount || 0).toLocaleString()}
+              </p>
+              <span className={cn("text-[9px] font-bold uppercase tracking-[1px] border rounded-[1px] px-1.5 py-0.5 mt-0.5 inline-block", typeConf.color)}>
+                {typeConf.label}
+              </span>
+            </div>
+
+            {/* Chevron */}
+            <div className="shrink-0 ml-2">
+              {isOpen
+                ? <ChevronDown className="h-4 w-4 text-[#888888]" />
+                : <ChevronRight className="h-4 w-4 text-[#555555] group-hover:text-[#888888] transition-colors" />
+              }
+            </div>
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="border-t border-[#1A1A1A] bg-[#0D0D0D] p-6">
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-[#DA291C]" />
+              </div>
+            ) : (
+              <div className="max-w-md mx-auto space-y-4">
+                {/* Receipt preview */}
+                <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[#1A1A1A]">
+                    <p className="text-[10px] font-bold text-[#888888] uppercase tracking-[1.5px]">Transaction Receipt</p>
+                  </div>
+                  <div className="p-5 space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-[11px]">
+                      <div><p className="text-[#888888] uppercase tracking-[0.8px]">Receipt ID</p><p className="font-bold text-white mt-0.5">{String(sale.id).slice(0,8).toUpperCase()}</p></div>
+                      <div><p className="text-[#888888] uppercase tracking-[0.8px]">Date / Time</p><p className="font-bold text-white mt-0.5">{formatDate(sale.sale_date)}</p></div>
+                      <div><p className="text-[#888888] uppercase tracking-[0.8px]">Payment Mode</p><p className={cn("font-bold mt-0.5 uppercase", typeConf.color.split(" ")[0])}>{sale.sales_type}</p></div>
+                      {sale.customer_name && <div><p className="text-[#888888] uppercase tracking-[0.8px]">Customer</p><p className="font-bold text-white mt-0.5 truncate">{sale.customer_name}</p></div>}
                     </div>
-                    <div class="double-divider"></div>
-                    <div class="receipt-info">
-                        <span>Receipt #:</span>
-                        <span>${String(sale.id).slice(0, 8).toUpperCase()}</span>
-                    </div>
-                    <div class="receipt-info">
-                        <span>Date:</span>
-                        <span>${new Date(sale.sale_date).toLocaleDateString()}</span>
-                    </div>
-                    <div class="receipt-info">
-                        <span>Time:</span>
-                        <span>${safeDate(sale.sale_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <div class="receipt-info">
-                        <span>Type:</span>
-                        <span>${sale.sales_type.toUpperCase()}</span>
-                    </div>
-                    ${sale.customer_name ? `
-                    <div class="receipt-info">
-                        <span>Customer:</span>
-                        <span>${sale.customer_name}</span>
-                    </div>
-                    ` : ''}
-                    ${sale.customer_phone ? `
-                    <div class="receipt-info">
-                        <span>Phone:</span>
-                        <span>${sale.customer_phone}</span>
-                    </div>
-                    ` : ''}
-                    <div class="divider"></div>
-                    <div class="items-header">
-                        <span>ITEM</span>
-                        <span>AMOUNT</span>
-                    </div>
-                    <div class="divider"></div>
-                    ${items.map(item => `
-                    <div class="item-row">
-                        <div class="item-name">${item.product_name}</div>
-                        <div class="item-detail">
-                            <span>${item.quantity} x Rs.${item.unit_price.toLocaleString()}</span>
-                            <span>Rs.${item.total_price.toLocaleString()}</span>
+
+                    <div className="border-t border-dashed border-[#303030] my-3" />
+
+                    <div className="space-y-2">
+                      {items.map((item) => (
+                        <div key={item.product_id} className="flex items-center justify-between text-[12px]">
+                          <div className="flex-1 min-w-0 pr-4">
+                            <p className="font-medium text-white truncate">{item.product_name}</p>
+                            <p className="text-[#888888] text-[11px]">{item.quantity} × रू {item.unit_price.toLocaleString()}</p>
+                          </div>
+                          <p className="font-bold text-white shrink-0">रू {item.total_price.toLocaleString()}</p>
                         </div>
+                      ))}
                     </div>
-                    `).join('')}
-                    <div class="divider"></div>
-                    <div class="totals">
-                        <div class="total-row">
-                            <span>Subtotal:</span>
-                            <span>Rs.${(sale.total_amount + sale.discount_applied).toLocaleString()}</span>
+
+                    <div className="border-t border-dashed border-[#303030] my-3" />
+
+                    <div className="space-y-1.5 text-[12px]">
+                      <div className="flex justify-between text-[#888888]">
+                        <span>Subtotal</span>
+                        <span>रू {((sale.total_amount||0)+(sale.discount_applied||0)).toLocaleString()}</span>
+                      </div>
+                      {sale.discount_applied > 0 && (
+                        <div className="flex justify-between text-emerald-400">
+                          <span>Discount</span>
+                          <span>-रू {(sale.discount_applied||0).toLocaleString()}</span>
                         </div>
-                        ${sale.discount_applied > 0 ? `
-                        <div class="total-row">
-                            <span>Discount:</span>
-                            <span>-Rs.${sale.discount_applied.toLocaleString()}</span>
-                        </div>
-                        ` : ''}
+                      )}
                     </div>
-                    <div class="double-divider"></div>
-                    <div class="total-row grand-total">
-                        <span>GRAND TOTAL:</span>
-                        <span>Rs.${sale.total_amount.toLocaleString()}</span>
+
+                    <div className="border-t border-[#303030] pt-3 flex justify-between items-center">
+                      <span className="text-[12px] font-bold text-white uppercase tracking-[1px]">Grand Total</span>
+                      <span className="text-[20px] font-bold text-white">रू {(sale.total_amount||0).toLocaleString()}</span>
                     </div>
-                    <div class="double-divider"></div>
-                    <div class="footer">
-                        <div class="barcode">*${String(sale.id).slice(0, 8).toUpperCase()}*</div>
-                        <p>--------------------------------</p>
-                        <p class="bold">Thank you for your purchase!</p>
-                        <p>Please come again</p>
-                        <p style="margin-top: 8px; font-size: 10px;">Goods once sold cannot be returned</p>
-                        <p style="font-size: 10px;">Powered by StoreHub</p>
-                    </div>
+                  </div>
                 </div>
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        window.onafterprint = function() {
-                            window.close();
-                        };
-                    };
-                </script>
-            </body>
-            </html>
-        `;
 
-        printWindow.document.write(receiptHTML);
-        printWindow.document.close();
-    };
-
-    const handlePrintA4 = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const printWindow = window.open('', '_blank', 'width=800,height=900');
-        if (!printWindow) return;
-
-        const receiptHTML = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Receipt #${String(sale.id).slice(0, 8)}</title>
-                <style>
-                    @page {
-                        size: A4;
-                        margin: 20mm;
-                    }
-                    * {
-                        margin: 0;
-                        padding: 0;
-                        box-sizing: border-box;
-                    }
-                    body {
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        font-size: 14px;
-                        line-height: 1.6;
-                        background: #f5f5f5;
-                        padding: 40px;
-                        color: #333;
-                    }
-                    .receipt-container {
-                        max-width: 500px;
-                        margin: 0 auto;
-                        background: white;
-                        border-radius: 12px;
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                        overflow: hidden;
-                    }
-                    .header {
-                        background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-                        color: white;
-                        padding: 30px;
-                        text-align: center;
-                    }
-                    .store-name {
-                        font-size: 28px;
-                        font-weight: bold;
-                        letter-spacing: 2px;
-                        margin-bottom: 8px;
-                    }
-                    .store-info {
-                        font-size: 13px;
-                        opacity: 0.9;
-                    }
-                    .content {
-                        padding: 30px;
-                    }
-                    .receipt-meta {
-                        display: flex;
-                        justify-content: space-between;
-                        padding-bottom: 20px;
-                        border-bottom: 2px solid #e5e7eb;
-                        margin-bottom: 20px;
-                    }
-                    .receipt-meta-item {
-                        text-align: center;
-                    }
-                    .receipt-meta-label {
-                        font-size: 11px;
-                        color: #6b7280;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        margin-bottom: 4px;
-                    }
-                    .receipt-meta-value {
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #111827;
-                    }
-                    .customer-info {
-                        background: #f9fafb;
-                        padding: 16px;
-                        border-radius: 8px;
-                        margin-bottom: 20px;
-                    }
-                    .customer-label {
-                        font-size: 11px;
-                        color: #6b7280;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        margin-bottom: 4px;
-                    }
-                    .customer-name {
-                        font-size: 16px;
-                        font-weight: 600;
-                    }
-                    .customer-phone {
-                        font-size: 14px;
-                        color: #6b7280;
-                    }
-                    .items-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 20px;
-                    }
-                    .items-table th {
-                        background: #f9fafb;
-                        padding: 12px;
-                        text-align: left;
-                        font-size: 12px;
-                        color: #6b7280;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        border-bottom: 2px solid #e5e7eb;
-                    }
-                    .items-table th:last-child {
-                        text-align: right;
-                    }
-                    .items-table td {
-                        padding: 14px 12px;
-                        border-bottom: 1px solid #f3f4f6;
-                    }
-                    .items-table td:last-child {
-                        text-align: right;
-                        font-weight: 600;
-                    }
-                    .item-name {
-                        font-weight: 500;
-                    }
-                    .item-qty {
-                        color: #6b7280;
-                        font-size: 13px;
-                    }
-                    .totals {
-                        border-top: 2px solid #e5e7eb;
-                        padding-top: 16px;
-                    }
-                    .total-row {
-                        display: flex;
-                        justify-content: space-between;
-                        padding: 8px 0;
-                        font-size: 14px;
-                    }
-                    .total-row.discount {
-                        color: #dc2626;
-                    }
-                    .total-row.grand-total {
-                        font-size: 20px;
-                        font-weight: bold;
-                        padding: 16px 0;
-                        border-top: 2px solid #e5e7eb;
-                        margin-top: 8px;
-                        color: #0d9488;
-                    }
-                    .footer {
-                        text-align: center;
-                        padding: 24px 30px;
-                        background: #f9fafb;
-                        border-top: 1px solid #e5e7eb;
-                    }
-                    .footer-thanks {
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #111827;
-                        margin-bottom: 4px;
-                    }
-                    .footer-message {
-                        font-size: 13px;
-                        color: #6b7280;
-                    }
-                    .footer-policy {
-                        font-size: 11px;
-                        color: #9ca3af;
-                        margin-top: 12px;
-                        padding-top: 12px;
-                        border-top: 1px solid #e5e7eb;
-                    }
-                    @media print {
-                        body {
-                            background: white;
-                            padding: 0;
-                        }
-                        .receipt-container {
-                            box-shadow: none;
-                            max-width: 100%;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="receipt-container">
-                    <div class="header">
-                        <div class="store-name">STOREHUB</div>
-                        <div class="store-info">Kathmandu, Nepal • Tel: 01-1234567</div>
-                        <div class="store-info">VAT/PAN: 123456789</div>
-                    </div>
-                    <div class="content">
-                        <div class="receipt-meta">
-                            <div class="receipt-meta-item">
-                                <div class="receipt-meta-label">Receipt No.</div>
-                                <div class="receipt-meta-value">#${String(sale.id).slice(0, 8).toUpperCase()}</div>
-                            </div>
-                            <div class="receipt-meta-item">
-                                <div class="receipt-meta-label">Date</div>
-                                <div class="receipt-meta-value">${safeDate(sale.sale_date).toLocaleDateString()}</div>
-                            </div>
-                            <div class="receipt-meta-item">
-                                <div class="receipt-meta-label">Time</div>
-                                <div class="receipt-meta-value">${safeDate(sale.sale_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                            </div>
-                            <div class="receipt-meta-item">
-                                <div class="receipt-meta-label">Type</div>
-                                <div class="receipt-meta-value">${sale.sales_type.toUpperCase()}</div>
-                            </div>
-                        </div>
-                        ${(sale.customer_name || sale.customer_phone) ? `
-                        <div class="customer-info">
-                            <div class="customer-label">Bill To</div>
-                            <div class="customer-name">${sale.customer_name || 'Walk-in Customer'}</div>
-                            ${sale.customer_phone ? `<div class="customer-phone">${sale.customer_phone}</div>` : ''}
-                        </div>
-                        ` : ''}
-                        <table class="items-table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th style="text-align: right;">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${items.map(item => `
-                                <tr>
-                                    <td>
-                                        <div class="item-name">${item.product_name}</div>
-                                        <div class="item-qty">${item.quantity} × Rs.${item.unit_price.toLocaleString()}</div>
-                                    </td>
-                                    <td>Rs.${item.total_price.toLocaleString()}</td>
-                                </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        <div class="totals">
-                            <div class="total-row">
-                                <span>Subtotal</span>
-                                <span>Rs.${(sale.total_amount + sale.discount_applied).toLocaleString()}</span>
-                            </div>
-                            ${sale.discount_applied > 0 ? `
-                            <div class="total-row discount">
-                                <span>Discount</span>
-                                <span>-Rs.${sale.discount_applied.toLocaleString()}</span>
-                            </div>
-                            ` : ''}
-                            <div class="total-row grand-total">
-                                <span>Grand Total</span>
-                                <span>Rs.${sale.total_amount.toLocaleString()}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="footer">
-                        <div class="footer-thanks">Thank you for your purchase!</div>
-                        <div class="footer-message">Please visit again</div>
-                        <div class="footer-policy">Goods once sold cannot be returned or exchanged.<br>Powered by StoreHub</div>
-                    </div>
+                {/* Print buttons */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handlePrintThermal}
+                    className="h-10 border border-[#303030] hover:border-[#555555] text-[#888888] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    Thermal (80mm)
+                  </button>
+                  <button
+                    onClick={handlePrintA4}
+                    className="h-10 bg-[#DA291C] hover:bg-[#B01E0A] text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] flex items-center justify-center gap-2 transition-all"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    A4 / PDF
+                  </button>
                 </div>
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        window.onafterprint = function() {
-                            window.close();
-                        };
-                    };
-                </script>
-            </body>
-            </html>
-        `;
-
-        printWindow.document.write(receiptHTML);
-        printWindow.document.close();
-    };
-
-    return (
-        <Collapsible open={isOpen} onOpenChange={handleOpenChange} className="group">
-            <Card className="border-0 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                <CollapsibleTrigger asChild>
-                    <CardContent className="p-4 sm:p-6 cursor-pointer bg-white relative z-10">
-                        <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-                            <div className="flex items-start gap-4">
-                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${sale.sales_type === 'credit' ? 'bg-orange-100 text-orange-600' : 'bg-teal-100 text-teal-600'
-                                    }`}>
-                                    {sale.sales_type === 'credit' ? <User className="h-6 w-6" /> : <ArrowUpRight className="h-6 w-6" />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-semibold text-gray-900 line-clamp-1">
-                                            {sale.customer_name || "Walk-in Customer"}
-                                        </span>
-                                        <Badge variant="secondary" className="text-xs font-normal bg-gray-100">
-                                            #{String(sale.id).slice(0, 8)}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" />
-                                            {safeDate(sale.sale_date).toLocaleDateString()}
-                                        </span>
-                                        {sale.customer_phone && (
-                                            <span className="flex items-center gap-1">
-                                                <Phone className="h-3 w-3" />
-                                                {sale.customer_phone}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between sm:justify-end gap-6 pl-16 sm:pl-0">
-                                <div className="text-right">
-                                    <p className="text-lg font-bold text-gray-900">
-                                        रू {sale.total_amount?.toLocaleString() ?? 0}
-                                    </p>
-                                    <div className="flex items-center justify-end gap-2 mt-0.5">
-                                        <Badge variant="outline" className="capitalize">
-                                            {sale.sales_type}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                {isOpen ? (
-                                    <ChevronDown className="h-5 w-5 text-gray-500" />
-                                ) : (
-                                    <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-gray-500 transition-colors" />
-                                )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </CollapsibleTrigger>
-
-                <CollapsibleContent className="border-t border-gray-100 bg-gray-50/50">
-                    <div className="p-6">
-                        {loading ? (
-                            <div className="flex justify-center py-8">
-                                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                            </div>
-                        ) : (
-                            <div className="max-w-md mx-auto">
-                                {/* Receipt Preview Card */}
-                                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                                    {/* Receipt Preview - Styled like thermal receipt */}
-                                    <div className="p-6 font-mono text-sm bg-gradient-to-b from-gray-50 to-white">
-                                        {/* Store Header */}
-                                        <div className="text-center mb-4">
-                                            <h3 className="font-bold text-lg tracking-wide">STOREHUB</h3>
-                                            <p className="text-xs text-gray-600">Kathmandu, Nepal</p>
-                                            <p className="text-xs text-gray-600">VAT/PAN: 123456789</p>
-                                        </div>
-
-                                        <div className="border-t-2 border-dashed border-gray-300 my-3"></div>
-
-                                        {/* Receipt Info */}
-                                        <div className="space-y-1 text-xs">
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Receipt #:</span>
-                                                <span className="font-medium">{String(sale.id).slice(0, 8).toUpperCase()}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Date:</span>
-                                                <span>{safeDate(sale.sale_date).toLocaleDateString()}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Type:</span>
-                                                <span className="uppercase">{sale.sales_type}</span>
-                                            </div>
-                                            {sale.customer_name && (
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-600">Customer:</span>
-                                                    <span>{sale.customer_name}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="border-t border-dashed border-gray-300 my-3"></div>
-
-                                        {/* Items */}
-                                        <div className="space-y-2">
-                                            {items.map((item) => (
-                                                <div key={item.product_id} className="text-xs">
-                                                    <div className="font-medium truncate">{item.product_name}</div>
-                                                    <div className="flex justify-between text-gray-600 pl-2">
-                                                        <span>{item.quantity} x Rs.{item.unit_price.toLocaleString()}</span>
-                                                        <span className="font-medium text-gray-900">Rs.{item.total_price.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="border-t border-dashed border-gray-300 my-3"></div>
-
-                                        {/* Totals */}
-                                        <div className="space-y-1 text-xs">
-                                            <div className="flex justify-between">
-                                                <span>Subtotal:</span>
-                                                <span>Rs.{((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span>
-                                            </div>
-                                            {sale.discount_applied > 0 && (
-                                                <div className="flex justify-between text-red-600">
-                                                    <span>Discount:</span>
-                                                    <span>-Rs.{(sale.discount_applied || 0).toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="border-t-2 border-dashed border-gray-300 my-3"></div>
-
-                                        <div className="flex justify-between font-bold text-sm">
-                                            <span>TOTAL:</span>
-                                            <span>Rs.{(sale.total_amount || 0).toLocaleString()}</span>
-                                        </div>
-
-                                        <div className="border-t-2 border-dashed border-gray-300 my-3"></div>
-
-                                        {/* Footer */}
-                                        <div className="text-center text-xs text-gray-500 mt-4">
-                                            <p className="font-medium text-gray-700">Thank you for your purchase!</p>
-                                            <p>Please come again</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Print Buttons */}
-                                    <div className="p-4 bg-gray-50 border-t border-gray-100 space-y-2">
-                                        <div className="flex gap-2">
-                                            <Button onClick={handlePrintThermal} variant="outline" className="flex-1">
-                                                <Printer className="h-4 w-4 mr-2" />
-                                                Thermal (80mm)
-                                            </Button>
-                                            <Button onClick={handlePrintA4} className="flex-1 bg-teal-600 hover:bg-teal-700">
-                                                <FileText className="h-4 w-4 mr-2" />
-                                                A4 / PDF
-                                            </Button>
-                                        </div>
-                                        <p className="text-xs text-gray-400 text-center">Choose thermal for POS printers, A4 for regular paper or PDF</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </CollapsibleContent>
-            </Card>
-        </Collapsible>
-    );
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
 };
 
+// ---------- Main Page ----------
 export default function SalesHistory() {
-    const [sales, setSales] = useState<Sale[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [filterTime, setFilterTime] = useState("all");
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
 
-    // Filter States
-    const [filterType, setFilterType] = useState("all");
-    const [filterTime, setFilterTime] = useState("all");
+  useEffect(() => { fetchSales(); }, []);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterType, filterTime, selectedDate]);
 
-    useEffect(() => {
-        fetchSales();
-    }, []);
+  const fetchSales = async () => {
+    setLoading(true);
+    try {
+      const data = await salesService.getSales();
+      setSales(data);
+    } catch {
+      toast.error("Failed to load sales history");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const fetchSales = async () => {
-        // ... (existing fetch logic)
-        try {
-            setLoading(true);
-            const data = await salesService.getSales();
-            setSales(data);
-        } catch (error) {
-            console.error("Failed to fetch sales:", error);
-            toast.error("Failed to load sales history");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const isWithinTimeRange = (dateString: string) => {
+    if (!dateString) return true;
+    const date = new Date(dateString);
+    if (!isValid(date)) return true;
+    const now = new Date();
 
-    const isWithinTimeRange = (dateString: string) => {
-        if (!dateString) return true;
-        const date = new Date(dateString);
-        if (!isValid(date)) return true;
-        const now = new Date();
+    // calendar date takes priority
+    if (selectedDate) {
+      try {
+        return isSameDay(date, parseISO(selectedDate));
+      } catch { return false; }
+    }
 
-        switch (filterTime) {
-            case "today":
-                return isAfter(date, startOfDay(now));
-            case "yesterday": {
-                const yesterday = subDays(now, 1);
-                const startOfYesterday = startOfDay(yesterday);
-                return isAfter(date, startOfYesterday) && date < startOfDay(now);
-            }
-            case "last7days":
-                return isAfter(date, subDays(now, 7));
-            case "thisMonth":
-                return isAfter(date, startOfMonth(now));
-            default:
-                return true;
-        }
-    };
+    switch (filterTime) {
+      case "today":     return isAfter(date, startOfDay(now));
+      case "yesterday": {
+        const start = startOfDay(subDays(now, 1));
+        return isAfter(date, start) && date < startOfDay(now);
+      }
+      case "last7days":  return isAfter(date, subDays(now, 7));
+      case "thisMonth":  return isAfter(date, startOfMonth(now));
+      default: return true;
+    }
+  };
 
-    const filteredSales = sales.filter(sale => {
-        const matchesSearch =
-            (sale.customer_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-            (sale.customer_phone || "").includes(searchTerm) ||
-            String(sale.id).includes(searchTerm);
+  const clearDateFilter = () => {
+    setSelectedDate("");
+    setShowDatePicker(false);
+  };
 
-        const matchesType = filterType === "all" || sale.sales_type === filterType;
-        const matchesTime = isWithinTimeRange(sale.sale_date);
+  const filteredSales = sales.filter(sale => {
+    const matchesSearch =
+      (sale.customer_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (sale.customer_phone || "").includes(searchTerm) ||
+      String(sale.id).includes(searchTerm);
+    const matchesType = filterType === "all" || sale.sales_type === filterType;
+    const matchesTime = isWithinTimeRange(sale.sale_date);
+    return matchesSearch && matchesType && matchesTime;
+  });
 
-        return matchesSearch && matchesType && matchesTime;
-    });
+  // Summary stats
+  const totalRevenue = filteredSales.reduce((s, sale) => s + (sale.total_amount || 0), 0);
+  const cashSales = filteredSales.filter(s => s.sales_type === "cash").length;
+  const creditSales = filteredSales.filter(s => s.sales_type === "credit").length;
 
-    return (
-        <div className="space-y-6 pb-20 lg:pb-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Sales History</h1>
-                <p className="text-gray-500 mt-1">View and manage past transactions</p>
-            </div>
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredSales.length / ITEMS_PER_PAGE));
+  const paginatedSales = filteredSales.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
-            {/* Search and Filters */}
-            <Card className="border-0 shadow-sm">
-                <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Search by customer name, phone or Receipt ID..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 h-11 rounded-xl border-gray-200"
-                            />
-                        </div>
-                        <div className="flex gap-4">
-                            <Select value={filterType} onValueChange={setFilterType}>
-                                <SelectTrigger className="w-[140px] h-11 rounded-xl border-gray-200">
-                                    <SelectValue placeholder="Sales Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Types</SelectItem>
-                                    <SelectItem value="cash">Cash</SelectItem>
-                                    <SelectItem value="credit">Credit</SelectItem>
-                                    <SelectItem value="online">Online</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={filterTime} onValueChange={setFilterTime}>
-                                <SelectTrigger className="w-[140px] h-11 rounded-xl border-gray-200">
-                                    <SelectValue placeholder="Time Period" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Time</SelectItem>
-                                    <SelectItem value="today">Today</SelectItem>
-                                    <SelectItem value="yesterday">Yesterday</SelectItem>
-                                    <SelectItem value="last7days">Last 7 Days</SelectItem>
-                                    <SelectItem value="thisMonth">This Month</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Sales List */}
-            <div className="space-y-4">
-                {filteredSales.length === 0 && !loading ? (
-                    <div className="text-center py-12 bg-white rounded-xl">
-                        <p className="text-gray-500">No sales found matching your filters</p>
-                    </div>
-                ) : (
-                    filteredSales.map((sale) => (
-                        <SaleHistoryItem key={String(sale.id)} sale={sale} />
-                    ))
-                )}
-            </div>
+  return (
+    <div className="space-y-6 pb-20 lg:pb-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Archive</p>
+          <h1 className="text-[24px] font-bold text-white tracking-tight">Sales History</h1>
         </div>
-    );
-}
+        <button
+          onClick={fetchSales}
+          className="h-9 w-9 rounded-[2px] border border-[#1A1A1A] bg-[#111111] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#1A1A1A] transition-colors self-start"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Total Revenue", value: `रू ${totalRevenue.toLocaleString()}`, accent: "text-white" },
+          { label: "Cash Sales",    value: cashSales,   accent: "text-emerald-400" },
+          { label: "Credit Sales",  value: creditSales, accent: "text-amber-400" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4">
+            <p className="text-[10px] text-[#888888] uppercase tracking-[1px] mb-2">{stat.label}</p>
+            <p className={cn("text-[20px] font-bold", stat.accent)}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Filter className="h-3.5 w-3.5 text-[#888888]" />
+          <p className="text-[10px] font-bold text-[#888888] uppercase tracking-[1.5px]">Filter Records</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#666666]" />
+            <input
+              placeholder="Search by name, phone, or receipt ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 pl-10 pr-3 bg-transparent border border-[#303030] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#555555] transition-colors"
+            />
+          </div>
+
+          {/* Type filter */}
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="h-10 px-3 bg-[#0A0A0A] border border-[#303030] rounded-[2px] text-[12px] text-[#CCCCCC] uppercase tracking-[0.5px] focus:outline-none focus:border-[#555555] transition-colors appearance-none cursor-pointer min-w-[130px]"
+          >
+            <option value="all">All Types</option>
+            <option value="cash">Cash</option>
+            <option value="credit">Credit</option>
+            <option value="online">Online</option>
+            <option value="mixed">Mixed</option>
+          </select>
+
+          {/* Time filter — hidden when calendar date is active */}
+          {!selectedDate && (
+            <select
+              value={filterTime}
+              onChange={(e) => setFilterTime(e.target.value)}
+              className="h-10 px-3 bg-[#0A0A0A] border border-[#303030] rounded-[2px] text-[12px] text-[#CCCCCC] uppercase tracking-[0.5px] focus:outline-none focus:border-[#555555] transition-colors appearance-none cursor-pointer min-w-[140px]"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="last7days">Last 7 Days</option>
+              <option value="thisMonth">This Month</option>
+            </select>
+          )}
+
+          {/* Date picker */}
+          <div className="relative">
+            {selectedDate ? (
+              <div className="h-10 px-3 border border-[#DA291C]/50 bg-[#DA291C]/5 rounded-[2px] flex items-center gap-2 text-[12px] text-[#DA291C] font-bold uppercase tracking-[0.5px]">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>{new Date(selectedDate + "T00:00:00").toLocaleDateString("en-NP", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                <button onClick={clearDateFilter} className="ml-1 hover:text-white transition-colors">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="h-10 px-3 border border-[#303030] hover:border-[#555555] bg-[#0A0A0A] rounded-[2px] flex items-center gap-2 text-[12px] text-[#888888] hover:text-white uppercase tracking-[0.5px] transition-all"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Pick Date
+              </button>
+            )}
+
+            {showDatePicker && !selectedDate && (
+              <div className="absolute right-0 top-12 z-50 bg-[#111111] border border-[#303030] rounded-[2px] shadow-2xl p-4 shadow-black/60">
+                <p className="text-[10px] font-bold text-[#888888] uppercase tracking-[1px] mb-3">Select Date</p>
+                <input
+                  type="date"
+                  className="h-10 px-3 bg-[#0A0A0A] border border-[#303030] rounded-[2px] text-[13px] text-white focus:outline-none focus:border-[#DA291C] transition-colors [color-scheme:dark] cursor-pointer"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setSelectedDate(e.target.value);
+                      setFilterTime("all");
+                      setShowDatePicker(false);
+                    }
+                  }}
+                />
+                <button onClick={() => setShowDatePicker(false)} className="mt-2 text-[10px] text-[#888888] hover:text-white transition-colors w-full text-center uppercase tracking-[1px]">Cancel</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Active filter indicators */}
+        {(selectedDate || filterTime !== "all" || filterType !== "all") && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Active:</p>
+            {filterType !== "all" && (
+              <span className="text-[10px] font-bold border border-[#303030] rounded-[1px] px-2 py-0.5 text-[#CCCCCC] uppercase tracking-[0.5px]">{filterType}</span>
+            )}
+            {selectedDate && (
+              <span className="text-[10px] font-bold border border-[#DA291C]/30 bg-[#DA291C]/5 rounded-[1px] px-2 py-0.5 text-[#DA291C] uppercase tracking-[0.5px]">
+                {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-NP", { day: "2-digit", month: "short" })}
+              </span>
+            )}
+            {filterTime !== "all" && !selectedDate && (
+              <span className="text-[10px] font-bold border border-[#303030] rounded-[1px] px-2 py-0.5 text-[#CCCCCC] uppercase tracking-[0.5px]">{filterTime}</span>
+            )}
+            <button
+              onClick={() => { setFilterType("all"); setFilterTime("all"); clearDateFilter(); }}
+              className="text-[10px] text-[#DA291C] hover:underline uppercase tracking-[0.5px]"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Result count + pagination info */}
+      {!loading && (
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">
+            {filteredSales.length} transaction{filteredSales.length !== 1 ? "s" : ""} found
+          </p>
+          {totalPages > 1 && (
+            <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">
+              Page {currentPage} of {totalPages}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Sales List */}
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-[74px] bg-[#111111] border border-[#1A1A1A] rounded-[2px] animate-pulse" />
+          ))}
+        </div>
+      ) : filteredSales.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 border border-dashed border-[#1A1A1A] rounded-[2px]">
+          <Search className="h-8 w-8 text-[#303030] mb-4" />
+          <p className="text-[14px] font-medium text-white mb-1">No Transactions Found</p>
+          <p className="text-[12px] text-[#888888] text-center max-w-xs">
+            {selectedDate ? `No sales recorded on ${new Date(selectedDate + "T00:00:00").toLocaleDateString("en-NP", { day: "2-digit", month: "long", year: "numeric" })}.` : "Try adjusting your search or filter criteria."}
+          </p>
+          {(searchTerm || filterType !== "all" || filterTime !== "all" || selectedDate) && (
+            <button
+              onClick={() => { setSearchTerm(""); setFilterType("all"); setFilterTime("all"); clearDateFilter(); }}
+              className="mt-4 text-[11px] text-[#DA291C] uppercase tracking-[1px] hover:underline"
+            >
+              Reset All Filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            {paginatedSales.map((sale) => (
+              <SaleHistoryItem key={String(sale.id)} sale={sale} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2 border-t border-[#1A1A1A]">
+              <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredSales.length)} of {filteredSales.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {/* Page pills */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${i}`} className="w-8 text-center text-[#888888] text-[12px]">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p as number)}
+                        className={cn(
+                          "h-8 w-8 rounded-[2px] text-[12px] font-bold transition-colors",
+                          currentPage === p
+                            ? "bg-[#DA291C] text-white border border-[#DA291C]"
+                            : "border border-[#1A1A1A] text-[#888888] hover:text-white hover:bg-[#1A1A1A]"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )
+                }
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
