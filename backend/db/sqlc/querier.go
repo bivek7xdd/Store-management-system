@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	ArchiveProductVariant(ctx context.Context, id pgtype.UUID) error
 	CheckNotificationExists(ctx context.Context, arg CheckNotificationExistsParams) (bool, error)
 	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
@@ -19,6 +20,7 @@ type Querier interface {
 	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
 	CreatePaymentRecord(ctx context.Context, arg CreatePaymentRecordParams) (PaymentRecord, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error)
 	CreateSaleItem(ctx context.Context, arg CreateSaleItemParams) (SaleItem, error)
 	CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error)
@@ -31,6 +33,7 @@ type Querier interface {
 	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
 	DeleteOldNotifications(ctx context.Context, storeID pgtype.UUID) error
 	DeleteProduct(ctx context.Context, id pgtype.UUID) error
+	DeleteProductVariant(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) error
@@ -55,9 +58,11 @@ type Querier interface {
 	GetInventoryStats(ctx context.Context, storeID pgtype.UUID) (GetInventoryStatsRow, error)
 	GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
 	GetNotifications(ctx context.Context, arg GetNotificationsParams) ([]Notification, error)
+	GetPOSCatalog(ctx context.Context, storeID pgtype.UUID) ([]GetPOSCatalogRow, error)
 	GetPaymentTotalsByStore(ctx context.Context, storeID pgtype.UUID) ([]GetPaymentTotalsByStoreRow, error)
 	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
 	GetProductPairFrequency(ctx context.Context, storeID pgtype.UUID) ([]GetProductPairFrequencyRow, error)
+	GetProductVariant(ctx context.Context, id pgtype.UUID) (ProductVariant, error)
 	GetProductVelocity(ctx context.Context, storeID pgtype.UUID) ([]GetProductVelocityRow, error)
 	GetProfitStats(ctx context.Context, arg GetProfitStatsParams) (GetProfitStatsRow, error)
 	GetRecentSales(ctx context.Context, arg GetRecentSalesParams) ([]GetRecentSalesRow, error)
@@ -81,6 +86,7 @@ type Querier interface {
 	GetTotalSales(ctx context.Context, arg GetTotalSalesParams) (GetTotalSalesRow, error)
 	GetUnreadCount(ctx context.Context, storeID pgtype.UUID) (int64, error)
 	GetUnreadNotifications(ctx context.Context, storeID pgtype.UUID) ([]Notification, error)
+	GetVariantBySKU(ctx context.Context, sku string) (ProductVariant, error)
 	IncrementCustomerPurchaseCount(ctx context.Context, arg IncrementCustomerPurchaseCountParams) error
 	ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Customer, error)
 	ListPaymentsBySale(ctx context.Context, saleID pgtype.UUID) ([]PaymentRecord, error)
@@ -91,6 +97,7 @@ type Querier interface {
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
 	ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) ([]Product, error)
+	ListVariantsByProduct(ctx context.Context, productID pgtype.UUID) ([]ProductVariant, error)
 	MarkAllNotificationsAsRead(ctx context.Context, storeID pgtype.UUID) error
 	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (Notification, error)
 	RecordDebtPayment(ctx context.Context, arg RecordDebtPaymentParams) (Debt, error)
@@ -103,10 +110,12 @@ type Querier interface {
 	UpdatePasswordByEmail(ctx context.Context, arg UpdatePasswordByEmailParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
+	UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error)
 	UpdateSaleAmount(ctx context.Context, arg UpdateSaleAmountParams) error
 	UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error)
 	UpdateStoreOwner(ctx context.Context, arg UpdateStoreOwnerParams) (StoreOwner, error)
 	UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) (Supplier, error)
+	UpdateVariantStock(ctx context.Context, arg UpdateVariantStockParams) (ProductVariant, error)
 	VerifyOTP(ctx context.Context, arg VerifyOTPParams) (OtpToken, error)
 }
 

@@ -1,5 +1,5 @@
 import api from './api';
-import { Category, Supplier, Product } from '../types';
+import { Category, Supplier, Product, ProductVariant } from '../types';
 import { db } from '../db/db';
 
 export interface CreateProductData {
@@ -16,6 +16,7 @@ export interface CreateProductData {
     supplier_id?: string;
     image_url?: string;
     is_tracked?: boolean;
+    variants?: any[];
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> { }
@@ -390,6 +391,36 @@ export const inventoryService = {
 
         // Return local data as the source of truth for the UI
         return await db.products.reverse().sortBy('created_at');
+    },
+
+    getPOSCatalog: async () => {
+        if (isOnline()) {
+            try {
+                const response = await api.get<{ data: any[] }>(`pos/catalog`);
+                const catalog = response.data.data || [];
+                
+                // Keep local items synchronized implicitly
+                // For a robust offline app, you'd sync products and variants correctly
+                return catalog;
+            } catch (error) {
+                console.warn('[Inventory] Fetching POS catalog failed, falling back to cache', error);
+            }
+        }
+        
+        // Offline representation
+        const allProducts = await db.products.toArray();
+        const catalog = [];
+        
+        for (const p of allProducts) {
+             if (p.status === 'discontinued') continue;
+             const variants = await db.product_variants.where('product_id').equals(p.id).toArray();
+             catalog.push({
+                 ...p,
+                 variants: variants
+             });
+        }
+        
+        return catalog;
     },
 
     getProduct: async (id: string) => {

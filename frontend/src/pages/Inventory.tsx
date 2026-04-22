@@ -48,6 +48,9 @@ import { ProductSkeleton } from "@/components/ProductSkeleton";
 import { PremiumEmptyState } from "@/components/PremiumEmptyState";
 import { FeatureTooltip } from "@/components/FeatureTooltip";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { VariantBuilder, VariantDimension } from "@/components/products/VariantBuilder";
+import { VariantGrid, generateCartesianProduct } from "@/components/products/VariantGrid";
+import { ProductVariant } from "@/types";
 
 const colors = {
   primary: "#0d9488",
@@ -103,8 +106,22 @@ export default function Inventory() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
+  const [hasVariants, setHasVariants] = useState(false);
+  const [dimensions, setDimensions] = useState<VariantDimension[]>([]);
+  const [combinations, setCombinations] = useState<Partial<ProductVariant>[]>([]);
   const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (hasVariants) {
+       const newCombs = generateCartesianProduct(dimensions);
+       // Preserve existing values for matched attributes
+       setCombinations(prev => newCombs.map(nc => {
+          const match = prev.find(p => JSON.stringify(p.attributes) === JSON.stringify(nc));
+          return match ? { ...match, attributes: nc } : { attributes: nc };
+       }));
+    }
+  }, [dimensions, hasVariants]);
 
   // Initialize sync service and listen for status changes
   useEffect(() => {
@@ -348,9 +365,52 @@ export default function Inventory() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleEditClick = (product: Product) => {
+  const handleEditClick = async (product: Product) => {
     setEditingProduct(product);
     setBarcodeValue(getTextValue(product.barcode));
+
+    // Load existing variants from Dexie to pre-populate VariantBuilder/VariantGrid
+    try {
+      const savedVariants = await db.product_variants
+        .where('product_id')
+        .equals(product.id)
+        .toArray();
+
+      if (savedVariants.length > 0) {
+        setHasVariants(true);
+
+        // Reconstruct dimensions from saved variant attributes
+        const allKeys = Array.from(
+          new Set(savedVariants.flatMap(v => Object.keys(v.attributes || {})))
+        );
+        const reconstructedDimensions: VariantDimension[] = allKeys.map(key => ({
+          key,
+          values: Array.from(
+            new Set(savedVariants.map(v => (v.attributes as Record<string, string>)[key]).filter(Boolean))
+          ),
+        }));
+        setDimensions(reconstructedDimensions);
+
+        // Reconstruct combinations from the saved variants
+        const reconstructedCombinations: Partial<ProductVariant>[] = savedVariants.map(v => ({
+          id: v.id,
+          sku: v.sku,
+          attributes: v.attributes as Record<string, string>,
+          cost_price: v.cost_price,
+          selling_price: v.selling_price,
+          stock_level: v.stock_level,
+        }));
+        setCombinations(reconstructedCombinations);
+      } else {
+        setHasVariants(false);
+        setDimensions([]);
+        setCombinations([]);
+      }
+    } catch (err) {
+      console.warn('[Inventory] Could not load variants for edit:', err);
+      setHasVariants(false);
+    }
+
     setAddDialogOpen(true);
   };
 
@@ -380,6 +440,9 @@ export default function Inventory() {
       setEditingProduct(null);
       setBarcodeValue("");
       setFormErrors({});
+      setHasVariants(false);
+      setDimensions([]);
+      setCombinations([]);
     } else if (editingProduct) {
       setBarcodeValue(getTextValue(editingProduct.barcode));
     }
@@ -403,16 +466,35 @@ export default function Inventory() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    const priceRaw = parseFloat(formData.get("price") as string);
+    const price = hasVariants && isNaN(priceRaw) ? combinations[0]?.selling_price || 0 : priceRaw || 0;
+    
+    const costPriceRaw = parseFloat(formData.get("cost_price") as string);
+    const cost_price = hasVariants && isNaN(costPriceRaw) ? combinations[0]?.cost_price || 0 : costPriceRaw || 0;
+    
+    const stockRaw = parseInt(formData.get("stock_quantity") as string);
+    const stock_quantity = hasVariants ? combinations.reduce((acc, c) => acc + (c.stock_level || 0), 0) : stockRaw || 0;
+
     const data: CreateProductData = {
       name: formData.get("name") as string,
       barcode: formData.get("barcode") as string || undefined,
-      price: parseFloat(formData.get("price") as string),
-      cost_price: formData.get("cost_price") ? parseFloat(formData.get("cost_price") as string) : 0,
-      stock_quantity: parseInt(formData.get("stock_quantity") as string),
+      price: price,
+      cost_price: cost_price,
+      stock_quantity: stock_quantity,
       low_stock_threshold: formData.get("low_stock_threshold") ? parseInt(formData.get("low_stock_threshold") as string) : 10,
       expires_at: formData.get("expires_at") ? new Date(formData.get("expires_at") as string).toISOString() : undefined,
       category_id: formData.get("category_id") as string,
     };
+
+    if (hasVariants && combinations.length > 0) {
+      data.variants = combinations.map((c: any) => ({
+        sku: c.sku || "",
+        attributes: c.attributes || {},
+        cost_price: c.cost_price || cost_price,
+        selling_price: c.selling_price || price,
+        stock_level: c.stock_level || 0,
+      }));
+    }
 
     const errors = validateProductForm(data);
     if (Object.keys(errors).length > 0) {
@@ -779,84 +861,114 @@ export default function Inventory() {
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price" className="text-sm font-medium">Price (रू)*</Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      defaultValue={editingProduct ? getNumericValue(editingProduct.price) : undefined}
-                      placeholder="100"
-                      required
-                      className={`rounded-lg ${formErrors.price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                      onChange={() => setFormErrors(prev => ({ ...prev, price: "" }))}
-                    />
-                    {formErrors.price && (
-                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                        <span>⚠</span> {formErrors.price}
-                      </p>
-                    )}
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50/50">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">Product has variants</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {editingProduct && hasVariants
+                        ? 'Editing existing variants — toggle locked'
+                        : 'Like size, color, or material'
+                      }
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)</Label>
-                    <Input
-                      id="cost_price"
-                      name="cost_price"
-                      type="number"
-                      step="0.01"
-                      defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
-                      placeholder="80"
-                      className={`rounded-lg ${formErrors.cost_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                      onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
-                    />
-                    {formErrors.cost_price && (
-                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                        <span>⚠</span> {formErrors.cost_price}
-                      </p>
-                    )}
-                  </div>
+                  <Switch
+                    checked={hasVariants}
+                    onCheckedChange={editingProduct && hasVariants ? undefined : setHasVariants}
+                    disabled={!!(editingProduct && hasVariants)}
+                    title={editingProduct && hasVariants ? 'Variants are locked for existing products' : undefined}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
-                    <Input
-                      id="stock_quantity"
-                      name="stock_quantity"
-                      type="number"
-                      min={0}
-                      max={2147483647}
-                      defaultValue={editingProduct?.stock_quantity}
-                      placeholder="50"
-                      required
-                      className={`rounded-lg ${formErrors.stock_quantity ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                      onChange={() => setFormErrors(prev => ({ ...prev, stock_quantity: "" }))}
-                    />
-                    {formErrors.stock_quantity && (
-                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                        <span>⚠</span> {formErrors.stock_quantity}
-                      </p>
-                    )}
+
+                {hasVariants && (
+                  <div className="space-y-4 pt-2 border-t mt-4">
+                    <p className="text-xs text-amber-600 font-medium">
+                      ⚠ SKUs and prices can be updated. Add/remove dimensions creates NEW variants on save.
+                    </p>
+                    <VariantBuilder dimensions={dimensions} onChange={setDimensions} />
+                    <VariantGrid combinations={combinations} onChange={setCombinations} />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
-                    <Input
-                      id="low_stock_threshold"
-                      name="low_stock_threshold"
-                      type="number"
-                      min={0}
-                      max={2147483647}
-                      defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
-                      placeholder="10"
-                      className={`rounded-lg ${formErrors.low_stock_threshold ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                      onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
-                    />
-                    {formErrors.low_stock_threshold && (
-                      <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                        <span>⚠</span> {formErrors.low_stock_threshold}
-                      </p>
-                    )}
+                )}
+
+                <div className={hasVariants ? "hidden" : "space-y-4"}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="price" className="text-sm font-medium">Price (रू)*</Label>
+                      <Input
+                        id="price"
+                        name="price"
+                        type="number"
+                        step="0.01"
+                        defaultValue={editingProduct ? getNumericValue(editingProduct.price) : undefined}
+                        placeholder="100"
+                        required={!hasVariants}
+                        className={`rounded-lg ${formErrors.price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                        onChange={() => setFormErrors(prev => ({ ...prev, price: "" }))}
+                      />
+                      {formErrors.price && (
+                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                          <span>⚠</span> {formErrors.price}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)</Label>
+                      <Input
+                        id="cost_price"
+                        name="cost_price"
+                        type="number"
+                        step="0.01"
+                        defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
+                        placeholder="80"
+                        className={`rounded-lg ${formErrors.cost_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                        onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
+                      />
+                      {formErrors.cost_price && (
+                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                          <span>⚠</span> {formErrors.cost_price}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
+                      <Input
+                        id="stock_quantity"
+                        name="stock_quantity"
+                        type="number"
+                        min={0}
+                        max={2147483647}
+                        defaultValue={editingProduct?.stock_quantity}
+                        placeholder="50"
+                        required={!hasVariants}
+                        className={`rounded-lg ${formErrors.stock_quantity ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                        onChange={() => setFormErrors(prev => ({ ...prev, stock_quantity: "" }))}
+                      />
+                      {formErrors.stock_quantity && (
+                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                          <span>⚠</span> {formErrors.stock_quantity}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
+                      <Input
+                        id="low_stock_threshold"
+                        name="low_stock_threshold"
+                        type="number"
+                        min={0}
+                        max={2147483647}
+                        defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
+                        placeholder="10"
+                        className={`rounded-lg ${formErrors.low_stock_threshold ? "border-red-500 focus-visible:ring-red-400" : ""}`}
+                        onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
+                      />
+                      {formErrors.low_stock_threshold && (
+                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                          <span>⚠</span> {formErrors.low_stock_threshold}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">

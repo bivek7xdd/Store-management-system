@@ -150,6 +150,13 @@ func main() {
 		marketRoutes.GET("/prices", handlers.GetMarketPrices)
 		marketRoutes.GET("/suppliers", handlers.FindSuppliers)
 	}
+
+	// POS routes
+	posRoutes := router.Group("/api/pos")
+	posRoutes.Use(utils.JWTMiddleware())
+	{
+		posRoutes.GET("/catalog", handlers.GetPOSCatalog)
+	}
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "8000"

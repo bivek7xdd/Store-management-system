@@ -64,18 +64,20 @@ const createSaleItem = `-- name: CreateSaleItem :one
 INSERT INTO sale_items (
     sale_id,
     product_id,
+    variant_id,
     quantity,
     unit_price,
     total_price
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 )
-RETURNING id, sale_id, product_id, quantity, unit_price, total_price
+RETURNING id, sale_id, product_id, variant_id, quantity, unit_price, total_price
 `
 
 type CreateSaleItemParams struct {
 	SaleID     pgtype.UUID    `db:"sale_id" json:"sale_id"`
 	ProductID  pgtype.UUID    `db:"product_id" json:"product_id"`
+	VariantID  pgtype.UUID    `db:"variant_id" json:"variant_id"`
 	Quantity   int32          `db:"quantity" json:"quantity"`
 	UnitPrice  pgtype.Numeric `db:"unit_price" json:"unit_price"`
 	TotalPrice pgtype.Numeric `db:"total_price" json:"total_price"`
@@ -85,6 +87,7 @@ func (q *Queries) CreateSaleItem(ctx context.Context, arg CreateSaleItemParams) 
 	row := q.db.QueryRow(ctx, createSaleItem,
 		arg.SaleID,
 		arg.ProductID,
+		arg.VariantID,
 		arg.Quantity,
 		arg.UnitPrice,
 		arg.TotalPrice,
@@ -94,6 +97,7 @@ func (q *Queries) CreateSaleItem(ctx context.Context, arg CreateSaleItemParams) 
 		&i.ID,
 		&i.SaleID,
 		&i.ProductID,
+		&i.VariantID,
 		&i.Quantity,
 		&i.UnitPrice,
 		&i.TotalPrice,
@@ -148,20 +152,28 @@ func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, e
 }
 
 const getSaleItems = `-- name: GetSaleItems :many
-SELECT si.id, si.sale_id, si.product_id, si.quantity, si.unit_price::float as unit_price, si.total_price::float as total_price, p.name as product_name
+SELECT 
+    si.id, si.sale_id, si.product_id, si.variant_id, si.quantity, si.unit_price::float as unit_price, si.total_price::float as total_price, 
+    p.name as product_name,
+    v.sku as variant_sku,
+    v.attributes as variant_attributes
 FROM sale_items si
 JOIN products p ON si.product_id = p.id
+LEFT JOIN product_variants v ON si.variant_id = v.id
 WHERE si.sale_id = $1
 `
 
 type GetSaleItemsRow struct {
-	ID          pgtype.UUID `db:"id" json:"id"`
-	SaleID      pgtype.UUID `db:"sale_id" json:"sale_id"`
-	ProductID   pgtype.UUID `db:"product_id" json:"product_id"`
-	Quantity    int32       `db:"quantity" json:"quantity"`
-	UnitPrice   float64     `db:"unit_price" json:"unit_price"`
-	TotalPrice  float64     `db:"total_price" json:"total_price"`
-	ProductName string      `db:"product_name" json:"product_name"`
+	ID                pgtype.UUID `db:"id" json:"id"`
+	SaleID            pgtype.UUID `db:"sale_id" json:"sale_id"`
+	ProductID         pgtype.UUID `db:"product_id" json:"product_id"`
+	VariantID         pgtype.UUID `db:"variant_id" json:"variant_id"`
+	Quantity          int32       `db:"quantity" json:"quantity"`
+	UnitPrice         float64     `db:"unit_price" json:"unit_price"`
+	TotalPrice        float64     `db:"total_price" json:"total_price"`
+	ProductName       string      `db:"product_name" json:"product_name"`
+	VariantSku        pgtype.Text `db:"variant_sku" json:"variant_sku"`
+	VariantAttributes []byte      `db:"variant_attributes" json:"variant_attributes"`
 }
 
 func (q *Queries) GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSaleItemsRow, error) {
@@ -177,10 +189,13 @@ func (q *Queries) GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSa
 			&i.ID,
 			&i.SaleID,
 			&i.ProductID,
+			&i.VariantID,
 			&i.Quantity,
 			&i.UnitPrice,
 			&i.TotalPrice,
 			&i.ProductName,
+			&i.VariantSku,
+			&i.VariantAttributes,
 		); err != nil {
 			return nil, err
 		}

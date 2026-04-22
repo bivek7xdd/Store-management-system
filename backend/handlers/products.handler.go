@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,20 +16,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CreateProductVariantReq struct {
+	Sku          string            `json:"sku" binding:"required"`
+	Attributes   map[string]string `json:"attributes" binding:"required"`
+	CostPrice    float64           `json:"cost_price" binding:"required"`
+	SellingPrice float64           `json:"selling_price" binding:"required"`
+	StockLevel   int32             `json:"stock_level" binding:"required"`
+	ImageUrl     string            `json:"image_url"`
+}
+
 type createProductReq struct {
-	Name              string  `json:"name" binding:"required"`
-	Barcode           string  `json:"barcode"`
-	Price             float64 `json:"price" binding:"required"`
-	CostPrice         float64 `json:"cost_price" binding:"required"`
-	MarketPrice       float64 `json:"market_price"`
-	StockQuantity     int32   `json:"stock_quantity" binding:"required"`
-	LowStockThreshold int32   `json:"low_stock_threshold"`
-	ExpiresAt         string  `json:"expires_at"`
-	Status            string  `json:"status"`
-	CategoryID        string  `json:"category_id" binding:"required"`
-	SupplierID        string  `json:"supplier_id"`
-	ImageUrl          string  `json:"image_url"`
-	IsTracked         bool    `json:"is_tracked"`
+	Name              string                    `json:"name" binding:"required"`
+	Barcode           string                    `json:"barcode"`
+	Price             float64                   `json:"price"` // Changed binding required to optional
+	CostPrice         float64                   `json:"cost_price"` // Changed binding required to optional
+	MarketPrice       float64                   `json:"market_price"`
+	StockQuantity     int32                     `json:"stock_quantity"` // Changed binding required to optional
+	LowStockThreshold int32                     `json:"low_stock_threshold"`
+	ExpiresAt         string                    `json:"expires_at"`
+	Status            string                    `json:"status"`
+	CategoryID        string                    `json:"category_id" binding:"required"`
+	SupplierID        string                    `json:"supplier_id"`
+	ImageUrl          string                    `json:"image_url"`
+	IsTracked         bool                      `json:"is_tracked"`
+	Variants          []CreateProductVariantReq `json:"variants"`
 }
 
 func CreateProduct(c *gin.Context) {
@@ -100,14 +111,19 @@ func CreateProduct(c *gin.Context) {
 		imageUrl = pgtype.Text{String: req.ImageUrl, Valid: true}
 	}
 
-	// Convert price to pgtype.Numeric
+	// Convert price to pgtype.Numeric safely if provided
 	var price pgtype.Numeric
-	if err := price.Scan(fmt.Sprintf("%f", req.Price)); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid price format", err)
+	if req.Price > 0 {
+		if err := price.Scan(fmt.Sprintf("%f", req.Price)); err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid price format", err)
+			return
+		}
+	} else if len(req.Variants) == 0 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Price is required for standard items", err)
 		return
 	}
 
-	product, err := utils.Queries.CreateProduct(ctx, db.CreateProductParams{
+	createParams := db.CreateProductParams{
 		Name:              req.Name,
 		Barcode:           barcode,
 		Price:             price,
@@ -122,7 +138,53 @@ func CreateProduct(c *gin.Context) {
 		StoreID:           storeID,
 		ImageUrl:          imageUrl,
 		IsTracked:         pgtype.Bool{Bool: req.IsTracked, Valid: true},
-	})
+	}
+
+	if len(req.Variants) > 0 {
+		var variantParams []db.CreateProductVariantParams
+		for _, variant := range req.Variants {
+			var vImageUrl pgtype.Text
+			if variant.ImageUrl != "" {
+				vImageUrl = pgtype.Text{String: variant.ImageUrl, Valid: true}
+			}
+
+			attrBytes, err := json.Marshal(variant.Attributes)
+			if err != nil {
+				utils.ErrorResponse(c, http.StatusBadRequest, "Invalid attributes JSON", err)
+				return
+			}
+
+			variantParams = append(variantParams, db.CreateProductVariantParams{
+				Sku:          variant.Sku,
+				Attributes:   attrBytes,
+				CostPrice:    utils.Numeric(variant.CostPrice),
+				SellingPrice: utils.Numeric(variant.SellingPrice),
+				StockLevel:   variant.StockLevel,
+				ImageUrl:     vImageUrl,
+			})
+		}
+		
+		txParams := db.CreateProductWithVariantsTxParams{
+			Product:  createParams,
+			Variants: variantParams,
+		}
+		
+		product, variants, err := utils.Store.CreateProductWithVariantsTx(ctx, txParams)
+		if err != nil {
+			log.Printf("error creating nested product: %v", err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create product with variants", err)
+			return
+		}
+		utils.Queries.CheckAndNotifyLowStock(ctx, storeID, product)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Product and variants created successfully",
+			"product": product,
+			"variants": variants,
+		})
+		return
+	}
+
+	product, err := utils.Queries.CreateProduct(ctx, createParams)
 
 	if err != nil {
 		log.Printf("error creating product: %v", err)
@@ -179,7 +241,7 @@ func GetProduct(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
 
 	product, err := utils.Queries.GetProduct(ctx, pgtype.UUID{Bytes: productUUID, Valid: true})
@@ -189,7 +251,17 @@ func GetProduct(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Product fetched successfully", product)
+	// Also return any active variants so the frontend can hydrate the edit form
+	variants, err := utils.Queries.ListVariantsByProduct(ctx, product.ID)
+	if err != nil {
+		log.Printf("warning: could not fetch variants for product %s: %v", idParam, err)
+		variants = []db.ProductVariant{} // non-fatal, return empty
+	}
+
+	utils.SuccessResponse(c, "Product fetched successfully", gin.H{
+		"product":  product,
+		"variants": variants,
+	})
 }
 
 type updateProductReq struct {
@@ -268,9 +340,22 @@ func UpdateProduct(c *gin.Context) {
 		}
 	}
 
+	// Cascade validation: if the product has active variants, stock_quantity
+	// must NOT be set manually — it is derived from the sum of variant stock levels.
 	stockQuantity := existingProduct.StockQuantity
 	if req.StockQuantity > 0 {
-		stockQuantity = req.StockQuantity
+		activeVariants, verr := utils.Queries.ListVariantsByProduct(ctx, existingProduct.ID)
+		if verr == nil && len(activeVariants) > 0 {
+			// Silently ignore the manually supplied stock_quantity;
+			// the correct total is the sum of variant stock levels.
+			total := int32(0)
+			for _, v := range activeVariants {
+				total += v.StockLevel
+			}
+			stockQuantity = total
+		} else {
+			stockQuantity = req.StockQuantity
+		}
 	}
 
 	lowStockThreshold := existingProduct.LowStockThreshold
@@ -426,4 +511,60 @@ func GetTrackedProducts(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, "Tracked products fetched successfully", products)
+}
+
+type POSCatalogItem struct {
+	ID            pgtype.UUID     `json:"id"`
+	Name          string          `json:"name"`
+	Barcode       pgtype.Text     `json:"barcode"`
+	Price         float64         `json:"price"`
+	CostPrice     float64         `json:"cost_price"`
+	StockQuantity int32           `json:"stock_quantity"`
+	CategoryID    pgtype.UUID     `json:"category_id"`
+	ImageUrl      pgtype.Text     `json:"image_url"`
+	Variants      json.RawMessage `json:"variants"`
+}
+
+func GetPOSCatalog(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	rows, err := utils.Queries.GetPOSCatalog(ctx, storeID)
+	if err != nil {
+		log.Printf("error getting POS catalog: %v", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to get POS catalog", err)
+		return
+	}
+
+	var items []POSCatalogItem
+	for _, row := range rows {
+		price, _ := row.Price.Float64Value()
+		costPrice, _ := row.CostPrice.Float64Value()
+
+		item := POSCatalogItem{
+			ID:            row.ID,
+			Name:          row.Name,
+			Barcode:       row.Barcode,
+			Price:         price.Float64,
+			CostPrice:     costPrice.Float64,
+			StockQuantity: row.StockQuantity,
+			CategoryID:    row.CategoryID,
+			ImageUrl:      row.ImageUrl,
+		}
+
+		if len(row.Variants) > 0 {
+			item.Variants = json.RawMessage(row.Variants)
+		} else {
+			item.Variants = json.RawMessage("[]")
+		}
+
+		items = append(items, item)
+	}
+	
+	if items == nil {
+		items = []POSCatalogItem{}
+	}
+
+	utils.SuccessResponse(c, "POS catalog fetched successfully", items)
 }

@@ -359,6 +359,20 @@ type Product struct {
 	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type ProductVariant struct {
+	ID           pgtype.UUID        `db:"id" json:"id"`
+	ProductID    pgtype.UUID        `db:"product_id" json:"product_id"`
+	Sku          string             `db:"sku" json:"sku"`
+	Attributes   []byte             `db:"attributes" json:"attributes"`
+	CostPrice    pgtype.Numeric     `db:"cost_price" json:"cost_price"`
+	SellingPrice pgtype.Numeric     `db:"selling_price" json:"selling_price"`
+	StockLevel   int32              `db:"stock_level" json:"stock_level"`
+	ImageUrl     pgtype.Text        `db:"image_url" json:"image_url"`
+	ArchivedAt   pgtype.Timestamptz `db:"archived_at" json:"archived_at"`
+	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
 type Sale struct {
 	ID              pgtype.UUID        `db:"id" json:"id"`
 	SalesType       SalesTypes         `db:"sales_type" json:"sales_type"`
@@ -374,6 +388,7 @@ type SaleItem struct {
 	ID         pgtype.UUID    `db:"id" json:"id"`
 	SaleID     pgtype.UUID    `db:"sale_id" json:"sale_id"`
 	ProductID  pgtype.UUID    `db:"product_id" json:"product_id"`
+	VariantID  pgtype.UUID    `db:"variant_id" json:"variant_id"`
 	Quantity   int32          `db:"quantity" json:"quantity"`
 	UnitPrice  pgtype.Numeric `db:"unit_price" json:"unit_price"`
 	TotalPrice pgtype.Numeric `db:"total_price" json:"total_price"`

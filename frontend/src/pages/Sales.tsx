@@ -17,9 +17,12 @@ import { SplitPaymentDialog, PaymentEntry } from "@/components/pos/SplitPaymentD
 import { customerService } from "@/services/customerService";
 import { Customer } from "@/types";
 import { cn } from "@/lib/utils";
+import { VariantSelectionDialog } from "@/components/pos/VariantSelectionDialog";
+import { ProductVariant } from "@/types";
 
 interface CartItem {
   productId: string;
+  variantId?: string;
   name: string;
   price: number;
   quantity: number;
@@ -52,6 +55,8 @@ export default function Sales() {
     const saved = localStorage.getItem("storeflow_confetti");
     return saved !== null ? JSON.parse(saved) : true;
   });
+  const [variantSelectionProduct, setVariantSelectionProduct] = useState<Product | null>(null);
+  const [showVariantModal, setShowVariantModal] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("storeflow_confetti", JSON.stringify(showConfetti));
@@ -97,7 +102,7 @@ export default function Sales() {
       }
       setIsSearching(true);
       try {
-        let results;
+        let results: Product[];
         if (offlineStatus.isOnline) {
           results = await inventoryService.searchProducts(searchTerm);
         } else {
@@ -108,7 +113,19 @@ export default function Sales() {
             .toArray();
           results = cachedProducts;
         }
-        setProducts(results || []);
+
+        // Enrich each result with its Dexie-cached variants so the
+        // variant selection modal has data to show.
+        const enriched = await Promise.all(
+          (results || []).map(async (p) => {
+            const variants = await db.product_variants
+              .where('product_id')
+              .equals(p.id)
+              .toArray();
+            return variants.length > 0 ? { ...p, variants } : p;
+          })
+        );
+        setProducts(enriched);
       } catch (error) {
         console.error("Search error:", error);
         if (offlineStatus.isOnline) {
@@ -133,6 +150,8 @@ export default function Sales() {
     const timer = setTimeout(search, 300);
     return () => clearTimeout(timer);
   }, [searchTerm, offlineStatus.isOnline]);
+
+  // Remove the stale no-op fetchCatalog since we now enrich search results directly.
 
   useEffect(() => {
     if (selectedCustomer && selectedCustomer.name !== 'Guest') {
@@ -160,24 +179,47 @@ export default function Sales() {
     }
   }, [discountValue]);
 
-  const addToCart = (product: Product) => {
-    const existing = cart.find((item) => item.productId === product.id);
-    const price = typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0;
+  const addToCart = async (product: Product, variant?: ProductVariant) => {
+    // If product.variants hasn't been hydrated yet (e.g. scan path bypassed search
+    // enrichment), do a quick Dexie lookup before deciding whether to open the modal.
+    let resolvedProduct = product;
+    if (!variant && product.variants === undefined) {
+      const cachedVariants = await db.product_variants
+        .where('product_id')
+        .equals(product.id)
+        .toArray();
+      if (cachedVariants.length > 0) {
+        resolvedProduct = { ...product, variants: cachedVariants };
+      }
+    }
+
+    if (!variant && resolvedProduct.variants && resolvedProduct.variants.length > 0) {
+      setVariantSelectionProduct(resolvedProduct);
+      setShowVariantModal(true);
+      return;
+    }
+
+    const itemKey = variant ? `${product.id}-${variant.id}` : product.id;
+    const existing = cart.find((item) => (variant ? item.variantId === variant.id : item.productId === product.id && !item.variantId));
+    
+    const price = variant ? variant.selling_price : (typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0);
+    const stock = variant ? variant.stock_level : product.stock_quantity;
+    const displayName = variant ? `${product.name} - ${Object.values(variant.attributes).join(" / ")}` : product.name;
 
     if (existing) {
-      if (existing.quantity >= product.stock_quantity) {
+      if (existing.quantity >= stock) {
         toast.error("Not enough stock");
         return;
       }
       setCart(
         cart.map((item) =>
-          item.productId === product.id
+          (variant ? item.variantId === variant.id : item.productId === product.id && !item.variantId)
             ? { ...item, quantity: item.quantity + 1 }
             : item
         )
       );
     } else {
-      if (product.stock_quantity <= 0) {
+      if (stock <= 0) {
         toast.error("Product out of stock");
         return;
       }
@@ -185,14 +227,15 @@ export default function Sales() {
         ...cart,
         {
           productId: product.id,
-          name: product.name,
+          variantId: variant?.id,
+          name: displayName,
           price: price,
           quantity: 1,
-          stock: product.stock_quantity
+          stock: stock
         },
       ]);
     }
-    toast.success(`${product.name} added to cart`);
+    toast.success(`${displayName} added to cart`);
   };
 
   const handleScanSuccess = async (barcode: string) => {
@@ -209,6 +252,19 @@ export default function Sales() {
             : (p.barcode && 'Valid' in p.barcode && p.barcode.Valid ? p.barcode.String : '');
           return barcodeStr === barcode;
         });
+      }
+
+      // Check if barcode matches a variant SKU directly
+      if (results.length === 0) {
+         const allVariants = await db.product_variants.where('sku').equals(barcode).toArray();
+         if (allVariants.length === 1) {
+            const parent = await db.products.get(allVariants[0].product_id);
+            if (parent) {
+               addToCart(parent, allVariants[0]);
+               setIsSearching(false);
+               return;
+            }
+         }
       }
 
       if (results && results.length > 0) {
@@ -230,11 +286,13 @@ export default function Sales() {
     }
   };
 
-  const updateQuantity = (productId: string, changeVal: number) => {
+  const updateQuantity = (key: string, changeVal: number) => {
     setCart(
       cart
         .map((item) => {
-          if (item.productId === productId) {
+          // key is either variantId (for variant items) or productId (for plain items)
+          const matches = item.variantId ? item.variantId === key : item.productId === key;
+          if (matches) {
             const newQuantity = item.quantity + changeVal;
             if (newQuantity > item.stock) {
               toast.error("Not enough stock");
@@ -248,8 +306,8 @@ export default function Sales() {
     );
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter((item) => item.productId !== productId));
+  const removeFromCart = (productId: string, variantId?: string) => {
+    setCart(cart.filter((item) => (variantId ? item.variantId !== variantId : item.productId !== productId || item.variantId !== undefined)));
   };
 
   const handleCheckout = async () => {
@@ -300,6 +358,7 @@ export default function Sales() {
         customer_id: selectedCustomer!.id,
         items: cart.map(item => ({
           product_id: item.productId,
+          variant_id: item.variantId,
           quantity: item.quantity,
           unit_price: item.price,
           total_price: item.price * item.quantity,
@@ -480,34 +539,49 @@ export default function Sales() {
                     <p className="text-[12px] font-medium text-[#666666] uppercase tracking-[2px]">No Matches In Archive</p>
                   </div>
                 ) : (
-                  products.map((product) => (
-                    <button
-                      key={product.id}
-                      onClick={() => addToCart(product)}
-                      disabled={product.stock_quantity <= 0}
-                      className="w-full flex items-center justify-between p-5 hover:bg-[#1A1A1A] transition-all text-left group disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-[#0A0A0A] border border-[#303030] rounded-[2px] flex items-center justify-center">
-                           <p className="text-[14px] font-black text-white">{product.name.charAt(0).toUpperCase()}</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-[14px] text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</p>
-                            {!offlineStatus.isOnline && (
-                              <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#888888] uppercase rounded-[1px]">Vault</div>
-                            )}
+                  products.map((product) => {
+                    const hasVariants = product.variants && product.variants.length > 0;
+                    const isDisabled = hasVariants
+                      ? product.variants!.every(v => v.stock_level <= 0)
+                      : product.stock_quantity <= 0;
+
+                    return (
+                      <button
+                        key={product.id}
+                        onClick={() => addToCart(product)}
+                        disabled={isDisabled}
+                        className="w-full flex items-center justify-between p-5 hover:bg-[#1A1A1A] transition-all text-left group disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-[#0A0A0A] border border-[#303030] rounded-[2px] flex items-center justify-center">
+                             <p className="text-[14px] font-black text-white">{product.name.charAt(0).toUpperCase()}</p>
                           </div>
-                          <p className="text-[11px] text-[#888888] font-medium uppercase tracking-[0.5px] mt-0.5">
-                            Index: {product.stock_quantity} UNIT • रू {(typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0).toLocaleString()}
-                          </p>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-[14px] text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</p>
+                              {hasVariants && (
+                                <div className="px-1.5 py-0.5 text-[8px] font-black border border-[#DA291C]/40 text-[#DA291C] uppercase rounded-[1px] tracking-[1px]">
+                                  {product.variants!.length} VAR
+                                </div>
+                              )}
+                              {!offlineStatus.isOnline && (
+                                <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#888888] uppercase rounded-[1px]">Vault</div>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#888888] font-medium uppercase tracking-[0.5px] mt-0.5">
+                              {hasVariants
+                                ? `${product.variants!.length} variations available`
+                                : `Index: ${product.stock_quantity} UNIT • रू ${(typeof product.price === 'number' ? product.price : (product.price as any).Int64 || (product.price as any).Float64 || 0).toLocaleString()}`
+                              }
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="h-9 w-9 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center group-hover:bg-[#DA291C] group-hover:border-[#DA291C] transition-all">
-                        <Plus className="h-4 w-4 text-[#CCCCCC] group-hover:text-white" />
-                      </div>
-                    </button>
-                  ))
+                        <div className="h-9 w-9 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center group-hover:bg-[#DA291C] group-hover:border-[#DA291C] transition-all">
+                          <Plus className="h-4 w-4 text-[#CCCCCC] group-hover:text-white" />
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -539,7 +613,7 @@ export default function Sales() {
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
                   {cart.map((item) => (
-                    <div key={item.productId} className="flex items-center justify-between p-3 rounded-[2px] bg-[#0A0A0A] border border-transparent hover:border-[#303030] transition-colors group">
+                    <div key={item.variantId ? `v-${item.variantId}` : `p-${item.productId}`} className="flex items-center justify-between p-3 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] hover:border-[#303030] transition-colors group">
                       <div className="flex-1 min-w-0 pr-4">
                         <p className="font-bold text-[12px] text-white uppercase tracking-tight truncate">{item.name}</p>
                         <p className="text-[10px] text-[#888888] font-medium uppercase tracking-[0.5px]">
@@ -548,20 +622,20 @@ export default function Sales() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
-                          onClick={() => updateQuantity(item.productId, -1)}
+                          onClick={() => updateQuantity(item.variantId || item.productId, -1)}
                           className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-white"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
                         <span className="text-[12px] font-bold text-white w-5 text-center">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.productId, 1)}
+                          onClick={() => updateQuantity(item.variantId || item.productId, 1)}
                           className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-white"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
                         <button
-                          onClick={() => removeFromCart(item.productId)}
+                          onClick={() => removeFromCart(item.productId, item.variantId)}
                           className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[#888888] hover:text-[#DA291C]"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -736,6 +810,16 @@ export default function Sales() {
         totalDue={finalTotal}
         onConfirm={finalizeCheckout}
         initialPayments={payments}
+      />
+      <VariantSelectionDialog
+        open={showVariantModal}
+        onOpenChange={setShowVariantModal}
+        product={variantSelectionProduct}
+        onSelect={(variant) => {
+          if (variantSelectionProduct) {
+            addToCart(variantSelectionProduct, variant);
+          }
+        }}
       />
     </div>
   );

@@ -16,6 +16,7 @@ import (
 
 type saleItemReq struct {
 	ProductID string  `json:"product_id" binding:"required"`
+	VariantID string  `json:"variant_id"`
 	Quantity  int32   `json:"quantity" binding:"required"`
 	UnitPrice float64 `json:"unit_price" binding:"required"`
 }
@@ -122,8 +123,18 @@ func CreateSale(c *gin.Context) {
 		var totalPriceNum pgtype.Numeric
 		totalPriceNum.Scan(fmt.Sprintf("%f", float64(item.Quantity)*item.UnitPrice))
 
+		var variantID pgtype.UUID
+		if item.VariantID != "" {
+			vUUID, err := uuid.Parse(item.VariantID)
+			if err == nil {
+				variantID = pgtype.UUID{Bytes: vUUID, Valid: true}
+			}
+		}
+
 		saleItems = append(saleItems, db.CreateSaleItemParams{
+			SaleID:     pgtype.UUID{}, // Will be set in transaction
 			ProductID:  pgtype.UUID{Bytes: prodUUID, Valid: true},
+			VariantID:  variantID,
 			Quantity:   item.Quantity,
 			UnitPrice:  unitPriceNum,
 			TotalPrice: totalPriceNum,

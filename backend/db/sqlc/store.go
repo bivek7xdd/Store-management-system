@@ -78,7 +78,18 @@ func (store *Store) CreateSaleTx(ctx context.Context, arg CreateSaleTxParams) (C
 				return err
 			}
 
-			// Update Stock
+			// Update Variant Stock if applicable
+			if item.VariantID.Valid {
+				_, err = q.UpdateVariantStock(ctx, UpdateVariantStockParams{
+					ID:         item.VariantID,
+					StockLevel: item.Quantity,
+				})
+				if err != nil {
+					return err
+				}
+			}
+
+			// Update Parent/Main Product Stock
 			product, err := q.UpdateProductStock(ctx, UpdateProductStockParams{
 				ID:            item.ProductID,
 				StockQuantity: item.Quantity,
@@ -165,4 +176,36 @@ func (q *Queries) CheckAndNotifyLowStock(ctx context.Context, storeID pgtype.UUI
 
 		}
 	}
+}
+
+type CreateProductWithVariantsTxParams struct {
+	Product  CreateProductParams
+	Variants []CreateProductVariantParams
+}
+
+func (store *Store) CreateProductWithVariantsTx(ctx context.Context, arg CreateProductWithVariantsTxParams) (Product, []ProductVariant, error) {
+	var product Product
+	var variants []ProductVariant
+
+	err := store.ExecTx(ctx, func(q *Queries) error {
+		var err error
+
+		product, err = q.CreateProduct(ctx, arg.Product)
+		if err != nil {
+			return err
+		}
+
+		for _, vArg := range arg.Variants {
+			vArg.ProductID = product.ID
+			variant, err := q.CreateProductVariant(ctx, vArg)
+			if err != nil {
+				return err
+			}
+			variants = append(variants, variant)
+		}
+
+		return nil
+	})
+
+	return product, variants, err
 }

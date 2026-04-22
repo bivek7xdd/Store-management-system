@@ -14,6 +14,7 @@ export interface Product {
   store_id: string;
   image_url?: { String: string; Valid: boolean };
   is_tracked?: boolean;
+  variants?: ProductVariant[];
   created_at: { Time: string; Valid: boolean };
   updated_at: { Time: string; Valid: boolean };
   synced?: number; // 0 = not synced, 1 = synced, -1 = marked for deletion
@@ -60,6 +61,7 @@ export interface Customer {
 
 export interface SaleItem {
   productId: string;
+  variantId?: string;
   productName: string;
   quantity: number;
   price: number;
@@ -122,4 +124,17 @@ export interface SyncProgress {
   total: number;
   completed: number;
   current?: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  sku: string;
+  attributes: Record<string, string>;
+  cost_price: number;
+  selling_price: number;
+  stock_level: number;
+  image_url?: string;
+  archived_at?: string;
+  synced?: number; // 0 = not synced, 1 = synced
 }

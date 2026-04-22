@@ -324,9 +324,43 @@ export const syncService = {
 
       if (products.length > 0) {
         // Mark all server products as synced
-        const syncedProducts = products.map(p => ({ ...p, synced: 1 }));
+        const syncedProducts = products.map((p: any) => ({ ...p, synced: 1 }));
         await db.products.bulkPut(syncedProducts);
         console.log(`Cached ${products.length} products from server`);
+
+        // --- T020: Sync variant cache & purge archived variants ---
+        try {
+          for (const product of products) {
+            const variantsResp = await api.get(`products/${product.id}`);
+            const variantsData = variantsResp.data?.data?.variants;
+            if (Array.isArray(variantsData) && variantsData.length > 0) {
+              // Upsert active variants
+              const toCache = variantsData.map((v: any) => ({
+                ...v,
+                product_id: product.id,
+                synced: 1,
+              }));
+              await db.product_variants.bulkPut(toCache);
+
+              // Purge locally any variants for this product NOT in the server list
+              const serverIds = new Set(variantsData.map((v: any) => v.id));
+              const localVariants = await db.product_variants
+                .where('product_id')
+                .equals(product.id)
+                .toArray();
+              const toDelete = localVariants
+                .filter(lv => !serverIds.has(lv.id))
+                .map(lv => lv.id);
+              if (toDelete.length > 0) {
+                await db.product_variants.bulkDelete(toDelete);
+                console.log(`[Sync] Purged ${toDelete.length} archived variants for product ${product.id}`);
+              }
+            }
+          }
+        } catch (variantSyncErr) {
+          // Non-fatal: log but don't block
+          console.warn('[Sync] Variant cache refresh failed:', variantSyncErr);
+        }
       }
 
       return true;
