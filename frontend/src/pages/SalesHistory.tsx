@@ -28,10 +28,10 @@ const formatTime = (dateString: string | undefined) =>
   safeDate(dateString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof Banknote }> = {
-  cash:   { label: "Cash",   color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",  icon: Banknote },
-  credit: { label: "Credit", color: "text-amber-400 border-amber-500/30 bg-amber-500/10",        icon: CreditCard },
-  online: { label: "Online", color: "text-blue-400 border-blue-500/30 bg-blue-500/10",           icon: Smartphone },
-  mixed:  { label: "Mixed",  color: "text-purple-400 border-purple-500/30 bg-purple-500/10",     icon: ArrowUpRight },
+  cash: { label: "Cash", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10", icon: Banknote },
+  credit: { label: "Credit", color: "text-amber-400 border-amber-500/30 bg-amber-500/10", icon: CreditCard },
+  online: { label: "Online", color: "text-blue-400 border-blue-500/30 bg-blue-500/10", icon: Smartphone },
+  mixed: { label: "Mixed", color: "text-purple-400 border-purple-500/30 bg-purple-500/10", icon: ArrowUpRight },
 };
 
 // ---------- Sale Row ----------
@@ -61,7 +61,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     e.stopPropagation();
     const printWindow = window.open("", "_blank", "width=350,height=600");
     if (!printWindow) return;
-    const html = `<!DOCTYPE html><html><head><title>Receipt #${String(sale.id).slice(0,8)}</title>
+    const html = `<!DOCTYPE html><html><head><title>Receipt #${String(sale.id).slice(0, 8)}</title>
     <style>@page{size:80mm auto;margin:0}*{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Courier New',monospace;font-size:12px;line-height:1.4;width:80mm;padding:8mm 4mm;background:white;color:black}
     .c{text-align:center}.b{font-weight:bold}.row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
@@ -70,7 +70,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     <div class="c"><div class="b" style="font-size:18px">STOREHUB</div>
     <div style="font-size:11px">Kathmandu, Nepal • VAT/PAN: 123456789</div></div>
     <div class="ddiv"></div>
-    <div class="row"><span>Receipt #:</span><span>${String(sale.id).slice(0,8).toUpperCase()}</span></div>
+    <div class="row"><span>Receipt #:</span><span>${String(sale.id).slice(0, 8).toUpperCase()}</span></div>
     <div class="row"><span>Date:</span><span>${formatDate(sale.sale_date)}</span></div>
     <div class="row"><span>Time:</span><span>${formatTime(sale.sale_date)}</span></div>
     <div class="row"><span>Type:</span><span>${sale.sales_type.toUpperCase()}</span></div>
@@ -81,10 +81,10 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     ${items.map(i => `<div style="margin:6px 0"><div>${i.product_name}</div>
     <div class="row" style="padding-left:8px;color:#333"><span>${i.quantity} x Rs.${i.unit_price.toLocaleString()}</span><span>Rs.${i.total_price.toLocaleString()}</span></div></div>`).join("")}
     <div class="div"></div>
-    <div class="row"><span>Subtotal:</span><span>Rs.${((sale.total_amount||0)+(sale.discount_applied||0)).toLocaleString()}</span></div>
+    <div class="row"><span>Subtotal:</span><span>Rs.${((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span></div>
     ${sale.discount_applied > 0 ? `<div class="row"><span>Discount:</span><span>-Rs.${sale.discount_applied.toLocaleString()}</span></div>` : ""}
     <div class="ddiv"></div>
-    <div class="row gt"><span>GRAND TOTAL:</span><span>Rs.${(sale.total_amount||0).toLocaleString()}</span></div>
+    <div class="row gt"><span>GRAND TOTAL:</span><span>Rs.${(sale.total_amount || 0).toLocaleString()}</span></div>
     <div class="ddiv"></div>
     <div class="c" style="margin-top:16px;font-size:11px"><div class="b">Thank you for your purchase!</div><div>Please come again</div></div>
     </body><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</script></html>`;
@@ -96,7 +96,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     e.stopPropagation();
     const printWindow = window.open("", "_blank", "width=800,height=900");
     if (!printWindow) return;
-    const html = `<!DOCTYPE html><html><head><title>Receipt #${String(sale.id).slice(0,8)}</title>
+    const html = `<!DOCTYPE html><html><head><title>Receipt #${String(sale.id).slice(0, 8)}</title>
     <style>@page{size:A4;margin:20mm}*{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:14px;line-height:1.6;background:#f5f5f5;padding:40px;color:#333}
     .wrap{max-width:500px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);overflow:hidden}
@@ -118,16 +118,16 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     <div class="wrap"><div class="hdr"><div class="hdr-title">STOREHUB</div>
     <div class="hdr-sub">Kathmandu, Nepal • VAT/PAN: 123456789</div></div>
     <div class="body"><div class="meta">
-    <div class="meta-item"><div class="meta-label">Receipt No.</div><div class="meta-value">#${String(sale.id).slice(0,8).toUpperCase()}</div></div>
+    <div class="meta-item"><div class="meta-label">Receipt No.</div><div class="meta-value">#${String(sale.id).slice(0, 8).toUpperCase()}</div></div>
     <div class="meta-item"><div class="meta-label">Date</div><div class="meta-value">${formatDate(sale.sale_date)}</div></div>
     <div class="meta-item"><div class="meta-label">Time</div><div class="meta-value">${formatTime(sale.sale_date)}</div></div>
     <div class="meta-item"><div class="meta-label">Type</div><div class="meta-value">${sale.sales_type.toUpperCase()}</div></div>
     </div><table><thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead><tbody>
     ${items.map(i => `<tr><td><div style="font-weight:500">${i.product_name}</div><div style="color:#6b7280;font-size:13px">${i.quantity} × Rs.${i.unit_price.toLocaleString()}</div></td><td>Rs.${i.total_price.toLocaleString()}</td></tr>`).join("")}
     </tbody></table><div class="totals">
-    <div class="t-row"><span>Subtotal</span><span>Rs.${((sale.total_amount||0)+(sale.discount_applied||0)).toLocaleString()}</span></div>
+    <div class="t-row"><span>Subtotal</span><span>Rs.${((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span></div>
     ${sale.discount_applied > 0 ? `<div class="t-row" style="color:#dc2626"><span>Discount</span><span>-Rs.${sale.discount_applied.toLocaleString()}</span></div>` : ""}
-    <div class="t-row gt"><span>Grand Total</span><span>Rs.${(sale.total_amount||0).toLocaleString()}</span></div>
+    <div class="t-row gt"><span>Grand Total</span><span>Rs.${(sale.total_amount || 0).toLocaleString()}</span></div>
     </div></div><div class="footer"><div style="font-size:16px;font-weight:600;margin-bottom:4px">Thank you for your purchase!</div>
     <div style="font-size:13px;color:#6b7280">Goods once sold cannot be returned. Powered by StoreHub</div></div></div>
     </body><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</script></html>`;
@@ -210,7 +210,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                   </div>
                   <div className="p-5 space-y-3">
                     <div className="grid grid-cols-2 gap-3 text-[11px]">
-                      <div><p className="text-[#888888] uppercase tracking-[0.8px]">Receipt ID</p><p className="font-bold text-white mt-0.5">{String(sale.id).slice(0,8).toUpperCase()}</p></div>
+                      <div><p className="text-[#888888] uppercase tracking-[0.8px]">Receipt ID</p><p className="font-bold text-white mt-0.5">{String(sale.id).slice(0, 8).toUpperCase()}</p></div>
                       <div><p className="text-[#888888] uppercase tracking-[0.8px]">Date / Time</p><p className="font-bold text-white mt-0.5">{formatDate(sale.sale_date)}</p></div>
                       <div><p className="text-[#888888] uppercase tracking-[0.8px]">Payment Mode</p><p className={cn("font-bold mt-0.5 uppercase", typeConf.color.split(" ")[0])}>{sale.sales_type}</p></div>
                       {sale.customer_name && <div><p className="text-[#888888] uppercase tracking-[0.8px]">Customer</p><p className="font-bold text-white mt-0.5 truncate">{sale.customer_name}</p></div>}
@@ -235,19 +235,19 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                     <div className="space-y-1.5 text-[12px]">
                       <div className="flex justify-between text-[#888888]">
                         <span>Subtotal</span>
-                        <span>रू {((sale.total_amount||0)+(sale.discount_applied||0)).toLocaleString()}</span>
+                        <span>रू {((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span>
                       </div>
                       {sale.discount_applied > 0 && (
                         <div className="flex justify-between text-emerald-400">
                           <span>Discount</span>
-                          <span>-रू {(sale.discount_applied||0).toLocaleString()}</span>
+                          <span>-रू {(sale.discount_applied || 0).toLocaleString()}</span>
                         </div>
                       )}
                     </div>
 
                     <div className="border-t border-[#303030] pt-3 flex justify-between items-center">
                       <span className="text-[12px] font-bold text-white uppercase tracking-[1px]">Grand Total</span>
-                      <span className="text-[20px] font-bold text-white">रू {(sale.total_amount||0).toLocaleString()}</span>
+                      <span className="text-[20px] font-bold text-white">रू {(sale.total_amount || 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -319,13 +319,13 @@ export default function SalesHistory() {
     }
 
     switch (filterTime) {
-      case "today":     return isAfter(date, startOfDay(now));
+      case "today": return isAfter(date, startOfDay(now));
       case "yesterday": {
         const start = startOfDay(subDays(now, 1));
         return isAfter(date, start) && date < startOfDay(now);
       }
-      case "last7days":  return isAfter(date, subDays(now, 7));
-      case "thisMonth":  return isAfter(date, startOfMonth(now));
+      case "last7days": return isAfter(date, subDays(now, 7));
+      case "thisMonth": return isAfter(date, startOfMonth(now));
       default: return true;
     }
   };
@@ -377,8 +377,8 @@ export default function SalesHistory() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Total Revenue", value: `रू ${totalRevenue.toLocaleString()}`, accent: "text-white" },
-          { label: "Cash Sales",    value: cashSales,   accent: "text-emerald-400" },
-          { label: "Credit Sales",  value: creditSales, accent: "text-amber-400" },
+          { label: "Cash Sales", value: cashSales, accent: "text-emerald-400" },
+          { label: "Credit Sales", value: creditSales, accent: "text-amber-400" },
         ].map((stat) => (
           <div key={stat.label} className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4">
             <p className="text-[10px] text-[#888888] uppercase tracking-[1px] mb-2">{stat.label}</p>

@@ -15,15 +15,17 @@ export interface Sale {
     id?: number; // Local auto-increment ID
     offlineId?: string; // UUID for syncing
     sales_type: 'cash' | 'credit' | 'online' | 'mixed';
-    amount_paid: number;
+    amount_paid?: number;
     total_amount: number;
     discount_applied: number;
     note?: string;
     sale_date: string;
     customer_id: string;
-    payments: any[];
-    items: SaleItem[];
+    payments?: any[];
+    items?: SaleItem[];
     synced: number; // 0 = false, 1 = true
+    customer_name?: string;
+    customer_phone?: string;
 }
 
 
