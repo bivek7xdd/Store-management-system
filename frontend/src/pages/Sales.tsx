@@ -102,45 +102,22 @@ export default function Sales() {
       }
       setIsSearching(true);
       try {
-        let results: Product[];
-        if (offlineStatus.isOnline) {
-          results = await inventoryService.searchProducts(searchTerm);
-        } else {
+        const results = await inventoryService.searchProducts(searchTerm);
+        setProducts(results || []);
+      } catch (error) {
+        console.error("Search error:", error);
+        // Fallback search directly in Dexie if service fails
+        try {
           const cachedProducts = await db.products
             .where('name')
             .startsWithIgnoreCase(searchTerm)
             .limit(20)
             .toArray();
-          results = cachedProducts;
-        }
-
-        // Enrich each result with its Dexie-cached variants so the
-        // variant selection modal has data to show.
-        const enriched = await Promise.all(
-          (results || []).map(async (p) => {
-            const variants = await db.product_variants
-              .where('product_id')
-              .equals(p.id)
-              .toArray();
-            return variants.length > 0 ? { ...p, variants } : p;
-          })
-        );
-        setProducts(enriched);
-      } catch (error) {
-        console.error("Search error:", error);
-        if (offlineStatus.isOnline) {
-          try {
-            const cachedProducts = await db.products
-              .where('name')
-              .startsWithIgnoreCase(searchTerm)
-              .limit(20)
-              .toArray();
-            setProducts(cachedProducts || []);
-            toast.info("Showing cached products (Network Error)");
-          } catch (fallbackError) {
-            console.error("Fallback search error:", fallbackError);
-            setProducts([]);
-          }
+          setProducts(cachedProducts || []);
+          toast.info("Showing cached products (Search Error)");
+        } catch (fallbackError) {
+          console.error("Fallback search error:", fallbackError);
+          setProducts([]);
         }
       } finally {
         setIsSearching(false);

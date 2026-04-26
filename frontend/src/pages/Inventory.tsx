@@ -51,6 +51,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VariantBuilder, VariantDimension } from "@/components/products/VariantBuilder";
 import { VariantGrid, generateCartesianProduct } from "@/components/products/VariantGrid";
 import { ProductVariant } from "@/types";
+import { db } from "@/db/db";
 
 const colors = {
   primary: "#0d9488",
@@ -109,8 +110,19 @@ export default function Inventory() {
   const [hasVariants, setHasVariants] = useState(false);
   const [dimensions, setDimensions] = useState<VariantDimension[]>([]);
   const [combinations, setCombinations] = useState<Partial<ProductVariant>[]>([]);
+  const [productName, setProductName] = useState("");
   const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to generate a clean SKU
+  const generateSKU = (name: string, attrs: Record<string, string>) => {
+    if (!name) return "";
+    const nameSlug = name.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    const attrSlug = Object.values(attrs)
+      .map(v => v.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))
+      .join('-');
+    return attrSlug ? `${nameSlug}-${attrSlug}` : nameSlug;
+  };
 
   useEffect(() => {
     if (hasVariants) {
@@ -118,10 +130,16 @@ export default function Inventory() {
        // Preserve existing values for matched attributes
        setCombinations(prev => newCombs.map(nc => {
           const match = prev.find(p => JSON.stringify(p.attributes) === JSON.stringify(nc));
-          return match ? { ...match, attributes: nc } : { attributes: nc };
+          if (match) return { ...match, attributes: nc };
+          
+          // If no match, it's a new combination - auto-generate SKU
+          return { 
+            attributes: nc,
+            sku: generateSKU(productName || editingProduct?.name || "", nc)
+          };
        }));
     }
-  }, [dimensions, hasVariants]);
+  }, [dimensions, hasVariants, productName, editingProduct]);
 
   // Initialize sync service and listen for status changes
   useEffect(() => {
@@ -143,10 +161,15 @@ export default function Inventory() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch products
+  // Fetch products with search and filter awareness
   const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
-    queryKey: ["products"],
-    queryFn: () => inventoryService.getProducts(),
+    queryKey: ["products", searchTerm, categoryFilter, stockFilter],
+    queryFn: () => {
+      if (searchTerm && searchTerm.length >= 2) {
+        return inventoryService.searchProducts(searchTerm, 100);
+      }
+      return inventoryService.getProducts(200); // Fetch a larger batch for local management
+    },
     enabled: isAuthenticated && !authLoading,
   });
 
@@ -208,8 +231,9 @@ export default function Inventory() {
     },
     onSettled: () => {
       console.log('[Component] createProduct onSettled - refetching');
-      // Always refetch after error or success
+      // Invalidate all product-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.refetchQueries({ queryKey: ["products"] });
     },
   });
 
@@ -445,6 +469,9 @@ export default function Inventory() {
       setCombinations([]);
     } else if (editingProduct) {
       setBarcodeValue(getTextValue(editingProduct.barcode));
+      setProductName(editingProduct.name);
+    } else {
+      setProductName("");
     }
   };
 
@@ -803,7 +830,7 @@ export default function Inventory() {
                 )}
               </Tooltip>
             </TooltipProvider>
-            <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
+            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold">
                   {editingProduct ? "Edit Product" : "Add New Product"}
@@ -818,7 +845,8 @@ export default function Inventory() {
                   <Input
                     id="name"
                     name="name"
-                    defaultValue={editingProduct?.name}
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
                     placeholder="e.g., Basmati Rice"
                     required
                     className="rounded-lg"
@@ -880,12 +908,17 @@ export default function Inventory() {
                 </div>
 
                 {hasVariants && (
-                  <div className="space-y-4 pt-2 border-t mt-4">
-                    <p className="text-xs text-amber-600 font-medium">
-                      ⚠ SKUs and prices can be updated. Add/remove dimensions creates NEW variants on save.
-                    </p>
+                  <div className="space-y-4 pt-4 border-t mt-4 overflow-hidden">
+                    <div className="flex items-center gap-2 p-2 bg-amber-50 rounded border border-amber-100">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                      <p className="text-[11px] text-amber-700 font-medium leading-tight">
+                        SKUs and prices can be updated. Changing dimensions (adding/removing options) will generate NEW variant combinations.
+                      </p>
+                    </div>
                     <VariantBuilder dimensions={dimensions} onChange={setDimensions} />
-                    <VariantGrid combinations={combinations} onChange={setCombinations} />
+                    <div className="w-full overflow-x-auto custom-scrollbar -mx-1 px-1">
+                      <VariantGrid combinations={combinations} onChange={setCombinations} />
+                    </div>
                   </div>
                 )}
 
@@ -1149,150 +1182,23 @@ export default function Inventory() {
             </Select>
           </div>
         </CardContent>
-      </Card >
+      </Card>
 
       {/* Products Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="inventory-grid">
         {
-          paginatedProducts.map((product: Product) => {
-            const stockQuantity = product.stock_quantity;
-            const lowThreshold = getInt32Value(product.low_stock_threshold);
-            const isLowStock = stockQuantity < lowThreshold;
-
-            const expiryDate = getDateValue(product.expires_at);
-            const daysUntilExpiry = expiryDate
-              ? Math.floor((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-              : null;
-            const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
-
-            const price = getNumericValue(product.price);
-            const marketPrice = getNumericValue(product.market_price);
-            const barcode = getTextValue(product.barcode);
-
-            return (
-              <Card key={product.id} className="border-0 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: `${colors.primary}10` }}
-                      >
-                        <Package className="h-5 w-5" style={{ color: colors.primary }} />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base font-semibold text-gray-900">{product.name}</CardTitle>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          {product.status?.product_status || 'active'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {isLowStock && (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-xs">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Low
-                        </Badge>
-                      )}
-                      {isExpiringSoon && (
-                        <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {daysUntilExpiry}d
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id={`track-${product.id}`}
-                        checked={product.is_tracked || false}
-                        onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
-                        className="data-[state=checked]:bg-teal-600"
-                      />
-                      <Label htmlFor={`track-${product.id}`} className="text-xs text-gray-500 cursor-pointer">
-                        Track Online Price
-                      </Label>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Stock</span>
-                      <span className="font-semibold text-gray-900">{stockQuantity} units</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-500">Price</span>
-                      <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
-                    </div>
-                    {expiryDate && (
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-500">Expiry</span>
-                        <span className="font-medium text-gray-700">
-                          {new Date(expiryDate).toLocaleDateString("en-NP")}
-                        </span>
-                      </div>
-                    )}
-                    {barcode && (
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-500">Barcode</span>
-                        <span className="font-mono text-xs text-gray-600">{barcode}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-auto pt-4">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            <Button
-                              variant="outline"
-                              className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900"
-                              onClick={() => handleEditClick(product)}
-                              disabled={!offlineStatus.isOnline}
-                            >
-                              <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
-                              Edit
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
-                        {!offlineStatus.isOnline && (
-                          <TooltipContent>
-                            <p>Editing products requires internet connection</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            <Button
-                              variant="outline"
-                              className="rounded-lg border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100"
-                              onClick={() => handleDeleteClick(product)}
-                              disabled={!offlineStatus.isOnline}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
-                        {!offlineStatus.isOnline && (
-                          <TooltipContent>
-                            <p>Deleting products requires internet connection</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
+          paginatedProducts.map((product: Product) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              handleTrackToggle={handleTrackToggle}
+              handleEditClick={handleEditClick}
+              handleDeleteClick={handleDeleteClick}
+              offlineStatus={offlineStatus}
+            />
+          ))
         }
-      </div >
+      </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 mt-8">
@@ -1369,6 +1275,190 @@ export default function Inventory() {
         onOpenChange={setSearchScannerOpen}
         onScanSuccess={handleSearchScanSuccess}
       />
-    </div >
+    </div>
+  );
+}
+
+interface ProductCardProps {
+  product: Product;
+  handleTrackToggle: (id: string, tracked: boolean) => void;
+  handleEditClick: (product: Product) => void;
+  handleDeleteClick: (product: Product) => void;
+  offlineStatus: OfflineStatus;
+}
+
+function ProductCard({ product, handleTrackToggle, handleEditClick, handleDeleteClick, offlineStatus }: ProductCardProps) {
+  // Lazy-load variants if they aren't already attached
+  const [localVariants, setLocalVariants] = useState<ProductVariant[]>(product.variants || []);
+  
+  useEffect(() => {
+    if (!product.variants || product.variants.length === 0) {
+      db.product_variants.where('product_id').equals(product.id).toArray()
+        .then(vars => {
+          if (vars.length > 0) setLocalVariants(vars);
+        });
+    } else {
+      setLocalVariants(product.variants);
+    }
+  }, [product.id, product.variants]);
+
+  const displayVariants = localVariants;
+  const stockQuantity = product.stock_quantity;
+  const lowThreshold = getInt32Value(product.low_stock_threshold);
+  const isLowStock = stockQuantity < lowThreshold;
+
+  const expiryDate = getDateValue(product.expires_at);
+  const daysUntilExpiry = expiryDate
+    ? Math.floor((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+
+  const price = getNumericValue(product.price);
+  const barcode = getTextValue(product.barcode);
+
+  return (
+    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div
+              className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: `${colors.primary}10` }}
+            >
+              <Package className="h-5 w-5" style={{ color: colors.primary }} />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                {product.name}
+                {displayVariants && displayVariants.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-bold bg-indigo-50 text-indigo-700 border-indigo-100 uppercase tracking-wider">
+                    {displayVariants.length} VAR
+                  </Badge>
+                )}
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {product.status?.product_status || 'active'}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            {isLowStock && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-xs">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Low
+              </Badge>
+            )}
+            {isExpiringSoon && (
+              <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
+                <Calendar className="h-3 w-3 mr-1" />
+                {daysUntilExpiry}d
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id={`track-${product.id}`}
+              checked={product.is_tracked || false}
+              onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
+              className="data-[state=checked]:bg-teal-600"
+            />
+            <Label htmlFor={`track-${product.id}`} className="text-xs text-gray-500 cursor-pointer">
+              Track Online Price
+            </Label>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col">
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">Stock</span>
+            <span className="font-semibold text-gray-900">{stockQuantity} units</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">Price</span>
+            <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
+          </div>
+          {expiryDate && (
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">Expiry</span>
+              <span className="font-medium text-gray-700">
+                {new Date(expiryDate).toLocaleDateString("en-NP")}
+              </span>
+            </div>
+          )}
+          {barcode && (
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">Barcode</span>
+              <span className="font-mono text-xs text-gray-600">{barcode}</span>
+            </div>
+          )}
+          {displayVariants && displayVariants.length > 0 && (
+            <div className="pt-3">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Variant Distribution</p>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                {displayVariants.map((v) => (
+                  <div key={v.id} className="flex justify-between items-center text-xs bg-gray-50/50 p-1.5 rounded border border-gray-100">
+                    <span className="text-gray-600 font-medium truncate max-w-[120px]">
+                      {Object.values(v.attributes).join(' / ')}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-400 font-mono">{v.sku}</span>
+                      <span className={`font-bold ${v.stock_level <= 5 ? 'text-amber-600' : 'text-gray-900'}`}>
+                        {v.stock_level}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-auto pt-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900 w-full"
+                    onClick={() => handleEditClick(product)}
+                    disabled={!offlineStatus.isOnline}
+                  >
+                    <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
+                    Edit
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!offlineStatus.isOnline && (
+                <TooltipContent>
+                  <p>Editing products requires internet connection</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    className="group rounded-lg border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 w-full"
+                    onClick={() => handleDeleteClick(product)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete this product permanently</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -359,38 +359,36 @@ export const inventoryService = {
 
     // Products
     getProducts: async (limit = 50, offset = 0) => {
-        // Server-First: Try to fetch from server if online to ensure latest data
+        let products: Product[] = [];
+        
         if (isOnline()) {
             try {
                 const response = await api.get<{ data: Product[] }>(`products?limit=${limit}&offset=${offset}`);
-                const serverProducts = response.data.data || [];
-
-                // For the first page (offset 0), we can assume it's a good time to sync
-                // and potentially remove local items that aren't on the server
-                if (offset === 0) {
-                    const localProducts = await db.products.toArray();
-                    const serverIds = new Set(serverProducts.map(p => p.id));
-
-                    // If we have products on server, items missing from server response 
-                    // AND not recently created locally (offline) should be removed.
-                    // For simplicity in this app, we'll sync by replacement for the fetched range.
-                    await db.products.bulkPut(serverProducts);
-
-                    // But wait, if serverProducts is just a page, we can't delete everything.
-                    // However, if the user deleted something, it won't be in serverProducts.
-                    // If we want a true sync, we'd need a "ListAllProductIds" or similar.
-                } else {
-                    await db.products.bulkPut(serverProducts);
+                products = response.data.data || [];
+                
+                // For a robust offline app, we sync by replacement for the fetched range.
+                if (products.length > 0) {
+                    await db.products.bulkPut(products);
                 }
-
-                return serverProducts;
             } catch (error) {
                 console.warn('[Inventory] Fetching products failed, falling back to cache', error);
+                products = await db.products.reverse().sortBy('created_at');
             }
+        } else {
+            products = await db.products.reverse().sortBy('created_at');
         }
 
-        // Return local data as the source of truth for the UI
-        return await db.products.reverse().sortBy('created_at');
+        // Apply limit/offset locally if we returned everything from cache
+        // (Though ideally we should do this more precisely)
+        const paginated = products.slice(offset, offset + limit);
+
+        // Enrich with variants from local DB
+        const enriched = await Promise.all(paginated.map(async (p) => {
+            const variants = await db.product_variants.where('product_id').equals(p.id).toArray();
+            return { ...p, variants };
+        }));
+
+        return enriched;
     },
 
     getPOSCatalog: async () => {
@@ -425,20 +423,39 @@ export const inventoryService = {
 
     getProduct: async (id: string) => {
         try {
-            // Check cache first? Or prefer fresh?
-            // User wants offline first, but consistency matters. 
-            // Let's try network if online, else cache.
             if (isOnline()) {
-                const response = await api.get<{ data: Product }>(`products/${id}`);
-                await db.products.put(response.data.data);
-                return response.data.data;
+                const response = await api.get<{ data: any }>(`products/${id}`);
+                const responseData = response.data?.data || response.data;
+                
+                const product = responseData.product || responseData;
+                const variants = responseData.variants || [];
+
+                await db.products.put({ ...product, synced: 1 });
+                
+                if (variants.length > 0) {
+                    const variantsToCache = variants.map((v: any) => ({
+                        ...v,
+                        product_id: product.id,
+                        synced: 1
+                    }));
+                    await db.product_variants.bulkPut(variantsToCache);
+                }
+                
+                return { ...product, variants };
             }
+            
             const product = await db.products.get(id);
-            if (product) return product;
+            if (product) {
+                const variants = await db.product_variants.where('product_id').equals(id).toArray();
+                return { ...product, variants };
+            }
             throw new Error('Product not found in cache');
         } catch (error) {
             const product = await db.products.get(id);
-            if (product) return product;
+            if (product) {
+                const variants = await db.product_variants.where('product_id').equals(id).toArray();
+                return { ...product, variants };
+            }
             throw error;
         }
     },
@@ -455,15 +472,44 @@ export const inventoryService = {
                 ...data
             } as unknown as Product;
             await db.products.put(tempProduct);
+
+            // Save variants locally if they exist
+            if (data.variants && data.variants.length > 0) {
+                const variantsToCache = data.variants.map((v: any) => ({
+                    ...v,
+                    id: v.id || `temp-var-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                    product_id: tempProduct.id,
+                    synced: 0
+                }));
+                await db.product_variants.bulkPut(variantsToCache);
+                // Attach variants to the returned object for immediate UI update
+                (tempProduct as any).variants = variantsToCache;
+            }
+
             return tempProduct;
         }
         
         try {
             // Direct API call.
             const response = await api.post('products/create', data);
-            const createdProduct = response.data?.data || response.data;
-            await db.products.put({ ...createdProduct, synced: 1 });
-            return createdProduct;
+            const responseData = response.data?.data || response.data;
+            
+            // Handle the case where variants are returned separately (nested response)
+            const product = responseData.product || responseData;
+            const variants = responseData.variants || [];
+
+            await db.products.put({ ...product, synced: 1 });
+            
+            if (variants.length > 0) {
+                const variantsToCache = variants.map((v: any) => ({
+                    ...v,
+                    product_id: product.id,
+                    synced: 1
+                }));
+                await db.product_variants.bulkPut(variantsToCache);
+            }
+            
+            return product;
         } catch (error) {
             console.warn('[Inventory] Failed to create product on server, saving locally', error);
             // If server creation fails, save locally with synced=0
@@ -504,6 +550,25 @@ export const inventoryService = {
                 const updated = { ...existing, ...data, updated_at: new Date().toISOString() } as any;
                 updated.synced = 0; // Mark as needing sync
                 await db.products.put(updated);
+
+                // Update variants locally if they exist in the update data
+                if (data.variants) {
+                    // Simple replacement for offline: clear existing and add new
+                    // (A more sophisticated diffing could be done, but this is safer for offline state)
+                    await db.product_variants.where('product_id').equals(id).delete();
+                    
+                    if (data.variants.length > 0) {
+                        const variantsToCache = data.variants.map((v: any) => ({
+                            ...v,
+                            id: v.id || `temp-var-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                            product_id: id,
+                            synced: 0
+                        }));
+                        await db.product_variants.bulkPut(variantsToCache);
+                        updated.variants = variantsToCache;
+                    }
+                }
+
                 console.log('[Inventory] Offline update successful, synced=0');
                 return updated;
             }
@@ -515,10 +580,24 @@ export const inventoryService = {
         console.log('[Inventory] Online - updating on server');
         try {
             const response = await api.put(`products/${id}`, data);
-            const updatedProduct = response.data?.data || response.data;
-            await db.products.put({ ...updatedProduct, synced: 1 });
+            const responseData = response.data?.data || response.data;
+            
+            const product = responseData.product || responseData;
+            const variants = responseData.variants || [];
+
+            await db.products.put({ ...product, synced: 1 });
+
+            if (variants.length > 0) {
+                const variantsToCache = variants.map((v: any) => ({
+                    ...v,
+                    product_id: product.id,
+                    synced: 1
+                }));
+                await db.product_variants.bulkPut(variantsToCache);
+            }
+            
             console.log('[Inventory] Server update successful');
-            return updatedProduct;
+            return product;
         } catch (error) {
             console.warn('[Inventory] Failed to update product on server, saving locally', error);
             // If server update fails, save locally with synced=0
@@ -555,7 +634,7 @@ export const inventoryService = {
         const performOfflineSearch = async () => {
             const lowerQuery = query.toLowerCase();
             const all = await db.products.toArray();
-            return all.filter(p => {
+            const results = all.filter(p => {
                 const status = typeof p.status === 'string'
                     ? p.status
                     : (p.status?.product_status || 'active');
@@ -569,17 +648,43 @@ export const inventoryService = {
                 return p.name.toLowerCase().includes(lowerQuery) ||
                     (barcodeStr && barcodeStr.includes(query));
             });
+
+            // Also search in variants SKU
+            const matchedVariants = await db.product_variants.where('sku').equals(query).toArray();
+            if (matchedVariants.length > 0) {
+                const parentIds = [...new Set(matchedVariants.map(v => v.product_id))];
+                const parents = await db.products.where('id').anyOf(parentIds).toArray();
+                
+                // Merge with results, avoiding duplicates
+                const existingIds = new Set(results.map(r => r.id));
+                for (const parent of parents) {
+                    if (!existingIds.has(parent.id)) {
+                        results.push(parent);
+                    }
+                }
+            }
+            return results;
         };
 
+        let results: Product[] = [];
         try {
             if (isOnline()) {
                 const response = await api.get<{ data: Product[] }>(`products/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
-                return response.data.data || [];
+                results = response.data.data || [];
+            } else {
+                results = await performOfflineSearch();
             }
-            return await performOfflineSearch();
         } catch (error) {
             console.warn('[Inventory] Search failed, falling back to local', error);
-            return await performOfflineSearch();
+            results = await performOfflineSearch();
         }
+
+        // Enrich search results with variants
+        const enriched = await Promise.all(results.map(async (p) => {
+            const variants = await db.product_variants.where('product_id').equals(p.id).toArray();
+            return { ...p, variants };
+        }));
+
+        return enriched;
     },
 };

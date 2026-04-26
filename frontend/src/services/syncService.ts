@@ -330,30 +330,46 @@ export const syncService = {
 
         // --- T020: Sync variant cache & purge archived variants ---
         try {
-          for (const product of products) {
-            const variantsResp = await api.get(`products/${product.id}`);
-            const variantsData = variantsResp.data?.data?.variants;
-            if (Array.isArray(variantsData) && variantsData.length > 0) {
+          console.log('[Sync] Refreshing variant cache via POS catalog...');
+          const catalogResp = await api.get('pos/catalog');
+          const catalogItems = catalogResp.data?.data || [];
+          
+          for (const item of catalogItems) {
+            // item.variants is returned as a JSON array from the backend
+            const variants = Array.isArray(item.variants) ? item.variants : [];
+            
+            if (variants.length > 0) {
               // Upsert active variants
-              const toCache = variantsData.map((v: any) => ({
+              const toCache = variants.map((v: any) => ({
                 ...v,
-                product_id: product.id,
+                product_id: item.id,
                 synced: 1,
               }));
               await db.product_variants.bulkPut(toCache);
 
               // Purge locally any variants for this product NOT in the server list
-              const serverIds = new Set(variantsData.map((v: any) => v.id));
+              const serverIds = new Set(variants.map((v: any) => v.id));
               const localVariants = await db.product_variants
                 .where('product_id')
-                .equals(product.id)
+                .equals(item.id)
                 .toArray();
+              
               const toDelete = localVariants
                 .filter(lv => !serverIds.has(lv.id))
                 .map(lv => lv.id);
+                
               if (toDelete.length > 0) {
                 await db.product_variants.bulkDelete(toDelete);
-                console.log(`[Sync] Purged ${toDelete.length} archived variants for product ${product.id}`);
+                console.log(`[Sync] Purged ${toDelete.length} archived variants for product ${item.id}`);
+              }
+            } else {
+              // If no variants on server, clear local variants for this product
+              const localVariants = await db.product_variants
+                .where('product_id')
+                .equals(item.id)
+                .toArray();
+              if (localVariants.length > 0) {
+                await db.product_variants.bulkDelete(localVariants.map(v => v.id));
               }
             }
           }
