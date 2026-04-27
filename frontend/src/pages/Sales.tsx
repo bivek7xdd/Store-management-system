@@ -231,13 +231,17 @@ export default function Sales() {
         });
       }
 
-      // Check if barcode matches a variant SKU directly
+      // Check if barcode matches a variant SKU or barcode directly
       if (results.length === 0) {
-         const allVariants = await db.product_variants.where('sku').equals(barcode).toArray();
-         if (allVariants.length === 1) {
-            const parent = await db.products.get(allVariants[0].product_id);
+         let matchedVariants = await db.product_variants.where('sku').equals(barcode).toArray();
+         if (matchedVariants.length === 0) {
+             matchedVariants = await db.product_variants.where('barcode').equals(barcode).toArray();
+         }
+         
+         if (matchedVariants.length === 1) {
+            const parent = await db.products.get(matchedVariants[0].product_id);
             if (parent) {
-               addToCart(parent, allVariants[0]);
+               addToCart(parent, matchedVariants[0]);
                setIsSearching(false);
                return;
             }

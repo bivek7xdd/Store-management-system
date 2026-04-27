@@ -39,3 +39,11 @@ SELECT * FROM customers
 WHERE store_id = $1 AND (name ILIKE $2 OR phone ILIKE $2)
 ORDER BY name
 LIMIT 20;
+
+-- name: UpdateCustomer :one
+UPDATE customers
+SET name = $1,
+    phone = $2
+WHERE id = $3 AND store_id = $4
+RETURNING *;
+

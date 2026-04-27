@@ -18,7 +18,8 @@ import (
 
 type CreateProductVariantReq struct {
 	Sku          string            `json:"sku" binding:"required"`
-	Attributes   map[string]string `json:"attributes" binding:"required"`
+	Barcode      string            `json:"barcode"`
+	Attributes   json.RawMessage   `json:"attributes" binding:"required"`
 	CostPrice    float64           `json:"cost_price" binding:"required"`
 	SellingPrice float64           `json:"selling_price" binding:"required"`
 	StockLevel   int32             `json:"stock_level" binding:"required"`
@@ -66,6 +67,8 @@ func CreateProduct(c *gin.Context) {
 	var barcode pgtype.Text
 	if req.Barcode != "" {
 		barcode = pgtype.Text{String: req.Barcode, Valid: true}
+	} else {
+		barcode = pgtype.Text{String: utils.RandomBarcode(), Valid: true}
 	}
 
 	var marketPrice pgtype.Numeric
@@ -148,14 +151,25 @@ func CreateProduct(c *gin.Context) {
 				vImageUrl = pgtype.Text{String: variant.ImageUrl, Valid: true}
 			}
 
-			attrBytes, err := json.Marshal(variant.Attributes)
-			if err != nil {
-				utils.ErrorResponse(c, http.StatusBadRequest, "Invalid attributes JSON", err)
-				return
+			attrBytes := json.RawMessage("{}")
+			if len(variant.Attributes) > 0 && string(variant.Attributes) != "null" {
+				if !json.Valid(variant.Attributes) {
+					utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid JSON attributes for variant %s", variant.Sku), nil)
+					return
+				}
+				attrBytes = variant.Attributes
+			}
+
+			var vBarcode pgtype.Text
+			if variant.Barcode != "" {
+				vBarcode = pgtype.Text{String: variant.Barcode, Valid: true}
+			} else {
+				vBarcode = pgtype.Text{String: utils.RandomBarcode(), Valid: true}
 			}
 
 			variantParams = append(variantParams, db.CreateProductVariantParams{
 				Sku:          variant.Sku,
+				Barcode:      vBarcode,
 				Attributes:   attrBytes,
 				CostPrice:    utils.Numeric(variant.CostPrice),
 				SellingPrice: utils.Numeric(variant.SellingPrice),
@@ -198,16 +212,53 @@ func CreateProduct(c *gin.Context) {
 	utils.SuccessResponse(c, "Product created successfully", product)
 }
 
+// VariantResponse is a JSON-serialisable variant with attributes decoded to a map.
+type VariantResponse struct {
+	ID           pgtype.UUID            `json:"id"`
+	ProductID    pgtype.UUID            `json:"product_id"`
+	Sku          string                 `json:"sku"`
+	Barcode      pgtype.Text            `json:"barcode"`
+	Attributes   json.RawMessage        `json:"attributes"`
+	CostPrice    pgtype.Numeric         `json:"cost_price"`
+	SellingPrice pgtype.Numeric         `json:"selling_price"`
+	StockLevel   int32                  `json:"stock_level"`
+	ImageUrl     pgtype.Text            `json:"image_url"`
+}
+
+// productWithVariants is the enriched response type for the list endpoint.
+type productWithVariants struct {
+	db.Product
+	Variants []VariantResponse `json:"variants"`
+}
+
+// decodeVariants converts []db.ProductVariant (with []byte attributes) to
+// []VariantResponse (with map[string]interface{} attributes) so they serialise
+// correctly instead of being base64-encoded.
+func decodeVariants(variants []db.ProductVariant) []VariantResponse {
+	out := make([]VariantResponse, 0, len(variants))
+	for _, v := range variants {
+		out = append(out, VariantResponse{
+			ID:           v.ID,
+			ProductID:    v.ProductID,
+			Sku:          v.Sku,
+			Barcode:      v.Barcode,
+			Attributes:   v.Attributes,
+			CostPrice:    v.CostPrice,
+			SellingPrice: v.SellingPrice,
+			StockLevel:   v.StockLevel,
+			ImageUrl:     v.ImageUrl,
+		})
+	}
+	return out
+}
+
 func GetProducts(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
 
-	// Parse pagination params
 	limitStr := c.DefaultQuery("limit", "50")
 	offsetStr := c.DefaultQuery("offset", "0")
-
 	limit, _ := strconv.Atoi(limitStr)
 	offset, _ := strconv.Atoi(offsetStr)
-
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}
@@ -229,7 +280,32 @@ func GetProducts(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Products fetched successfully", products)
+	// Batch-fetch all variants in one query.
+	productIDs := make([]pgtype.UUID, 0, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+	}
+
+	variantMap := make(map[pgtype.UUID][]db.ProductVariant)
+	if len(productIDs) > 0 {
+		allVariants, verr := utils.Queries.ListVariantsByProducts(ctx, productIDs)
+		if verr != nil {
+			log.Printf("warning: could not batch-fetch variants: %v", verr)
+		}
+		for _, v := range allVariants {
+			variantMap[v.ProductID] = append(variantMap[v.ProductID], v)
+		}
+	}
+
+	enriched := make([]productWithVariants, 0, len(products))
+	for _, p := range products {
+		enriched = append(enriched, productWithVariants{
+			Product:  p,
+			Variants: decodeVariants(variantMap[p.ID]),
+		})
+	}
+
+	utils.SuccessResponse(c, "Products fetched successfully", enriched)
 }
 
 func GetProduct(c *gin.Context) {
@@ -276,8 +352,9 @@ type updateProductReq struct {
 	Status            string  `json:"status"`
 	CategoryID        string  `json:"category_id"`
 	SupplierID        string  `json:"supplier_id"`
-	ImageUrl          string  `json:"image_url"`
-	IsTracked         *bool   `json:"is_tracked"`
+	ImageUrl          string                    `json:"image_url"`
+	IsTracked         *bool                     `json:"is_tracked"`
+	Variants          []CreateProductVariantReq `json:"variants"`
 }
 
 func UpdateProduct(c *gin.Context) {
@@ -411,7 +488,7 @@ func UpdateProduct(c *gin.Context) {
 		isTracked = pgtype.Bool{Bool: *req.IsTracked, Valid: true}
 	}
 
-	product, err := utils.Queries.UpdateProduct(ctx, db.UpdateProductParams{
+	updateParams := db.UpdateProductParams{
 		ID:                pgtype.UUID{Bytes: productUUID, Valid: true},
 		Name:              name,
 		Barcode:           barcode,
@@ -426,7 +503,66 @@ func UpdateProduct(c *gin.Context) {
 		SupplierID:        supplierID,
 		ImageUrl:          imageUrl,
 		IsTracked:         isTracked,
-	})
+	}
+
+	if len(req.Variants) > 0 {
+		var variantParams []db.CreateProductVariantParams
+		for _, variant := range req.Variants {
+			var vImageUrl pgtype.Text
+			if variant.ImageUrl != "" {
+				vImageUrl = pgtype.Text{String: variant.ImageUrl, Valid: true}
+			}
+
+			attrBytes := json.RawMessage("{}")
+			if len(variant.Attributes) > 0 && string(variant.Attributes) != "null" {
+				if !json.Valid(variant.Attributes) {
+					utils.ErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid JSON attributes for variant %s", variant.Sku), nil)
+					return
+				}
+				attrBytes = variant.Attributes
+			}
+
+			var vBarcode pgtype.Text
+			if variant.Barcode != "" {
+				vBarcode = pgtype.Text{String: variant.Barcode, Valid: true}
+			} else {
+				vBarcode = pgtype.Text{String: utils.RandomBarcode(), Valid: true}
+			}
+
+			variantParams = append(variantParams, db.CreateProductVariantParams{
+				Sku:          variant.Sku,
+				Barcode:      vBarcode,
+				Attributes:   attrBytes,
+				CostPrice:    utils.Numeric(variant.CostPrice),
+				SellingPrice: utils.Numeric(variant.SellingPrice),
+				StockLevel:   variant.StockLevel,
+				ImageUrl:     vImageUrl,
+			})
+		}
+
+		txParams := db.UpdateProductWithVariantsTxParams{
+			UpdateProductParams: updateParams,
+			Variants:            variantParams,
+		}
+
+		product, variants, err := utils.Store.UpdateProductWithVariantsTx(ctx, txParams)
+		if err != nil {
+			log.Printf("error updating product with variants: %v", err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update product with variants", err)
+			return
+		}
+		
+		utils.Queries.CheckAndNotifyLowStock(ctx, product.StoreID, product)
+		
+		c.JSON(http.StatusOK, gin.H{
+			"message":  "Product and variants updated successfully",
+			"product":  product,
+			"variants": variants,
+		})
+		return
+	}
+
+	product, err := utils.Queries.UpdateProduct(ctx, updateParams)
 
 	if err != nil {
 		log.Printf("error updating product: %v", err)

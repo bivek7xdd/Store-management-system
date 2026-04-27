@@ -360,35 +360,52 @@ export const inventoryService = {
     // Products
     getProducts: async (limit = 50, offset = 0) => {
         let products: Product[] = [];
-        
+
         if (isOnline()) {
             try {
-                const response = await api.get<{ data: Product[] }>(`products?limit=${limit}&offset=${offset}`);
-                products = response.data.data || [];
-                
-                // For a robust offline app, we sync by replacement for the fetched range.
+                const response = await api.get<{ data: any[] }>(`products?limit=${limit}&offset=${offset}`);
+                const raw = response.data.data || [];
+
+                // The list endpoint now returns { ...product, variants: [] }
+                // Split out and cache variants separately, then store clean products.
+                const variantsToBulkPut: any[] = [];
+                products = raw.map((item: any) => {
+                    const { variants, ...product } = item;
+                    if (Array.isArray(variants) && variants.length > 0) {
+                        variants.forEach((v: any) => {
+                            variantsToBulkPut.push({ ...v, product_id: product.id, synced: 1 });
+                        });
+                    }
+                    // Carry variants on the returned object for immediate UI use
+                    return { ...product, variants: variants || [] } as Product;
+                });
+
+                // Persist to IndexedDB for offline use
                 if (products.length > 0) {
-                    await db.products.bulkPut(products);
+                    await db.products.bulkPut(products.map(p => ({ ...(p as any), variants: undefined })));
+                }
+                if (variantsToBulkPut.length > 0) {
+                    await db.product_variants.bulkPut(variantsToBulkPut);
                 }
             } catch (error) {
                 console.warn('[Inventory] Fetching products failed, falling back to cache', error);
                 products = await db.products.reverse().sortBy('created_at');
+                // Enrich from cache
+                return Promise.all(products.slice(offset, offset + limit).map(async (p) => {
+                    const variants = await db.product_variants.where('product_id').equals(p.id).toArray();
+                    return { ...p, variants };
+                }));
             }
         } else {
-            products = await db.products.reverse().sortBy('created_at');
+            const cached = await db.products.reverse().sortBy('created_at');
+            return Promise.all(cached.slice(offset, offset + limit).map(async (p) => {
+                const variants = await db.product_variants.where('product_id').equals(p.id).toArray();
+                return { ...p, variants };
+            }));
         }
 
-        // Apply limit/offset locally if we returned everything from cache
-        // (Though ideally we should do this more precisely)
-        const paginated = products.slice(offset, offset + limit);
-
-        // Enrich with variants from local DB
-        const enriched = await Promise.all(paginated.map(async (p) => {
-            const variants = await db.product_variants.where('product_id').equals(p.id).toArray();
-            return { ...p, variants };
-        }));
-
-        return enriched;
+        // Apply offset/limit (API already honours them, but handle edge cases)
+        return products.slice(0, limit);
     },
 
     getPOSCatalog: async () => {

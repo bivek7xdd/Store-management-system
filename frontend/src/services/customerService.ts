@@ -62,6 +62,24 @@ export const customerService = {
     }
   },
 
+  async updateCustomer(id: string, customer: Partial<Customer>): Promise<Customer> {
+    const isOnline = syncService.getStatus().isOnline;
+    if (isOnline) {
+      const response = await api.put(`/customers/${id}`, customer);
+      const updatedCustomer = response.data.data;
+      await db.customers.put(updatedCustomer);
+      return updatedCustomer;
+    } else {
+      const existing = await db.customers.get(id);
+      if (existing) {
+        const updated = { ...existing, ...customer, synced: 0 };
+        await db.customers.put(updated);
+        return updated;
+      }
+      throw new Error('Customer not found');
+    }
+  },
+
   async getGuestCustomer(): Promise<Customer | undefined> {
     return await db.customers.where('name').equals('Guest').first();
   },

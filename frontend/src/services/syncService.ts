@@ -279,6 +279,18 @@ export const syncService = {
               continue;
             }
 
+            // Fetch any local variants for this product
+            const localVariants = await db.product_variants.where('product_id').equals(product.id).toArray();
+            const formattedVariants = localVariants.map(v => ({
+              sku: v.sku,
+              barcode: v.barcode,
+              attributes: v.attributes,
+              cost_price: v.cost_price,
+              selling_price: v.selling_price,
+              stock_level: v.stock_level,
+              image_url: v.image_url
+            }));
+
             // Handle create or update
             const payload = {
               name: product.name,
@@ -294,6 +306,7 @@ export const syncService = {
               status: product.status,
               image_url: product.image_url,
               is_tracked: product.is_tracked,
+              variants: formattedVariants.length > 0 ? formattedVariants : undefined,
             };
 
             if (product.id.startsWith('temp-')) {

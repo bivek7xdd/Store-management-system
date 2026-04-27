@@ -130,6 +130,7 @@ export interface ProductVariant {
   id: string;
   product_id: string;
   sku: string;
+  barcode?: string;
   attributes: Record<string, string>;
   cost_price: number;
   selling_price: number;

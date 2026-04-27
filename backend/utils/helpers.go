@@ -2,9 +2,20 @@ package utils
 
 import (
 	"fmt"
-
+	"math/rand"
+	"time"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// ParseUUID parses a string into a pgtype.UUID
+func ParseUUID(s string) (pgtype.UUID, error) {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return pgtype.UUID{}, err
+	}
+	return pgtype.UUID{Bytes: id, Valid: true}, nil
+}
 
 // Text converts a string to a valid pgtype.Text
 func Text(s string) pgtype.Text {
@@ -42,4 +53,14 @@ func Float64(n pgtype.Numeric) float64 {
 	}
 	f, _ := n.Float64Value()
 	return f.Float64
+}
+
+// RandomBarcode generates a random 12-digit barcode string
+func RandomBarcode() string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	digits := make([]byte, 12)
+	for i := 0; i < 12; i++ {
+		digits[i] = byte('0' + r.Intn(10))
+	}
+	return string(digits)
 }

@@ -6,6 +6,7 @@ export type { SaleItem };
 
 export interface SaleItemReq {
     product_id: string;
+    variant_id?: string;
     quantity: number;
     unit_price: number;
     total_price: number;
@@ -46,11 +47,23 @@ export const salesService = {
                 for (const item of data.items) {
                     const product = await db.products.get(item.product_id);
                     if (product) {
-                        const newStock = Math.max(0, product.stock_quantity - item.quantity);
-                        await db.products.update(item.product_id, {
-                            stock_quantity: newStock
-                        });
-                        console.log(`[Sales] Updated stock for ${product.name}: ${product.stock_quantity} -> ${newStock}`);
+                        let newStock = product.stock_quantity;
+                        if (item.variant_id) {
+                            const variant = await db.product_variants.get(item.variant_id);
+                            if (variant) {
+                                const newVariantStock = Math.max(0, variant.stock_level - item.quantity);
+                                await db.product_variants.update(item.variant_id, {
+                                    stock_level: newVariantStock
+                                });
+                                console.log(`[Sales] Updated stock for variant ${variant.sku}: ${variant.stock_level} -> ${newVariantStock}`);
+                            }
+                        } else {
+                            newStock = Math.max(0, product.stock_quantity - item.quantity);
+                            await db.products.update(item.product_id, {
+                                stock_quantity: newStock
+                            });
+                            console.log(`[Sales] Updated stock for ${product.name}: ${product.stock_quantity} -> ${newStock}`);
+                        }
 
                         // 1.6 Local Low Stock Check
                         const threshold = typeof product.low_stock_threshold === 'number'

@@ -108,6 +108,7 @@ func main() {
 		customerRoutes.GET("", handlers.ListCustomers)
 		customerRoutes.GET("/search", handlers.SearchCustomers)
 		customerRoutes.POST("", handlers.CreateCustomer)
+		customerRoutes.PUT("/:id", handlers.UpdateCustomer)
 	}
 
 	// Debt routes

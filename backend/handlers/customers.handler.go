@@ -83,3 +83,41 @@ func CreateCustomer(c *gin.Context) {
 
 	utils.SuccessResponse(c, "Customer created successfully", customer)
 }
+
+type UpdateCustomerRequest struct {
+	Name  string `json:"name" binding:"required"`
+	Phone string `json:"phone" binding:"required"`
+}
+
+func UpdateCustomer(c *gin.Context) {
+	idParam := c.Param("id")
+	customerID, err := utils.ParseUUID(idParam)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid customer ID", err)
+		return
+	}
+
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	var req UpdateCustomerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request payload", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	customer, err := utils.Queries.UpdateCustomer(ctx, db.UpdateCustomerParams{
+		Name:    req.Name,
+		Phone:   req.Phone,
+		ID:      customerID,
+		StoreID: storeID,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update customer", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Customer updated successfully", customer)
+}

@@ -42,7 +42,7 @@ export class StoreDatabase extends Dexie {
     product_variants!: Table<ProductVariant, string>;
     constructor() {
         super('store-manager-db');
-        this.version(10).stores({
+        this.version(11).stores({
             products: 'id, name, barcode, category_id, synced', // frequently queried fields
             categories: 'id, name, synced',
             suppliers: 'id, name, synced',
@@ -50,7 +50,7 @@ export class StoreDatabase extends Dexie {
             customers: 'id, name, phone, loyalty_status',
             notifications: 'id, reference_id, type, status, created_at',
             debts: 'id, customer_id, status',
-            product_variants: 'id, product_id, sku, synced'
+            product_variants: 'id, product_id, sku, barcode, synced'
         });
     }
 }

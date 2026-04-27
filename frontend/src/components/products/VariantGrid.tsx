@@ -27,6 +27,7 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
           <tr>
             <th className="py-3 px-4 min-w-[80px] border-b border-black">Variant</th>
             <th className="py-3 px-4 min-w-[150px] border-b border-black">SKU</th>
+            <th className="py-3 px-4 min-w-[150px] border-b border-black">Barcode</th>
             <th className="py-3 px-4 min-w-[120px] border-b border-black">Cost Price</th>
             <th className="py-3 px-4 min-w-[120px] border-b border-black">Selling Price</th>
             <th className="py-3 px-4 min-w-[100px] border-b border-black">Stock</th>
@@ -44,6 +45,14 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
                     placeholder="Auto-gen or Enter" 
                     value={c.sku || ""} 
                     onChange={e => updateCombination(i, "sku", e.target.value)} 
+                    className="h-8 max-w-[180px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
+                  />
+                </td>
+                <td className="py-2 px-3">
+                  <Input 
+                    placeholder="Enter barcode" 
+                    value={c.barcode || ""} 
+                    onChange={e => updateCombination(i, "barcode", e.target.value)} 
                     className="h-8 max-w-[180px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
                   />
                 </td>

@@ -33,12 +33,14 @@ func (store *Store) ExecTx(ctx context.Context, fn func(*Queries) error) error {
 	q := New(tx)
 	err = fn(q)
 	if err != nil {
+		fmt.Printf("Transaction error, rolling back: %v\n", err)
 		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
 		}
 		return err
 	}
 
+	fmt.Println("Transaction successful, committing...")
 	return tx.Commit(ctx)
 }
 
@@ -195,6 +197,7 @@ func (store *Store) CreateProductWithVariantsTx(ctx context.Context, arg CreateP
 			return err
 		}
 
+		totalStock := int32(0)
 		for _, vArg := range arg.Variants {
 			vArg.ProductID = product.ID
 			variant, err := q.CreateProductVariant(ctx, vArg)
@@ -202,9 +205,89 @@ func (store *Store) CreateProductWithVariantsTx(ctx context.Context, arg CreateP
 				return err
 			}
 			variants = append(variants, variant)
+			totalStock += vArg.StockLevel
 		}
 
-		return nil
+		// Update parent stock with aggregate sum
+		product, err = q.UpdateProduct(ctx, UpdateProductParams{
+			ID:                product.ID,
+			Name:              product.Name,
+			Barcode:           product.Barcode,
+			Price:             product.Price,
+			CostPrice:         product.CostPrice,
+			MarketPrice:       product.MarketPrice,
+			StockQuantity:     totalStock,
+			LowStockThreshold: product.LowStockThreshold,
+			ExpiresAt:         product.ExpiresAt,
+			Status:            product.Status,
+			CategoryID:        product.CategoryID,
+			SupplierID:        product.SupplierID,
+			ImageUrl:          product.ImageUrl,
+			IsTracked:         product.IsTracked,
+		})
+
+		return err
+	})
+
+	return product, variants, err
+}
+
+type UpdateProductWithVariantsTxParams struct {
+	UpdateProductParams UpdateProductParams
+	Variants            []CreateProductVariantParams
+}
+
+func (store *Store) UpdateProductWithVariantsTx(ctx context.Context, arg UpdateProductWithVariantsTxParams) (Product, []ProductVariant, error) {
+	var product Product
+	var variants []ProductVariant
+
+	err := store.ExecTx(ctx, func(q *Queries) error {
+		var err error
+
+		product, err = q.UpdateProduct(ctx, arg.UpdateProductParams)
+		if err != nil {
+			return err
+		}
+
+		// Delete existing variants
+		err = q.DeleteVariantsByProduct(ctx, product.ID)
+		if err != nil {
+			return err
+		}
+
+		totalStock := int32(0)
+		// Create new variants
+		for _, vArg := range arg.Variants {
+			vArg.ProductID = product.ID
+			variant, err := q.CreateProductVariant(ctx, vArg)
+			if err != nil {
+				return err
+			}
+			variants = append(variants, variant)
+			totalStock += vArg.StockLevel
+		}
+
+		// Update parent stock with aggregate sum if variants exist
+		if len(arg.Variants) > 0 {
+			product, err = q.UpdateProduct(ctx, UpdateProductParams{
+				ID:                product.ID,
+				Name:              product.Name,
+				Barcode:           product.Barcode,
+				Price:             product.Price,
+				CostPrice:         product.CostPrice,
+				MarketPrice:       product.MarketPrice,
+				StockQuantity:     totalStock,
+				LowStockThreshold: product.LowStockThreshold,
+				ExpiresAt:         product.ExpiresAt,
+				Status:            product.Status,
+				CategoryID:        product.CategoryID,
+				SupplierID:        product.SupplierID,
+				ImageUrl:          product.ImageUrl,
+				IsTracked:         product.IsTracked,
+			})
+		}
+
+		return err
 	})
 
 	return product, variants, err

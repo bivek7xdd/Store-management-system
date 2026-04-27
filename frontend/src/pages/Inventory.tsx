@@ -36,7 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff } from "lucide-react";
+import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,8 +54,11 @@ import { ProductVariant } from "@/types";
 import { db } from "@/db/db";
 
 const colors = {
-  primary: "#0d9488",
-  primaryDark: "#115e59",
+  primary: "#DA291C",
+  primaryDark: "#B01E0A",
+  surface: "#111111",
+  border: "#1A1A1A",
+  muted: "#888888",
 };
 
 // Helper function to extract numeric value from pgtype.Numeric
@@ -111,6 +114,7 @@ export default function Inventory() {
   const [dimensions, setDimensions] = useState<VariantDimension[]>([]);
   const [combinations, setCombinations] = useState<Partial<ProductVariant>[]>([]);
   const [productName, setProductName] = useState("");
+  const [expandAll, setExpandAll] = useState(false);
   const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -391,14 +395,13 @@ export default function Inventory() {
 
   const handleEditClick = async (product: Product) => {
     setEditingProduct(product);
+    setProductName(product.name);
     setBarcodeValue(getTextValue(product.barcode));
 
-    // Load existing variants from Dexie to pre-populate VariantBuilder/VariantGrid
     try {
-      const savedVariants = await db.product_variants
-        .where('product_id')
-        .equals(product.id)
-        .toArray();
+      // Use the service to get the full product with variants (handles online/offline fetch)
+      const fullProduct = await inventoryService.getProduct(product.id);
+      const savedVariants = fullProduct.variants || [];
 
       if (savedVariants.length > 0) {
         setHasVariants(true);
@@ -408,7 +411,7 @@ export default function Inventory() {
           new Set(savedVariants.flatMap(v => Object.keys(v.attributes || {})))
         );
         const reconstructedDimensions: VariantDimension[] = allKeys.map(key => ({
-          key,
+          name: key,
           values: Array.from(
             new Set(savedVariants.map(v => (v.attributes as Record<string, string>)[key]).filter(Boolean))
           ),
@@ -419,6 +422,7 @@ export default function Inventory() {
         const reconstructedCombinations: Partial<ProductVariant>[] = savedVariants.map(v => ({
           id: v.id,
           sku: v.sku,
+          barcode: v.barcode,
           attributes: v.attributes as Record<string, string>,
           cost_price: v.cost_price,
           selling_price: v.selling_price,
@@ -516,6 +520,7 @@ export default function Inventory() {
     if (hasVariants && combinations.length > 0) {
       data.variants = combinations.map((c: any) => ({
         sku: c.sku || "",
+        barcode: c.barcode || undefined,
         attributes: c.attributes || {},
         cost_price: c.cost_price || cost_price,
         selling_price: c.selling_price || price,
@@ -687,32 +692,15 @@ export default function Inventory() {
   if (productsLoading || authLoading) {
     return (
       <div className="space-y-6 pb-20 lg:pb-6">
-        {/* Header Mockup */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
-            <p className="text-gray-500 mt-1">Manage your products and stock levels</p>
-          </div>
-          <div className="flex gap-2">
-            {/* No need to mock buttons exactly, just keeping layout consistent */}
+            <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+            <h1 className="text-[24px] font-bold text-white tracking-tight">Inventory</h1>
           </div>
         </div>
-
-        {/* Filters Mockup */}
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
-              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
-              <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Products Grid Skeleton */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4 space-y-2">
           {[...Array(6)].map((_, i) => (
-            <ProductSkeleton key={i} />
+            <div key={i} className="h-[56px] bg-[#1A1A1A] rounded-[2px] animate-pulse" />
           ))}
         </div>
       </div>
@@ -723,8 +711,8 @@ export default function Inventory() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-red-500 mb-2">Failed to load products</p>
-          <p className="text-gray-500 text-sm">Please try again later</p>
+          <p className="text-[#DA291C] mb-2 font-medium">Failed to load products</p>
+          <p className="text-[#888888] text-sm">Please try again later</p>
         </div>
       </div>
     );
@@ -737,8 +725,8 @@ export default function Inventory() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="inventory-header">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
-          <p className="text-gray-500 mt-1">Manage your products and stock levels</p>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+          <h1 className="text-[24px] font-bold text-white tracking-tight">Inventory</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Offline Status Indicator */}
@@ -763,11 +751,11 @@ export default function Inventory() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleImportClick} 
-                    className="rounded-lg border-gray-200"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleImportClick}
+                    className="rounded-[2px] border-[#303030] bg-[#111111] text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] text-[11px] uppercase tracking-[1px]"
                     disabled={!offlineStatus.isOnline}
                   >
                     <Upload className="mr-2 h-4 w-4" />
@@ -786,11 +774,11 @@ export default function Inventory() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleExport} 
-                    className="rounded-lg border-gray-200"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    className="rounded-[2px] border-[#303030] bg-[#111111] text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] text-[11px] uppercase tracking-[1px]"
                     disabled={!offlineStatus.isOnline}
                   >
                     <Download className="mr-2 h-4 w-4" />
@@ -811,10 +799,9 @@ export default function Inventory() {
                 <TooltipTrigger asChild>
                   <span>
                     <DialogTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        className="rounded-lg" 
-                        style={{ background: colors.primaryDark }}
+                      <Button
+                        size="sm"
+                        className="rounded-[2px] bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[11px] uppercase tracking-[1px]"
                         disabled={!offlineStatus.isOnline}
                       >
                         <Plus className="mr-2 h-4 w-4" />
@@ -830,204 +817,190 @@ export default function Inventory() {
                 )}
               </Tooltip>
             </TooltipProvider>
-            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold">
-                  {editingProduct ? "Edit Product" : "Add New Product"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingProduct ? "Update product details" : "Enter product details to add to your inventory"}
-                </DialogDescription>
-              </DialogHeader>
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">Product Name*</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
-                    placeholder="e.g., Basmati Rice"
-                    required
-                    className="rounded-lg"
-                  />
+            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[4px] bg-[#0A0A0A] border border-[#1A1A1A] p-0">
+              {/* Dialog Header */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
+                <div>
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1.5px] mb-0.5">
+                    {editingProduct ? "Edit" : "New"} Product
+                  </p>
+                  <DialogTitle className="text-[18px] font-bold text-white tracking-tight">
+                    {editingProduct ? editingProduct.name : "Add Product"}
+                  </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    {editingProduct ? "Update product details" : "Enter product details to add to your inventory"}
+                  </DialogDescription>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category_id" className="text-sm font-medium">Category*</Label>
-                  <Select name="category_id" required defaultValue={editingProduct?.category_id}>
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((cat: Category) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="barcode" className="text-sm font-medium">Barcode (optional)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="barcode"
-                      name="barcode"
-                      value={barcodeValue}
-                      onChange={(e) => setBarcodeValue(e.target.value)}
-                      placeholder="8901234567890"
-                      className="rounded-lg"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0 rounded-lg"
-                      onClick={() => setFormScannerOpen(true)}
-                    >
-                      <Scan className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50/50">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Product has variants</Label>
-                    <p className="text-xs text-muted-foreground">
-                      {editingProduct && hasVariants
-                        ? 'Editing existing variants — toggle locked'
-                        : 'Like size, color, or material'
-                      }
-                    </p>
-                  </div>
-                  <Switch
-                    checked={hasVariants}
-                    onCheckedChange={editingProduct && hasVariants ? undefined : setHasVariants}
-                    disabled={!!(editingProduct && hasVariants)}
-                    title={editingProduct && hasVariants ? 'Variants are locked for existing products' : undefined}
-                  />
-                </div>
+              </div>
 
-                {hasVariants && (
-                  <div className="space-y-4 pt-4 border-t mt-4 overflow-hidden">
-                    <div className="flex items-center gap-2 p-2 bg-amber-50 rounded border border-amber-100">
-                      <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-                      <p className="text-[11px] text-amber-700 font-medium leading-tight">
-                        SKUs and prices can be updated. Changing dimensions (adding/removing options) will generate NEW variant combinations.
+              <form className="space-y-0" onSubmit={handleSubmit}>
+                <div className="px-6 py-4 space-y-4">
+                  {/* Name */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Product Name *</label>
+                    <input
+                      id="name" name="name"
+                      value={productName}
+                      onChange={(e) => setProductName(e.target.value)}
+                      placeholder="e.g., Basmati Rice"
+                      required
+                      className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333] transition-colors"
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Category *</label>
+                    <Select name="category_id" required defaultValue={editingProduct?.category_id}>
+                      <SelectTrigger className="h-10 bg-[#111111] border-[#1A1A1A] rounded-[2px] text-[13px] text-white focus:ring-0 focus:border-[#333333]">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#111111] border-[#1A1A1A] rounded-[2px]">
+                        {categories?.map((cat: Category) => (
+                          <SelectItem key={cat.id} value={cat.id} className="text-[13px] text-white focus:bg-[#1A1A1A] focus:text-white">
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Barcode */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Barcode</label>
+                    <div className="flex gap-2">
+                      <input
+                        id="barcode" name="barcode"
+                        value={barcodeValue}
+                        onChange={(e) => setBarcodeValue(e.target.value)}
+                        placeholder="8901234567890"
+                        className="flex-1 h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333] transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormScannerOpen(true)}
+                        className="h-10 w-10 bg-[#111111] border border-[#1A1A1A] rounded-[2px] flex items-center justify-center text-[#666666] hover:text-white hover:border-[#333333] transition-colors"
+                      >
+                        <Scan className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Variants toggle */}
+                  <div className="flex items-center justify-between p-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+                    <div>
+                      <p className="text-[13px] font-medium text-white">Product has variants</p>
+                      <p className="text-[11px] text-[#888888] mt-0.5">
+                        {editingProduct && hasVariants
+                          ? 'Editing existing variants — toggle locked'
+                          : 'E.g. Size, Color, Material'}
                       </p>
                     </div>
-                    <VariantBuilder dimensions={dimensions} onChange={setDimensions} />
-                    <div className="w-full overflow-x-auto custom-scrollbar -mx-1 px-1">
-                      <VariantGrid combinations={combinations} onChange={setCombinations} />
-                    </div>
+                    <Switch
+                      checked={hasVariants}
+                      onCheckedChange={editingProduct && hasVariants ? undefined : setHasVariants}
+                      disabled={!!(editingProduct && hasVariants)}
+                      className="data-[state=checked]:bg-[#DA291C]"
+                    />
                   </div>
-                )}
 
-                <div className={hasVariants ? "hidden" : "space-y-4"}>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price" className="text-sm font-medium">Price (रू)*</Label>
-                      <Input
-                        id="price"
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        defaultValue={editingProduct ? getNumericValue(editingProduct.price) : undefined}
-                        placeholder="100"
-                        required={!hasVariants}
-                        className={`rounded-lg ${formErrors.price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                        onChange={() => setFormErrors(prev => ({ ...prev, price: "" }))}
-                      />
-                      {formErrors.price && (
-                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                          <span>⚠</span> {formErrors.price}
+                  {/* Variant builder */}
+                  {hasVariants && (
+                    <div className="space-y-4 pt-2 border-t border-[#1A1A1A]">
+                      <div className="flex items-center gap-2 p-2 bg-[#1A1A1A] rounded-[2px] border border-amber-500/20">
+                        <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+                        <p className="text-[11px] text-amber-400 font-medium leading-tight">
+                          SKUs and prices can be updated. Changing dimensions will regenerate combinations.
                         </p>
-                      )}
+                      </div>
+                      <VariantBuilder dimensions={dimensions} onChange={setDimensions} />
+                      <div className="w-full overflow-x-auto -mx-1 px-1">
+                        <VariantGrid combinations={combinations} onChange={setCombinations} />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cost_price" className="text-sm font-medium">Cost Price (रू)</Label>
-                      <Input
-                        id="cost_price"
-                        name="cost_price"
-                        type="number"
-                        step="0.01"
-                        defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
-                        placeholder="80"
-                        className={`rounded-lg ${formErrors.cost_price ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                        onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
-                      />
-                      {formErrors.cost_price && (
-                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                          <span>⚠</span> {formErrors.cost_price}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="stock_quantity" className="text-sm font-medium">Stock Quantity*</Label>
-                      <Input
-                        id="stock_quantity"
-                        name="stock_quantity"
-                        type="number"
-                        min={0}
-                        max={2147483647}
-                        defaultValue={editingProduct?.stock_quantity}
-                        placeholder="50"
-                        required={!hasVariants}
-                        className={`rounded-lg ${formErrors.stock_quantity ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                        onChange={() => setFormErrors(prev => ({ ...prev, stock_quantity: "" }))}
-                      />
-                      {formErrors.stock_quantity && (
-                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                          <span>⚠</span> {formErrors.stock_quantity}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="low_stock_threshold" className="text-sm font-medium">Low Stock Alert</Label>
-                      <Input
-                        id="low_stock_threshold"
-                        name="low_stock_threshold"
-                        type="number"
-                        min={0}
-                        max={2147483647}
-                        defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
-                        placeholder="10"
-                        className={`rounded-lg ${formErrors.low_stock_threshold ? "border-red-500 focus-visible:ring-red-400" : ""}`}
-                        onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
-                      />
-                      {formErrors.low_stock_threshold && (
-                        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                          <span>⚠</span> {formErrors.low_stock_threshold}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expires_at" className="text-sm font-medium">Expiry Date (optional)</Label>
-                  <Input
-                    id="expires_at"
-                    name="expires_at"
-                    type="date"
-                    defaultValue={formatDateForInput(getDateValue(editingProduct?.expires_at))}
-                    className="rounded-lg"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full rounded-xl h-11 font-semibold"
-                  style={{ background: colors.primaryDark }}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    editingProduct ? "Updating..." : "Adding..."
-                  ) : !offlineStatus.isOnline ? (
-                    editingProduct ? "Save Offline" : "Add Offline"
-                  ) : (
-                    editingProduct ? "Update Product" : "Add Product"
                   )}
-                </Button>
+
+                  {/* Price / Stock (hidden when variants active) */}
+                  <div className={hasVariants ? "hidden" : "space-y-4"}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Price (रू) *</label>
+                        <input
+                          id="price" name="price" type="number" step="0.01"
+                          defaultValue={editingProduct ? getNumericValue(editingProduct.price) : undefined}
+                          placeholder="100"
+                          required={!hasVariants}
+                          onChange={() => setFormErrors(prev => ({ ...prev, price: "" }))}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.price ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                        />
+                        {formErrors.price && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.price}</p>}
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Cost Price (रू)</label>
+                        <input
+                          id="cost_price" name="cost_price" type="number" step="0.01"
+                          defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
+                          placeholder="80"
+                          onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.cost_price ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                        />
+                        {formErrors.cost_price && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.cost_price}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Stock Quantity *</label>
+                        <input
+                          id="stock_quantity" name="stock_quantity" type="number" min={0} max={2147483647}
+                          defaultValue={editingProduct?.stock_quantity}
+                          placeholder="50"
+                          required={!hasVariants}
+                          onChange={() => setFormErrors(prev => ({ ...prev, stock_quantity: "" }))}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.stock_quantity ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                        />
+                        {formErrors.stock_quantity && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.stock_quantity}</p>}
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Low Stock Alert</label>
+                        <input
+                          id="low_stock_threshold" name="low_stock_threshold" type="number" min={0} max={2147483647}
+                          defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
+                          placeholder="10"
+                          onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.low_stock_threshold ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                        />
+                        {formErrors.low_stock_threshold && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.low_stock_threshold}</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expiry date */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Expiry Date</label>
+                    <input
+                      id="expires_at" name="expires_at" type="date"
+                      defaultValue={formatDateForInput(getDateValue(editingProduct?.expires_at))}
+                      className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white focus:outline-none focus:border-[#333333] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <div className="px-6 py-4 border-t border-[#1A1A1A]">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-11 bg-[#DA291C] hover:bg-[#B01E0A] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-bold uppercase tracking-[1px] rounded-[2px] transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> {editingProduct ? "Updating..." : "Adding..."}</>
+                    ) : !offlineStatus.isOnline ? (
+                      editingProduct ? "Save Offline" : "Add Offline"
+                    ) : (
+                      editingProduct ? "Update Product" : "Add Product"
+                    )}
+                  </button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
@@ -1117,13 +1090,11 @@ export default function Inventory() {
 
       {/* Offline Mode Banner */}
       {!offlineStatus.isOnline && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
-          <WifiOff className="h-5 w-5 text-orange-600" />
+        <div className="bg-[#1A1A1A] border border-[#303030] rounded-[2px] p-4 flex items-center gap-3">
+          <WifiOff className="h-5 w-5 text-amber-400" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-orange-800">
-              Working offline
-            </p>
-            <p className="text-xs text-orange-600">
+            <p className="text-sm font-bold text-white uppercase tracking-[0.5px]">Working Offline</p>
+            <p className="text-xs text-[#888888]">
               Product changes will be saved locally and synced when connection is restored.
             </p>
           </div>
@@ -1131,135 +1102,127 @@ export default function Inventory() {
       )}
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm" data-tour="inventory-filters">
-        <CardContent className="pt-6">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search products or barcode..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-10 rounded-lg border-gray-200"
-              />
-              <FeatureTooltip
-                featureKey="inventory_scanner"
-                title="Try the Scanner!"
-                description="Scan product barcodes directly with your camera to find them in your inventory instantly."
-              >
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  onClick={() => setSearchScannerOpen(true)}
-                  data-tour="inventory-scanner"
-                >
-                  <Scan className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                </button>
-              </FeatureTooltip>
-            </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="rounded-lg border-gray-200">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories?.map((cat: Category) => (
-                  <SelectItem key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={stockFilter} onValueChange={setStockFilter}>
-              <SelectTrigger className="rounded-lg border-gray-200">
-                <SelectValue placeholder="Stock Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Items</SelectItem>
-                <SelectItem value="low">Low Stock</SelectItem>
-                <SelectItem value="expiring">Expiring Soon</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Products Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="inventory-grid">
-        {
-          paginatedProducts.map((product: Product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              handleTrackToggle={handleTrackToggle}
-              handleEditClick={handleEditClick}
-              handleDeleteClick={handleDeleteClick}
-              offlineStatus={offlineStatus}
+      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4" data-tour="inventory-filters">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#666666]" />
+            <input
+              placeholder="Search products or barcode..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 pl-10 pr-10 bg-transparent border border-[#303030] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#555555] transition-colors"
             />
-          ))
-        }
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                onClick={() => setSearchScannerOpen(true)}
+                data-tour="inventory-scanner"
+              >
+                <Scan className="h-4 w-4 text-[#666666] hover:text-[#888888]" />
+              </button>
+            </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-10 px-3 bg-[#0A0A0A] border border-[#303030] rounded-[2px] text-[12px] text-[#CCCCCC] focus:outline-none focus:border-[#555555] transition-colors"
+          >
+            <option value="all">All Categories</option>
+            {categories?.map((cat: Category) => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+          <select
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            className="h-10 px-3 bg-[#0A0A0A] border border-[#303030] rounded-[2px] text-[12px] text-[#CCCCCC] focus:outline-none focus:border-[#555555] transition-colors"
+          >
+            <option value="all">All Items</option>
+            <option value="low">Low Stock</option>
+            <option value="expiring">Expiring Soon</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Products Table */}
+      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden" data-tour="inventory-grid">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-[#1A1A1A] hover:bg-transparent">
+                <TableHead className="w-[40px] text-[#666666]">
+                  <button
+                    className="h-6 w-6 flex items-center justify-center text-[#666666] hover:text-white"
+                    onClick={() => setExpandAll(!expandAll)}
+                    title={expandAll ? "Collapse All" : "Expand All"}
+                  >
+                    {expandAll ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                </TableHead>
+                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Product</TableHead>
+                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Status</TableHead>
+                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Stock</TableHead>
+                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Price</TableHead>
+                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Barcode</TableHead>
+                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedProducts.map((product: Product) => (
+                <ProductTableRow
+                  key={product.id}
+                  product={product}
+                  handleTrackToggle={handleTrackToggle}
+                  handleEditClick={handleEditClick}
+                  handleDeleteClick={handleDeleteClick}
+                  offlineStatus={offlineStatus}
+                  forceExpand={expandAll}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="rounded-lg border-gray-200"
-          >
-            Previous
-          </Button>
-          <span className="text-sm font-medium text-gray-500">
+        <div className="flex items-center justify-between px-1">
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">
             Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="rounded-lg border-gray-200"
-          >
-            Next
-          </Button>
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-8 px-3 rounded-[2px] border border-[#1A1A1A] text-[11px] text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors uppercase tracking-[1px]"
+            >Prev</button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 px-3 rounded-[2px] border border-[#1A1A1A] text-[11px] text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors uppercase tracking-[1px]"
+            >Next</button>
+          </div>
         </div>
       )}
 
       {filteredProducts.length === 0 && (
-        <Card className="border-0 shadow-sm border-dashed border-2">
-          <CardContent className="py-12">
-            <PremiumEmptyState
-              icon={Package}
-              title={productsList.length === 0 ? "No products yet" : "No results found"}
-              description={
-                productsList.length === 0
-                  ? "Start building your inventory by adding your first product or importing from a CSV."
-                  : "We couldn't find any products matching your current filters. Try adjusting your search or filters."
-              }
-              action={
-                productsList.length === 0 ? (
-                  <Button
-                    onClick={() => setAddDialogOpen(true)}
-                    style={{ background: colors.primaryDark }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add First Product
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setCategoryFilter("all");
-                      setStockFilter("all");
-                    }}
-                  >
-                    Clear All Filters
-                  </Button>
-                )
-              }
-            />
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-24 border border-dashed border-[#1A1A1A] rounded-[2px]">
+          <Package className="h-8 w-8 text-[#303030] mb-4" />
+          <p className="text-[14px] font-medium text-white mb-1">
+            {productsList.length === 0 ? "No products yet" : "No results found"}
+          </p>
+          <p className="text-[12px] text-[#888888] text-center max-w-xs">
+            {productsList.length === 0
+              ? "Start building your inventory by adding your first product."
+              : "No products match your current filters."}
+          </p>
+          {(searchTerm || categoryFilter !== "all" || stockFilter !== "all") && (
+            <button
+              onClick={() => { setSearchTerm(""); setCategoryFilter("all"); setStockFilter("all"); }}
+              className="mt-4 text-[11px] text-[#DA291C] uppercase tracking-[1px] hover:underline"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
       )}
 
       {/* Barcode Scanner for Form */}
@@ -1285,11 +1248,18 @@ interface ProductCardProps {
   handleEditClick: (product: Product) => void;
   handleDeleteClick: (product: Product) => void;
   offlineStatus: OfflineStatus;
+  forceExpand?: boolean;
 }
 
-function ProductCard({ product, handleTrackToggle, handleEditClick, handleDeleteClick, offlineStatus }: ProductCardProps) {
-  // Lazy-load variants if they aren't already attached
+function ProductTableRow({ product, handleTrackToggle, handleEditClick, handleDeleteClick, offlineStatus, forceExpand }: ProductCardProps) {
   const [localVariants, setLocalVariants] = useState<ProductVariant[]>(product.variants || []);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (forceExpand !== undefined) {
+      setExpanded(forceExpand);
+    }
+  }, [forceExpand]);
   
   useEffect(() => {
     if (!product.variants || product.variants.length === 0) {
@@ -1305,7 +1275,7 @@ function ProductCard({ product, handleTrackToggle, handleEditClick, handleDelete
   const displayVariants = localVariants;
   const stockQuantity = product.stock_quantity;
   const lowThreshold = getInt32Value(product.low_stock_threshold);
-  const isLowStock = stockQuantity < lowThreshold;
+  const isLowStock = stockQuantity <= lowThreshold;
 
   const expiryDate = getDateValue(product.expires_at);
   const daysUntilExpiry = expiryDate
@@ -1315,150 +1285,156 @@ function ProductCard({ product, handleTrackToggle, handleEditClick, handleDelete
 
   const price = getNumericValue(product.price);
   const barcode = getTextValue(product.barcode);
+  const hasVariants = displayVariants && displayVariants.length > 0;
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <div
-              className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: `${colors.primary}10` }}
+    <>
+      <TableRow className={`border-b border-[#1A1A1A] hover:bg-[#0D0D0D] transition-colors ${expanded ? 'bg-[#0D0D0D]' : ''}`}>
+        <TableCell className="p-3">
+          {hasVariants && (
+            <button
+              className="h-8 w-8 flex items-center justify-center text-[#666666] hover:text-white transition-colors"
+              onClick={() => setExpanded(!expanded)}
             >
-              <Package className="h-5 w-5" style={{ color: colors.primary }} />
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+          )}
+        </TableCell>
+        <TableCell className="p-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-[2px] bg-[#1A1A1A] flex items-center justify-center shrink-0">
+              <Package className="h-4 w-4 text-[#555555]" />
             </div>
             <div>
-              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+              <div className="font-semibold text-white text-[13px] flex items-center gap-2">
                 {product.name}
-                {displayVariants && displayVariants.length > 0 && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-bold bg-indigo-50 text-indigo-700 border-indigo-100 uppercase tracking-wider">
+                {hasVariants && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#DA291C]/10 text-[#DA291C] border border-[#DA291C]/20 rounded-[2px] font-bold uppercase tracking-wider">
                     {displayVariants.length} VAR
-                  </Badge>
+                  </span>
                 )}
-              </CardTitle>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {product.status?.product_status || 'active'}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            {isLowStock && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-xs">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Low
-              </Badge>
-            )}
-            {isExpiringSoon && (
-              <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 text-xs">
-                <Calendar className="h-3 w-3 mr-1" />
-                {daysUntilExpiry}d
-              </Badge>
-            )}
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
-          <div className="flex items-center gap-2">
-            <Switch
-              id={`track-${product.id}`}
-              checked={product.is_tracked || false}
-              onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
-              className="data-[state=checked]:bg-teal-600"
-            />
-            <Label htmlFor={`track-${product.id}`} className="text-xs text-gray-500 cursor-pointer">
-              Track Online Price
-            </Label>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between py-2 border-b border-gray-100">
-            <span className="text-gray-500">Stock</span>
-            <span className="font-semibold text-gray-900">{stockQuantity} units</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-100">
-            <span className="text-gray-500">Price</span>
-            <span className="font-semibold" style={{ color: colors.primary }}>रू {price}</span>
-          </div>
-          {expiryDate && (
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-500">Expiry</span>
-              <span className="font-medium text-gray-700">
-                {new Date(expiryDate).toLocaleDateString("en-NP")}
-              </span>
-            </div>
-          )}
-          {barcode && (
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-500">Barcode</span>
-              <span className="font-mono text-xs text-gray-600">{barcode}</span>
-            </div>
-          )}
-          {displayVariants && displayVariants.length > 0 && (
-            <div className="pt-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Variant Distribution</p>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-                {displayVariants.map((v) => (
-                  <div key={v.id} className="flex justify-between items-center text-xs bg-gray-50/50 p-1.5 rounded border border-gray-100">
-                    <span className="text-gray-600 font-medium truncate max-w-[120px]">
-                      {Object.values(v.attributes).join(' / ')}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-gray-400 font-mono">{v.sku}</span>
-                      <span className={`font-bold ${v.stock_level <= 5 ? 'text-amber-600' : 'text-gray-900'}`}>
-                        {v.stock_level}
-                      </span>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
+          </div>
+        </TableCell>
+        <TableCell className="p-3">
+          <span className="text-[12px] text-[#888888] capitalize">{product.status?.product_status || 'active'}</span>
+          {isExpiringSoon && (
+            <div className="mt-1">
+              <span className="text-[10px] text-amber-400 font-bold">{daysUntilExpiry}d exp</span>
+            </div>
           )}
-        </div>
-        <div className="grid grid-cols-2 gap-2 mt-auto pt-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    variant="outline"
-                    className="group rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900 w-full"
-                    onClick={() => handleEditClick(product)}
-                    disabled={!offlineStatus.isOnline}
-                  >
-                    <Pencil className="h-4 w-4 mr-2 text-gray-500 group-hover:text-gray-900" />
-                    Edit
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!offlineStatus.isOnline && (
-                <TooltipContent>
-                  <p>Editing products requires internet connection</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    variant="outline"
-                    className="group rounded-lg border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 w-full"
-                    onClick={() => handleDeleteClick(product)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete this product permanently</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardContent>
-    </Card>
+        </TableCell>
+        <TableCell className="p-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] font-bold text-white">{stockQuantity}</span>
+            <span className="text-[11px] text-[#888888]">units</span>
+            {isLowStock && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-[2px] font-bold uppercase tracking-wider">Low</span>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="p-3">
+          <span className="text-[13px] font-bold text-[#DA291C]">रू {price}</span>
+        </TableCell>
+        <TableCell className="p-3">
+          <span className="font-mono text-[11px] text-[#666666]">{barcode || '—'}</span>
+        </TableCell>
+        <TableCell className="p-3 text-right">
+          <div className="flex items-center justify-end gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Switch
+                      id={`track-${product.id}`}
+                      checked={product.is_tracked || false}
+                      onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
+                      className="data-[state=checked]:bg-[#DA291C] scale-75"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent><p>Track Online Price</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[#666666] hover:text-white hover:bg-[#1A1A1A]"
+                      onClick={() => handleEditClick(product)}
+                      disabled={!offlineStatus.isOnline}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!offlineStatus.isOnline && (
+                  <TooltipContent><p>Requires internet</p></TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[#666666] hover:text-[#DA291C] hover:bg-[#DA291C]/10"
+                      onClick={() => handleDeleteClick(product)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent><p>Delete product</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {/* Expanded Variants Row */}
+      {hasVariants && expanded && (
+        <TableRow>
+          <TableCell colSpan={7} className="p-0 border-b border-[#1A1A1A]">
+            <div className="pl-[60px] pr-4 py-3 bg-[#0D0D0D] border-l-2 border-l-[#DA291C]/40">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#1A1A1A]">
+                    <th className="pb-2 text-left text-[10px] text-[#888888] uppercase tracking-[1px] font-bold">Variant</th>
+                    <th className="pb-2 text-left text-[10px] text-[#888888] uppercase tracking-[1px] font-bold">SKU</th>
+                    <th className="pb-2 text-left text-[10px] text-[#888888] uppercase tracking-[1px] font-bold">Barcode</th>
+                    <th className="pb-2 text-right text-[10px] text-[#888888] uppercase tracking-[1px] font-bold">Price</th>
+                    <th className="pb-2 text-right text-[10px] text-[#888888] uppercase tracking-[1px] font-bold">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayVariants.map((v) => (
+                    <tr key={String(v.id)} className="border-b border-[#1A1A1A] last:border-0">
+                      <td className="py-2 text-[12px] font-medium text-white">
+                        {Object.values(v.attributes as Record<string,string>).join(' / ')}
+                      </td>
+                      <td className="py-2 text-[11px] font-mono text-[#888888]">{v.sku}</td>
+                      <td className="py-2 text-[11px] font-mono text-[#888888]">{(v as any).barcode || '—'}</td>
+                      <td className="py-2 text-[12px] text-right text-[#DA291C] font-bold">रू {(v as any).selling_price}</td>
+                      <td className="py-2 text-[12px] text-right">
+                        <span className={`font-bold ${ (v as any).stock_level <= 5 ? 'text-amber-400' : 'text-white'}`}>
+                          {(v as any).stock_level}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
