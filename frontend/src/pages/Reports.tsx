@@ -77,9 +77,9 @@ import {
 import { cn } from "@/lib/utils";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const PRIMARY = "#0d9488";
-const PRIMARY_DARK = "#115e59";
-const COLORS = ["#0d9488", "#059669", "#0891b2", "#7c3aed", "#db2777", "#ea580c"];
+const PRIMARY = "#DA291C";
+const PRIMARY_DARK = "#B01E0A";
+const COLORS = ["#DA291C", "#E85D52", "#8B1A12", "#FF6B5E", "#C44035", "#F09590"];
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => {
@@ -92,22 +92,22 @@ const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => {
 
 function InsightIcon({ type }: { type: Insight["type"] }) {
   switch (type) {
-    case "success":    return <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />;
-    case "warning":    return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />;
-    case "alert":      return <Flame className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />;
-    case "opportunity":return <Zap className="h-4 w-4 text-violet-500 shrink-0 mt-0.5" />;
-    default:           return <Info className="h-4 w-4 text-sky-500 shrink-0 mt-0.5" />;
+    case "success":    return <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />;
+    case "warning":    return <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />;
+    case "alert":      return <Flame className="h-4 w-4 text-[#DA291C] shrink-0 mt-0.5" />;
+    case "opportunity":return <Zap className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />;
+    default:           return <Info className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />;
   }
 }
 
 function insightBorder(type: Insight["type"]) {
   return {
-    success:     "border-l-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20",
-    warning:     "border-l-amber-400 bg-amber-50/60 dark:bg-amber-900/20",
-    alert:       "border-l-red-400 bg-red-50/60 dark:bg-red-900/20",
-    opportunity: "border-l-violet-400 bg-violet-50/60 dark:bg-violet-900/20",
-    info:        "border-l-sky-400 bg-sky-50/60 dark:bg-sky-900/20",
-  }[type] ?? "border-l-gray-400 bg-gray-50/60";
+    success:     "border-l-emerald-500 bg-emerald-900/20",
+    warning:     "border-l-amber-500 bg-amber-900/20",
+    alert:       "border-l-[#DA291C] bg-[#DA291C]/10",
+    opportunity: "border-l-violet-500 bg-violet-900/20",
+    info:        "border-l-sky-500 bg-sky-900/20",
+  }[type] ?? "border-l-[#303030] bg-[#1A1A1A]";
 }
 
 function insightActionLabel(action: string | undefined): string {
@@ -144,68 +144,60 @@ function InsightsFeed({ insights }: { insights: Insight[] }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <Card className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-t-2 border-teal-500/20" data-tour="reports-insights">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
-                <Brain className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-              </div>
-              Daily Insights
-              <Badge variant="secondary" className="text-xs font-medium">
-                {insights.length} new
-              </Badge>
-            </CardTitle>
-            <span className="text-xs text-muted-foreground">Smart Analysis · Just Now</span>
+      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]" data-tour="reports-insights">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+              <Brain className="h-4 w-4 text-[#DA291C]" />
+            </div>
+            <span className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">Daily Insights</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] font-medium">
+              {insights.length} new
+            </span>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2.5">
-            <AnimatePresence mode="popLayout">
-              {shown.map((insight, i) => (
-                <motion.div
-                  key={`${i}-${insight.type}`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border-l-4 transition-all duration-200 group",
-                    insightBorder(insight.type)
-                  )}
-                >
-                  <InsightIcon type={insight.type} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground leading-snug">{insight.message}</p>
-                  </div>
-                  {insight.action && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs h-7 px-2 shrink-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleAction(insight.action)}
-                    >
-                      {insightActionLabel(insight.action)}
-                    </Button>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {insights.length > 3 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full text-muted-foreground hover:text-foreground text-xs gap-1"
-                onClick={() => setExpanded(!expanded)}
+          <span className="text-[11px] text-[#555555]">Smart Analysis · Just Now</span>
+        </div>
+        <div className="p-5 space-y-2.5">
+          <AnimatePresence mode="popLayout">
+            {shown.map((insight, i) => (
+              <motion.div
+                key={`${i}-${insight.type}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                className={cn(
+                  "flex items-start gap-3 p-3 rounded-[2px] border-l-2 transition-all duration-200 group",
+                  insightBorder(insight.type)
+                )}
               >
-                {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                {expanded ? "Show less" : `Show ${insights.length - 3} more insights`}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                <InsightIcon type={insight.type} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-[#CCCCCC] leading-snug">{insight.message}</p>
+                </div>
+                {insight.action && (
+                  <button
+                    className="text-[11px] px-2 py-1 shrink-0 text-[#8F8F8F] hover:text-white uppercase tracking-[0.5px] transition-colors"
+                    onClick={() => handleAction(insight.action)}
+                  >
+                    {insightActionLabel(insight.action)}
+                  </button>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {insights.length > 3 && (
+            <button
+              className="w-full text-[#555555] hover:text-[#8F8F8F] text-[11px] uppercase tracking-[1px] py-2 flex items-center justify-center gap-1 transition-colors"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              {expanded ? "Show less" : `Show ${insights.length - 3} more insights`}
+            </button>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -259,117 +251,114 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <Card id="view_dead_stock" className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm h-full">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              </div>
-              Dead Stock Cash Trap
-            </CardTitle>
+      <div id="view_dead_stock" className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] h-full">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+            </div>
+            <span className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">Dead Stock Cash Trap</span>
+          </div>
             
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-800 dark:text-amber-400">
-                  <Tag className="h-3 w-3" />
-                  Create Discount
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Discount Dead Stock</DialogTitle>
-                  <DialogDescription>
-                    You have {(deadStock?.items || []).length} items that haven't sold in 60+ days. Apply a bulk markdown to liquidate them and recover your capital.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label>Discount Percentage (%)</Label>
-                    <div className="flex items-center gap-2">
-                       <Input 
-                         type="number" 
-                         min={1} 
-                         max={99} 
-                         value={discountPercent} 
-                         onChange={(e) => setDiscountPercent(Number(e.target.value))} 
-                         className="w-full"
-                       />
-                       <span className="text-xl font-bold">%</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg space-y-2">
-                    <p className="font-semibold text-foreground">Items to be updated:</p>
-                    <ul className="list-disc pl-4 grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
-                      {(deadStock?.items || []).map((item, idx) => (
-                        <li key={idx} className="truncate">
-                          {item.product_name} 
-                          <span className="opacity-50 ml-1">(-{discountPercent}%)</span>
-                        </li>
-                      ))}
-                    </ul>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <button className="text-[11px] h-7 px-3 flex items-center gap-1.5 rounded-[2px] border border-amber-800 text-amber-400 hover:bg-amber-900/30 transition-colors uppercase tracking-[0.5px]">
+                <Tag className="h-3 w-3" />
+                Create Discount
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-[#111111] border-[#303030]">
+              <DialogHeader>
+                <DialogTitle className="text-white">Discount Dead Stock</DialogTitle>
+                <DialogDescription className="text-[#8F8F8F]">
+                  You have {(deadStock?.items || []).length} items that haven't sold in 60+ days. Apply a bulk markdown to liquidate them and recover your capital.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[#8F8F8F]">Discount Percentage (%)</Label>
+                  <div className="flex items-center gap-2">
+                     <Input 
+                       type="number" 
+                       min={1} 
+                       max={99} 
+                       value={discountPercent} 
+                       onChange={(e) => setDiscountPercent(Number(e.target.value))} 
+                       className="w-full bg-[#0A0A0A] border-[#303030] text-white"
+                     />
+                     <span className="text-xl font-medium text-white">%</span>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button 
-                    className="bg-amber-600 hover:bg-amber-700 text-white" 
-                    onClick={() => applyDiscountMutation.mutate()}
-                    disabled={applyDiscountMutation.isPending || !deadStock?.items?.length}
-                  >
-                    {applyDiscountMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Slash Prices
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            
-          </div>
-        </CardHeader>
-        <CardContent>
+                <div className="text-[12px] text-[#8F8F8F] bg-[#0A0A0A] border border-[#1A1A1A] p-3 rounded-[2px] space-y-2">
+                  <p className="font-medium text-white">Items to be updated:</p>
+                  <ul className="list-disc pl-4 grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
+                    {(deadStock?.items || []).map((item, idx) => (
+                      <li key={idx} className="truncate">
+                        {item.product_name} 
+                        <span className="text-[#555555] ml-1">(-{discountPercent}%)</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <DialogFooter>
+                <button className="px-4 py-2 rounded-[2px] border border-[#303030] text-[#8F8F8F] text-[12px] uppercase tracking-[1px] hover:text-white transition-colors" onClick={() => setOpen(false)}>Cancel</button>
+                <button 
+                  className="px-4 py-2 rounded-[2px] bg-amber-600 hover:bg-amber-700 text-white text-[12px] uppercase tracking-[1px] disabled:opacity-50 flex items-center gap-2 transition-colors" 
+                  onClick={() => applyDiscountMutation.mutate()}
+                  disabled={applyDiscountMutation.isPending || !deadStock?.items?.length}
+                >
+                  {applyDiscountMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Slash Prices
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="p-5">
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Capital Tied Up</p>
-                <p className="text-4xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mb-1">Capital Tied Up</p>
+                <p className="text-[28px] font-medium text-amber-400">
                   रू <CountUp to={total} />
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Unsold for 60+ days</p>
+                <p className="text-[12px] text-[#555555] mt-1">Unsold for 60+ days</p>
               </div>
               <div className="space-y-2">
                 {thresholdData.map((t) => (
                   <div key={t.label} className="flex items-center gap-3">
                     <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
-                    <span className="text-xs text-muted-foreground w-20">{t.label}</span>
-                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <span className="text-[11px] text-[#8F8F8F] w-20">{t.label}</span>
+                    <div className="flex-1 h-1.5 bg-[#1A1A1A] rounded-[2px] overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         whileInView={{ width: `${total > 0 ? (t.value / total) * 100 : 0}%` }}
                         viewport={{ once: true }}
-                        className="h-full rounded-full"
+                        className="h-full rounded-[2px]"
                         style={{ backgroundColor: t.color }}
                         transition={{ duration: 1, ease: "circOut" }}
                       />
                     </div>
-                    <span className="text-xs font-semibold w-24 text-right">रू {t.value.toLocaleString()}</span>
+                    <span className="text-[12px] font-medium text-[#CCCCCC] w-24 text-right">रू {t.value.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">By Category</p>
+              <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">By Category</p>
               {byCategory.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">Clear! 🎉</p>
+                <p className="text-[13px] text-[#555555] py-4 text-center">Clear! 🎉</p>
               ) : (
                 byCategory.slice(0, 5).map((cat) => (
                   <div key={cat.category} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-medium truncate">{cat.category || "General"}</span>
-                      <span className="text-muted-foreground">रू {cat.total.toLocaleString()}</span>
+                    <div className="flex justify-between text-[12px]">
+                      <span className="text-[#CCCCCC] truncate">{cat.category || "General"}</span>
+                      <span className="text-[#8F8F8F]">रू {cat.total.toLocaleString()}</span>
                     </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-[#1A1A1A] rounded-[2px] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-amber-400"
+                        className="h-full rounded-[2px] bg-amber-500"
                         style={{ width: `${(cat.total / max) * 100}%` }}
                       />
                     </div>
@@ -378,8 +367,8 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -387,9 +376,9 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
 // ── Feature 3: Predictive Velocity Restocking ─────────────────────────────────
 function VelocityTable({ items }: { items: ReportStats["velocity"] }) {
   const urgency = (days: number) => {
-    if (days <= 7) return { bg: "bg-red-50 dark:bg-red-950/30", badge: "bg-red-100 text-red-700 dark:bg-red-900/40", label: "Critical" };
-    if (days <= 14) return { bg: "bg-amber-50 dark:bg-amber-950/30", badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40", label: "Low" };
-    return { bg: "hover:bg-muted/40", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40", label: "Healthy" };
+    if (days <= 7) return { bg: "bg-[#DA291C]/5", badge: "bg-[#DA291C]/20 text-[#DA291C]", label: "Critical" };
+    if (days <= 14) return { bg: "bg-amber-900/10", badge: "bg-amber-900/30 text-amber-400", label: "Low" };
+    return { bg: "hover:bg-[#1A1A1A]", badge: "bg-emerald-900/30 text-emerald-400", label: "Healthy" };
   };
 
   return (
@@ -399,33 +388,31 @@ function VelocityTable({ items }: { items: ReportStats["velocity"] }) {
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
     >
-      <Card id="view_velocity" className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm overflow-hidden">
-        <CardHeader className="pb-3 border-b">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
-                <RefreshCw className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-              </div>
-              Velocity Tracking
-            </CardTitle>
-            <span className="text-xs text-muted-foreground">Predictive Restock Analysis</span>
+      <div id="view_velocity" className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+              <RefreshCw className="h-4 w-4 text-[#DA291C]" />
+            </div>
+            <span className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">Velocity Tracking</span>
           </div>
-        </CardHeader>
+          <span className="text-[11px] text-[#555555]">Predictive Restock Analysis</span>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-[13px]">
             <thead>
-              <tr className="bg-muted/30">
-                <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground">Product</th>
-                <th className="text-right px-4 py-2 text-xs font-semibold text-muted-foreground">Stock</th>
-                <th className="text-right px-4 py-2 text-xs font-semibold text-muted-foreground">Daily Avg</th>
-                <th className="text-right px-4 py-2 text-xs font-semibold text-muted-foreground">Days Left</th>
-                <th className="text-right px-4 py-2 text-xs font-semibold text-muted-foreground">Status</th>
+              <tr className="bg-[#0A0A0A]">
+                <th className="text-left px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Product</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Stock</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Daily Avg</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Days Left</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-[#1A1A1A]">
               {(items || []).length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground italic">
+                  <td colSpan={5} className="px-4 py-8 text-center text-[#555555] italic text-[13px]">
                     No velocity data available for this period. 
                   </td>
                 </tr>
@@ -434,14 +421,14 @@ function VelocityTable({ items }: { items: ReportStats["velocity"] }) {
                   const u = urgency(item.estimated_days_to_stockout);
                   return (
                     <tr key={i} className={cn("transition-colors", u.bg)}>
-                      <td className="px-4 py-3 font-medium">{item.product_name}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{item.stock_quantity}</td>
-                      <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.avg_daily_sales).toFixed(1)}</td>
-                      <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      <td className="px-4 py-3 text-[#CCCCCC]">{item.product_name}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-white">{item.stock_quantity}</td>
+                      <td className="px-4 py-3 text-right text-[#8F8F8F]">{Number(item.avg_daily_sales).toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right font-medium tabular-nums text-white">
                         {item.estimated_days_to_stockout > 365 ? "365+" : item.estimated_days_to_stockout}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold", u.badge)}>
+                        <span className={cn("inline-flex items-center rounded-[2px] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.5px]", u.badge)}>
                           {u.label}
                         </span>
                       </td>
@@ -452,7 +439,7 @@ function VelocityTable({ items }: { items: ReportStats["velocity"] }) {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 }
@@ -468,45 +455,41 @@ function BasketWidget({ pairs }: { pairs: ReportStats["basket_pairs"] }) {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <Card id="view_basket" className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm h-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
-              <ShoppingCart className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-            </div>
-            Smart Bundles
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {(pairs || []).slice(0, 5).map((pair, i) => {
-              const pct = Math.round((pair.pair_frequency / maxFreq) * 100);
-              return (
-                <div key={i} className="group flex items-center gap-3 p-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-all border border-transparent hover:border-violet-500/10">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate text-foreground">{pair.product_a_name}</p>
-                    <div className="flex items-center gap-1 my-1">
-                      <Link2 className="h-3 w-3 text-violet-500" />
-                      <div className="h-[1px] flex-1 bg-violet-500/20" />
-                    </div>
-                    <p className="text-xs font-bold truncate text-foreground">{pair.product_b_name}</p>
+      <div id="view_basket" className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] h-full">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#1A1A1A]">
+          <div className="h-7 w-7 rounded-[2px] bg-violet-900/30 flex items-center justify-center">
+            <ShoppingCart className="h-4 w-4 text-violet-400" />
+          </div>
+          <span className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">Smart Bundles</span>
+        </div>
+        <div className="p-5 space-y-3">
+          {(pairs || []).slice(0, 5).map((pair, i) => {
+            const pct = Math.round((pair.pair_frequency / maxFreq) * 100);
+            return (
+              <div key={i} className="group flex items-center gap-3 p-3 rounded-[2px] bg-[#0A0A0A] hover:bg-[#1A1A1A] transition-all border border-[#1A1A1A] hover:border-[#303030]">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] text-[#CCCCCC] truncate">{pair.product_a_name}</p>
+                  <div className="flex items-center gap-1 my-1">
+                    <Link2 className="h-3 w-3 text-violet-400" />
+                    <div className="h-[1px] flex-1 bg-violet-500/20" />
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] font-black text-violet-600 dark:text-violet-400">{pair.pair_frequency}× Pairs</span>
-                    <div className="w-12 h-1 bg-muted rounded-full mt-1 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        className="h-full bg-violet-500"
-                      />
-                    </div>
+                  <p className="text-[12px] text-[#CCCCCC] truncate">{pair.product_b_name}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] font-medium text-violet-400 uppercase tracking-[0.5px]">{pair.pair_frequency}× Pairs</span>
+                  <div className="w-12 h-1 bg-[#1A1A1A] rounded-[2px] mt-1 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      className="h-full bg-violet-500"
+                    />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -529,9 +512,12 @@ function TrafficHeatmap({ cells }: { cells: ReportStats["traffic_heatmap"] }) {
   const maxCount = useMemo(() => Math.max(...(cells?.map((c) => c.transaction_count) || [1]), 1), [cells]);
 
   const cellColor = (count: number): string => {
-    if (count === 0) return "hsl(var(--muted)/0.3)";
+    if (count === 0) return "#1A1A1A";
     const intensity = count / maxCount;
-    return `hsl(183, 70%, ${Math.round(85 - intensity * 50)}%)`;
+    const r = Math.round(30 + intensity * 188);
+    const g = Math.round(26 + intensity * 15);
+    const b = Math.round(28 + intensity * 0);
+    return `rgb(${r}, ${g}, ${b})`;
   };
 
   return (
@@ -541,26 +527,24 @@ function TrafficHeatmap({ cells }: { cells: ReportStats["traffic_heatmap"] }) {
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
     >
-      <Card className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm overflow-hidden">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
-              <Clock className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-            </div>
-            Peak Traffic Hours
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#1A1A1A]">
+          <div className="h-7 w-7 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+            <Clock className="h-4 w-4 text-[#DA291C]" />
+          </div>
+          <span className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">Peak Traffic Hours</span>
+        </div>
+        <div className="p-5">
           <div className="overflow-x-auto">
             <div className="min-w-[540px]">
               <div className="flex mb-2 ml-12">
                 {DAY_LABELS.map((d) => (
-                  <div key={d} className="flex-1 text-center text-[10px] font-bold text-muted-foreground">{d}</div>
+                  <div key={d} className="flex-1 text-center text-[10px] font-medium text-[#555555] uppercase tracking-[0.5px]">{d}</div>
                 ))}
               </div>
               {Array.from({ length: 24 }, (_, hour) => (
                 <div key={hour} className="flex items-center mb-0.5">
-                  <div className="w-12 text-right pr-2 text-[9px] font-medium text-muted-foreground shrink-0 tabular-nums">
+                  <div className="w-12 text-right pr-2 text-[9px] font-normal text-[#555555] shrink-0 tabular-nums">
                     {hour % 3 === 0 ? HOUR_LABELS[hour] : ""}
                   </div>
                   {Array.from({ length: 7 }, (_, day) => {
@@ -571,12 +555,12 @@ function TrafficHeatmap({ cells }: { cells: ReportStats["traffic_heatmap"] }) {
                           <TooltipTrigger asChild>
                             <motion.div
                               whileHover={{ scale: 1.15, zIndex: 10 }}
-                              className="flex-1 h-3.5 mx-0.5 rounded-[2px] cursor-help"
+                              className="flex-1 h-3.5 mx-0.5 rounded-[1px] cursor-help"
                               style={{ backgroundColor: cellColor(count) }}
                               onMouseEnter={() => setHoveredCell({ day, hour, count })}
                             />
                           </TooltipTrigger>
-                          <TooltipContent className="text-[10px] font-bold">
+                          <TooltipContent className="text-[10px] font-medium bg-[#1A1A1A] border-[#303030] text-white">
                             {DAY_LABELS[day]} · {HOUR_LABELS[hour]} · {count} tx
                           </TooltipContent>
                         </Tooltip>
@@ -587,8 +571,8 @@ function TrafficHeatmap({ cells }: { cells: ReportStats["traffic_heatmap"] }) {
               ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -604,24 +588,20 @@ function KPICard({ icon, label, value, sub, iconBg, valueColor }: {
 }) {
   const numericValue = parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
   return (
-    <motion.div whileHover={{ y: -4 }}>
-      <Card className="border-0 shadow-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm h-full group">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-bold text-muted-foreground flex items-center gap-2">
-            <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center transition-all group-hover:bg-primary/20", iconBg ?? "bg-primary/10")}>
-              {icon}
-            </div>
-            {label}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={cn("text-xl font-black flex items-baseline gap-1", valueColor ?? "text-foreground")}>
-            {value.includes("रू") && <span className="text-xs opacity-60">रू</span>}
-            <CountUp to={numericValue} />
+    <motion.div whileHover={{ y: -2 }}>
+      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 h-full hover:border-[#303030] transition-colors">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">{label}</p>
+          <div className={cn("h-8 w-8 rounded-[2px] flex items-center justify-center", iconBg ?? "bg-[#DA291C]/10")}>
+            {icon}
           </div>
-          {sub && <p className="text-[10px] font-medium text-muted-foreground mt-1 truncate">{sub}</p>}
-        </CardContent>
-      </Card>
+        </div>
+        <div className={cn("text-[24px] font-medium flex items-baseline gap-1", valueColor ?? "text-white")}>
+          {value.includes("रू") && <span className="text-[12px] text-[#555555]">रू</span>}
+          <CountUp to={numericValue} />
+        </div>
+        {sub && <p className="text-[12px] text-[#555555] mt-1 truncate">{sub}</p>}
+      </div>
     </motion.div>
   );
 }
@@ -652,15 +632,15 @@ export default function Reports() {
 
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-      <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
-      <p className="text-xs font-bold text-muted-foreground animate-pulse">Analyzing Store Pulse...</p>
+      <Loader2 className="h-10 w-10 animate-spin text-[#DA291C] opacity-50" />
+      <p className="text-[11px] text-[#555555] uppercase tracking-[1px] animate-pulse">Analyzing Store Pulse...</p>
     </div>
   );
 
   if (isError || !stats) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-      <AlertTriangle className="h-10 w-10 text-red-500/50" />
-      <p className="text-xs font-bold text-muted-foreground">Intelligence Service Offline</p>
+      <AlertTriangle className="h-10 w-10 text-[#DA291C]/50" />
+      <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Intelligence Service Offline</p>
     </div>
   );
 
@@ -676,17 +656,17 @@ export default function Reports() {
     >
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="reports-header">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-black tracking-tighter">Intelligence Hub</h1>
-          <p className="text-sm font-medium text-muted-foreground">Actionable business intelligence for {dateRange}ly performance</p>
+        <div>
+          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Analytics</p>
+          <h1 className="text-[22px] font-medium text-white tracking-tight">Intelligence Hub</h1>
         </div>
         <div className="flex items-center gap-2" data-tour="reports-export">
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-32 h-9 text-xs font-bold rounded-xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-0 shadow-sm">
-              <Calendar className="h-3 w-3 mr-2" />
+            <SelectTrigger className="w-32 h-9 text-[11px] rounded-[2px] bg-[#111111] border-[#1A1A1A] text-[#8F8F8F] uppercase tracking-[0.5px]">
+              <Calendar className="h-3 w-3 mr-2 text-[#555555]" />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-none shadow-xl">
+            <SelectContent className="rounded-[2px] border-[#303030] bg-[#111111]">
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="week">Weekly</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
@@ -699,9 +679,9 @@ export default function Reports() {
             description="Generate professional PDF or CSV reports for your store's performance to share with your team or accountant."
             placement="bottom"
           >
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handleExportPDF} className="h-9 w-9 border-0 bg-white/50 dark:bg-slate-900/50 rounded-xl shadow-sm"><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={handleExportCSV} className="h-9 w-9 border-0 bg-white/50 dark:bg-slate-900/50 rounded-xl shadow-sm"><Download className="h-4 w-4" /></Button>
+            <div className="flex items-center gap-1">
+              <button onClick={handleExportPDF} className="h-9 w-9 rounded-[2px] flex items-center justify-center border border-[#1A1A1A] bg-[#111111] hover:bg-[#1A1A1A] transition-colors"><FileText className="h-4 w-4 text-[#666666]" /></button>
+              <button onClick={handleExportCSV} className="h-9 w-9 rounded-[2px] flex items-center justify-center border border-[#1A1A1A] bg-[#111111] hover:bg-[#1A1A1A] transition-colors"><Download className="h-4 w-4 text-[#666666]" /></button>
             </div>
           </FeatureTooltip>
         </div>
@@ -712,10 +692,10 @@ export default function Reports() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-tour="reports-kpis">
-        <KPICard icon={<TrendingUp className="h-4 w-4 text-emerald-500" />} label="Total Sales" value={`रू ${totalSalesVal}`} sub={`${sales.count} Transactions`} iconBg="bg-emerald-500/10" valueColor="text-emerald-600" />
-        <KPICard icon={<Zap className="h-4 w-4 text-primary" />} label="Gross Profit" value={`रू ${profit.gross_profit}`} sub={`${profit.total_revenue > 0 ? Math.round((Number(profit.gross_profit) / Number(profit.total_revenue)) * 100) : 0}% Margin`} />
-        <KPICard icon={<Package className="h-4 w-4 text-sky-500" />} label="Inventory Value" value={`रू ${inventory.total_value}`} sub={`${inventory.total_products} Skus`} iconBg="bg-sky-500/10" />
-        <KPICard icon={<Users className="h-4 w-4 text-red-500" />} label="Receivables" value={`रू ${totalOutstanding}`} sub={`from ${debts.total_debtors} Debtors`} iconBg="bg-red-500/10" valueColor="text-red-600" />
+        <KPICard icon={<TrendingUp className="h-4 w-4 text-emerald-400" />} label="Total Sales" value={`रू ${totalSalesVal}`} sub={`${sales.count} Transactions`} iconBg="bg-emerald-900/30" valueColor="text-emerald-400" />
+        <KPICard icon={<Zap className="h-4 w-4 text-[#DA291C]" />} label="Gross Profit" value={`रू ${profit.gross_profit}`} sub={`${profit.total_revenue > 0 ? Math.round((Number(profit.gross_profit) / Number(profit.total_revenue)) * 100) : 0}% Margin`} />
+        <KPICard icon={<Package className="h-4 w-4 text-sky-400" />} label="Inventory Value" value={`रू ${inventory.total_value}`} sub={`${inventory.total_products} Skus`} iconBg="bg-sky-900/30" />
+        <KPICard icon={<Users className="h-4 w-4 text-[#DA291C]" />} label="Receivables" value={`रू ${totalOutstanding}`} sub={`from ${debts.total_debtors} Debtors`} iconBg="bg-[#DA291C]/10" valueColor="text-[#DA291C]" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -728,110 +708,116 @@ export default function Reports() {
 
       {/* Detailed Tabs */}
       <Tabs defaultValue="sales" className="space-y-4">
-        <TabsList className="bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm p-1 rounded-2xl border border-white/10 w-fit">
-          <TabsTrigger value="sales" className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Sales</TabsTrigger>
-          <TabsTrigger value="inventory" className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Inventory</TabsTrigger>
-          <TabsTrigger value="debtors" className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Debtors</TabsTrigger>
+        <TabsList className="bg-[#111111] border border-[#1A1A1A] p-0.5 rounded-[2px] w-fit">
+          <TabsTrigger value="sales" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Sales</TabsTrigger>
+          <TabsTrigger value="inventory" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Inventory</TabsTrigger>
+          <TabsTrigger value="debtors" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Debtors</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales" className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
-             <Card className="md:col-span-2 border-0 shadow-md overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                <CardHeader><CardTitle className="text-sm font-bold">Sales Volume Trend</CardTitle></CardHeader>
-                <CardContent className="h-64">
+             <div className="md:col-span-2 bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#1A1A1A]">
+                  <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Sales Volume Trend</span>
+                </div>
+                <div className="p-5 h-64">
                    <ResponsiveContainer>
                       <ComposedChart data={sales.daily_trend}>
-                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted)/0.2)" />
-                         <XAxis dataKey="sale_date" axisLine={false} tickLine={false} tick={{fontSize: 10}} tickFormatter={(v) => new Date(v).toLocaleDateString([], {day: 'numeric', month: 'short'})} />
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
+                         <XAxis dataKey="sale_date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#555555'}} tickFormatter={(v) => new Date(v).toLocaleDateString([], {day: 'numeric', month: 'short'})} />
                          <YAxis hide />
-                         <RechartsTooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                         <Bar dataKey="daily_total" fill={PRIMARY} radius={[4, 4, 0, 0]} opacity={0.3} />
-                         <Line type="monotone" dataKey="daily_total" stroke={PRIMARY} strokeWidth={3} dot={{r: 4, fill: PRIMARY, strokeWidth: 0}} />
+                         <RechartsTooltip contentStyle={{borderRadius: '2px', border: '1px solid #303030', backgroundColor: '#111111', color: '#CCCCCC'}} />
+                         <Bar dataKey="daily_total" fill={PRIMARY} radius={[2, 2, 0, 0]} opacity={0.3} />
+                         <Line type="monotone" dataKey="daily_total" stroke={PRIMARY} strokeWidth={2} dot={{r: 3, fill: PRIMARY, strokeWidth: 0}} />
                       </ComposedChart>
                    </ResponsiveContainer>
-                </CardContent>
-             </Card>
-             <Card className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                <CardHeader><CardTitle className="text-sm font-bold">Top Sellers</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
+                </div>
+             </div>
+             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+                <div className="px-5 py-4 border-b border-[#1A1A1A]">
+                  <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Top Sellers</span>
+                </div>
+                <div className="p-5 space-y-4">
                    {sales.top_products?.slice(0, 5).map(p => (
                       <div key={p.product_id} className="flex items-center justify-between">
-                         <span className="text-xs font-bold truncate pr-4">{p.product_name}</span>
-                         <Badge variant="secondary" className="text-[10px] font-black">{p.total_quantity} sold</Badge>
+                         <span className="text-[12px] text-[#CCCCCC] truncate pr-4">{p.product_name}</span>
+                         <span className="text-[10px] px-2 py-0.5 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] font-medium shrink-0">{p.total_quantity} sold</span>
                       </div>
                    ))}
-                </CardContent>
-             </Card>
+                </div>
+             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="inventory" className="space-y-4">
            <div className="grid md:grid-cols-2 gap-4">
-              <Card className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                 <CardHeader><CardTitle className="text-sm font-bold">Stock Distribution</CardTitle></CardHeader>
-                 <CardContent className="h-64 flex flex-col items-center">
+              <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+                 <div className="px-5 py-4 border-b border-[#1A1A1A]">
+                   <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Stock Distribution</span>
+                 </div>
+                 <div className="p-5 h-64 flex flex-col items-center">
                     <ResponsiveContainer>
                       <PieChart>
                         <Pie data={inventory.stock_by_category} cx="50%" cy="50%" innerRadius={60} outerRadius={80} dataKey="product_count">
                            {inventory.stock_by_category?.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                         </Pie>
-                        <RechartsTooltip />
+                        <RechartsTooltip contentStyle={{borderRadius: '2px', border: '1px solid #303030', backgroundColor: '#111111', color: '#CCCCCC'}} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="flex flex-wrap gap-2 justify-center mt-2">
                        {inventory.stock_by_category?.map((c, i) => (
-                          <div key={i} className="flex items-center gap-1 text-[10px] font-bold">
+                          <div key={i} className="flex items-center gap-1 text-[10px] text-[#8F8F8F]">
                              <div className="h-2 w-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}} />
                              {c.category_name}
                           </div>
                        ))}
                     </div>
-                 </CardContent>
-              </Card>
-              <Card className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                 <CardHeader><CardTitle className="text-sm font-bold">Revenue by Category</CardTitle></CardHeader>
-                 <CardContent className="h-64">
+                 </div>
+              </div>
+              <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+                 <div className="px-5 py-4 border-b border-[#1A1A1A]">
+                   <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Revenue by Category</span>
+                 </div>
+                 <div className="p-5 h-64">
                     <ResponsiveContainer>
                        <BarChart data={inventory.revenue_by_category} layout="vertical">
                           <XAxis type="number" hide />
-                          <YAxis dataKey="category_name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold'}} width={80} />
-                          <Bar dataKey="total_revenue" fill={PRIMARY} radius={[0, 4, 4, 0]} />
-                          <RechartsTooltip />
+                          <YAxis dataKey="category_name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8F8F8F'}} width={80} />
+                          <Bar dataKey="total_revenue" fill={PRIMARY} radius={[0, 2, 2, 0]} />
+                          <RechartsTooltip contentStyle={{borderRadius: '2px', border: '1px solid #303030', backgroundColor: '#111111', color: '#CCCCCC'}} />
                        </BarChart>
                     </ResponsiveContainer>
-                 </CardContent>
-              </Card>
+                 </div>
+              </div>
            </div>
         </TabsContent>
 
         <TabsContent value="debtors" className="space-y-4">
-          <Card className="border-0 shadow-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-bold flex items-center justify-between">
-                Largest Receivables
-                <span className="text-[10px] text-muted-foreground">Follow up required</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
+              <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Largest Receivables</span>
+              <span className="text-[10px] text-[#555555]">Follow up required</span>
+            </div>
+            <div className="p-5 space-y-2">
               {debts.top_debtors?.map(d => (
-                <div key={d.customer_phone} className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div key={d.customer_phone} className="flex items-center justify-between p-3 rounded-[2px] bg-[#0A0A0A] hover:bg-[#1A1A1A] transition-colors border border-[#1A1A1A]">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
+                    <div className="h-9 w-9 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] flex items-center justify-center font-medium text-[12px]">
                        {d.customer_name?.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-xs font-black">{d.customer_name}</p>
-                      <p className="text-[10px] text-muted-foreground">{d.customer_phone}</p>
+                      <p className="text-[12px] text-white">{d.customer_name}</p>
+                      <p className="text-[10px] text-[#555555]">{d.customer_phone}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-black text-red-500">रू {Number(d.total_debt).toLocaleString()}</p>
-                    <p className="text-[9px] font-bold text-muted-foreground">Last: {new Date(d.last_transaction).toLocaleDateString()}</p>
+                    <p className="text-[12px] font-medium text-[#DA291C]">रू {Number(d.total_debt).toLocaleString()}</p>
+                    <p className="text-[9px] text-[#555555]">Last: {new Date(d.last_transaction).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </motion.div>

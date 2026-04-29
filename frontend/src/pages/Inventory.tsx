@@ -52,6 +52,7 @@ import { VariantBuilder, VariantDimension } from "@/components/products/VariantB
 import { VariantGrid, generateCartesianProduct } from "@/components/products/VariantGrid";
 import { ProductVariant } from "@/types";
 import { db } from "@/db/db";
+import { cn } from "@/lib/utils";
 
 const colors = {
   primary: "#DA291C",
@@ -409,11 +410,11 @@ export default function Inventory() {
         // Reconstruct dimensions from saved variant attributes
         const allKeys = Array.from(
           new Set(savedVariants.flatMap(v => Object.keys(v.attributes || {})))
-        );
+        ) as string[];
         const reconstructedDimensions: VariantDimension[] = allKeys.map(key => ({
           name: key,
           values: Array.from(
-            new Set(savedVariants.map(v => (v.attributes as Record<string, string>)[key]).filter(Boolean))
+            new Set(savedVariants.map(v => v.attributes[key]).filter(Boolean))
           ),
         }));
         setDimensions(reconstructedDimensions);
@@ -518,7 +519,7 @@ export default function Inventory() {
     };
 
     if (hasVariants && combinations.length > 0) {
-      data.variants = combinations.map((c: any) => ({
+      data.variants = combinations.map((c) => ({
         sku: c.sku || "",
         barcode: c.barcode || undefined,
         attributes: c.attributes || {},
@@ -817,7 +818,7 @@ export default function Inventory() {
                 )}
               </Tooltip>
             </TooltipProvider>
-            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[4px] bg-[#0A0A0A] border border-[#1A1A1A] p-0">
+            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] p-0">
               {/* Dialog Header */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
                 <div>
@@ -1007,79 +1008,84 @@ export default function Inventory() {
 
           {/* Import CSV Dialog */}
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-primary" />
-                  Import Products from Spreadsheet
-                </DialogTitle>
-                <DialogDescription>
-                  Supported formats: CSV, Excel (.xlsx, .xls) and Google Sheets.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg mb-4 text-xs text-blue-700 flex gap-2">
-                <span className="shrink-0 font-bold bg-blue-100 h-5 w-5 rounded-full flex items-center justify-center">i</span>
-                <p>For <strong>Google Sheets</strong>: Go to File &gt; Download &gt; Microsoft Excel (.xlsx) and then upload that file here.</p>
+            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] p-0 shadow-2xl">
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
+                <div>
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1.5px] mb-0.5">Spreadsheet</p>
+                  <DialogTitle className="text-[18px] font-bold text-white tracking-tight flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-[#DA291C]" />
+                    Import Products
+                  </DialogTitle>
+                  <DialogDescription className="text-[11px] text-[#555555] mt-1">
+                    Supported formats: CSV, Excel (.xlsx, .xls) and Google Sheets.
+                  </DialogDescription>
+                </div>
               </div>
 
-              <div className="border rounded-xl overflow-hidden my-4">
-                <Table>
-                  <TableHeader className="bg-gray-50">
-                    <TableRow>
-                      <TableHead className="w-[150px] font-semibold text-xs">Spreadsheet Column</TableHead>
-                      <TableHead className="font-semibold text-xs text-center border-l">Required</TableHead>
-                      <TableHead className="font-semibold text-xs border-l">Sample Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {[
-                      { col: "name", req: "Yes", sample: "Basmati Rice" },
-                      { col: "price", req: "Yes", sample: "150.00" },
-                      { col: "category_name", req: "Yes", sample: "Grains" },
-                      { col: "barcode", req: "No", sample: "8901234567890" },
-                      { col: "cost_price", req: "No", sample: "120.00" },
-                      { col: "stock_quantity", req: "No (defaults to 0)", sample: "50" },
-                      { col: "low_stock_threshold", req: "No (defaults to 10)", sample: "10" },
-                      { col: "expires_at", req: "No", sample: "2026-12-31" },
-                    ].map((row, idx) => (
-                      <TableRow key={idx} className="text-sm">
-                        <TableCell className="font-medium bg-gray-50/50">{row.col}</TableCell>
-                        <TableCell className="text-center border-l">
-                          <Badge variant={row.req.startsWith("Yes") ? "default" : "secondary"} className="text-[10px] py-0">
-                            {row.req}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground border-l font-mono text-xs italic">{row.sample}</TableCell>
+              <div className="px-6 py-5 space-y-5">
+                <div className="bg-[#111111] border border-[#1A1A1A] p-4 rounded-[2px] text-[12px] text-[#8F8F8F] flex gap-3">
+                  <div className="h-5 w-5 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] flex items-center justify-center shrink-0 font-bold text-[10px]">i</div>
+                  <p>For <strong>Google Sheets</strong>: Go to File &gt; Download &gt; Microsoft Excel (.xlsx) and then upload that file here.</p>
+                </div>
+
+                <div className="border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-[#0A0A0A]">
+                      <TableRow className="border-[#1A1A1A] hover:bg-transparent">
+                        <TableHead className="w-[150px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px] h-10">Spreadsheet Column</TableHead>
+                        <TableHead className="text-[11px] font-normal text-[#555555] uppercase tracking-[1px] text-center border-l border-[#1A1A1A] h-10">Required</TableHead>
+                        <TableHead className="text-[11px] font-normal text-[#555555] uppercase tracking-[1px] border-l border-[#1A1A1A] h-10">Sample Value</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { col: "name", req: "Yes", sample: "Basmati Rice" },
+                        { col: "price", req: "Yes", sample: "150.00" },
+                        { col: "category_name", req: "Yes", sample: "Grains" },
+                        { col: "barcode", req: "No", sample: "8901234567890" },
+                        { col: "cost_price", req: "No", sample: "120.00" },
+                        { col: "stock_quantity", req: "No (0)", sample: "50" },
+                        { col: "low_stock_threshold", req: "No (10)", sample: "10" },
+                        { col: "expires_at", req: "No", sample: "2026-12-31" },
+                      ].map((row, idx) => (
+                        <TableRow key={idx} className="border-[#1A1A1A] hover:bg-[#111111]/50 text-[12px]">
+                          <TableCell className="font-medium text-[#CCCCCC] bg-[#0A0A0A]/30 py-2.5">{row.col}</TableCell>
+                          <TableCell className="text-center border-l border-[#1A1A1A] py-2.5">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded-[2px] text-[10px] font-medium uppercase tracking-[0.5px]",
+                              row.req.startsWith("Yes") ? "bg-[#DA291C]/10 text-[#DA291C]" : "bg-[#1A1A1A] text-[#555555]"
+                            )}>
+                              {row.req}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-[#555555] border-l border-[#1A1A1A] font-mono text-[10px] italic py-2.5">{row.sample}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
-              <div className="flex flex-col gap-4">
                 <div 
-                  className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-gray-50/50 hover:bg-gray-50 hover:border-primary/50 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-[#1A1A1A] rounded-[2px] p-10 flex flex-col items-center justify-center gap-4 bg-[#111111] hover:bg-[#1A1A1A] hover:border-[#303030] transition-all cursor-pointer group"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <div className="p-3 bg-white rounded-full shadow-sm border border-gray-100 text-primary">
+                  <div className="h-12 w-12 bg-[#0A0A0A] rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] group-hover:text-white transition-colors">
                     <Upload className="h-6 w-6" />
                   </div>
                   <div className="text-center">
-                    <p className="font-medium text-gray-900">Choose your Excel or CSV file</p>
-                    <p className="text-sm text-gray-500 mt-1">Make sure the first row contains the column headers</p>
+                    <p className="text-[13px] font-medium text-white">Choose your Excel or CSV file</p>
+                    <p className="text-[11px] text-[#555555] mt-1">Make sure the first row contains the column headers</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-4 pt-2">
-                  <Button variant="ghost" size="sm" onClick={downloadTemplate} className="text-xs text-muted-foreground hover:text-primary gap-2">
-                    <Download className="h-3 w-3" />
-                    Download XLSX Template
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="rounded-lg" onClick={() => setImportDialogOpen(false)}>
-                      Cancel
-                    </Button>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-[#1A1A1A]">
+                  <button onClick={downloadTemplate} className="text-[11px] text-[#555555] hover:text-[#DA291C] uppercase tracking-[1px] flex items-center gap-2 transition-colors">
+                    <Download className="h-3.5 w-3.5" />
+                    Download Template
+                  </button>
+                  <div className="flex gap-3">
+                    <button className="px-4 py-2 rounded-[2px] border border-[#1A1A1A] text-[#8F8F8F] text-[11px] uppercase tracking-[1px] hover:text-white transition-colors" onClick={() => setImportDialogOpen(false)}>Cancel</button>
+                    <button className="px-6 py-2 rounded-[2px] bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[11px] uppercase tracking-[1px] transition-colors" onClick={() => fileInputRef.current?.click()}>Upload File</button>
                   </div>
                 </div>
               </div>

@@ -140,11 +140,10 @@ export default function Dashboard() {
               <button
                 key={opt.value}
                 onClick={() => setRange(opt.value)}
-                className={`px-3 py-1.5 rounded-[2px] text-[11px] font-normal uppercase tracking-[0.8px] transition-all ${
-                  range === opt.value
-                    ? "bg-[#DA291C] text-white"
-                    : "text-[#666666] hover:text-[#CCCCCC]"
-                }`}
+                className={`px-3 py-1.5 rounded-[2px] text-[11px] font-normal uppercase tracking-[0.8px] transition-all ${range === opt.value
+                  ? "bg-[#DA291C] text-white"
+                  : "text-[#666666] hover:text-[#CCCCCC]"
+                  }`}
               >
                 {opt.label}
               </button>

@@ -21,42 +21,42 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
   const headers = Object.keys(combinations[0].attributes || {});
 
   return (
-    <div className="border border-black rounded-sm overflow-x-auto w-full mt-6 bg-white shrink-0">
+    <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-x-auto w-full mt-6 shrink-0">
       <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-black text-white font-semibold">
+        <thead className="bg-[#0A0A0A] border-b border-[#1A1A1A]">
           <tr>
-            <th className="py-3 px-4 min-w-[80px] border-b border-black">Variant</th>
-            <th className="py-3 px-4 min-w-[150px] border-b border-black">SKU</th>
-            <th className="py-3 px-4 min-w-[150px] border-b border-black">Barcode</th>
-            <th className="py-3 px-4 min-w-[120px] border-b border-black">Cost Price</th>
-            <th className="py-3 px-4 min-w-[120px] border-b border-black">Selling Price</th>
-            <th className="py-3 px-4 min-w-[100px] border-b border-black">Stock</th>
+            <th className="py-3 px-4 min-w-[80px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Variant</th>
+            <th className="py-3 px-4 min-w-[150px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">SKU</th>
+            <th className="py-3 px-4 min-w-[150px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Barcode</th>
+            <th className="py-3 px-4 min-w-[120px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Cost Price</th>
+            <th className="py-3 px-4 min-w-[120px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Selling Price</th>
+            <th className="py-3 px-4 min-w-[100px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Stock</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-black/10">
+        <tbody className="divide-y divide-[#1A1A1A]">
           {combinations.map((c, i) => {
             const variantTitle = headers.map(h => c.attributes![h]).join(" / ");
             return (
-              <tr key={i} className="hover:bg-zinc-50 transition-colors">
-                <td className="py-2 px-4 font-medium whitespace-nowrap text-zinc-900">{variantTitle}</td>
-                <td className="py-2 px-3">
+              <tr key={i} className="hover:bg-[#1A1A1A] transition-colors">
+                <td className="py-2.5 px-4 font-medium whitespace-nowrap text-[#CCCCCC] text-[12px]">{variantTitle}</td>
+                <td className="py-2.5 px-3">
                   <Input 
                     required
                     placeholder="Auto-gen or Enter" 
                     value={c.sku || ""} 
                     onChange={e => updateCombination(i, "sku", e.target.value)} 
-                    className="h-8 max-w-[180px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
+                    className="h-8 max-w-[180px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
                   />
                 </td>
-                <td className="py-2 px-3">
+                <td className="py-2.5 px-3">
                   <Input 
                     placeholder="Enter barcode" 
                     value={c.barcode || ""} 
                     onChange={e => updateCombination(i, "barcode", e.target.value)} 
-                    className="h-8 max-w-[180px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
+                    className="h-8 max-w-[180px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
                   />
                 </td>
-                <td className="py-2 px-3">
+                <td className="py-2.5 px-3">
                   <Input 
                     type="number" 
                     min="0"
@@ -64,10 +64,10 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
                     required
                     value={c.cost_price ?? baseCostPrice ?? ""} 
                     onChange={e => updateCombination(i, "cost_price", parseFloat(e.target.value) || 0)} 
-                    className="h-8 max-w-[120px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
+                    className="h-8 max-w-[120px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
                   />
                 </td>
-                <td className="py-2 px-3">
+                <td className="py-2.5 px-3">
                   <Input 
                     type="number" 
                     min="0"
@@ -75,17 +75,17 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
                     required
                     value={c.selling_price ?? basePrice ?? ""} 
                     onChange={e => updateCombination(i, "selling_price", parseFloat(e.target.value) || 0)} 
-                    className="h-8 max-w-[120px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
+                    className="h-8 max-w-[120px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
                   />
                 </td>
-                <td className="py-2 px-3">
+                <td className="py-2.5 px-3">
                   <Input 
                     type="number" 
                     min="0"
                     required
                     value={c.stock_level ?? ""} 
                     onChange={e => updateCombination(i, "stock_level", parseInt(e.target.value) || 0)} 
-                    className="h-8 max-w-[100px] rounded-sm border-zinc-300 focus-visible:ring-black focus-visible:border-black"
+                    className="h-8 max-w-[100px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
                   />
                 </td>
               </tr>

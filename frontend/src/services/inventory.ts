@@ -16,7 +16,7 @@ export interface CreateProductData {
     supplier_id?: string;
     image_url?: string;
     is_tracked?: boolean;
-    variants?: any[];
+    variants?: Partial<ProductVariant>[];
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> { }
@@ -438,7 +438,7 @@ export const inventoryService = {
         return catalog;
     },
 
-    getProduct: async (id: string) => {
+    getProduct: async (id: string): Promise<Product & { variants: ProductVariant[] }> => {
         try {
             if (isOnline()) {
                 const response = await api.get<{ data: any }>(`products/${id}`);
