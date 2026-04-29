@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 import {
   Search, MessageCircle, Phone, Users, Wallet, RefreshCw,
   ChevronLeft, ChevronRight, Filter, Pencil, Trash2, Calendar,
-  MoreVertical, CreditCard, Banknote, AlertCircle, Plus,
+  MoreVertical, CreditCard, Banknote, AlertCircle, Plus, X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,10 +26,12 @@ import {
 const ITEMS_PER_PAGE = 15;
 
 export default function Debtors() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [dateFilter, setDateFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [debtToDelete, setDebtToDelete] = useState<string | null>(null);
@@ -59,7 +62,10 @@ export default function Debtors() {
     const matchesStatus =
       statusFilter === "all" ? true :
       statusFilter === "pending" ? outstanding > 0 : outstanding <= 0;
-    return matchesSearch && matchesStatus;
+    
+    const matchesDate = !dateFilter || new Date(d.created_at).toISOString().split('T')[0] === dateFilter;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const totalOutstanding = (debts || []).reduce(
@@ -215,13 +221,31 @@ export default function Debtors() {
             <SelectItem value="paid" className="text-[13px] text-[#CCCCCC] focus:bg-[#1A1A1A] focus:text-white">Fully Settled</SelectItem>
           </SelectContent>
         </Select>
+
+        <div className="relative w-full sm:w-[180px]">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555] pointer-events-none" />
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[12px] text-[#CCCCCC] focus:outline-none focus:border-[#303030] transition-colors [color-scheme:dark]"
+          />
+          {dateFilter && (
+            <button 
+              onClick={() => setDateFilter("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center text-[#555555] hover:text-white"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
       <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden" data-tour="debtors-list">
         {/* Table Header */}
-        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 border-b border-[#1A1A1A] bg-[#0A0A0A]">
-          {["Customer", "Phone", "Outstanding", "Due Date", "Actions"].map((col) => (
+        <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 border-b border-[#1A1A1A] bg-[#0A0A0A]">
+          {["Customer", "Initiated", "Outstanding", "Due Date", "Actions"].map((col) => (
             <p key={col} className="text-[10px] font-medium text-[#555555] uppercase tracking-[1px]">{col}</p>
           ))}
         </div>
@@ -229,7 +253,7 @@ export default function Debtors() {
         {loading ? (
           <div className="divide-y divide-[#111111]">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 px-4 py-4">
+              <div key={i} className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-4">
                 <Skeleton className="h-4 w-32 bg-[#1A1A1A]" />
                 <Skeleton className="h-4 w-24 bg-[#1A1A1A]" />
                 <Skeleton className="h-4 w-20 bg-[#1A1A1A]" />
@@ -272,20 +296,43 @@ export default function Debtors() {
               const isOverdue = debtor.due_date && new Date(debtor.due_date) < new Date() && !isFullyPaid;
 
               return (
-                <div key={debtor.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 px-4 py-4 items-center hover:bg-[#0F0F0F] transition-colors group">
+                <div key={debtor.id} className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-4 items-center hover:bg-[#0F0F0F] transition-colors group">
 
                   {/* Customer */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[11px] font-bold text-white shrink-0 bg-[#303030]">
+                    <div className="h-8 w-8 rounded-[2px] flex items-center justify-center text-[12px] font-bold text-white shrink-0 bg-[#303030]">
                       {(debtor.customer_name || "U").charAt(0).toUpperCase()}
                     </div>
-                    <p className="text-[13px] text-white font-medium truncate">{debtor.customer_name || "Unknown"}</p>
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-white font-medium truncate">{debtor.customer_name || "Unknown"}</p>
+                      <p className="text-[11px] text-[#555555] flex items-center gap-1 mt-0.5">
+                        <Phone className="h-2.5 w-2.5" />
+                        {debtor.customer_phone || "No phone"}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Phone */}
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="h-3 w-3 text-[#555555] shrink-0" />
-                    <p className="text-[12px] text-[#CCCCCC]">{debtor.customer_phone || "—"}</p>
+                  {/* Initiated */}
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5 text-[12px] text-[#CCCCCC]">
+                      <Calendar className="h-3 w-3 text-[#555555]" />
+                      {new Date(debtor.created_at).toLocaleDateString("en-NP")}
+                    </div>
+                    {debtor.sale_id && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[9px] font-bold text-[#888888] border border-[#303030] rounded-[1px] px-1.5 py-0.5 uppercase tracking-[0.5px]">
+                          #{String(debtor.sale_id).slice(0, 8)}
+                        </span>
+                        <button 
+                          onClick={() => {
+                            navigate(`/sales/history?search=${debtor.sale_id}`);
+                          }}
+                          className="text-[10px] text-[#DA291C] hover:underline uppercase tracking-[0.5px] font-bold"
+                        >
+                          Receipt
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Outstanding */}
@@ -310,11 +357,11 @@ export default function Debtors() {
                         <Calendar className={`h-3 w-3 shrink-0 ${isOverdue ? "text-[#F13A2C]" : "text-[#555555]"}`} />
                         <p className={`text-[12px] ${isOverdue ? "text-[#F13A2C]" : "text-[#CCCCCC]"}`}>
                           {new Date(debtor.due_date).toLocaleDateString("en-NP")}
-                          {isOverdue && <span className="ml-1 text-[10px] uppercase tracking-[0.5px]">(overdue)</span>}
+                          {isOverdue && <span className="ml-1 text-[10px] uppercase tracking-[0.5px] font-bold">(overdue)</span>}
                         </p>
                       </>
                     ) : (
-                      <p className="text-[12px] text-[#555555]">—</p>
+                      <p className="text-[12px] text-[#555555]">No Due Date</p>
                     )}
                   </div>
 

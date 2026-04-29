@@ -11,6 +11,7 @@ export interface SaleItemReq {
     unit_price: number;
     total_price: number;
     product_name: string;
+    variant_attributes?: any;
 }
 
 export interface CreateSaleData {
@@ -19,6 +20,7 @@ export interface CreateSaleData {
     total_amount: number;
     payments: any[];
     note?: string;
+    due_date?: string;
     discount_applied: number;
     customer_id: string;
     items: SaleItemReq[];

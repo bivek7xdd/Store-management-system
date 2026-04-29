@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -39,14 +38,14 @@ INSERT INTO product_variants (
 `
 
 type CreateProductVariantParams struct {
-	ProductID    pgtype.UUID     `db:"product_id" json:"product_id"`
-	Sku          string          `db:"sku" json:"sku"`
-	Barcode      pgtype.Text     `db:"barcode" json:"barcode"`
-	Attributes   json.RawMessage `db:"attributes" json:"attributes"`
-	CostPrice    pgtype.Numeric  `db:"cost_price" json:"cost_price"`
-	SellingPrice pgtype.Numeric  `db:"selling_price" json:"selling_price"`
-	StockLevel   int32           `db:"stock_level" json:"stock_level"`
-	ImageUrl     pgtype.Text     `db:"image_url" json:"image_url"`
+	ProductID    pgtype.UUID    `db:"product_id" json:"product_id"`
+	Sku          string         `db:"sku" json:"sku"`
+	Barcode      pgtype.Text    `db:"barcode" json:"barcode"`
+	Attributes   []byte         `db:"attributes" json:"attributes"`
+	CostPrice    pgtype.Numeric `db:"cost_price" json:"cost_price"`
+	SellingPrice pgtype.Numeric `db:"selling_price" json:"selling_price"`
+	StockLevel   int32          `db:"stock_level" json:"stock_level"`
+	ImageUrl     pgtype.Text    `db:"image_url" json:"image_url"`
 }
 
 func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error) {
@@ -267,14 +266,14 @@ RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, s
 `
 
 type UpdateProductVariantParams struct {
-	ID           pgtype.UUID     `db:"id" json:"id"`
-	Sku          string          `db:"sku" json:"sku"`
-	Barcode      pgtype.Text     `db:"barcode" json:"barcode"`
-	Attributes   json.RawMessage `db:"attributes" json:"attributes"`
-	CostPrice    pgtype.Numeric  `db:"cost_price" json:"cost_price"`
-	SellingPrice pgtype.Numeric  `db:"selling_price" json:"selling_price"`
-	StockLevel   int32           `db:"stock_level" json:"stock_level"`
-	ImageUrl     pgtype.Text     `db:"image_url" json:"image_url"`
+	ID           pgtype.UUID    `db:"id" json:"id"`
+	Sku          string         `db:"sku" json:"sku"`
+	Barcode      pgtype.Text    `db:"barcode" json:"barcode"`
+	Attributes   []byte         `db:"attributes" json:"attributes"`
+	CostPrice    pgtype.Numeric `db:"cost_price" json:"cost_price"`
+	SellingPrice pgtype.Numeric `db:"selling_price" json:"selling_price"`
+	StockLevel   int32          `db:"stock_level" json:"stock_level"`
+	ImageUrl     pgtype.Text    `db:"image_url" json:"image_url"`
 }
 
 func (q *Queries) UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error) {

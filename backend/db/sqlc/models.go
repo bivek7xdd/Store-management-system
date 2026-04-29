@@ -6,7 +6,6 @@ package db
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -365,7 +364,7 @@ type ProductVariant struct {
 	ProductID    pgtype.UUID        `db:"product_id" json:"product_id"`
 	Sku          string             `db:"sku" json:"sku"`
 	Barcode      pgtype.Text        `db:"barcode" json:"barcode"`
-	Attributes   json.RawMessage    `db:"attributes" json:"attributes"`
+	Attributes   []byte             `db:"attributes" json:"attributes"`
 	CostPrice    pgtype.Numeric     `db:"cost_price" json:"cost_price"`
 	SellingPrice pgtype.Numeric     `db:"selling_price" json:"selling_price"`
 	StockLevel   int32              `db:"stock_level" json:"stock_level"`

@@ -305,7 +305,7 @@ export default function Sales() {
     setShowSplitPaymentModal(true);
   };
 
-  const finalizeCheckout = async (confirmedPayments: PaymentEntry[]) => {
+  const finalizeCheckout = async (confirmedPayments: PaymentEntry[], debtInfo?: { dueDate: string; notes: string }) => {
     const parsedDiscountValue = parseFloat(discountValue) || 0;
     const totalPaid = confirmedPayments.reduce((sum, p) => sum + p.amount, 0);
     
@@ -334,7 +334,8 @@ export default function Sales() {
             payment_type: p.type,
             provider: p.provider
         })),
-        note: debtNote,
+        note: debtInfo?.notes || debtNote,
+        due_date: debtInfo?.dueDate,
         discount_applied: discountAmount,
         customer_id: selectedCustomer!.id,
         items: cart.map(item => ({

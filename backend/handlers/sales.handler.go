@@ -31,6 +31,7 @@ type createSaleReq struct {
 	SalesType       string        `json:"sales_type"`
 	Payments        []paymentReq  `json:"payments"`
 	Note            string        `json:"note"`
+	DueDate         string        `json:"due_date"`
 	DiscountApplied float64       `json:"discount_applied"`
 	CustomerID      string        `json:"customer_id" binding:"required"`
 	Items           []saleItemReq `json:"items" binding:"required"`
@@ -55,7 +56,7 @@ func CreateSale(c *gin.Context) {
 	}
 	totalAmount -= req.DiscountApplied
 
-	// Calculate total payments received
+	// Calculate total payments received (excluding credit which is debt)
 	var sumPayments float64
 	var paymentsParams []db.CreatePaymentRecordParams
 	for _, p := range req.Payments {
@@ -67,7 +68,10 @@ func CreateSale(c *gin.Context) {
 			PaymentType: db.SalesTypes(p.PaymentType),
 			Provider:    pgtype.Text{String: p.Provider, Valid: p.Provider != ""},
 		})
-		sumPayments += p.Amount
+		
+		if p.PaymentType != "credit" {
+			sumPayments += p.Amount
+		}
 	}
 
 	// Determine effective sales type and debt status
@@ -151,11 +155,18 @@ func CreateSale(c *gin.Context) {
 		var amountPaidNum pgtype.Numeric
 		amountPaidNum.Scan(fmt.Sprintf("%f", sumPayments))
 
-		// Default due date to 30 days from now
-		// TODO: Allow frontend to pass due date
-		dueDate := pgtype.Timestamptz{
-			Time:  time.Now().AddDate(0, 0, 30),
-			Valid: true,
+		// Handle Due Date
+		var dueDate pgtype.Timestamptz
+		if req.DueDate != "" {
+			parsedDate, err := time.Parse("2006-01-02", req.DueDate)
+			if err == nil {
+				dueDate = pgtype.Timestamptz{Time: parsedDate, Valid: true}
+			} else {
+				// Fallback to 30 days if parsing fails
+				dueDate = pgtype.Timestamptz{Time: time.Now().AddDate(0, 0, 30), Valid: true}
+			}
+		} else {
+			dueDate = pgtype.Timestamptz{Time: time.Now().AddDate(0, 0, 30), Valid: true}
 		}
 
 		createDebtParams = &db.CreateDebtParams{

@@ -10,6 +10,7 @@ export interface SaleItem {
     unit_price: number;
     total_price: number;
     product_name: string;
+    variant_attributes?: any;
 }
 
 export interface Sale {

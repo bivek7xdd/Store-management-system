@@ -16,7 +16,8 @@ RETURNING *;
 SELECT 
     s.id, s.sales_type, s.total_amount::float as total_amount, s.discount_applied::float as discount_applied, s.receipt_url, s.sale_date, s.store_id, s.customer_id,
     c.name as customer_name,
-    c.phone as customer_phone
+    c.phone as customer_phone,
+    COALESCE((SELECT SUM(amount)::float FROM payment_records WHERE sale_id = s.id AND payment_type != 'credit'), 0)::float as amount_paid
 FROM sales s
 LEFT JOIN customers c ON s.customer_id = c.id
 WHERE s.store_id = $1
@@ -26,7 +27,8 @@ ORDER BY s.sale_date DESC;
 SELECT 
     s.id, s.sales_type, s.total_amount::float as total_amount, s.discount_applied::float as discount_applied, s.receipt_url, s.sale_date, s.store_id, s.customer_id,
     c.name as customer_name,
-    c.phone as customer_phone
+    c.phone as customer_phone,
+    COALESCE((SELECT SUM(amount)::float FROM payment_records WHERE sale_id = s.id AND payment_type != 'credit'), 0)::float as amount_paid
 FROM sales s
 LEFT JOIN customers c ON s.customer_id = c.id
 WHERE s.id = $1 AND s.store_id = $2;

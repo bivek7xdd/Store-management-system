@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search, Calendar, ChevronDown, ChevronRight, ChevronLeft, User, Phone,
   ArrowUpRight, Loader2, Printer, FileText, X, RefreshCw,
@@ -78,11 +79,19 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     <div class="div"></div>
     <div class="row b"><span>ITEM</span><span>AMOUNT</span></div>
     <div class="div"></div>
-    ${items.map(i => `<div style="margin:6px 0"><div>${i.product_name}</div>
-    <div class="row" style="padding-left:8px;color:#333"><span>${i.quantity} x Rs.${i.unit_price.toLocaleString()}</span><span>Rs.${i.total_price.toLocaleString()}</span></div></div>`).join("")}
+    ${items.map(i => {
+      const variantSuffix = i.variant_attributes && Object.keys(i.variant_attributes).length > 0 ? ` (${Object.values(i.variant_attributes).join("/")})` : "";
+      return `<div style="margin:6px 0"><div>${i.product_name}${variantSuffix}</div>
+      <div class="row" style="padding-left:8px;color:#333"><span>${i.quantity} x Rs.${i.unit_price.toLocaleString()}</span><span>Rs.${i.total_price.toLocaleString()}</span></div></div>`;
+    }).join("")}
     <div class="div"></div>
     <div class="row"><span>Subtotal:</span><span>Rs.${((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span></div>
     ${sale.discount_applied > 0 ? `<div class="row"><span>Discount:</span><span>-Rs.${sale.discount_applied.toLocaleString()}</span></div>` : ""}
+    ${(sale.amount_paid !== undefined && sale.amount_paid < sale.total_amount) ? `
+      <div class="div"></div>
+      <div class="row"><span>Amount Paid:</span><span>Rs.${(sale.amount_paid || 0).toLocaleString()}</span></div>
+      <div class="row b" style="font-size:13px"><span>Balance Due:</span><span>Rs.${((sale.total_amount || 0) - (sale.amount_paid || 0)).toLocaleString()}</span></div>
+    ` : ""}
     <div class="ddiv"></div>
     <div class="row gt"><span>GRAND TOTAL:</span><span>Rs.${(sale.total_amount || 0).toLocaleString()}</span></div>
     <div class="ddiv"></div>
@@ -123,11 +132,24 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     <div class="meta-item"><div class="meta-label">Time</div><div class="meta-value">${formatTime(sale.sale_date)}</div></div>
     <div class="meta-item"><div class="meta-label">Type</div><div class="meta-value">${sale.sales_type.toUpperCase()}</div></div>
     </div><table><thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-    ${items.map(i => `<tr><td><div style="font-weight:500">${i.product_name}</div><div style="color:#6b7280;font-size:13px">${i.quantity} × Rs.${i.unit_price.toLocaleString()}</div></td><td>Rs.${i.total_price.toLocaleString()}</td></tr>`).join("")}
+    ${items.map(i => {
+      const variantSuffix = i.variant_attributes && Object.keys(i.variant_attributes).length > 0 ? ` <span style="color:#6b7280;font-size:12px">(${Object.values(i.variant_attributes).join("/")})</span>` : "";
+      return `<tr><td><div style="font-weight:500">${i.product_name}${variantSuffix}</div><div style="color:#6b7280;font-size:13px">${i.quantity} × Rs.${i.unit_price.toLocaleString()}</div></td><td>Rs.${i.total_price.toLocaleString()}</td></tr>`;
+    }).join("")}
     </tbody></table><div class="totals">
     <div class="t-row"><span>Subtotal</span><span>Rs.${((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span></div>
     ${sale.discount_applied > 0 ? `<div class="t-row" style="color:#dc2626"><span>Discount</span><span>-Rs.${sale.discount_applied.toLocaleString()}</span></div>` : ""}
     <div class="t-row gt"><span>Grand Total</span><span>Rs.${(sale.total_amount || 0).toLocaleString()}</span></div>
+    ${(sale.amount_paid !== undefined && sale.amount_paid < sale.total_amount) ? `
+      <div class="t-row" style="margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb">
+        <span style="color:#6b7280">Amount Paid</span>
+        <span style="font-weight:600;color:#10b981">Rs.${(sale.amount_paid || 0).toLocaleString()}</span>
+      </div>
+      <div class="t-row" style="font-size:18px;font-weight:bold;color:#DA291C">
+        <span>Balance Due</span>
+        <span>Rs.${((sale.total_amount || 0) - (sale.amount_paid || 0)).toLocaleString()}</span>
+      </div>
+    ` : ""}
     </div></div><div class="footer"><div style="font-size:16px;font-weight:600;margin-bottom:4px">Thank you for your purchase!</div>
     <div style="font-size:13px;color:#6b7280">Goods once sold cannot be returned. Powered by StoreHub</div></div></div>
     </body><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</script></html>`;
@@ -218,12 +240,21 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
 
                     <div className="border-t border-dashed border-[#303030] my-3" />
 
-                    <div className="space-y-2">
-                      {items.map((item) => (
-                        <div key={item.product_id} className="flex items-center justify-between text-[12px]">
+                    <div className="space-y-3">
+                      {items.map((item, idx) => (
+                        <div key={`${item.product_id}-${idx}`} className="flex items-start justify-between text-[12px]">
                           <div className="flex-1 min-w-0 pr-4">
-                            <p className="font-medium text-white truncate">{item.product_name}</p>
-                            <p className="text-[#888888] text-[11px]">{item.quantity} × रू {item.unit_price.toLocaleString()}</p>
+                            <p className="font-medium text-white break-words">
+                              {item.product_name}
+                              {item.variant_attributes && Object.keys(item.variant_attributes).length > 0 && !item.product_name.includes(" - ") && (
+                                <span className="text-[#888888] ml-1">
+                                  ({Object.values(item.variant_attributes).join(" / ")})
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-[#555555] text-[10px] mt-0.5 uppercase tracking-[0.5px]">
+                              {item.quantity} × रू {item.unit_price.toLocaleString()}
+                            </p>
                           </div>
                           <p className="font-bold text-white shrink-0">रू {item.total_price.toLocaleString()}</p>
                         </div>
@@ -245,9 +276,24 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                       )}
                     </div>
 
-                    <div className="border-t border-[#303030] pt-3 flex justify-between items-center">
-                      <span className="text-[12px] font-bold text-white uppercase tracking-[1px]">Grand Total</span>
-                      <span className="text-[20px] font-bold text-white">रू {(sale.total_amount || 0).toLocaleString()}</span>
+                    <div className="border-t border-[#303030] pt-4 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[12px] font-bold text-white uppercase tracking-[1px]">Grand Total</span>
+                        <span className="text-[20px] font-bold text-white">रू {(sale.total_amount || 0).toLocaleString()}</span>
+                      </div>
+                      
+                      {(sale.amount_paid !== undefined && sale.amount_paid < sale.total_amount) && (
+                        <div className="pt-2 border-t border-dashed border-[#1A1A1A] space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-[#888888] uppercase tracking-[1px]">Amount Paid</span>
+                            <span className="font-bold text-emerald-400">रू {(sale.amount_paid || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-[#DA291C] font-bold uppercase tracking-[1px]">Balance Due (Debt)</span>
+                            <span className="font-bold text-[#DA291C]">रू {((sale.total_amount || 0) - (sale.amount_paid || 0)).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -280,9 +326,10 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
 
 // ---------- Main Page ----------
 export default function SalesHistory() {
+  const [searchParams] = useSearchParams();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [filterType, setFilterType] = useState("all");
   const [filterTime, setFilterTime] = useState("all");
   const [selectedDate, setSelectedDate] = useState<string>("");

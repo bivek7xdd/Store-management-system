@@ -109,7 +109,8 @@ const getSale = `-- name: GetSale :one
 SELECT 
     s.id, s.sales_type, s.total_amount::float as total_amount, s.discount_applied::float as discount_applied, s.receipt_url, s.sale_date, s.store_id, s.customer_id,
     c.name as customer_name,
-    c.phone as customer_phone
+    c.phone as customer_phone,
+    COALESCE((SELECT SUM(amount)::float FROM payment_records WHERE sale_id = s.id AND payment_type != 'credit'), 0)::float as amount_paid
 FROM sales s
 LEFT JOIN customers c ON s.customer_id = c.id
 WHERE s.id = $1 AND s.store_id = $2
@@ -131,6 +132,7 @@ type GetSaleRow struct {
 	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
 	CustomerName    pgtype.Text        `db:"customer_name" json:"customer_name"`
 	CustomerPhone   pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+	AmountPaid      float64            `db:"amount_paid" json:"amount_paid"`
 }
 
 func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, error) {
@@ -147,6 +149,7 @@ func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, e
 		&i.CustomerID,
 		&i.CustomerName,
 		&i.CustomerPhone,
+		&i.AmountPaid,
 	)
 	return i, err
 }
@@ -211,7 +214,8 @@ const listSales = `-- name: ListSales :many
 SELECT 
     s.id, s.sales_type, s.total_amount::float as total_amount, s.discount_applied::float as discount_applied, s.receipt_url, s.sale_date, s.store_id, s.customer_id,
     c.name as customer_name,
-    c.phone as customer_phone
+    c.phone as customer_phone,
+    COALESCE((SELECT SUM(amount)::float FROM payment_records WHERE sale_id = s.id AND payment_type != 'credit'), 0)::float as amount_paid
 FROM sales s
 LEFT JOIN customers c ON s.customer_id = c.id
 WHERE s.store_id = $1
@@ -229,6 +233,7 @@ type ListSalesRow struct {
 	CustomerID      pgtype.UUID        `db:"customer_id" json:"customer_id"`
 	CustomerName    pgtype.Text        `db:"customer_name" json:"customer_name"`
 	CustomerPhone   pgtype.Text        `db:"customer_phone" json:"customer_phone"`
+	AmountPaid      float64            `db:"amount_paid" json:"amount_paid"`
 }
 
 func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSalesRow, error) {
@@ -251,6 +256,7 @@ func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSal
 			&i.CustomerID,
 			&i.CustomerName,
 			&i.CustomerPhone,
+			&i.AmountPaid,
 		); err != nil {
 			return nil, err
 		}
