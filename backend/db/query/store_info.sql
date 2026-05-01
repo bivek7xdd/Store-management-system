@@ -3,9 +3,11 @@ INSERT INTO store_info (
   name,
   address,
   currency_code,
-  owner_id
+  owner_id,
+  loyalty_progress_target,
+  loyalty_discount_percentage
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: GetStoreInfo :one
@@ -31,6 +33,8 @@ SET
   name = COALESCE(sqlc.narg('name'), name),
   address = COALESCE(sqlc.narg('address'), address),
   currency_code = COALESCE(sqlc.narg('currency_code'), currency_code),
+  loyalty_progress_target = COALESCE(sqlc.narg('loyalty_progress_target'), loyalty_progress_target),
+  loyalty_discount_percentage = COALESCE(sqlc.narg('loyalty_discount_percentage'), loyalty_discount_percentage),
   updated_at = CURRENT_TIMESTAMP
 WHERE id = sqlc.arg('id')
 RETURNING *;

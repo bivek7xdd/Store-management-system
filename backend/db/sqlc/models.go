@@ -396,13 +396,15 @@ type SaleItem struct {
 }
 
 type StoreInfo struct {
-	ID           pgtype.UUID        `db:"id" json:"id"`
-	Name         string             `db:"name" json:"name"`
-	Address      string             `db:"address" json:"address"`
-	CurrencyCode string             `db:"currency_code" json:"currency_code"`
-	OwnerID      pgtype.UUID        `db:"owner_id" json:"owner_id"`
-	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID                        pgtype.UUID        `db:"id" json:"id"`
+	Name                      string             `db:"name" json:"name"`
+	Address                   string             `db:"address" json:"address"`
+	CurrencyCode              string             `db:"currency_code" json:"currency_code"`
+	OwnerID                   pgtype.UUID        `db:"owner_id" json:"owner_id"`
+	LoyaltyProgressTarget     int32              `db:"loyalty_progress_target" json:"loyalty_progress_target"`
+	LoyaltyDiscountPercentage pgtype.Numeric     `db:"loyalty_discount_percentage" json:"loyalty_discount_percentage"`
+	CreatedAt                 pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt                 pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type StoreOwner struct {

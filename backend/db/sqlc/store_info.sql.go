@@ -16,17 +16,21 @@ INSERT INTO store_info (
   name,
   address,
   currency_code,
-  owner_id
+  owner_id,
+  loyalty_progress_target,
+  loyalty_discount_percentage
 ) VALUES (
-  $1, $2, $3, $4
-) RETURNING id, name, address, currency_code, owner_id, created_at, updated_at
+  $1, $2, $3, $4, $5, $6
+) RETURNING id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at
 `
 
 type CreateStoreInfoParams struct {
-	Name         string      `db:"name" json:"name"`
-	Address      string      `db:"address" json:"address"`
-	CurrencyCode string      `db:"currency_code" json:"currency_code"`
-	OwnerID      pgtype.UUID `db:"owner_id" json:"owner_id"`
+	Name                      string         `db:"name" json:"name"`
+	Address                   string         `db:"address" json:"address"`
+	CurrencyCode              string         `db:"currency_code" json:"currency_code"`
+	OwnerID                   pgtype.UUID    `db:"owner_id" json:"owner_id"`
+	LoyaltyProgressTarget     int32          `db:"loyalty_progress_target" json:"loyalty_progress_target"`
+	LoyaltyDiscountPercentage pgtype.Numeric `db:"loyalty_discount_percentage" json:"loyalty_discount_percentage"`
 }
 
 func (q *Queries) CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error) {
@@ -35,6 +39,8 @@ func (q *Queries) CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams
 		arg.Address,
 		arg.CurrencyCode,
 		arg.OwnerID,
+		arg.LoyaltyProgressTarget,
+		arg.LoyaltyDiscountPercentage,
 	)
 	var i StoreInfo
 	err := row.Scan(
@@ -43,6 +49,8 @@ func (q *Queries) CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams
 		&i.Address,
 		&i.CurrencyCode,
 		&i.OwnerID,
+		&i.LoyaltyProgressTarget,
+		&i.LoyaltyDiscountPercentage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -60,7 +68,7 @@ func (q *Queries) DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getAllStores = `-- name: GetAllStores :many
-SELECT id, name, address, currency_code, owner_id, created_at, updated_at FROM store_info
+SELECT id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at FROM store_info
 `
 
 func (q *Queries) GetAllStores(ctx context.Context) ([]StoreInfo, error) {
@@ -78,6 +86,8 @@ func (q *Queries) GetAllStores(ctx context.Context) ([]StoreInfo, error) {
 			&i.Address,
 			&i.CurrencyCode,
 			&i.OwnerID,
+			&i.LoyaltyProgressTarget,
+			&i.LoyaltyDiscountPercentage,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -92,7 +102,7 @@ func (q *Queries) GetAllStores(ctx context.Context) ([]StoreInfo, error) {
 }
 
 const getStoreInfo = `-- name: GetStoreInfo :one
-SELECT id, name, address, currency_code, owner_id, created_at, updated_at FROM store_info
+SELECT id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at FROM store_info
 WHERE id = $1 LIMIT 1
 `
 
@@ -105,6 +115,8 @@ func (q *Queries) GetStoreInfo(ctx context.Context, id pgtype.UUID) (StoreInfo, 
 		&i.Address,
 		&i.CurrencyCode,
 		&i.OwnerID,
+		&i.LoyaltyProgressTarget,
+		&i.LoyaltyDiscountPercentage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -112,7 +124,7 @@ func (q *Queries) GetStoreInfo(ctx context.Context, id pgtype.UUID) (StoreInfo, 
 }
 
 const getStoreInfoByOwner = `-- name: GetStoreInfoByOwner :one
-SELECT id, name, address, currency_code, owner_id, created_at, updated_at FROM store_info
+SELECT id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at FROM store_info
 WHERE owner_id = $1 LIMIT 1
 `
 
@@ -125,6 +137,8 @@ func (q *Queries) GetStoreInfoByOwner(ctx context.Context, ownerID pgtype.UUID) 
 		&i.Address,
 		&i.CurrencyCode,
 		&i.OwnerID,
+		&i.LoyaltyProgressTarget,
+		&i.LoyaltyDiscountPercentage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -133,7 +147,7 @@ func (q *Queries) GetStoreInfoByOwner(ctx context.Context, ownerID pgtype.UUID) 
 
 const getStoreWithOwner = `-- name: GetStoreWithOwner :one
 SELECT 
-  store_info.id, store_info.name, store_info.address, store_info.currency_code, store_info.owner_id, store_info.created_at, store_info.updated_at,
+  store_info.id, store_info.name, store_info.address, store_info.currency_code, store_info.owner_id, store_info.loyalty_progress_target, store_info.loyalty_discount_percentage, store_info.created_at, store_info.updated_at,
   store_owner.id, store_owner.name, store_owner.email, store_owner.password, store_owner.emailverified, store_owner.phone, store_owner.role, store_owner.profile_picture, store_owner.created_at, store_owner.updated_at
 FROM store_info
 INNER JOIN store_owner ON store_info.owner_id = store_owner.id
@@ -154,6 +168,8 @@ func (q *Queries) GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetSto
 		&i.StoreInfo.Address,
 		&i.StoreInfo.CurrencyCode,
 		&i.StoreInfo.OwnerID,
+		&i.StoreInfo.LoyaltyProgressTarget,
+		&i.StoreInfo.LoyaltyDiscountPercentage,
 		&i.StoreInfo.CreatedAt,
 		&i.StoreInfo.UpdatedAt,
 		&i.StoreOwner.ID,
@@ -171,7 +187,7 @@ func (q *Queries) GetStoreWithOwner(ctx context.Context, id pgtype.UUID) (GetSto
 }
 
 const listStoreInfo = `-- name: ListStoreInfo :many
-SELECT id, name, address, currency_code, owner_id, created_at, updated_at FROM store_info
+SELECT id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at FROM store_info
 ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2
@@ -197,6 +213,8 @@ func (q *Queries) ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([
 			&i.Address,
 			&i.CurrencyCode,
 			&i.OwnerID,
+			&i.LoyaltyProgressTarget,
+			&i.LoyaltyDiscountPercentage,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -216,16 +234,20 @@ SET
   name = COALESCE($1, name),
   address = COALESCE($2, address),
   currency_code = COALESCE($3, currency_code),
+  loyalty_progress_target = COALESCE($4, loyalty_progress_target),
+  loyalty_discount_percentage = COALESCE($5, loyalty_discount_percentage),
   updated_at = CURRENT_TIMESTAMP
-WHERE id = $4
-RETURNING id, name, address, currency_code, owner_id, created_at, updated_at
+WHERE id = $6
+RETURNING id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at
 `
 
 type UpdateStoreInfoParams struct {
-	Name         pgtype.Text `db:"name" json:"name"`
-	Address      pgtype.Text `db:"address" json:"address"`
-	CurrencyCode pgtype.Text `db:"currency_code" json:"currency_code"`
-	ID           pgtype.UUID `db:"id" json:"id"`
+	Name                      pgtype.Text    `db:"name" json:"name"`
+	Address                   pgtype.Text    `db:"address" json:"address"`
+	CurrencyCode              pgtype.Text    `db:"currency_code" json:"currency_code"`
+	LoyaltyProgressTarget     pgtype.Int4    `db:"loyalty_progress_target" json:"loyalty_progress_target"`
+	LoyaltyDiscountPercentage pgtype.Numeric `db:"loyalty_discount_percentage" json:"loyalty_discount_percentage"`
+	ID                        pgtype.UUID    `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error) {
@@ -233,6 +255,8 @@ func (q *Queries) UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams
 		arg.Name,
 		arg.Address,
 		arg.CurrencyCode,
+		arg.LoyaltyProgressTarget,
+		arg.LoyaltyDiscountPercentage,
 		arg.ID,
 	)
 	var i StoreInfo
@@ -242,6 +266,8 @@ func (q *Queries) UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams
 		&i.Address,
 		&i.CurrencyCode,
 		&i.OwnerID,
+		&i.LoyaltyProgressTarget,
+		&i.LoyaltyDiscountPercentage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
