@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { userService } from "@/services/userService";
 import { OnlineTrackingTab } from "@/components/settings/OnlineTrackingTab";
 import { LoyaltyTab } from "@/components/settings/LoyaltyTab";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -108,225 +109,220 @@ export default function Settings() {
     }
   };
 
+  const inputCls = "h-11 bg-transparent border border-[#1A1A1A] rounded-[2px] px-3 font-medium text-sm text-white placeholder:text-[#555555] focus:outline-none focus:border-[#DA291C] transition-colors";
+  const labelCls = "text-[11px] font-bold uppercase tracking-[1.5px] text-[#555555]";
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-20 lg:pb-10">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1 text-lg">Manage your account and store preferences.</p>
+    <div className="max-w-4xl mx-auto space-y-8 pb-20 lg:pb-10">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight text-white uppercase italic">System Configuration</h1>
+        <div className="h-0.5 w-12 bg-[#DA291C]" />
+        <p className="text-[#888888] mt-2 text-sm uppercase tracking-[0.5px]">Manage enterprise preferences and security protocols.</p>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="flex w-full mb-8 bg-muted/50 p-1 rounded-xl h-14 overflow-x-auto hide-scrollbar space-x-1">
-          <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[120px]">
-            <User className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
-            <span className="font-medium text-sm lg:text-base">Profile</span>
+        <TabsList className="flex w-full mb-10 bg-[#0A0A0A] border border-[#1A1A1A] p-1 rounded-[2px] h-12 overflow-x-auto hide-scrollbar space-x-1">
+          <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
+            <User className="h-3.5 w-3.5 shrink-0" />
+            <span>Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="store" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[120px]">
-            <Store className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
-            <span className="font-medium text-sm lg:text-base">Store Info</span>
+          <TabsTrigger value="store" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
+            <Store className="h-3.5 w-3.5 shrink-0" />
+            <span>Business</span>
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[120px]">
-            <Shield className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
-            <span className="font-medium text-sm lg:text-base">Security</span>
+          <TabsTrigger value="security" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
+            <Shield className="h-3.5 w-3.5 shrink-0" />
+            <span>Security</span>
           </TabsTrigger>
-          <TabsTrigger value="online" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[140px]">
-            <Globe className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
-            <span className="font-medium text-sm lg:text-base">Online Tracking</span>
+          <TabsTrigger value="online" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[140px] uppercase text-[10px] font-bold tracking-[1.5px]">
+            <Globe className="h-3.5 w-3.5 shrink-0" />
+            <span>Tracking</span>
           </TabsTrigger>
-          <TabsTrigger value="loyalty" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[140px]">
-            <Heart className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
-            <span className="font-medium text-sm lg:text-base">Loyalty Program</span>
+          <TabsTrigger value="loyalty" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[140px] uppercase text-[10px] font-bold tracking-[1.5px]">
+            <Heart className="h-3.5 w-3.5 shrink-0" />
+            <span>Loyalty</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="focus-visible:outline-none focus-visible:ring-0">
-          <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-6">
-              <CardTitle className="text-xl">Profile Information</CardTitle>
-              <CardDescription>Update your personal details here.</CardDescription>
-            </CardHeader>
+        <TabsContent value="profile" className="focus-visible:outline-none focus-visible:ring-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+            <div className="p-8 border-b border-[#1A1A1A]">
+              <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Identity Parameters</h3>
+              <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Update your administrative credentials.</p>
+            </div>
             <form onSubmit={handleProfileUpdate}>
-              <CardContent className="space-y-6 pt-8">
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-semibold">Full Name</Label>
-                    <Input 
+              <div className="p-8 space-y-8">
+                <div className="grid gap-8 sm:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label htmlFor="name" className={labelCls}>Full Legal Name</Label>
+                    <input 
                       id="name" 
                       value={profileData.name} 
                       onChange={e => setProfileData({...profileData, name: e.target.value})} 
-                      className="rounded-xl h-11 focus-visible:ring-primary"
-                      placeholder="Enter your full name"
+                      className={cn(inputCls, "w-full")}
+                      placeholder="ENTER NAME"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-semibold">Phone Number</Label>
-                    <Input 
+                  <div className="space-y-3">
+                    <Label htmlFor="phone" className={labelCls}>Contact Number</Label>
+                    <input 
                       id="phone" 
                       value={profileData.phone} 
                       onChange={e => setProfileData({...profileData, phone: e.target.value})} 
-                      className="rounded-xl h-11 focus-visible:ring-primary"
+                      className={cn(inputCls, "w-full")}
                       placeholder="+977-XXXXXXXXXX"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="email" className={labelCls}>Primary Email Address</Label>
                   <div className="relative">
-                    <Input 
+                    <input 
                       id="email" 
                       value={user?.email} 
                       disabled 
-                      className="rounded-xl h-11 bg-muted/50 border-dashed cursor-not-allowed pr-10" 
+                      className={cn(inputCls, "w-full bg-[#111111] border-dashed cursor-not-allowed pr-10 text-[#888888]")} 
                     />
                     <CircleCheck className="absolute right-3 top-3 h-5 w-5 text-emerald-500" />
                   </div>
-                  <p className="text-[10px] text-muted-foreground ml-1">Verified email cannot be changed. Contact support for assistance.</p>
+                  <p className="text-[9px] text-[#444444] uppercase tracking-[1px]">Verified accounts require support authorization for email updates.</p>
                 </div>
-              </CardContent>
-              <CardFooter className="bg-muted/10 border-t mt-4 py-4 px-6 flex justify-end">
+              </div>
+              <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
                 <Button 
                   type="submit" 
                   disabled={profileLoading} 
-                  className="rounded-xl h-11 px-8 font-semibold shadow-md active:scale-95 transition-transform"
+                  className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-white text-black hover:bg-[#EEEEEE] transition-all"
                 >
                   {profileLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : "Save Changes"}
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : "Update Identity"}
                 </Button>
-              </CardFooter>
+              </div>
             </form>
-          </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="store" className="focus-visible:outline-none focus-visible:ring-0">
-          <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-6">
-              <CardTitle className="text-xl">Store Details</CardTitle>
-              <CardDescription>Manage your business information and branding.</CardDescription>
-            </CardHeader>
+        <TabsContent value="store" className="focus-visible:outline-none focus-visible:ring-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+            <div className="p-8 border-b border-[#1A1A1A]">
+              <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Business Entity Info</h3>
+              <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Configure your commercial workspace and regional settings.</p>
+            </div>
             <form onSubmit={handleStoreUpdate}>
-              <CardContent className="space-y-6 pt-8">
-                <div className="space-y-2">
-                  <Label htmlFor="store_name" className="text-sm font-semibold">Store Name</Label>
-                  <Input 
+              <div className="p-8 space-y-8">
+                <div className="space-y-3">
+                  <Label htmlFor="store_name" className={labelCls}>Registered Store Name</Label>
+                  <input 
                     id="store_name" 
                     value={storeData.name} 
                     onChange={e => setStoreData({...storeData, name: e.target.value})} 
-                    className="rounded-xl h-11 focus-visible:ring-primary"
-                    placeholder="Enter store name"
+                    className={cn(inputCls, "w-full")}
+                    placeholder="ENTER STORE NAME"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-sm font-semibold">Location / Address</Label>
-                  <Input 
+                <div className="space-y-3">
+                  <Label htmlFor="address" className={labelCls}>Physical Workspace Address</Label>
+                  <input 
                     id="address" 
                     value={storeData.address} 
                     onChange={e => setStoreData({...storeData, address: e.target.value})} 
-                    className="rounded-xl h-11 focus-visible:ring-primary"
-                    placeholder="e.g. Kathmandu, Nepal"
+                    className={cn(inputCls, "w-full")}
+                    placeholder="E.G. KATHMANDU, NEPAL"
                   />
                 </div>
-                <div className="space-y-2 w-full sm:w-1/2">
-                  <Label htmlFor="currency" className="text-sm font-semibold">Default Currency</Label>
-                  <Input 
+                <div className="space-y-3 w-full sm:w-1/2">
+                  <Label htmlFor="currency" className={labelCls}>System Currency Protocol</Label>
+                  <input 
                     id="currency" 
                     value={storeData.currency_code} 
                     onChange={e => setStoreData({...storeData, currency_code: e.target.value})} 
-                    className="rounded-xl h-11 focus-visible:ring-primary"
-                    placeholder="e.g. NPR, USD"
+                    className={cn(inputCls, "w-full uppercase")}
+                    placeholder="E.G. NPR"
                   />
                 </div>
-              </CardContent>
-              <CardFooter className="bg-muted/10 border-t mt-4 py-4 px-6 flex justify-end">
+              </div>
+              <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
                 <Button 
                   type="submit" 
                   disabled={storeLoading}
-                  className="rounded-xl h-11 px-8 font-semibold shadow-md active:scale-95 transition-transform"
+                  className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-white text-black hover:bg-[#EEEEEE] transition-all"
                 >
                   {storeLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : "Update Store"}
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : "Save Business Profile"}
                 </Button>
-              </CardFooter>
+              </div>
             </form>
-          </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="security" className="focus-visible:outline-none focus-visible:ring-0">
-          <Card className="border-0 shadow-lg rounded-2xl overflow-hidden border-l-4 border-l-amber-400">
-            <CardHeader className="bg-muted/30 pb-6">
-              <CardTitle className="text-xl">Security & Password</CardTitle>
-              <CardDescription>Secure your account by changing your password regularly.</CardDescription>
-            </CardHeader>
+        <TabsContent value="security" className="focus-visible:outline-none focus-visible:ring-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden border-l-2 border-l-[#DA291C]">
+            <div className="p-8 border-b border-[#1A1A1A]">
+              <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Security & Encryption</h3>
+              <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Rotate your authentication keys regularly.</p>
+            </div>
             <form onSubmit={handlePasswordUpdate}>
-              <CardContent className="space-y-6 pt-8">
-                <div className="space-y-2">
-                  <Label htmlFor="current_password" id="current_password_label" className="text-sm font-semibold">Current Password</Label>
-                  <Input 
+              <div className="p-8 space-y-8">
+                <div className="space-y-3">
+                  <Label htmlFor="current_password" className={labelCls}>Current Passkey</Label>
+                  <input 
                     id="current_password" 
                     type="password" 
                     autoComplete="current-password"
                     value={passwordData.current_password}
                     onChange={e => setPasswordData({...passwordData, current_password: e.target.value})}
-                    className="rounded-xl h-11 focus-visible:ring-primary"
+                    className={cn(inputCls, "w-full")}
                     placeholder="••••••••"
                   />
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="new_password" id="new_password_label" className="text-sm font-semibold">New Password</Label>
-                    <Input 
+                <div className="grid gap-8 sm:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label htmlFor="new_password" className={labelCls}>New Passkey</Label>
+                    <input 
                       id="new_password" 
                       type="password"
                       autoComplete="new-password"
                       value={passwordData.new_password}
                       onChange={e => setPasswordData({...passwordData, new_password: e.target.value})}
-                      className="rounded-xl h-11 focus-visible:ring-primary"
-                      placeholder="Minimum 8 characters"
+                      className={cn(inputCls, "w-full")}
+                      placeholder="MIN 8 CHARS"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm_password" id="confirm_password_label" className="text-sm font-semibold">Confirm New Password</Label>
-                    <Input 
+                  <div className="space-y-3">
+                    <Label htmlFor="confirm_password" className={labelCls}>Verify Passkey</Label>
+                    <input 
                       id="confirm_password" 
                       type="password"
                       autoComplete="new-password"
                       value={passwordData.confirm_password}
                       onChange={e => setPasswordData({...passwordData, confirm_password: e.target.value})}
-                      className="rounded-xl h-11 focus-visible:ring-primary"
-                      placeholder="Verify new password"
+                      className={cn(inputCls, "w-full")}
+                      placeholder="RE-ENTER PASSKEY"
                     />
                   </div>
                 </div>
-                <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-                  <p className="text-xs text-amber-800 leading-relaxed">
-                    Changing your password will NOT sign you out of other devices. If you suspect your account is compromised, please contact support immediately.
+                <div className="bg-[#111111] border border-[#1A1A1A] p-5 rounded-[2px] flex gap-4">
+                  <AlertCircle className="h-5 w-5 text-[#DA291C] shrink-0" />
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1px] leading-relaxed">
+                    Changing your passkey will immediately invalidate current session tokens. You may be required to re-authenticate on other active nodes.
                   </p>
                 </div>
-              </CardContent>
-              <CardFooter className="bg-muted/10 border-t mt-4 py-4 px-6 flex justify-end">
+              </div>
+              <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
                 <Button 
                   type="submit" 
                   disabled={securityLoading}
-                  className="rounded-xl h-11 px-8 font-semibold bg-amber-600 hover:bg-amber-700 shadow-md active:scale-95 transition-transform"
+                  className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-[#DA291C] text-white hover:bg-[#B01E0A] transition-all"
                 >
                   {securityLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : "Update Password"}
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : "Update Passkey"}
                 </Button>
-              </CardFooter>
+              </div>
             </form>
-          </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="online" className="focus-visible:outline-none focus-visible:ring-0">

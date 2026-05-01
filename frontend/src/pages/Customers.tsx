@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { customerService } from "@/services/customerService";
+import { userService } from "@/services/userService";
 import { Customer } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,7 @@ export default function Customers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [loyaltyTarget, setLoyaltyTarget] = useState(5);
   const queryClient = useQueryClient();
 
   const updateCustomerMutation = useMutation({
@@ -35,7 +37,17 @@ export default function Customers() {
 
   useEffect(() => {
     fetchCustomers();
+    fetchStoreInfo();
   }, []);
+
+  const fetchStoreInfo = async () => {
+    try {
+      const response = await userService.getStore();
+      setLoyaltyTarget(response?.data?.loyalty_progress_target || 5);
+    } catch (error) {
+      console.error("Failed to fetch store info:", error);
+    }
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -86,7 +98,7 @@ export default function Customers() {
             <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Loyal Customers</p>
             <div className="flex items-end justify-between">
               <h2 className="text-3xl font-bold text-white">
-                  {customers.filter(c => c.loyalty_status !== 'standard').length}
+                  {customers.filter(c => c.loyalty_status !== 'regular').length}
               </h2>
               <Award className="h-5 w-5 text-amber-500" />
             </div>
@@ -157,7 +169,7 @@ export default function Customers() {
                   </div>
 
                   <div>
-                    <Badge className={`rounded-[2px] text-[10px] uppercase font-black tracking-tighter ${customer.loyalty_status === 'gold' ? 'bg-amber-500 text-black' : customer.loyalty_status === 'silver' ? 'bg-slate-300 text-black' : 'bg-[#1A1A1A] text-white'}`}>
+                    <Badge className={`rounded-[2px] text-[10px] uppercase font-black tracking-tighter ${customer.loyalty_status === 'vip' ? 'bg-amber-500 text-black' : customer.loyalty_status === 'loyal' ? 'bg-slate-300 text-black' : 'bg-[#1A1A1A] text-white'}`}>
                       {customer.loyalty_status}
                     </Badge>
                   </div>
@@ -169,13 +181,13 @@ export default function Customers() {
                       <>
                         <div className="flex justify-between items-center pr-4">
                           <span className="text-[9px] font-black uppercase text-[#555555]">
-                            {customer.purchase_count % 5} / 5
+                            {loyaltyTarget > 0 ? (customer.purchase_count % loyaltyTarget) : 0} / {loyaltyTarget}
                           </span>
                         </div>
                         <div className="h-1 w-24 bg-[#1A1A1A] rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-[#DA291C] transition-all duration-500" 
-                            style={{ width: `${(customer.purchase_count % 5) * 20}%` }}
+                            style={{ width: `${loyaltyTarget > 0 ? ((customer.purchase_count % loyaltyTarget) / loyaltyTarget) * 100 : 0}%` }}
                           />
                         </div>
                       </>

@@ -702,6 +702,22 @@ export default function Sales() {
                         {selectedCustomer.loyalty_status}
                       </div>
                     </div>
+                    {selectedCustomer.name !== 'Guest' && (
+                      <div className="mt-3 space-y-1.5">
+                        <div className="flex justify-between items-center pr-1">
+                          <span className="text-[8px] font-black uppercase text-[#555555]">Reward Progress</span>
+                          <span className="text-[8px] font-black uppercase text-[#DA291C]">
+                            {selectedCustomer.purchase_count % loyaltySettings.target} / {loyaltySettings.target}
+                          </span>
+                        </div>
+                        <div className="h-1 w-full bg-[#1A1A1A] rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-[#DA291C] transition-all duration-500" 
+                            style={{ width: `${((selectedCustomer.purchase_count % loyaltySettings.target) / loyaltySettings.target) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

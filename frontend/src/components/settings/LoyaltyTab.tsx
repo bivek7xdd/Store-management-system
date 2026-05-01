@@ -7,6 +7,7 @@ import { Heart, Loader2, Award, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { userService } from "@/services/userService";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 export function LoyaltyTab() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export function LoyaltyTab() {
     try {
       await userService.updateStore({
         loyalty_progress_target: loyaltyData.loyalty_progress_target,
-        loyalty_discount_percentage: loyaltyData.loyalty_discount_percentage,
+        loyalty_discount_percentage: String(loyaltyData.loyalty_discount_percentage),
       });
       toast.success("Loyalty program settings updated successfully");
     } catch (error: any) {
@@ -51,105 +52,103 @@ export function LoyaltyTab() {
     }
   };
 
+  const inputCls = "h-12 bg-transparent border border-[#1A1A1A] rounded-[2px] px-4 font-bold text-lg text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors";
+  const labelCls = "text-[10px] font-bold uppercase tracking-[2px] text-[#555555]";
+
   if (fetching) {
     return (
-      <Card className="border-0 shadow-lg rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </Card>
+      <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] min-h-[400px] flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-[#DA291C]" />
+      </div>
     );
   }
 
   return (
-    <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
-      <CardHeader className="bg-muted/30 pb-6 border-b border-rose-100 bg-gradient-to-r from-rose-50 to-white">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-rose-100 flex items-center justify-center">
-            <Heart className="h-5 w-5 text-rose-600" />
-          </div>
-          <div>
-            <CardTitle className="text-xl">Loyalty Program Settings</CardTitle>
-            <CardDescription>Configure how customers earn rewards at checkout.</CardDescription>
-          </div>
+    <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+      <div className="p-8 border-b border-[#1A1A1A] flex items-center justify-between">
+        <div>
+          <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Loyalty Protocol</h3>
+          <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Configure automated customer reward logic.</p>
         </div>
-      </CardHeader>
+        <div className="h-10 w-10 bg-[#DA291C]/10 border border-[#DA291C]/20 flex items-center justify-center rounded-[2px]">
+          <Heart className="h-5 w-5 text-[#DA291C]" />
+        </div>
+      </div>
+      
       <form onSubmit={handleUpdate}>
-        <CardContent className="space-y-8 pt-8">
+        <div className="p-8 space-y-10">
           
           {/* Progress Target */}
-          <div className="space-y-4 bg-muted/20 p-5 rounded-xl border border-muted/50">
-            <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
-                <Award className="h-5 w-5 text-amber-500" />
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Award className="h-4 w-4 text-[#DA291C]" />
+                <Label htmlFor="progress_target" className={labelCls}>Reward Threshold</Label>
               </div>
-              <div className="space-y-1.5 flex-1">
-                <Label htmlFor="progress_target" className="text-base font-semibold">Reward Threshold</Label>
-                <p className="text-sm text-muted-foreground">Number of purchases required before a customer becomes eligible for a loyalty reward.</p>
-                <div className="pt-2 max-w-[200px]">
-                  <div className="relative">
-                    <Input 
-                      id="progress_target" 
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={loyaltyData.loyalty_progress_target} 
-                      onChange={e => setLoyaltyData({...loyaltyData, loyalty_progress_target: parseInt(e.target.value) || 0})} 
-                      className="rounded-xl h-11 pr-16 focus-visible:ring-rose-500 text-lg font-medium"
-                    />
-                    <div className="absolute right-3 top-0 h-11 flex items-center text-sm font-medium text-muted-foreground pointer-events-none">
-                      purchases
-                    </div>
-                  </div>
-                </div>
+              <p className="text-[11px] text-[#888888] uppercase tracking-[0.5px] leading-relaxed">
+                Define the quantity of finalized transactions required to trigger a VIP status reward for a customer entity.
+              </p>
+            </div>
+            <div className="relative max-w-[240px]">
+              <input 
+                id="progress_target" 
+                type="number"
+                min="1"
+                step="1"
+                value={loyaltyData.loyalty_progress_target} 
+                onChange={e => setLoyaltyData({...loyaltyData, loyalty_progress_target: parseInt(e.target.value) || 0})} 
+                className={cn(inputCls, "w-full pr-24")}
+              />
+              <div className="absolute right-4 top-0 h-12 flex items-center text-[10px] font-bold text-[#555555] uppercase tracking-[1px] pointer-events-none">
+                UNITS
               </div>
             </div>
           </div>
+
+          <div className="h-px bg-[#1A1A1A]" />
 
           {/* Discount Percentage */}
-          <div className="space-y-4 bg-muted/20 p-5 rounded-xl border border-muted/50">
-            <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
-                <Percent className="h-5 w-5 text-emerald-500" />
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Percent className="h-4 w-4 text-[#DA291C]" />
+                <Label htmlFor="discount_percentage" className={labelCls}>Loyalty Rebate Rate</Label>
               </div>
-              <div className="space-y-1.5 flex-1">
-                <Label htmlFor="discount_percentage" className="text-base font-semibold">Reward Discount</Label>
-                <p className="text-sm text-muted-foreground">The percentage discount applied to the customer's total bill once they reach the reward threshold.</p>
-                <div className="pt-2 max-w-[200px]">
-                  <div className="relative">
-                    <Input 
-                      id="discount_percentage" 
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={loyaltyData.loyalty_discount_percentage} 
-                      onChange={e => setLoyaltyData({...loyaltyData, loyalty_discount_percentage: e.target.value})} 
-                      className="rounded-xl h-11 pr-12 focus-visible:ring-emerald-500 text-lg font-medium"
-                    />
-                    <div className="absolute right-4 top-0 h-11 flex items-center text-lg font-medium text-muted-foreground pointer-events-none">
-                      %
-                    </div>
-                  </div>
-                </div>
+              <p className="text-[11px] text-[#888888] uppercase tracking-[0.5px] leading-relaxed">
+                The fixed percentage value deducted from the gross total once the target threshold is validated at checkout.
+              </p>
+            </div>
+            <div className="relative max-w-[240px]">
+              <input 
+                id="discount_percentage" 
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={loyaltyData.loyalty_discount_percentage} 
+                onChange={e => setLoyaltyData({...loyaltyData, loyalty_discount_percentage: e.target.value})} 
+                className={cn(inputCls, "w-full pr-12")}
+              />
+              <div className="absolute right-5 top-0 h-12 flex items-center text-lg font-bold text-[#DA291C] pointer-events-none">
+                %
               </div>
             </div>
           </div>
 
-        </CardContent>
-        <CardFooter className="bg-muted/10 border-t mt-4 py-4 px-6 flex justify-end">
+        </div>
+
+        <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
           <Button 
             type="submit" 
             disabled={loading}
-            className="rounded-xl h-11 px-8 font-semibold shadow-md active:scale-95 transition-transform bg-rose-600 hover:bg-rose-700"
+            className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-[#DA291C] text-white hover:bg-[#B01E0A] transition-all"
           >
             {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : "Save Loyalty Settings"}
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : "Save Protocol"}
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 }
