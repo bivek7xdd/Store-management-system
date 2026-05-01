@@ -116,6 +116,23 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [queryClient]);
 
+  const userMenuButton = (
+    <button className={cn(
+      "flex items-center rounded-[2px] hover:bg-[#111111] transition-colors text-left overflow-hidden",
+      isCollapsed ? "px-0 justify-center w-8 h-8" : "flex-1 px-3 py-2 gap-3"
+    )}>
+      <div className="h-7 w-7 rounded-[2px] flex items-center justify-center text-white text-[12px] font-semibold bg-[#DA291C] shrink-0">
+        {user?.name?.charAt(0)?.toUpperCase() || "U"}
+      </div>
+      {!isCollapsed && (
+        <div className="flex flex-col min-w-0">
+          <span className="text-[12px] font-medium text-white truncate">{user?.name}</span>
+          <span className="text-[11px] text-[#888888] truncate">{user?.store_name}</span>
+        </div>
+      )}
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
 
@@ -261,29 +278,22 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             
             <DropdownMenu>
-              <Tooltip delayDuration={300} disabled={!isCollapsed}>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <button className={cn(
-                      "flex items-center rounded-[2px] hover:bg-[#111111] transition-colors text-left overflow-hidden",
-                      isCollapsed ? "px-0 justify-center w-8 h-8" : "flex-1 px-3 py-2 gap-3"
-                    )}>
-                      <div className="h-7 w-7 rounded-[2px] flex items-center justify-center text-white text-[12px] font-semibold bg-[#DA291C] shrink-0">
-                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                      </div>
-                      {!isCollapsed && (
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[12px] font-medium text-white truncate">{user?.name}</span>
-                          <span className="text-[11px] text-[#888888] truncate">{user?.store_name}</span>
-                        </div>
-                      )}
-                    </button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
-                   Profile: {user?.name}
-                </TooltipContent>
-              </Tooltip>
+              {isCollapsed ? (
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      {userMenuButton}
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-[#111111] border-[#303030] text-white">
+                     Profile: {user?.name}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <DropdownMenuTrigger asChild>
+                  {userMenuButton}
+                </DropdownMenuTrigger>
+              )}
               <DropdownMenuContent align={isCollapsed ? "start" : "end"} side={isCollapsed ? "right" : "top"} className="w-52 bg-[#111111] border-[#303030] text-white">
                 <DropdownMenuLabel className="text-[#8F8F8F] text-[11px] uppercase tracking-[1px]">My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[#303030]" />

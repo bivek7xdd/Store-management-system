@@ -15,6 +15,7 @@ import confetti from "canvas-confetti";
 import { CustomerSelection } from "@/components/pos/CustomerSelection";
 import { SplitPaymentDialog, PaymentEntry } from "@/components/pos/SplitPaymentDialog";
 import { customerService } from "@/services/customerService";
+import { userService } from "@/services/userService";
 import { Customer } from "@/types";
 import { cn } from "@/lib/utils";
 import { VariantSelectionDialog } from "@/components/pos/VariantSelectionDialog";
@@ -57,6 +58,10 @@ export default function Sales() {
   });
   const [variantSelectionProduct, setVariantSelectionProduct] = useState<Product | null>(null);
   const [showVariantModal, setShowVariantModal] = useState(false);
+  const [loyaltySettings, setLoyaltySettings] = useState({
+    target: 5,
+    discount: "10.00"
+  });
 
   useEffect(() => {
     localStorage.setItem("storeflow_confetti", JSON.stringify(showConfetti));
@@ -93,6 +98,26 @@ export default function Sales() {
     };
     getCachedProductsCount();
   }, []);
+
+  useEffect(() => {
+    const fetchLoyaltySettings = async () => {
+      try {
+        const response = await userService.getStore();
+        const store = response.data;
+        if (store) {
+          setLoyaltySettings({
+            target: store.loyalty_progress_target || 5,
+            discount: store.loyalty_discount_percentage || "10.00"
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch loyalty settings:", error);
+      }
+    };
+    if (isAuthenticated) {
+      fetchLoyaltySettings();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const search = async () => {
@@ -132,12 +157,12 @@ export default function Sales() {
 
   useEffect(() => {
     if (selectedCustomer && selectedCustomer.name !== 'Guest') {
-      const isEligible = customerService.isEligibleForLoyaltyDiscount(selectedCustomer.purchase_count);
+      const isEligible = customerService.isEligibleForLoyaltyDiscount(selectedCustomer.purchase_count, loyaltySettings.target);
       if (isEligible && !loyaltyApplied) {
         setDiscountType('percent');
-        setDiscountValue('7');
+        setDiscountValue(parseFloat(loyaltySettings.discount).toString());
         setLoyaltyApplied(true);
-        toast.success(`Loyalty Reward: 7% discount auto-applied for ${selectedCustomer.name}!`, {
+        toast.success(`Loyalty Reward: ${parseFloat(loyaltySettings.discount)}% discount auto-applied for ${selectedCustomer.name}!`, {
             icon: '🎁',
             duration: 5000
         });

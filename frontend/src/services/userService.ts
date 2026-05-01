@@ -15,6 +15,8 @@ export interface UpdateStoreData {
   name?: string;
   address?: string;
   currency_code?: string;
+  loyalty_progress_target?: number;
+  loyalty_discount_percentage?: string;
 }
 
 export const userService = {

@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Store, Shield, CircleCheck, AlertCircle, Loader2 } from "lucide-react";
+import { User, Store, Shield, CircleCheck, AlertCircle, Loader2, Globe, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { userService } from "@/services/userService";
+import { OnlineTrackingTab } from "@/components/settings/OnlineTrackingTab";
+import { LoyaltyTab } from "@/components/settings/LoyaltyTab";
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -114,18 +116,26 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8 bg-muted/50 p-1 rounded-xl h-14">
-          <TabsTrigger value="profile" className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full">
-            <User className="h-5 w-5" />
-            <span className="font-medium">Profile</span>
+        <TabsList className="flex w-full mb-8 bg-muted/50 p-1 rounded-xl h-14 overflow-x-auto hide-scrollbar space-x-1">
+          <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[120px]">
+            <User className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
+            <span className="font-medium text-sm lg:text-base">Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="store" className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full">
-            <Store className="h-5 w-5" />
-            <span className="font-medium">Store</span>
+          <TabsTrigger value="store" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[120px]">
+            <Store className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
+            <span className="font-medium text-sm lg:text-base">Store Info</span>
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full">
-            <Shield className="h-5 w-5" />
-            <span className="font-medium">Security</span>
+          <TabsTrigger value="security" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[120px]">
+            <Shield className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
+            <span className="font-medium text-sm lg:text-base">Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="online" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[140px]">
+            <Globe className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
+            <span className="font-medium text-sm lg:text-base">Online Tracking</span>
+          </TabsTrigger>
+          <TabsTrigger value="loyalty" className="flex-1 flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all h-full min-w-[140px]">
+            <Heart className="h-4 w-4 lg:h-5 lg:w-5 shrink-0" />
+            <span className="font-medium text-sm lg:text-base">Loyalty Program</span>
           </TabsTrigger>
         </TabsList>
 
@@ -317,6 +327,14 @@ export default function Settings() {
               </CardFooter>
             </form>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="online" className="focus-visible:outline-none focus-visible:ring-0">
+          <OnlineTrackingTab />
+        </TabsContent>
+
+        <TabsContent value="loyalty" className="focus-visible:outline-none focus-visible:ring-0">
+          <LoyaltyTab />
         </TabsContent>
       </Tabs>
     </div>

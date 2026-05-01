@@ -84,10 +84,9 @@ export const customerService = {
     return await db.customers.where('name').equals('Guest').first();
   },
 
-  isEligibleForLoyaltyDiscount: (purchaseCount: number) => {
-    // Every 5th purchase gets a discount.
-    // If they have 4 previous purchases, this 5th one qualifies.
-    // count: 0, 1, 2, 3, 4(Disc), 5, 6, 7, 8, 9(Disc)...
-    return (purchaseCount + 1) % 5 === 0;
+  isEligibleForLoyaltyDiscount: (purchaseCount: number, target: number = 5) => {
+    // Number of purchases required before a customer becomes eligible for a loyalty reward.
+    // If target is 5, then every 5th purchase qualifies.
+    return (purchaseCount + 1) % target === 0;
   }
 };

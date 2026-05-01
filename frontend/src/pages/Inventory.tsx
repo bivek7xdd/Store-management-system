@@ -242,22 +242,6 @@ export default function Inventory() {
     },
   });
 
-  const trackProductMutation = useMutation({
-    mutationFn: ({ id, is_tracked }: { id: string; is_tracked: boolean }) =>
-      inventoryService.updateProduct(id, { is_tracked }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Tracking status updated");
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.error || "Failed to update tracking status";
-      toast.error(message);
-    },
-  });
-
-  const handleTrackToggle = (id: string, is_tracked: boolean) => {
-    trackProductMutation.mutate({ id, is_tracked });
-  };
 
   // Update product mutation with optimistic updates
   const updateProductMutation = useMutation({
@@ -1177,7 +1161,6 @@ export default function Inventory() {
                 <ProductTableRow
                   key={product.id}
                   product={product}
-                  handleTrackToggle={handleTrackToggle}
                   handleEditClick={handleEditClick}
                   handleDeleteClick={handleDeleteClick}
                   offlineStatus={offlineStatus}
@@ -1250,14 +1233,13 @@ export default function Inventory() {
 
 interface ProductCardProps {
   product: Product;
-  handleTrackToggle: (id: string, tracked: boolean) => void;
   handleEditClick: (product: Product) => void;
   handleDeleteClick: (product: Product) => void;
   offlineStatus: OfflineStatus;
   forceExpand?: boolean;
 }
 
-function ProductTableRow({ product, handleTrackToggle, handleEditClick, handleDeleteClick, offlineStatus, forceExpand }: ProductCardProps) {
+function ProductTableRow({ product, handleEditClick, handleDeleteClick, offlineStatus, forceExpand }: ProductCardProps) {
   const [localVariants, setLocalVariants] = useState<ProductVariant[]>(product.variants || []);
   const [expanded, setExpanded] = useState(false);
 
@@ -1348,21 +1330,6 @@ function ProductTableRow({ product, handleTrackToggle, handleEditClick, handleDe
         </TableCell>
         <TableCell className="p-3 text-right">
           <div className="flex items-center justify-end gap-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Switch
-                      id={`track-${product.id}`}
-                      checked={product.is_tracked || false}
-                      onCheckedChange={(checked) => handleTrackToggle(product.id, checked)}
-                      className="data-[state=checked]:bg-[#DA291C] scale-75"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent><p>Track Online Price</p></TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
