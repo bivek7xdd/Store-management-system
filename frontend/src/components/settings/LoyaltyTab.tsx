@@ -15,8 +15,9 @@ export function LoyaltyTab() {
   const [fetching, setFetching] = useState(true);
   const [loyaltyData, setLoyaltyData] = useState({
     loyalty_progress_target: 5,
-    loyalty_discount_percentage: "10.00",
+    loyalty_discount_percentage: 10.00,
   });
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     const fetchStore = async () => {
@@ -24,11 +25,14 @@ export function LoyaltyTab() {
         const response = await userService.getStore();
         const store = response.data;
         setLoyaltyData({
-          loyalty_progress_target: store.loyalty_progress_target || 5,
-          loyalty_discount_percentage: store.loyalty_discount_percentage || "10.00",
+          loyalty_progress_target: store.loyalty_progress_target ?? 5,
+          loyalty_discount_percentage: store.loyalty_discount_percentage ?? 10.00,
         });
+        setFetchError(false);
       } catch (error) {
         console.error("Failed to fetch store info:", error);
+        setFetchError(true);
+        toast.error("Failed to load loyalty settings. Please refresh the page.");
       } finally {
         setFetching(false);
       }
@@ -38,11 +42,15 @@ export function LoyaltyTab() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (fetchError) {
+      toast.error("Cannot update settings while fetch error persists. Please refresh the page.");
+      return;
+    }
     setLoading(true);
     try {
       await userService.updateStore({
         loyalty_progress_target: loyaltyData.loyalty_progress_target,
-        loyalty_discount_percentage: String(loyaltyData.loyalty_discount_percentage),
+        loyalty_discount_percentage: loyaltyData.loyalty_discount_percentage,
       });
       toast.success("Loyalty program settings updated successfully");
     } catch (error: any) {
@@ -69,15 +77,21 @@ export function LoyaltyTab() {
         <div>
           <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Loyalty Protocol</h3>
           <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Configure automated customer reward logic.</p>
+          {fetchError && (
+            <p className="text-[11px] text-[#DA291C] font-bold uppercase tracking-[1px] mt-2 flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#DA291C] animate-pulse" />
+              Connection Error: Failed to synchronize protocol parameters.
+            </p>
+          )}
         </div>
         <div className="h-10 w-10 bg-[#DA291C]/10 border border-[#DA291C]/20 flex items-center justify-center rounded-[2px]">
           <Heart className="h-5 w-5 text-[#DA291C]" />
         </div>
       </div>
-      
+
       <form onSubmit={handleUpdate}>
         <div className="p-8 space-y-10">
-          
+
           {/* Progress Target */}
           <div className="grid lg:grid-cols-2 gap-10 items-start">
             <div className="space-y-4">
@@ -90,13 +104,13 @@ export function LoyaltyTab() {
               </p>
             </div>
             <div className="relative max-w-[240px]">
-              <input 
-                id="progress_target" 
+              <input
+                id="progress_target"
                 type="number"
                 min="1"
                 step="1"
-                value={loyaltyData.loyalty_progress_target} 
-                onChange={e => setLoyaltyData({...loyaltyData, loyalty_progress_target: parseInt(e.target.value) || 0})} 
+                value={loyaltyData.loyalty_progress_target}
+                onChange={e => setLoyaltyData({ ...loyaltyData, loyalty_progress_target: Math.max(1, parseInt(e.target.value) || 1) })}
                 className={cn(inputCls, "w-full pr-24")}
               />
               <div className="absolute right-4 top-0 h-12 flex items-center text-[10px] font-bold text-[#555555] uppercase tracking-[1px] pointer-events-none">
@@ -119,14 +133,14 @@ export function LoyaltyTab() {
               </p>
             </div>
             <div className="relative max-w-[240px]">
-              <input 
-                id="discount_percentage" 
+              <input
+                id="discount_percentage"
                 type="number"
                 min="0"
                 max="100"
                 step="0.01"
-                value={loyaltyData.loyalty_discount_percentage} 
-                onChange={e => setLoyaltyData({...loyaltyData, loyalty_discount_percentage: e.target.value})} 
+                value={loyaltyData.loyalty_discount_percentage}
+                onChange={e => setLoyaltyData({ ...loyaltyData, loyalty_discount_percentage: parseFloat(e.target.value) || 0 })}
                 className={cn(inputCls, "w-full pr-12")}
               />
               <div className="absolute right-5 top-0 h-12 flex items-center text-lg font-bold text-[#DA291C] pointer-events-none">
@@ -138,10 +152,10 @@ export function LoyaltyTab() {
         </div>
 
         <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-[#DA291C] text-white hover:bg-[#B01E0A] transition-all"
+          <Button
+            type="submit"
+            disabled={loading || fetchError}
+            className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-[#DA291C] text-white hover:bg-[#B01E0A] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

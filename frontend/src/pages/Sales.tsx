@@ -60,7 +60,7 @@ export default function Sales() {
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [loyaltySettings, setLoyaltySettings] = useState({
     target: 5,
-    discount: "10.00"
+    discount: 10.00
   });
 
   useEffect(() => {
@@ -106,8 +106,8 @@ export default function Sales() {
         const store = response.data;
         if (store) {
           setLoyaltySettings({
-            target: store.loyalty_progress_target || 5,
-            discount: store.loyalty_discount_percentage || "10.00"
+            target: store.loyalty_progress_target ?? 5,
+            discount: store.loyalty_discount_percentage ?? 10.00
           });
         }
       } catch (error) {
@@ -160,9 +160,9 @@ export default function Sales() {
       const isEligible = customerService.isEligibleForLoyaltyDiscount(selectedCustomer.purchase_count, loyaltySettings.target);
       if (isEligible && !loyaltyApplied) {
         setDiscountType('percent');
-        setDiscountValue(parseFloat(loyaltySettings.discount).toString());
+        setDiscountValue(loyaltySettings.discount.toString());
         setLoyaltyApplied(true);
-        toast.success(`Loyalty Reward: ${parseFloat(loyaltySettings.discount)}% discount auto-applied for ${selectedCustomer.name}!`, {
+        toast.success(`Loyalty Reward: ${loyaltySettings.discount}% discount auto-applied for ${selectedCustomer.name}!`, {
             icon: '🎁',
             duration: 5000
         });

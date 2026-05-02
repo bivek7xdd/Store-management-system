@@ -85,6 +85,9 @@ export const customerService = {
   },
 
   isEligibleForLoyaltyDiscount: (purchaseCount: number, target: number = 5) => {
+    if (target <= 0) {
+      throw new Error('Target must be a positive integer');
+    }
     // Number of purchases required before a customer becomes eligible for a loyalty reward.
     // If target is 5, then every 5th purchase qualifies.
     return (purchaseCount + 1) % target === 0;

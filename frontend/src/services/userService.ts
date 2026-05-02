@@ -16,7 +16,7 @@ export interface UpdateStoreData {
   address?: string;
   currency_code?: string;
   loyalty_progress_target?: number;
-  loyalty_discount_percentage?: string;
+  loyalty_discount_percentage?: number;
 }
 
 export const userService = {
@@ -24,19 +24,25 @@ export const userService = {
     const response = await api.put("/users/profile", data);
     return response.data;
   },
-  
+
   updatePassword: async (data: UpdatePasswordData) => {
     const response = await api.put("/users/password", data);
     return response.data;
   },
-  
+
   updateStore: async (data: UpdateStoreData) => {
     const response = await api.put("/users/store", data);
     return response.data;
   },
-  
+
   getStore: async () => {
     const response = await api.get("/users/store");
+    if (response.data?.data) {
+      const store = response.data.data;
+      if (store.loyalty_discount_percentage !== undefined) {
+        store.loyalty_discount_percentage = Number(store.loyalty_discount_percentage);
+      }
+    }
     return response.data;
   }
 };

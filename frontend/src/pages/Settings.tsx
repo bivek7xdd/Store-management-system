@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
-  
+
   // Profile State
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -155,20 +155,20 @@ export default function Settings() {
                 <div className="grid gap-8 sm:grid-cols-2">
                   <div className="space-y-3">
                     <Label htmlFor="name" className={labelCls}>Full Legal Name</Label>
-                    <input 
-                      id="name" 
-                      value={profileData.name} 
-                      onChange={e => setProfileData({...profileData, name: e.target.value})} 
+                    <input
+                      id="name"
+                      value={profileData.name}
+                      onChange={e => setProfileData({ ...profileData, name: e.target.value })}
                       className={cn(inputCls, "w-full")}
                       placeholder="ENTER NAME"
                     />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="phone" className={labelCls}>Contact Number</Label>
-                    <input 
-                      id="phone" 
-                      value={profileData.phone} 
-                      onChange={e => setProfileData({...profileData, phone: e.target.value})} 
+                    <input
+                      id="phone"
+                      value={profileData.phone}
+                      onChange={e => setProfileData({ ...profileData, phone: e.target.value })}
                       className={cn(inputCls, "w-full")}
                       placeholder="+977-XXXXXXXXXX"
                     />
@@ -177,11 +177,11 @@ export default function Settings() {
                 <div className="space-y-3">
                   <Label htmlFor="email" className={labelCls}>Primary Email Address</Label>
                   <div className="relative">
-                    <input 
-                      id="email" 
-                      value={user?.email} 
-                      disabled 
-                      className={cn(inputCls, "w-full bg-[#111111] border-dashed cursor-not-allowed pr-10 text-[#888888]")} 
+                    <input
+                      id="email"
+                      value={user?.email || ""}
+                      disabled
+                      className={cn(inputCls, "w-full bg-[#111111] border-dashed cursor-not-allowed pr-10 text-[#888888]")}
                     />
                     <CircleCheck className="absolute right-3 top-3 h-5 w-5 text-emerald-500" />
                   </div>
@@ -189,9 +189,9 @@ export default function Settings() {
                 </div>
               </div>
               <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
-                <Button 
-                  type="submit" 
-                  disabled={profileLoading} 
+                <Button
+                  type="submit"
+                  disabled={profileLoading}
                   className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-white text-black hover:bg-[#EEEEEE] transition-all"
                 >
                   {profileLoading ? (
@@ -213,38 +213,38 @@ export default function Settings() {
               <div className="p-8 space-y-8">
                 <div className="space-y-3">
                   <Label htmlFor="store_name" className={labelCls}>Registered Store Name</Label>
-                  <input 
-                    id="store_name" 
-                    value={storeData.name} 
-                    onChange={e => setStoreData({...storeData, name: e.target.value})} 
+                  <input
+                    id="store_name"
+                    value={storeData.name}
+                    onChange={e => setStoreData({ ...storeData, name: e.target.value })}
                     className={cn(inputCls, "w-full")}
                     placeholder="ENTER STORE NAME"
                   />
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="address" className={labelCls}>Physical Workspace Address</Label>
-                  <input 
-                    id="address" 
-                    value={storeData.address} 
-                    onChange={e => setStoreData({...storeData, address: e.target.value})} 
+                  <input
+                    id="address"
+                    value={storeData.address}
+                    onChange={e => setStoreData({ ...storeData, address: e.target.value })}
                     className={cn(inputCls, "w-full")}
                     placeholder="E.G. KATHMANDU, NEPAL"
                   />
                 </div>
                 <div className="space-y-3 w-full sm:w-1/2">
                   <Label htmlFor="currency" className={labelCls}>System Currency Protocol</Label>
-                  <input 
-                    id="currency" 
-                    value={storeData.currency_code} 
-                    onChange={e => setStoreData({...storeData, currency_code: e.target.value})} 
+                  <input
+                    id="currency"
+                    value={storeData.currency_code}
+                    onChange={e => setStoreData({ ...storeData, currency_code: e.target.value })}
                     className={cn(inputCls, "w-full uppercase")}
                     placeholder="E.G. NPR"
                   />
                 </div>
               </div>
               <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={storeLoading}
                   className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-white text-black hover:bg-[#EEEEEE] transition-all"
                 >
@@ -267,12 +267,12 @@ export default function Settings() {
               <div className="p-8 space-y-8">
                 <div className="space-y-3">
                   <Label htmlFor="current_password" className={labelCls}>Current Passkey</Label>
-                  <input 
-                    id="current_password" 
-                    type="password" 
+                  <input
+                    id="current_password"
+                    type="password"
                     autoComplete="current-password"
                     value={passwordData.current_password}
-                    onChange={e => setPasswordData({...passwordData, current_password: e.target.value})}
+                    onChange={e => setPasswordData({ ...passwordData, current_password: e.target.value })}
                     className={cn(inputCls, "w-full")}
                     placeholder="••••••••"
                   />
@@ -280,24 +280,24 @@ export default function Settings() {
                 <div className="grid gap-8 sm:grid-cols-2">
                   <div className="space-y-3">
                     <Label htmlFor="new_password" className={labelCls}>New Passkey</Label>
-                    <input 
-                      id="new_password" 
+                    <input
+                      id="new_password"
                       type="password"
                       autoComplete="new-password"
                       value={passwordData.new_password}
-                      onChange={e => setPasswordData({...passwordData, new_password: e.target.value})}
+                      onChange={e => setPasswordData({ ...passwordData, new_password: e.target.value })}
                       className={cn(inputCls, "w-full")}
                       placeholder="MIN 8 CHARS"
                     />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="confirm_password" className={labelCls}>Verify Passkey</Label>
-                    <input 
-                      id="confirm_password" 
+                    <input
+                      id="confirm_password"
                       type="password"
                       autoComplete="new-password"
                       value={passwordData.confirm_password}
-                      onChange={e => setPasswordData({...passwordData, confirm_password: e.target.value})}
+                      onChange={e => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
                       className={cn(inputCls, "w-full")}
                       placeholder="RE-ENTER PASSKEY"
                     />
@@ -311,8 +311,8 @@ export default function Settings() {
                 </div>
               </div>
               <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={securityLoading}
                   className="rounded-[2px] h-12 px-10 font-bold uppercase text-[11px] tracking-[2px] bg-[#DA291C] text-white hover:bg-[#B01E0A] transition-all"
                 >

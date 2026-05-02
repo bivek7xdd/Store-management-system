@@ -38,11 +38,16 @@ export function OnlineTrackingTab() {
   const trackedProducts = products.filter(p => p.is_tracked);
   
   const searchResults = searchTerm.length >= 2 
-    ? products.filter(p => 
-        !p.is_tracked && 
-        (p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-         (p.barcode?.String || p.barcode || "").includes(searchTerm))
-      )
+    ? products.filter(p => {
+        const barcodeStr = typeof p.barcode === 'string' 
+          ? p.barcode 
+          : (p.barcode?.String || "");
+          
+        return !p.is_tracked && (
+          p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          barcodeStr.includes(searchTerm)
+        );
+      })
     : [];
 
   const inputCls = "h-12 bg-transparent border border-[#1A1A1A] rounded-[2px] px-4 font-bold text-sm text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors";
@@ -150,6 +155,8 @@ export function OnlineTrackingTab() {
                     className="h-9 w-9 text-[#333333] hover:text-[#DA291C] hover:bg-[#DA291C]/5 rounded-[2px] transition-all"
                     onClick={() => handleTrackToggle(product.id, false)}
                     disabled={trackProductMutation.isPending}
+                    aria-label={`Untrack ${product.name}`}
+                    title={`Untrack ${product.name}`}
                   >
                     <X className="h-4 w-4" />
                   </Button>

@@ -43,7 +43,7 @@ export default function Customers() {
   const fetchStoreInfo = async () => {
     try {
       const response = await userService.getStore();
-      setLoyaltyTarget(response?.data?.loyalty_progress_target || 5);
+      setLoyaltyTarget(response?.data?.loyalty_progress_target ?? 5);
     } catch (error) {
       console.error("Failed to fetch store info:", error);
     }
