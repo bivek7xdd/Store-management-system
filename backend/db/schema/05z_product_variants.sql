@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS product_variants (
     cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
     selling_price DECIMAL(10, 2) NOT NULL,
     stock_level INT NOT NULL DEFAULT 0,
+    damaged_stock_level INT NOT NULL DEFAULT 0,
     image_url VARCHAR(255),
     archived_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

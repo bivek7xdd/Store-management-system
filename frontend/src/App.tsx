@@ -14,6 +14,7 @@ import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
 import Sales from "./pages/Sales";
 import SalesHistory from "./pages/SalesHistory";
+import ReturnsHistory from "./pages/ReturnsHistory";
 import Debtors from "./pages/Debtors";
 import Reports from "./pages/Reports";
 import Market from "./pages/Market";
@@ -160,6 +161,13 @@ const App = () => {
                         <ProtectedRoute>
                           <Layout>
                             <SalesHistory />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/sales/returns" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <ReturnsHistory />
                           </Layout>
                         </ProtectedRoute>
                       } />

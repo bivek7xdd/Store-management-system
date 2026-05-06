@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	AddDamagedProductStock(ctx context.Context, arg AddDamagedProductStockParams) (Product, error)
+	AddDamagedVariantStock(ctx context.Context, arg AddDamagedVariantStockParams) (ProductVariant, error)
 	ArchiveProductVariant(ctx context.Context, id pgtype.UUID) error
 	CheckNotificationExists(ctx context.Context, arg CheckNotificationExistsParams) (bool, error)
 	CreateCategories(ctx context.Context, arg CreateCategoriesParams) (Category, error)
@@ -21,6 +23,8 @@ type Querier interface {
 	CreatePaymentRecord(ctx context.Context, arg CreatePaymentRecordParams) (PaymentRecord, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
+	CreateReturn(ctx context.Context, arg CreateReturnParams) (Return, error)
+	CreateReturnItem(ctx context.Context, arg CreateReturnItemParams) (ReturnItem, error)
 	CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error)
 	CreateSaleItem(ctx context.Context, arg CreateSaleItemParams) (SaleItem, error)
 	CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error)
@@ -67,8 +71,10 @@ type Querier interface {
 	GetProductVelocity(ctx context.Context, storeID pgtype.UUID) ([]GetProductVelocityRow, error)
 	GetProfitStats(ctx context.Context, arg GetProfitStatsParams) (GetProfitStatsRow, error)
 	GetRecentSales(ctx context.Context, arg GetRecentSalesParams) ([]GetRecentSalesRow, error)
+	GetReturnItems(ctx context.Context, returnID pgtype.UUID) ([]GetReturnItemsRow, error)
 	GetRevenueByCategory(ctx context.Context, arg GetRevenueByCategoryParams) ([]GetRevenueByCategoryRow, error)
 	GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, error)
+	GetSaleItem(ctx context.Context, id pgtype.UUID) (SaleItem, error)
 	GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSaleItemsRow, error)
 	GetSalesByType(ctx context.Context, arg GetSalesByTypeParams) ([]GetSalesByTypeRow, error)
 	GetSalesForPeriod(ctx context.Context, arg GetSalesForPeriodParams) (pgtype.Numeric, error)
@@ -95,6 +101,7 @@ type Querier interface {
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
 	ListProductsBySupplier(ctx context.Context, arg ListProductsBySupplierParams) ([]Product, error)
+	ListReturns(ctx context.Context, arg ListReturnsParams) ([]ListReturnsRow, error)
 	ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSalesRow, error)
 	ListStoreInfo(ctx context.Context, arg ListStoreInfoParams) ([]StoreInfo, error)
 	ListStoreOwners(ctx context.Context, arg ListStoreOwnersParams) ([]StoreOwner, error)
@@ -104,6 +111,8 @@ type Querier interface {
 	MarkAllNotificationsAsRead(ctx context.Context, storeID pgtype.UUID) error
 	MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (Notification, error)
 	RecordDebtPayment(ctx context.Context, arg RecordDebtPaymentParams) (Debt, error)
+	ReturnProductStock(ctx context.Context, arg ReturnProductStockParams) (Product, error)
+	ReturnVariantStock(ctx context.Context, arg ReturnVariantStockParams) (ProductVariant, error)
 	SearchCustomers(ctx context.Context, arg SearchCustomersParams) ([]Customer, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)

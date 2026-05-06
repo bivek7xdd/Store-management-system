@@ -589,8 +589,8 @@ type UpdateStoreParams struct {
 	Name                      string  `json:"name"`
 	Address                   string  `json:"address"`
 	CurrencyCode              string  `json:"currency_code"`
-	LoyaltyProgressTarget     *int32  `json:"loyalty_progress_target"`
-	LoyaltyDiscountPercentage *string `json:"loyalty_discount_percentage"`
+	LoyaltyProgressTarget     *int32   `json:"loyalty_progress_target"`
+	LoyaltyDiscountPercentage *float64 `json:"loyalty_discount_percentage"`
 }
 
 func UpdateStoreHandler(c *gin.Context) {
@@ -629,7 +629,7 @@ func UpdateStoreHandler(c *gin.Context) {
 
 	if req.LoyaltyDiscountPercentage != nil {
 		var num pgtype.Numeric
-		if err := num.Scan(*req.LoyaltyDiscountPercentage); err == nil {
+		if err := num.Scan(fmt.Sprintf("%f", *req.LoyaltyDiscountPercentage)); err == nil {
 			arg.LoyaltyDiscountPercentage = num
 		}
 	}

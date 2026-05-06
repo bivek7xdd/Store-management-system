@@ -336,7 +336,7 @@ func GetProduct(c *gin.Context) {
 
 	utils.SuccessResponse(c, "Product fetched successfully", gin.H{
 		"product":  product,
-		"variants": variants,
+		"variants": decodeVariants(variants),
 	})
 }
 
@@ -557,7 +557,7 @@ func UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message":  "Product and variants updated successfully",
 			"product":  product,
-			"variants": variants,
+			"variants": decodeVariants(variants),
 		})
 		return
 	}

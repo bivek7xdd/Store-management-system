@@ -154,10 +154,31 @@ func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, e
 	return i, err
 }
 
+const getSaleItem = `-- name: GetSaleItem :one
+SELECT id, sale_id, product_id, variant_id, quantity, unit_price, total_price FROM sale_items
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetSaleItem(ctx context.Context, id pgtype.UUID) (SaleItem, error) {
+	row := q.db.QueryRow(ctx, getSaleItem, id)
+	var i SaleItem
+	err := row.Scan(
+		&i.ID,
+		&i.SaleID,
+		&i.ProductID,
+		&i.VariantID,
+		&i.Quantity,
+		&i.UnitPrice,
+		&i.TotalPrice,
+	)
+	return i, err
+}
+
 const getSaleItems = `-- name: GetSaleItems :many
 SELECT 
     si.id, si.sale_id, si.product_id, si.variant_id, si.quantity, si.unit_price::float as unit_price, si.total_price::float as total_price, 
     p.name as product_name,
+    p.warranty_days,
     v.sku as variant_sku,
     v.attributes as variant_attributes
 FROM sale_items si
@@ -175,6 +196,7 @@ type GetSaleItemsRow struct {
 	UnitPrice         float64     `db:"unit_price" json:"unit_price"`
 	TotalPrice        float64     `db:"total_price" json:"total_price"`
 	ProductName       string      `db:"product_name" json:"product_name"`
+	WarrantyDays      pgtype.Int4 `db:"warranty_days" json:"warranty_days"`
 	VariantSku        pgtype.Text `db:"variant_sku" json:"variant_sku"`
 	VariantAttributes []byte      `db:"variant_attributes" json:"variant_attributes"`
 }
@@ -197,6 +219,7 @@ func (q *Queries) GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSa
 			&i.UnitPrice,
 			&i.TotalPrice,
 			&i.ProductName,
+			&i.WarrantyDays,
 			&i.VariantSku,
 			&i.VariantAttributes,
 		); err != nil {

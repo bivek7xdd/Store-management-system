@@ -158,6 +158,17 @@ func main() {
 	{
 		posRoutes.GET("/catalog", handlers.GetPOSCatalog)
 	}
+
+	// Returns routes
+	returnsRoutes := router.Group("/api/returns")
+	returnsRoutes.Use(utils.JWTMiddleware())
+	{
+		returnsRoutes.POST("", handlers.CreateReturn)
+		returnsRoutes.POST("/sync", handlers.SyncReturns)
+		returnsRoutes.GET("", handlers.ListReturns)
+		returnsRoutes.GET("/:id", handlers.GetReturnDetails)
+	}
+	
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "8000"

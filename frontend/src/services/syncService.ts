@@ -25,6 +25,7 @@ let syncStatus: OfflineStatus = {
   pendingProducts: 0,
   pendingCategories: 0,
   pendingSuppliers: 0,
+  pendingReturns: 0,
   lastSyncTime: null,
   isSyncing: false,
   syncError: null,
@@ -88,6 +89,15 @@ const updatePendingSuppliersCount = async () => {
     updateSyncStatus({ pendingSuppliers: count });
   } catch (error) {
     console.error('Failed to count pending suppliers:', error);
+  }
+};
+
+const updatePendingReturnsCount = async () => {
+  try {
+    const count = await db.pending_returns.where('synced').notEqual(1).count();
+    updateSyncStatus({ pendingReturns: count });
+  } catch (error) {
+    console.error('Failed to count pending returns:', error);
   }
 };
 
@@ -583,6 +593,68 @@ export const syncService = {
     }
   },
 
+  syncReturns: async (retryAttempt = 0): Promise<boolean> => {
+    if (!isAuthenticated()) {
+      return false;
+    }
+
+    if (!navigator.onLine) {
+      console.log('Offline: Skipping returns sync');
+      return false;
+    }
+
+    try {
+      const unsyncedReturns = await db.pending_returns.where('synced').equals(0).toArray();
+
+      if (unsyncedReturns.length === 0) {
+        console.log('No unsynced returns found');
+        return true;
+      }
+
+      console.log(`Syncing ${unsyncedReturns.length} returns...`);
+
+      const payload = {
+        returns: unsyncedReturns.map(r => ({
+          offline_id: r.offlineId,
+          sale_id: r.sale_id,
+          refund_amount: r.refund_amount.toString(),
+          refund_method: r.refund_method,
+          created_at: r.created_at,
+          items: r.items.map(i => ({
+            sale_item_id: i.sale_item_id,
+            quantity: i.quantity,
+            reason: i.reason,
+            condition: i.condition
+          }))
+        }))
+      };
+
+      const response = await api.post('returns/sync', payload);
+      const syncedIds = response.data?.synced || [];
+
+      for (const returnRecord of unsyncedReturns) {
+        if (returnRecord.offlineId && syncedIds.includes(returnRecord.offlineId)) {
+          if (returnRecord.id) {
+            await db.pending_returns.update(returnRecord.id, { synced: 1 });
+          }
+        }
+      }
+
+      await updatePendingReturnsCount();
+      return true;
+    } catch (error) {
+      console.error('Return sync failed:', error);
+
+      if (retryAttempt < RETRY_CONFIG.maxRetries) {
+        const retryDelay = calculateRetryDelay(retryAttempt);
+        await delay(retryDelay);
+        return syncService.syncReturns(retryAttempt + 1);
+      }
+
+      return false;
+    }
+  },
+
   // Manual sync trigger
   triggerSync: async (): Promise<boolean> => {
     if (!isAuthenticated()) {
@@ -598,8 +670,9 @@ export const syncService = {
     const categoriesSuccess = await syncService.syncCategories();
     const suppliersSuccess = await syncService.syncSuppliers();
     const productsSuccess = await syncService.syncProducts();
+    const returnsSuccess = await syncService.syncReturns();
 
-    return salesSuccess && categoriesSuccess && suppliersSuccess && productsSuccess;
+    return salesSuccess && categoriesSuccess && suppliersSuccess && productsSuccess && returnsSuccess;
   },
 
   // Initialize sync service
@@ -634,6 +707,7 @@ export const syncService = {
     updatePendingProductsCount();
     updatePendingCategoriesCount();
     updatePendingSuppliersCount();
+    updatePendingReturnsCount();
 
     // Initial sync check on load if online and authenticated
     if (navigator.onLine && isAuthenticated()) {
@@ -653,5 +727,6 @@ export const syncService = {
     await updatePendingProductsCount();
     await updatePendingCategoriesCount();
     await updatePendingSuppliersCount();
+    await updatePendingReturnsCount();
   },
 };

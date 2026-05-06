@@ -13,9 +13,11 @@ INSERT INTO products (
     supplier_id,
     store_id,
     image_url,
-    is_tracked
+    is_tracked,
+    damaged_quantity,
+    warranty_days
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 ) RETURNING *;
 
 -- name: GetProduct :one
@@ -44,6 +46,8 @@ SET
     supplier_id = COALESCE($12, supplier_id),
     image_url = COALESCE($13, image_url),
     is_tracked = COALESCE($14, is_tracked),
+    damaged_quantity = COALESCE($15, damaged_quantity),
+    warranty_days = COALESCE($16, warranty_days),
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;
@@ -120,3 +124,19 @@ WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued';
 SELECT * FROM products
 WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued'
 ORDER BY created_at DESC;
+
+-- name: AddDamagedProductStock :one
+UPDATE products
+SET 
+    damaged_quantity = damaged_quantity + $2,
+    updated_at = NOW()
+WHERE id = $1 AND store_id = $3
+RETURNING *;
+
+-- name: ReturnProductStock :one
+UPDATE products
+SET 
+    stock_quantity = stock_quantity + $2,
+    updated_at = NOW()
+WHERE id = $1 AND store_id = $3
+RETURNING *;

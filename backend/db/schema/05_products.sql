@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS products (
     market_price DECIMAL(10, 2),
     stock_quantity INT NOT NULL DEFAULT 0,
     low_stock_threshold INT DEFAULT 10,
+    damaged_quantity INT NOT NULL DEFAULT 0,
+    warranty_days INT DEFAULT 0,
     expires_at TIMESTAMPTZ,
     status product_status DEFAULT 'active',
     category_id UUID NOT NULL REFERENCES categories(id),

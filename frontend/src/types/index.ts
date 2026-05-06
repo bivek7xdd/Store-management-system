@@ -6,6 +6,8 @@ export interface Product {
   cost_price: { Int64: number; Valid: boolean } | number;
   market_price?: { Int64: number; Valid: boolean } | number;
   stock_quantity: number;
+  damaged_quantity?: number;
+  warranty_days?: number;
   low_stock_threshold: { Int32: number; Valid: boolean } | number;
   expires_at?: { Time: string; Valid: boolean };
   status: { product_status: 'active' | 'out_of_stock' | 'discontinued'; valid: boolean };
@@ -66,6 +68,7 @@ export interface SaleItem {
   quantity: number;
   price: number;
   total: number;
+  warranty_days?: number;
 }
 
 export interface Debtor {
@@ -135,7 +138,50 @@ export interface ProductVariant {
   cost_price: number;
   selling_price: number;
   stock_level: number;
+  damaged_stock_level?: number;
   image_url?: string;
   archived_at?: string;
   synced?: number; // 0 = not synced, 1 = synced
 }
+
+export interface ReturnItem {
+  id: string;
+  return_id: string;
+  sale_item_id: string;
+  quantity: number;
+  reason: string;
+  condition: string;
+  product_name?: string;
+  variant_sku?: string;
+}
+
+export interface Return {
+  id: string;
+  sale_id: string;
+  store_id: string;
+  refund_amount: number;
+  refund_method: string;
+  created_at: string;
+  sale_total?: number;
+  customer_name?: string;
+  items?: ReturnItem[];
+}
+
+export interface PendingReturnItem {
+  sale_item_id: string;
+  quantity: number;
+  reason: string;
+  condition: string;
+}
+
+export interface PendingReturn {
+  id?: number;
+  offlineId: string;
+  sale_id: string;
+  refund_amount: number;
+  refund_method: string;
+  items: PendingReturnItem[];
+  created_at: string;
+  synced: number;
+}
+

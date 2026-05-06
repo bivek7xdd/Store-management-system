@@ -1,7 +1,9 @@
 import Dexie, { Table } from 'dexie';
-import { Product, Category, Supplier, Customer, ProductVariant } from '../types';
+import { Product, Category, Supplier, Customer, ProductVariant, PendingReturn, PendingReturnItem } from '../types';
 import { Notification } from '../services/notifications';
 import { Debt } from '../services/debts';
+
+
 
 export interface SaleItem {
     product_id: string;
@@ -11,6 +13,7 @@ export interface SaleItem {
     total_price: number;
     product_name: string;
     variant_attributes?: any;
+    warranty_days?: number;
 }
 
 export interface Sale {
@@ -41,6 +44,7 @@ export class StoreDatabase extends Dexie {
     notifications!: Table<Notification, string>;
     debts!: Table<Debt, string>;
     product_variants!: Table<ProductVariant, string>;
+    pending_returns!: Table<PendingReturn, number>;
     constructor() {
         super('store-manager-db');
         this.version(11).stores({
@@ -51,7 +55,8 @@ export class StoreDatabase extends Dexie {
             customers: 'id, name, phone, loyalty_status',
             notifications: 'id, reference_id, type, status, created_at',
             debts: 'id, customer_id, status',
-            product_variants: 'id, product_id, sku, barcode, synced'
+            product_variants: 'id, product_id, sku, barcode, synced',
+            pending_returns: '++id, offlineId, synced, sale_id'
         });
     }
 }

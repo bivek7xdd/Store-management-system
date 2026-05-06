@@ -348,6 +348,8 @@ type Product struct {
 	MarketPrice       pgtype.Numeric     `db:"market_price" json:"market_price"`
 	StockQuantity     int32              `db:"stock_quantity" json:"stock_quantity"`
 	LowStockThreshold pgtype.Int4        `db:"low_stock_threshold" json:"low_stock_threshold"`
+	DamagedQuantity   int32              `db:"damaged_quantity" json:"damaged_quantity"`
+	WarrantyDays      pgtype.Int4        `db:"warranty_days" json:"warranty_days"`
 	ExpiresAt         pgtype.Timestamptz `db:"expires_at" json:"expires_at"`
 	Status            NullProductStatus  `db:"status" json:"status"`
 	CategoryID        pgtype.UUID        `db:"category_id" json:"category_id"`
@@ -360,18 +362,37 @@ type Product struct {
 }
 
 type ProductVariant struct {
+	ID                pgtype.UUID        `db:"id" json:"id"`
+	ProductID         pgtype.UUID        `db:"product_id" json:"product_id"`
+	Sku               string             `db:"sku" json:"sku"`
+	Barcode           pgtype.Text        `db:"barcode" json:"barcode"`
+	Attributes        []byte             `db:"attributes" json:"attributes"`
+	CostPrice         pgtype.Numeric     `db:"cost_price" json:"cost_price"`
+	SellingPrice      pgtype.Numeric     `db:"selling_price" json:"selling_price"`
+	StockLevel        int32              `db:"stock_level" json:"stock_level"`
+	DamagedStockLevel int32              `db:"damaged_stock_level" json:"damaged_stock_level"`
+	ImageUrl          pgtype.Text        `db:"image_url" json:"image_url"`
+	ArchivedAt        pgtype.Timestamptz `db:"archived_at" json:"archived_at"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Return struct {
 	ID           pgtype.UUID        `db:"id" json:"id"`
-	ProductID    pgtype.UUID        `db:"product_id" json:"product_id"`
-	Sku          string             `db:"sku" json:"sku"`
-	Barcode      pgtype.Text        `db:"barcode" json:"barcode"`
-	Attributes   []byte             `db:"attributes" json:"attributes"`
-	CostPrice    pgtype.Numeric     `db:"cost_price" json:"cost_price"`
-	SellingPrice pgtype.Numeric     `db:"selling_price" json:"selling_price"`
-	StockLevel   int32              `db:"stock_level" json:"stock_level"`
-	ImageUrl     pgtype.Text        `db:"image_url" json:"image_url"`
-	ArchivedAt   pgtype.Timestamptz `db:"archived_at" json:"archived_at"`
+	SaleID       pgtype.UUID        `db:"sale_id" json:"sale_id"`
+	StoreID      pgtype.UUID        `db:"store_id" json:"store_id"`
+	RefundAmount pgtype.Numeric     `db:"refund_amount" json:"refund_amount"`
+	RefundMethod string             `db:"refund_method" json:"refund_method"`
 	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type ReturnItem struct {
+	ID         pgtype.UUID `db:"id" json:"id"`
+	ReturnID   pgtype.UUID `db:"return_id" json:"return_id"`
+	SaleItemID pgtype.UUID `db:"sale_item_id" json:"sale_item_id"`
+	Quantity   int32       `db:"quantity" json:"quantity"`
+	Reason     string      `db:"reason" json:"reason"`
+	Condition  string      `db:"condition" json:"condition"`
 }
 
 type Sale struct {

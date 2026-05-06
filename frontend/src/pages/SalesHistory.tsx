@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/collapsible";
 import { isAfter, isValid, startOfDay, subDays, startOfMonth, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ReturnDialog } from "@/components/returns/ReturnDialog";
 
 const safeDate = (dateString: string | undefined): Date => {
   if (!dateString) return new Date();
@@ -41,6 +42,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
   const [items, setItems] = useState<SaleItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [returnDialogVisible, setReturnDialogVisible] = useState(false);
 
   const handleOpenChange = async (open: boolean) => {
     setIsOpen(open);
@@ -299,7 +301,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                 </div>
 
                 {/* Print buttons */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mt-4">
                   <button
                     onClick={handlePrintThermal}
                     className="h-10 border border-[#303030] hover:border-[#555555] text-[#888888] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] flex items-center justify-center gap-2 transition-all"
@@ -309,10 +311,19 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                   </button>
                   <button
                     onClick={handlePrintA4}
-                    className="h-10 bg-[#DA291C] hover:bg-[#B01E0A] text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] flex items-center justify-center gap-2 transition-all"
+                    className="h-10 border border-[#303030] hover:border-[#555555] text-[#888888] hover:text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] flex items-center justify-center gap-2 transition-all"
                   >
                     <FileText className="h-3.5 w-3.5" />
                     A4 / PDF
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReturnDialogVisible(true);
+                    }}
+                    className="h-10 col-span-2 bg-[#DA291C] hover:bg-[#B01E0A] text-white rounded-[2px] text-[11px] font-bold uppercase tracking-[1px] flex items-center justify-center gap-2 transition-all"
+                  >
+                    Process Return
                   </button>
                 </div>
               </div>
@@ -320,6 +331,14 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
           </div>
         </CollapsibleContent>
       </div>
+
+      <ReturnDialog 
+        visible={returnDialogVisible}
+        onHide={() => setReturnDialogVisible(false)}
+        sale={{...sale, items}}
+        onSuccess={() => toast.success('Return processed successfully')}
+        isOnline={navigator.onLine}
+      />
     </Collapsible>
   );
 };

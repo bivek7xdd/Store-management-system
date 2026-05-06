@@ -1,7 +1,8 @@
-h1:Rg+m/Mt6deyb5r47uCdRGRMKnT0iMlncdwBa7ER8vVY=
+h1:+l5jG1bX32JStN971+kSkq9nYpAzz+f3lNN3pOcnurA=
 20260412042618_init_schema.sql h1:20D0suekCKCFwTIu2Wsembx/0KBcUEo8vkPwHI6s7Lc=
 20260420015519_add_payments_and_loyalty.sql h1:1DbuxUz4UzRIaPKeST6Snu+NQMG22FuLmxCDjMmPauI=
 20260420015912.sql h1:Hjk4ba8rqA0uYDfhI8b54TkcgyDBuYgnUKqOWX1sZok=
 20260422020102_product_varient.sql h1:K7GpfSV/8DhwJkQ+7NbE1Qi5qiNzJFMcDhxG1kdJ4rM=
 20260501082438_setting.sql h1:kTa6Vk8tSt/POhb7cB+QmGZgsWkDzsHUuR0ooOrw+fI=
 20260501082742.sql h1:4TM+n5GvdxZ/vbH0UmSGXzyrGzQ0t4H5/hsaAAl47xQ=
+20260506041500_product_returns.sql h1:6+m8hhAL8rUjzvQ8p8EqiJ4DnHP3U4zBW17ktuF+jH4=

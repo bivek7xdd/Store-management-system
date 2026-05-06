@@ -26,11 +26,11 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
         <thead className="bg-[#0A0A0A] border-b border-[#1A1A1A]">
           <tr>
             <th className="py-3 px-4 min-w-[80px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Variant</th>
-            <th className="py-3 px-4 min-w-[150px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">SKU</th>
-            <th className="py-3 px-4 min-w-[150px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Barcode</th>
-            <th className="py-3 px-4 min-w-[120px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Cost Price</th>
-            <th className="py-3 px-4 min-w-[120px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Selling Price</th>
-            <th className="py-3 px-4 min-w-[100px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Stock</th>
+            <th className="py-3 px-4 min-w-[120px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">SKU</th>
+            <th className="py-3 px-4 min-w-[120px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Barcode</th>
+            <th className="py-3 px-4 min-w-[90px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Cost</th>
+            <th className="py-3 px-4 min-w-[90px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Price</th>
+            <th className="py-3 px-4 min-w-[80px] text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Stock</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#1A1A1A]">
@@ -64,7 +64,7 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
                     required
                     value={c.cost_price ?? baseCostPrice ?? ""} 
                     onChange={e => updateCombination(i, "cost_price", parseFloat(e.target.value) || 0)} 
-                    className="h-8 max-w-[120px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
+                    className="h-8 max-w-[90px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030] no-spinner"
                   />
                 </td>
                 <td className="py-2.5 px-3">
@@ -75,7 +75,7 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
                     required
                     value={c.selling_price ?? basePrice ?? ""} 
                     onChange={e => updateCombination(i, "selling_price", parseFloat(e.target.value) || 0)} 
-                    className="h-8 max-w-[120px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
+                    className="h-8 max-w-[90px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030] no-spinner"
                   />
                 </td>
                 <td className="py-2.5 px-3">
@@ -85,7 +85,7 @@ export function VariantGrid({ combinations, onChange, basePrice, baseCostPrice }
                     required
                     value={c.stock_level ?? ""} 
                     onChange={e => updateCombination(i, "stock_level", parseInt(e.target.value) || 0)} 
-                    className="h-8 max-w-[100px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030]"
+                    className="h-8 max-w-[80px] bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-[12px] focus-visible:ring-0 focus-visible:border-[#303030] no-spinner"
                   />
                 </td>
               </tr>

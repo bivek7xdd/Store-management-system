@@ -11,6 +11,41 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addDamagedVariantStock = `-- name: AddDamagedVariantStock :one
+UPDATE product_variants
+SET 
+    damaged_stock_level = damaged_stock_level + $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at
+`
+
+type AddDamagedVariantStockParams struct {
+	ID                pgtype.UUID `db:"id" json:"id"`
+	DamagedStockLevel int32       `db:"damaged_stock_level" json:"damaged_stock_level"`
+}
+
+func (q *Queries) AddDamagedVariantStock(ctx context.Context, arg AddDamagedVariantStockParams) (ProductVariant, error) {
+	row := q.db.QueryRow(ctx, addDamagedVariantStock, arg.ID, arg.DamagedStockLevel)
+	var i ProductVariant
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Sku,
+		&i.Barcode,
+		&i.Attributes,
+		&i.CostPrice,
+		&i.SellingPrice,
+		&i.StockLevel,
+		&i.DamagedStockLevel,
+		&i.ImageUrl,
+		&i.ArchivedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const archiveProductVariant = `-- name: ArchiveProductVariant :exec
 UPDATE product_variants
 SET archived_at = CURRENT_TIMESTAMP
@@ -34,7 +69,7 @@ INSERT INTO product_variants (
     image_url
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at
+) RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at
 `
 
 type CreateProductVariantParams struct {
@@ -69,6 +104,7 @@ func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVar
 		&i.CostPrice,
 		&i.SellingPrice,
 		&i.StockLevel,
+		&i.DamagedStockLevel,
 		&i.ImageUrl,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -98,7 +134,7 @@ func (q *Queries) DeleteVariantsByProduct(ctx context.Context, productID pgtype.
 }
 
 const getProductVariant = `-- name: GetProductVariant :one
-SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
+SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
 WHERE id = $1 LIMIT 1
 `
 
@@ -114,6 +150,7 @@ func (q *Queries) GetProductVariant(ctx context.Context, id pgtype.UUID) (Produc
 		&i.CostPrice,
 		&i.SellingPrice,
 		&i.StockLevel,
+		&i.DamagedStockLevel,
 		&i.ImageUrl,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -123,7 +160,7 @@ func (q *Queries) GetProductVariant(ctx context.Context, id pgtype.UUID) (Produc
 }
 
 const getVariantByBarcodeOrSKU = `-- name: GetVariantByBarcodeOrSKU :one
-SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
+SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
 WHERE barcode = $1 OR sku = $1 LIMIT 1
 `
 
@@ -139,6 +176,7 @@ func (q *Queries) GetVariantByBarcodeOrSKU(ctx context.Context, barcode pgtype.T
 		&i.CostPrice,
 		&i.SellingPrice,
 		&i.StockLevel,
+		&i.DamagedStockLevel,
 		&i.ImageUrl,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -148,7 +186,7 @@ func (q *Queries) GetVariantByBarcodeOrSKU(ctx context.Context, barcode pgtype.T
 }
 
 const getVariantBySKU = `-- name: GetVariantBySKU :one
-SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
+SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
 WHERE sku = $1 LIMIT 1
 `
 
@@ -164,6 +202,7 @@ func (q *Queries) GetVariantBySKU(ctx context.Context, sku string) (ProductVaria
 		&i.CostPrice,
 		&i.SellingPrice,
 		&i.StockLevel,
+		&i.DamagedStockLevel,
 		&i.ImageUrl,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -173,7 +212,7 @@ func (q *Queries) GetVariantBySKU(ctx context.Context, sku string) (ProductVaria
 }
 
 const listVariantsByProduct = `-- name: ListVariantsByProduct :many
-SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
+SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
 WHERE product_id = $1 AND archived_at IS NULL
 ORDER BY created_at ASC
 `
@@ -196,6 +235,7 @@ func (q *Queries) ListVariantsByProduct(ctx context.Context, productID pgtype.UU
 			&i.CostPrice,
 			&i.SellingPrice,
 			&i.StockLevel,
+			&i.DamagedStockLevel,
 			&i.ImageUrl,
 			&i.ArchivedAt,
 			&i.CreatedAt,
@@ -212,7 +252,7 @@ func (q *Queries) ListVariantsByProduct(ctx context.Context, productID pgtype.UU
 }
 
 const listVariantsByProducts = `-- name: ListVariantsByProducts :many
-SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
+SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
 WHERE product_id = ANY($1::uuid[]) AND archived_at IS NULL
 ORDER BY product_id, created_at ASC
 `
@@ -235,6 +275,7 @@ func (q *Queries) ListVariantsByProducts(ctx context.Context, dollar_1 []pgtype.
 			&i.CostPrice,
 			&i.SellingPrice,
 			&i.StockLevel,
+			&i.DamagedStockLevel,
 			&i.ImageUrl,
 			&i.ArchivedAt,
 			&i.CreatedAt,
@@ -250,6 +291,41 @@ func (q *Queries) ListVariantsByProducts(ctx context.Context, dollar_1 []pgtype.
 	return items, nil
 }
 
+const returnVariantStock = `-- name: ReturnVariantStock :one
+UPDATE product_variants
+SET 
+    stock_level = stock_level + $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at
+`
+
+type ReturnVariantStockParams struct {
+	ID         pgtype.UUID `db:"id" json:"id"`
+	StockLevel int32       `db:"stock_level" json:"stock_level"`
+}
+
+func (q *Queries) ReturnVariantStock(ctx context.Context, arg ReturnVariantStockParams) (ProductVariant, error) {
+	row := q.db.QueryRow(ctx, returnVariantStock, arg.ID, arg.StockLevel)
+	var i ProductVariant
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Sku,
+		&i.Barcode,
+		&i.Attributes,
+		&i.CostPrice,
+		&i.SellingPrice,
+		&i.StockLevel,
+		&i.DamagedStockLevel,
+		&i.ImageUrl,
+		&i.ArchivedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateProductVariant = `-- name: UpdateProductVariant :one
 UPDATE product_variants
 SET 
@@ -262,7 +338,7 @@ SET
     image_url = COALESCE($8, image_url),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at
+RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at
 `
 
 type UpdateProductVariantParams struct {
@@ -297,6 +373,7 @@ func (q *Queries) UpdateProductVariant(ctx context.Context, arg UpdateProductVar
 		&i.CostPrice,
 		&i.SellingPrice,
 		&i.StockLevel,
+		&i.DamagedStockLevel,
 		&i.ImageUrl,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -311,7 +388,7 @@ SET
     stock_level = stock_level - $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
-RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, image_url, archived_at, created_at, updated_at
+RETURNING id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at
 `
 
 type UpdateVariantStockParams struct {
@@ -331,6 +408,7 @@ func (q *Queries) UpdateVariantStock(ctx context.Context, arg UpdateVariantStock
 		&i.CostPrice,
 		&i.SellingPrice,
 		&i.StockLevel,
+		&i.DamagedStockLevel,
 		&i.ImageUrl,
 		&i.ArchivedAt,
 		&i.CreatedAt,

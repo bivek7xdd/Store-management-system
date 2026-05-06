@@ -4,6 +4,7 @@ import {
     ShoppingCart,
     ShoppingBag,
     History,
+    RefreshCcw,
 } from "lucide-react";
 import {
     Accordion,
@@ -33,6 +34,7 @@ export function SalesSidebarItem({ isActive }: { isActive: boolean }) {
     const salesLinks = [
         { icon: ShoppingBag, label: "New Sale (POS)", path: "/sales" },
         { icon: History, label: "Sales History", path: "/sales/history" },
+        { icon: RefreshCcw, label: "Returns History", path: "/sales/returns" },
     ];
 
     if (isCollapsed) {

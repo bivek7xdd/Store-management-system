@@ -475,6 +475,7 @@ export default function Inventory() {
     if (data.stock_quantity > INT32_MAX) errors.stock_quantity = `Stock quantity cannot exceed ${INT32_MAX.toLocaleString()}`;
     if (data.low_stock_threshold !== undefined && data.low_stock_threshold < 0) errors.low_stock_threshold = "Low stock alert cannot be negative";
     if (data.low_stock_threshold !== undefined && data.low_stock_threshold > INT32_MAX) errors.low_stock_threshold = `Low stock alert cannot exceed ${INT32_MAX.toLocaleString()}`;
+    if (data.warranty_days !== undefined && data.warranty_days < 0) errors.warranty_days = "Warranty days cannot be negative";
     return errors;
   };
 
@@ -498,6 +499,13 @@ export default function Inventory() {
       cost_price: cost_price,
       stock_quantity: stock_quantity,
       low_stock_threshold: formData.get("low_stock_threshold") ? parseInt(formData.get("low_stock_threshold") as string) : 10,
+      warranty_days: (() => {
+        const val = parseInt(formData.get("warranty_value") as string) || 0;
+        const unit = formData.get("warranty_unit") as string;
+        if (unit === "months") return val * 30;
+        if (unit === "years") return val * 365;
+        return val;
+      })(),
       expires_at: formData.get("expires_at") ? new Date(formData.get("expires_at") as string).toISOString() : undefined,
       category_id: formData.get("category_id") as string,
     };
@@ -802,7 +810,7 @@ export default function Inventory() {
                 )}
               </Tooltip>
             </TooltipProvider>
-            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] p-0">
+            <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2px] bg-[#0A0A0A] border border-[#DA291C] p-0 shadow-2xl shadow-red-500/10">
               {/* Dialog Header */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
                 <div>
@@ -916,7 +924,7 @@ export default function Inventory() {
                           placeholder="100"
                           required={!hasVariants}
                           onChange={() => setFormErrors(prev => ({ ...prev, price: "" }))}
-                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.price ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors no-spinner ${formErrors.price ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
                         />
                         {formErrors.price && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.price}</p>}
                       </div>
@@ -927,7 +935,7 @@ export default function Inventory() {
                           defaultValue={editingProduct ? getNumericValue(editingProduct.cost_price as any) : undefined}
                           placeholder="80"
                           onChange={() => setFormErrors(prev => ({ ...prev, cost_price: "" }))}
-                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.cost_price ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors no-spinner ${formErrors.cost_price ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
                         />
                         {formErrors.cost_price && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.cost_price}</p>}
                       </div>
@@ -941,7 +949,7 @@ export default function Inventory() {
                           placeholder="50"
                           required={!hasVariants}
                           onChange={() => setFormErrors(prev => ({ ...prev, stock_quantity: "" }))}
-                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.stock_quantity ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors no-spinner ${formErrors.stock_quantity ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
                         />
                         {formErrors.stock_quantity && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.stock_quantity}</p>}
                       </div>
@@ -952,21 +960,57 @@ export default function Inventory() {
                           defaultValue={editingProduct ? getInt32Value(editingProduct.low_stock_threshold) : 10}
                           placeholder="10"
                           onChange={() => setFormErrors(prev => ({ ...prev, low_stock_threshold: "" }))}
-                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors ${formErrors.low_stock_threshold ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                          className={`w-full h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors no-spinner ${formErrors.low_stock_threshold ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
                         />
                         {formErrors.low_stock_threshold && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.low_stock_threshold}</p>}
                       </div>
                     </div>
                   </div>
 
-                  {/* Expiry date */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Expiry Date</label>
-                    <input
-                      id="expires_at" name="expires_at" type="date"
-                      defaultValue={formatDateForInput(getDateValue(editingProduct?.expires_at))}
-                      className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white focus:outline-none focus:border-[#333333] transition-colors"
-                    />
+                  {/* Expiry date and Warranty */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Expiry Date</label>
+                      <input
+                        id="expires_at" name="expires_at" type="date"
+                        defaultValue={formatDateForInput(getDateValue(editingProduct?.expires_at))}
+                        className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white focus:outline-none focus:border-[#333333] transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Warranty Period</label>
+                      <div className="flex gap-2">
+                        <input
+                          id="warranty_value" name="warranty_value" type="number" min={0}
+                          defaultValue={(() => {
+                            const totalDays = editingProduct ? getNumericValue(editingProduct.warranty_days) : 0;
+                            if (totalDays === 0) return 0;
+                            if (totalDays % 365 === 0) return totalDays / 365;
+                            if (totalDays % 30 === 0) return totalDays / 30;
+                            return totalDays;
+                          })()}
+                          placeholder="1"
+                          onChange={() => setFormErrors(prev => ({ ...prev, warranty_days: "" }))}
+                          className={`flex-1 h-10 px-3 bg-[#111111] border rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none transition-colors no-spinner ${formErrors.warranty_days ? "border-[#DA291C]" : "border-[#1A1A1A] focus:border-[#333333]"}`}
+                        />
+                        <select
+                          name="warranty_unit"
+                          defaultValue={(() => {
+                            const totalDays = editingProduct ? getNumericValue(editingProduct.warranty_days) : 0;
+                            if (totalDays === 0) return "days";
+                            if (totalDays % 365 === 0) return "years";
+                            if (totalDays % 30 === 0) return "months";
+                            return "days";
+                          })()}
+                          className="w-24 h-10 px-2 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[12px] text-white focus:outline-none focus:border-[#333333] transition-colors"
+                        >
+                          <option value="days">Days</option>
+                          <option value="months">Months</option>
+                          <option value="years">Years</option>
+                        </select>
+                      </div>
+                      {formErrors.warranty_days && <p className="text-[11px] text-[#DA291C]">⚠ {formErrors.warranty_days}</p>}
+                    </div>
                   </div>
                 </div>
 
@@ -992,7 +1036,7 @@ export default function Inventory() {
 
           {/* Import CSV Dialog */}
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] p-0 shadow-2xl">
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-[2px] bg-[#0A0A0A] border border-[#333333] p-0 shadow-2xl shadow-red-500/10">
               <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
                 <div>
                   <p className="text-[10px] text-[#888888] uppercase tracking-[1.5px] mb-0.5">Spreadsheet</p>

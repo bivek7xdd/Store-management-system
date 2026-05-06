@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addDamagedProductStock = `-- name: AddDamagedProductStock :one
+UPDATE products
+SET 
+    damaged_quantity = damaged_quantity + $2,
+    updated_at = NOW()
+WHERE id = $1 AND store_id = $3
+RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+`
+
+type AddDamagedProductStockParams struct {
+	ID              pgtype.UUID `db:"id" json:"id"`
+	DamagedQuantity int32       `db:"damaged_quantity" json:"damaged_quantity"`
+	StoreID         pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) AddDamagedProductStock(ctx context.Context, arg AddDamagedProductStockParams) (Product, error) {
+	row := q.db.QueryRow(ctx, addDamagedProductStock, arg.ID, arg.DamagedQuantity, arg.StoreID)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Barcode,
+		&i.Price,
+		&i.CostPrice,
+		&i.MarketPrice,
+		&i.StockQuantity,
+		&i.LowStockThreshold,
+		&i.DamagedQuantity,
+		&i.WarrantyDays,
+		&i.ExpiresAt,
+		&i.Status,
+		&i.CategoryID,
+		&i.SupplierID,
+		&i.StoreID,
+		&i.ImageUrl,
+		&i.IsTracked,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (
     name,
@@ -26,10 +68,12 @@ INSERT INTO products (
     supplier_id,
     store_id,
     image_url,
-    is_tracked
+    is_tracked,
+    damaged_quantity,
+    warranty_days
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-) RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+) RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
 type CreateProductParams struct {
@@ -47,6 +91,8 @@ type CreateProductParams struct {
 	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
 	ImageUrl          pgtype.Text        `db:"image_url" json:"image_url"`
 	IsTracked         pgtype.Bool        `db:"is_tracked" json:"is_tracked"`
+	DamagedQuantity   int32              `db:"damaged_quantity" json:"damaged_quantity"`
+	WarrantyDays      pgtype.Int4        `db:"warranty_days" json:"warranty_days"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
@@ -65,6 +111,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.StoreID,
 		arg.ImageUrl,
 		arg.IsTracked,
+		arg.DamagedQuantity,
+		arg.WarrantyDays,
 	)
 	var i Product
 	err := row.Scan(
@@ -76,6 +124,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
+		&i.DamagedQuantity,
+		&i.WarrantyDays,
 		&i.ExpiresAt,
 		&i.Status,
 		&i.CategoryID,
@@ -143,7 +193,7 @@ func (q *Queries) GetCategoryStats(ctx context.Context, arg GetCategoryStatsPara
 }
 
 const getLowStockProducts = `-- name: GetLowStockProducts :many
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1
   AND status != 'discontinued'
   AND stock_quantity <= low_stock_threshold
@@ -168,6 +218,8 @@ func (q *Queries) GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) 
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
+			&i.DamagedQuantity,
+			&i.WarrantyDays,
 			&i.ExpiresAt,
 			&i.Status,
 			&i.CategoryID,
@@ -189,7 +241,7 @@ func (q *Queries) GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) 
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE id = $1 LIMIT 1
 `
 
@@ -205,6 +257,8 @@ func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, erro
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
+		&i.DamagedQuantity,
+		&i.WarrantyDays,
 		&i.ExpiresAt,
 		&i.Status,
 		&i.CategoryID,
@@ -253,7 +307,7 @@ func (q *Queries) GetSupplierStats(ctx context.Context, arg GetSupplierStatsPara
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND status != 'discontinued'
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -283,6 +337,8 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
+			&i.DamagedQuantity,
+			&i.WarrantyDays,
 			&i.ExpiresAt,
 			&i.Status,
 			&i.CategoryID,
@@ -304,7 +360,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 }
 
 const listProductsByCategory = `-- name: ListProductsByCategory :many
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND category_id = $2 AND status != 'discontinued'
 ORDER BY created_at DESC
 `
@@ -332,6 +388,8 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsBy
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
+			&i.DamagedQuantity,
+			&i.WarrantyDays,
 			&i.ExpiresAt,
 			&i.Status,
 			&i.CategoryID,
@@ -353,7 +411,7 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, arg ListProductsBy
 }
 
 const listProductsBySupplier = `-- name: ListProductsBySupplier :many
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND supplier_id = $2 AND status != 'discontinued'
 ORDER BY created_at DESC
 `
@@ -381,6 +439,8 @@ func (q *Queries) ListProductsBySupplier(ctx context.Context, arg ListProductsBy
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
+			&i.DamagedQuantity,
+			&i.WarrantyDays,
 			&i.ExpiresAt,
 			&i.Status,
 			&i.CategoryID,
@@ -402,7 +462,7 @@ func (q *Queries) ListProductsBySupplier(ctx context.Context, arg ListProductsBy
 }
 
 const listTrackedProducts = `-- name: ListTrackedProducts :many
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE store_id = $1 AND is_tracked = TRUE AND status != 'discontinued'
 ORDER BY updated_at DESC
 LIMIT 6
@@ -426,6 +486,8 @@ func (q *Queries) ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) 
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
+			&i.DamagedQuantity,
+			&i.WarrantyDays,
 			&i.ExpiresAt,
 			&i.Status,
 			&i.CategoryID,
@@ -446,8 +508,50 @@ func (q *Queries) ListTrackedProducts(ctx context.Context, storeID pgtype.UUID) 
 	return items, nil
 }
 
+const returnProductStock = `-- name: ReturnProductStock :one
+UPDATE products
+SET 
+    stock_quantity = stock_quantity + $2,
+    updated_at = NOW()
+WHERE id = $1 AND store_id = $3
+RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+`
+
+type ReturnProductStockParams struct {
+	ID            pgtype.UUID `db:"id" json:"id"`
+	StockQuantity int32       `db:"stock_quantity" json:"stock_quantity"`
+	StoreID       pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) ReturnProductStock(ctx context.Context, arg ReturnProductStockParams) (Product, error) {
+	row := q.db.QueryRow(ctx, returnProductStock, arg.ID, arg.StockQuantity, arg.StoreID)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Barcode,
+		&i.Price,
+		&i.CostPrice,
+		&i.MarketPrice,
+		&i.StockQuantity,
+		&i.LowStockThreshold,
+		&i.DamagedQuantity,
+		&i.WarrantyDays,
+		&i.ExpiresAt,
+		&i.Status,
+		&i.CategoryID,
+		&i.SupplierID,
+		&i.StoreID,
+		&i.ImageUrl,
+		&i.IsTracked,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const searchProducts = `-- name: SearchProducts :many
-SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
+SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
 WHERE 
     store_id = $1 AND 
     status != 'discontinued' AND (
@@ -488,6 +592,8 @@ func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) 
 			&i.MarketPrice,
 			&i.StockQuantity,
 			&i.LowStockThreshold,
+			&i.DamagedQuantity,
+			&i.WarrantyDays,
 			&i.ExpiresAt,
 			&i.Status,
 			&i.CategoryID,
@@ -524,9 +630,11 @@ SET
     supplier_id = COALESCE($12, supplier_id),
     image_url = COALESCE($13, image_url),
     is_tracked = COALESCE($14, is_tracked),
+    damaged_quantity = COALESCE($15, damaged_quantity),
+    warranty_days = COALESCE($16, warranty_days),
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
 type UpdateProductParams struct {
@@ -544,6 +652,8 @@ type UpdateProductParams struct {
 	SupplierID        pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
 	ImageUrl          pgtype.Text        `db:"image_url" json:"image_url"`
 	IsTracked         pgtype.Bool        `db:"is_tracked" json:"is_tracked"`
+	DamagedQuantity   int32              `db:"damaged_quantity" json:"damaged_quantity"`
+	WarrantyDays      pgtype.Int4        `db:"warranty_days" json:"warranty_days"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -562,6 +672,8 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.SupplierID,
 		arg.ImageUrl,
 		arg.IsTracked,
+		arg.DamagedQuantity,
+		arg.WarrantyDays,
 	)
 	var i Product
 	err := row.Scan(
@@ -573,6 +685,8 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
+		&i.DamagedQuantity,
+		&i.WarrantyDays,
 		&i.ExpiresAt,
 		&i.Status,
 		&i.CategoryID,
@@ -592,7 +706,7 @@ SET
     stock_quantity = stock_quantity - $2,
     updated_at = NOW()
 WHERE id = $1 AND store_id = $3
-RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
+RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
 type UpdateProductStockParams struct {
@@ -613,6 +727,8 @@ func (q *Queries) UpdateProductStock(ctx context.Context, arg UpdateProductStock
 		&i.MarketPrice,
 		&i.StockQuantity,
 		&i.LowStockThreshold,
+		&i.DamagedQuantity,
+		&i.WarrantyDays,
 		&i.ExpiresAt,
 		&i.Status,
 		&i.CategoryID,

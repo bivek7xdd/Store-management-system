@@ -55,6 +55,13 @@ func Float64(n pgtype.Numeric) float64 {
 	return f.Float64
 }
 
+// StringToNumeric converts a string to a valid pgtype.Numeric.
+func StringToNumeric(s string) (pgtype.Numeric, error) {
+	var n pgtype.Numeric
+	err := n.Scan(s)
+	return n, err
+}
+
 // RandomBarcode generates a random 12-digit barcode string
 func RandomBarcode() string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))

@@ -1,4 +1,4 @@
-# 🎨 Design System Update — Pages TODO
+64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M65;19;20M65;19;20M65;19;20M65;19;20M65;19;20M65;19;20M65;19;20M65;19;20M65;19;20M65;19;20M64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M64;19;20M# 🎨 Design System Update — Pages TODO
 
 Ferrari-inspired Chiaroscuro theme. Reference: `DESIGN.md`
 
@@ -19,10 +19,10 @@ Ferrari-inspired Chiaroscuro theme. Reference: `DESIGN.md`
 - [x] `Dashboard.tsx`
 - [ ] `Inventory.tsx`
 - [x] `Sales.tsx`
-- [ ] `SalesHistory.tsx`
-- [ ] `Reports.tsx`
+- [x] `SalesHistory.tsx`
+- [x] `Reports.tsx`
 - [x] `Debtors.tsx`
-- [ ] `Settings.tsx`
+- [x] `Settings.tsx`
 
 ---
 

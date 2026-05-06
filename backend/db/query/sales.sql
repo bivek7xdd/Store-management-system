@@ -50,6 +50,7 @@ RETURNING *;
 SELECT 
     si.id, si.sale_id, si.product_id, si.variant_id, si.quantity, si.unit_price::float as unit_price, si.total_price::float as total_price, 
     p.name as product_name,
+    p.warranty_days,
     v.sku as variant_sku,
     v.attributes as variant_attributes
 FROM sale_items si
@@ -60,3 +61,7 @@ WHERE si.sale_id = $1;
 UPDATE sales
 SET total_amount = $1
 WHERE id = $2;
+
+-- name: GetSaleItem :one
+SELECT * FROM sale_items
+WHERE id = $1 LIMIT 1;

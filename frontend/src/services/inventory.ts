@@ -10,6 +10,7 @@ export interface CreateProductData {
     market_price?: number;
     stock_quantity: number;
     low_stock_threshold?: number;
+    warranty_days?: number;
     expires_at?: string;
     status?: string;
     category_id: string;

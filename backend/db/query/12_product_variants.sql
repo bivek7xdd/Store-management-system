@@ -68,3 +68,19 @@ RETURNING *;
 -- name: DeleteVariantsByProduct :exec
 DELETE FROM product_variants
 WHERE product_id = $1;
+
+-- name: ReturnVariantStock :one
+UPDATE product_variants
+SET 
+    stock_level = stock_level + $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING *;
+
+-- name: AddDamagedVariantStock :one
+UPDATE product_variants
+SET 
+    damaged_stock_level = damaged_stock_level + $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING *;
