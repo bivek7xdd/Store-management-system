@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
 import { Button } from "@/components/ui/button";
 import { 
@@ -16,9 +16,9 @@ import {
     MapPin, 
     Plus,
     Search,
-    ExternalLink
+    ExternalLink,
+    Loader2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SupplierDialog } from "@/components/CreateInventoryDialogs";
 import {
     AlertDialog,
@@ -29,11 +29,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 
 // Helper to extract numeric values from pgtype
 const getNumericValue = (value: any): number => {
@@ -91,266 +88,266 @@ export default function SupplierDetails() {
 
     if (supplierLoading || statsLoading || productsLoading) {
         return (
-            <div className="p-8 flex flex-col items-center justify-center min-h-[400px] space-y-4">
-                <Truck className="h-12 w-12 text-teal-500 animate-bounce" />
-                <p className="text-gray-500 font-medium">Gathering supplier intelligence...</p>
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <Loader2 className="h-8 w-8 text-[#DA291C] animate-spin" />
+                <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#888888]">Loading Vendor Intel</span>
             </div>
         );
     }
 
-    if (!supplier) return <div className="p-8 text-center text-gray-500">Supplier not found</div>;
+    if (!supplier) return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+            <Truck className="h-10 w-10 text-[#1A1A1A]" />
+            <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#555555]">Vendor Not Found</span>
+        </div>
+    );
 
     const statsCards = [
         {
             title: "Total Products",
             value: stats?.product_count || 0,
             icon: Package,
-            color: "text-blue-600",
-            bg: "bg-blue-50"
+            accent: "text-[#DA291C]",
         },
         {
             title: "Inventory Value",
             value: `रू ${getNumericValue(stats?.total_value).toLocaleString()}`,
             icon: TrendingUp,
-            color: "text-emerald-600",
-            bg: "bg-emerald-50"
+            accent: "text-emerald-500",
         },
         {
             title: "Low Stock Items",
             value: stats?.low_stock_count || 0,
             icon: AlertTriangle,
-            color: "text-amber-600",
-            bg: "bg-amber-50"
+            accent: "text-amber-500",
         }
     ];
 
     return (
-        <div className="space-y-8 max-w-7xl mx-auto">
-            {/* Header section with glassmorphism style */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="space-y-6 pb-24 lg:pb-8">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
+                    <button 
                         onClick={() => navigate("/inventory/suppliers")}
-                        className="rounded-full hover:bg-gray-100"
+                        className="h-9 w-9 rounded-[2px] border border-[#1A1A1A] bg-[#111111] flex items-center justify-center text-[#888888] hover:text-white hover:border-[#303030] transition-colors"
                     >
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold text-gray-900">{supplier.name}</h1>
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none px-3">Supplier</Badge>
+                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Vendor Profile</p>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-[22px] font-medium text-white tracking-tight">{supplier.name}</h1>
+                            <Badge className="rounded-[2px] bg-[#DA291C] text-white text-[9px] font-black uppercase tracking-[1px] border-none px-2 py-0.5 h-auto">
+                                Vendor
+                            </Badge>
                         </div>
-                        <p className="text-gray-500 text-sm mt-0.5">Vendor Intelligence & Performance Dashboard</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <SupplierDialog supplier={supplier} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["supplier", id] })}>
-                        <Button variant="outline" size="sm" className="rounded-lg h-10 border-gray-200">
-                            <Pencil className="h-4 w-4 mr-2" />
+                        <Button className="h-9 px-4 rounded-[2px] border border-[#1A1A1A] bg-transparent text-[#CCCCCC] text-[10px] font-bold uppercase tracking-[1px] hover:bg-[#1A1A1A] hover:text-white transition-colors">
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
                             Edit Profile
                         </Button>
                     </SupplierDialog>
                     <Button 
-                        variant="destructive" 
-                        size="sm" 
                         onClick={() => setDeleteDialogOpen(true)}
-                        className="rounded-lg h-10"
+                        className="h-9 px-4 rounded-[2px] bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] font-bold uppercase tracking-[1px] transition-colors"
                     >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
                         Remove
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column: Stats and Contact */}
-                <div className="space-y-8">
+                <div className="space-y-6">
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 gap-4">
-                        {statsCards.map((stat, index) => (
-                            <motion.div
+                        {statsCards.map((stat) => (
+                            <div
                                 key={stat.title}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
+                                className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-6 group hover:border-[#303030] transition-colors"
                             >
-                                <Card className="border-none shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300">
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                                                <h3 className="text-2xl font-bold mt-1 text-gray-900 tracking-tight">{stat.value}</h3>
-                                            </div>
-                                            <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
-                                                <stat.icon className="h-6 w-6" />
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">{stat.title}</p>
+                                        <h3 className="text-2xl font-bold text-white tracking-tight">{stat.value}</h3>
+                                    </div>
+                                    <div className={`${stat.accent} group-hover:scale-110 transition-transform duration-300`}>
+                                        <stat.icon className="h-5 w-5" />
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
 
-                    {/* Contact Information Card */}
-                    <Card className="border-none shadow-sm overflow-hidden">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Truck className="h-5 w-5 text-teal-600" />
-                                Contact Details
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 space-y-6">
+                    {/* Contact Information */}
+                    <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+                        <div className="p-5 border-b border-[#1A1A1A] flex items-center gap-3">
+                            <div className="h-7 w-7 bg-[#0A0A0A] border border-[#303030] rounded-[2px] flex items-center justify-center">
+                                <Truck className="h-3.5 w-3.5 text-[#DA291C]" />
+                            </div>
+                            <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Contact Intel</p>
+                        </div>
+                        <div className="p-6 space-y-6">
                             <div className="flex items-start gap-4">
-                                <div className="p-2 bg-gray-50 rounded-lg">
-                                    <Mail className="h-5 w-5 text-gray-500" />
+                                <div className="h-8 w-8 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center shrink-0">
+                                    <Mail className="h-3.5 w-3.5 text-[#555555]" />
                                 </div>
-                                <div>
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Email Address</p>
-                                    <a href={`mailto:${supplier.email}`} className="text-sm text-blue-600 hover:underline font-medium break-all">
-                                        {supplier.email || "Not provided"}
-                                    </a>
+                                <div className="min-w-0">
+                                    <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Email Address</p>
+                                    {supplier.email ? (
+                                        <a href={`mailto:${supplier.email}`} className="text-[12px] text-[#DA291C] hover:underline font-medium break-all">
+                                            {supplier.email}
+                                        </a>
+                                    ) : (
+                                        <span className="text-[12px] text-[#333333] italic">Not provided</span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
-                                <div className="p-2 bg-gray-50 rounded-lg">
-                                    <Phone className="h-5 w-5 text-gray-500" />
+                                <div className="h-8 w-8 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center shrink-0">
+                                    <Phone className="h-3.5 w-3.5 text-[#555555]" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Phone Number</p>
-                                    <a href={`tel:${supplier.phone_number}`} className="text-sm text-gray-900 font-medium">
-                                        {supplier.phone_number || "Not provided"}
-                                    </a>
+                                    <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Phone Number</p>
+                                    {supplier.phone_number ? (
+                                        <a href={`tel:${supplier.phone_number}`} className="text-[12px] text-white font-medium">
+                                            {supplier.phone_number}
+                                        </a>
+                                    ) : (
+                                        <span className="text-[12px] text-[#333333] italic">Not provided</span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
-                                <div className="p-2 bg-gray-50 rounded-lg">
-                                    <MapPin className="h-5 w-5 text-gray-500" />
+                                <div className="h-8 w-8 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center shrink-0">
+                                    <MapPin className="h-3.5 w-3.5 text-[#555555]" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Office Address</p>
-                                    <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                                        {supplier.address || "No address recorded"}
+                                    <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Office Address</p>
+                                    <p className="text-[12px] text-[#AAAAAA] leading-relaxed font-medium">
+                                        {supplier.address || <span className="text-[#333333] italic">No address recorded</span>}
                                     </p>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right Column: Associated Products List */}
-                <div className="lg:col-span-2 space-y-6">
-                    <Card className="border-none shadow-sm min-h-[500px] flex flex-col">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle className="text-xl">Associated Products</CardTitle>
-                                    <CardDescription>All items sourced from this supplier</CardDescription>
-                                </div>
-                                <div className="relative w-full sm:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input 
-                                        placeholder="Search by name or barcode..." 
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-9 h-10 rounded-lg border-gray-200 focus:ring-teal-500"
-                                    />
-                                </div>
+                {/* Right Column: Associated Products */}
+                <div className="lg:col-span-2">
+                    <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden flex flex-col min-h-[500px]">
+                        {/* Products Header */}
+                        <div className="p-5 border-b border-[#1A1A1A] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Associated Products</p>
+                                <p className="text-[10px] text-[#555555] uppercase tracking-[0.5px] mt-0.5">All items sourced from this vendor</p>
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-0 flex-grow overflow-auto">
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555]" />
+                                <input
+                                    placeholder="SEARCH BY NAME OR BARCODE..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full h-9 pl-9 pr-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] text-[10px] font-bold uppercase tracking-[1px] text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Products Table */}
+                        <div className="flex-grow overflow-auto">
                             {filteredProducts && filteredProducts.length > 0 ? (
-                                <Table>
-                                    <TableHeader className="bg-gray-50 pointer-events-none sticky top-0 z-10">
-                                        <TableRow>
-                                            <TableHead className="font-semibold text-gray-600">Product</TableHead>
-                                            <TableHead className="font-semibold text-gray-600">Stock</TableHead>
-                                            <TableHead className="font-semibold text-gray-600 text-right">Price</TableHead>
-                                            <TableHead className="font-semibold text-gray-600 text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
+                                <div>
+                                    {/* Table Header */}
+                                    <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 px-6 py-3 bg-[#0A0A0A] border-b border-[#1A1A1A] sticky top-0 z-10">
+                                        {["Product", "Stock", "Price", ""].map(h => (
+                                            <span key={h} className={`text-[9px] font-black uppercase tracking-widest text-[#555555] ${h === 'Price' ? 'text-right' : ''}`}>{h}</span>
+                                        ))}
+                                    </div>
+
+                                    {/* Table Rows */}
+                                    <div className="divide-y divide-[#1A1A1A]">
                                         {filteredProducts.map((product) => {
                                             const isLowStock = product.stock_quantity <= getNumericValue(product.low_stock_threshold);
                                             return (
-                                                <TableRow key={product.id} className="hover:bg-gray-50 transition-colors group">
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">{product.name}</span>
-                                                            <span className="text-xs text-gray-400 transition-colors">{typeof product.barcode === 'string' ? product.barcode : product.barcode?.String || "No Barcode"}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className={`font-bold ${isLowStock ? "text-amber-600" : "text-gray-700"}`}>
-                                                                {product.stock_quantity}
-                                                            </span>
-                                                            {isLowStock && (
-                                                                <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] uppercase font-bold py-0 h-4">Low</Badge>
-                                                            )}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <span className="font-mono text-gray-900 font-semibold">रू {getNumericValue(product.price).toLocaleString()}</span>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0 rounded-full">
-                                                            <Link to={`/inventory`}>
-                                                                <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-teal-600" />
-                                                            </Link>
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
+                                                <div key={product.id} className="group grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 items-center hover:bg-[#0A0A0A] transition-colors">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[13px] font-bold text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</span>
+                                                        <span className="text-[10px] text-[#555555] font-medium">{typeof product.barcode === 'string' ? product.barcode : product.barcode?.String || "No Barcode"}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[13px] font-bold ${isLowStock ? "text-amber-500" : "text-white"}`}>
+                                                            {product.stock_quantity}
+                                                        </span>
+                                                        {isLowStock && (
+                                                            <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[8px] uppercase font-black py-0 h-4 rounded-[1px]">Low</Badge>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="font-mono text-[13px] text-white font-bold">रू {getNumericValue(product.price).toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex justify-end">
+                                                        <Link 
+                                                            to="/inventory"
+                                                            className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-[#DA291C] hover:border-[#DA291C]/30 transition-colors"
+                                                        >
+                                                            <ExternalLink className="h-3.5 w-3.5" />
+                                                        </Link>
+                                                    </div>
+                                                </div>
                                             );
                                         })}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                                    <div className="p-4 bg-gray-50 rounded-full mb-4">
-                                        <Package className="h-10 w-10 text-gray-300" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900">No products found</h3>
-                                    <p className="text-gray-500 max-w-xs mt-1">
-                                        {searchTerm ? `No products match "${searchTerm}"` : "This supplier hasn't been associated with any products yet."}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-16 text-center h-full">
+                                    <div className="h-14 w-14 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center mb-5">
+                                        <Package className="h-7 w-7 text-[#1A1A1A]" />
+                                    </div>
+                                    <h3 className="text-[13px] font-bold text-white uppercase tracking-[1px] mb-2">No Products Found</h3>
+                                    <p className="text-[11px] text-[#555555] uppercase tracking-[0.5px] max-w-xs">
+                                        {searchTerm ? `No products match "${searchTerm}"` : "This vendor hasn't been associated with any products yet."}
                                     </p>
                                     {!searchTerm && (
                                         <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="mt-6 rounded-lg"
                                             asChild
+                                            className="mt-6 h-9 px-5 rounded-[2px] border border-[#1A1A1A] bg-transparent text-[#CCCCCC] text-[10px] font-bold uppercase tracking-[1px] hover:bg-[#1A1A1A] hover:text-white transition-colors"
                                         >
                                             <Link to="/inventory">
-                                                <Plus className="h-4 w-4 mr-2" />
-                                                Associate First Product
+                                                <Plus className="h-3.5 w-3.5 mr-2" />
+                                                Associate Product
                                             </Link>
                                         </Button>
                                     )}
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* Delete Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent className="rounded-2xl">
+                <AlertDialogContent className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Supplier?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently remove <span className="font-bold text-gray-900">{supplier.name}</span> from your records. This action cannot be undone.
+                        <AlertDialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">Delete Vendor?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-[12px] text-[#888888] leading-relaxed">
+                            This will permanently remove <span className="font-bold text-white">{supplier.name}</span> from your records. This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel className="bg-transparent border-[#1A1A1A] hover:bg-[#1A1A1A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]">
+                            Cancel
+                        </AlertDialogCancel>
                         <Button
-                            variant="destructive"
                             onClick={handleDelete}
-                            className="rounded-lg"
+                            className="bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px] px-6"
                         >
-                            Delete Supplier
+                            Delete Vendor
                         </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
