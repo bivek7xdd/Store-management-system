@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sale, SaleItem } from '../../types';
+import { Sale, SaleItem, PendingReturnItem } from '../../types';
 import { ReturnReasonSelect } from './ReturnReasonSelect';
 import { returnsService } from '../../services/returns';
-import { PendingReturnItem } from '../../db/db';
 import { differenceInDays, parseISO } from 'date-fns';
 import { AlertCircle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -38,6 +37,7 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
 
   const calculateTotalRefund = () => {
     let total = 0;
+    if (!sale) return 0;
     Object.keys(selectedItems).forEach(productId => {
       const saleItem = sale.items.find(i => i.product_id === productId);
       if (saleItem) {
@@ -45,18 +45,19 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
       }
     });
     // Proportionally deduct discount if applicable
-    if (sale.discountApplied > 0 && sale.total > 0) {
-      const discountRatio = sale.discountApplied / (sale.total + sale.discountApplied);
+    if (sale.discount_applied > 0 && sale.total > 0) {
+      const discountRatio = sale.discount_applied / (sale.total + sale.discount_applied);
       total = total - (total * discountRatio);
     }
     return total;
   };
 
   const handleProcessReturn = async () => {
+    if (!sale) return;
     const itemsToReturn: PendingReturnItem[] = Object.keys(selectedItems).map(productId => {
       const saleItem = sale.items.find(i => i.product_id === productId);
       return {
-        sale_item_id: productId,
+        sale_item_id: saleItem?.id || productId,
         quantity: selectedItems[productId].quantity,
         reason: selectedItems[productId].reason,
         condition: selectedItems[productId].condition
@@ -94,13 +95,13 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
         <DialogHeader className="bg-white dark:bg-black text-black dark:text-white border-b border-black dark:border-white p-4">
           <DialogTitle className="text-xl font-bold">Process Return</DialogTitle>
         </DialogHeader>
-        
+
         <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto no-scrollbar">
           <div className="space-y-6">
             <div>
               <h3 className="font-bold mb-4">Select Items to Return</h3>
               <div className="space-y-4">
-                {sale.items.map(item => {
+                {sale?.items.map(item => {
                   const saleDate = parseISO(sale.sale_date);
                   const today = new Date();
                   const daysSinceSale = differenceInDays(today, saleDate);
@@ -114,7 +115,7 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
                       isExpired ? "border-red-500/30 bg-red-500/5 opacity-80" : "border-black dark:border-white"
                     )}>
                       <div className="flex items-center gap-3 flex-1">
-                        <input 
+                        <input
                           type="checkbox"
                           className="w-5 h-5 accent-black dark:accent-white disabled:opacity-30"
                           checked={!!selectedItems[item.product_id]}
@@ -137,10 +138,10 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
                           <p className="text-sm opacity-70">Sold: {item.quantity} @ Rs {item.unit_price}</p>
                         </div>
                       </div>
-                      
+
                       {selectedItems[item.product_id] && (
                         <div className="flex flex-col sm:flex-row gap-2 flex-1 w-full md:w-auto">
-                          <input 
+                          <input
                             type="number"
                             min="1"
                             max={item.quantity}
@@ -152,7 +153,7 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
                             className="w-full sm:w-20 px-3 py-2 border border-black dark:border-white bg-transparent rounded-[2px] focus:outline-none"
                           />
                           <div className="flex-1">
-                            <ReturnReasonSelect 
+                            <ReturnReasonSelect
                               value={selectedItems[item.product_id].reason}
                               onChange={(val) => setSelectedItems(prev => ({
                                 ...prev,
@@ -162,7 +163,7 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
                           </div>
                         </div>
                       )}
-                      
+
                       {isExpired && (
                         <div className="flex items-center gap-1 text-[11px] text-red-500 font-bold uppercase tracking-tight">
                           <AlertCircle size={14} />
@@ -178,7 +179,7 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
             <div className="flex flex-col md:flex-row justify-between items-center pt-4 border-t border-black dark:border-white gap-4">
               <div className="flex items-center gap-4 w-full md:w-auto">
                 <label className="font-medium">Refund Method:</label>
-                <select 
+                <select
                   value={refundMethod}
                   onChange={(e) => setRefundMethod(e.target.value)}
                   className="px-4 py-2 border border-black dark:border-white bg-transparent rounded-[2px] focus:outline-none text-black dark:text-white"
@@ -188,7 +189,7 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
                   <option value="online" className="bg-white dark:bg-black">Online Reversal</option>
                 </select>
               </div>
-              
+
               <div className="text-right w-full md:w-auto">
                 <p className="text-sm opacity-70">Total Refund</p>
                 <p className="text-2xl font-bold">Rs {calculateTotalRefund().toFixed(2)}</p>
@@ -196,13 +197,13 @@ export const ReturnDialog: React.FC<ReturnDialogProps> = ({ visible, onHide, sal
             </div>
 
             <div className="flex justify-end gap-4">
-              <button 
+              <button
                 onClick={onHide}
                 className="px-6 py-2 border border-black dark:border-white text-black dark:text-white rounded-[2px] hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleProcessReturn}
                 disabled={loading || Object.keys(selectedItems).length === 0}
                 className="px-6 py-2 bg-[#DA291C] text-white rounded-[2px] hover:bg-opacity-90 disabled:opacity-50 transition-colors font-bold"

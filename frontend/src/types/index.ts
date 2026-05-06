@@ -24,14 +24,14 @@ export interface Product {
 
 export interface Sale {
   id: string;
-  date: string;
+  sale_date: string;
   items: SaleItem[];
   total: number;
-  paymentType: "cash" | "credit" | "online" | "mixed";
+  sales_type: "cash" | "credit" | "online" | "mixed";
   payments: PaymentRecord[];
-  customerId: string;
-  discountApplied: number;
-  isPaid: boolean;
+  customer_id: string;
+  discount_applied: number;
+  is_paid: boolean;
   synced?: number;
 }
 
@@ -62,12 +62,13 @@ export interface Customer {
 }
 
 export interface SaleItem {
-  productId: string;
-  variantId?: string;
-  productName: string;
+  id: string;
+  product_id: string;
+  variant_id?: string;
+  product_name: string;
   quantity: number;
-  price: number;
-  total: number;
+  unit_price: number;
+  total_price: number;
   warranty_days?: number;
 }
 
