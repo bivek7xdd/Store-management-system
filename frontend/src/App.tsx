@@ -33,6 +33,7 @@ import React from "react";
 import LandingPage from "./pages/LandingPage";
 import Settings from "./pages/Settings";
 import DevOfflineHandler from "./components/DevOfflineHandler";
+import { Agentation } from "agentation";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -90,9 +91,9 @@ const App = () => {
             <NotificationProvider>
               <SidebarProvider>
                 <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <Routes>
                       {/* Public routes */}
                       <Route path="/login" element={<Login />} />
@@ -218,10 +219,11 @@ const App = () => {
                       {/* Catch-all route for 404 */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
-                </BrowserRouter>
-              </TooltipProvider>
-            </SidebarProvider>
-          </NotificationProvider>
+                  </BrowserRouter>
+                  {import.meta.env.DEV && <Agentation />}
+                </TooltipProvider>
+              </SidebarProvider>
+            </NotificationProvider>
           </AuthProvider>
         </QueryClientProvider>
       </DevOfflineHandler>

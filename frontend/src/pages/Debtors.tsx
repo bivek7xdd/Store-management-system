@@ -150,7 +150,7 @@ export default function Debtors() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchDebts}
-            className="h-8 w-8 rounded-[2px] border border-[#1A1A1A] bg-[#111111] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#1A1A1A] transition-colors"
+            className="h-8 w-8 rounded-[2px] border border-[#262626] bg-[#111111] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#262626] transition-colors"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -160,7 +160,7 @@ export default function Debtors() {
 
       {/* Stat Cards */}
       <div className="grid gap-3 sm:grid-cols-3" data-tour="debtors-summary">
-        <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
+        <div className="bg-[#111111] border border-[#262626] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Total Outstanding</p>
             <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
@@ -170,7 +170,7 @@ export default function Debtors() {
           <p className="text-[24px] font-medium text-white">रू {totalOutstanding.toLocaleString()}</p>
         </div>
 
-        <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
+        <div className="bg-[#111111] border border-[#262626] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Pending Accounts</p>
             <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
@@ -181,12 +181,12 @@ export default function Debtors() {
           <p className="text-[12px] text-[#555555] mt-1">of {debts.length} total</p>
         </div>
 
-        <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
+        <div className="bg-[#111111] border border-[#262626] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Recovery Rate</p>
             <span className="text-[13px] font-medium text-emerald-400">{recoveryRate}%</span>
           </div>
-          <div className="h-1.5 w-full bg-[#1A1A1A] rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-[#262626] rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all duration-700"
               style={{ width: `${recoveryRate}%` }}
@@ -205,11 +205,11 @@ export default function Debtors() {
             placeholder="Search by name or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#303030] transition-colors"
+            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#262626] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#303030] transition-colors"
           />
         </div>
         <Select value={statusFilter} onValueChange={(v: "all" | "pending" | "paid") => setStatusFilter(v)}>
-          <SelectTrigger className="w-full sm:w-[160px] h-[38px] rounded-[2px] border border-[#1A1A1A] bg-[#111111] text-[#CCCCCC] text-[12px] focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="w-full sm:w-[160px] h-[38px] rounded-[2px] border border-[#262626] bg-[#111111] text-[#CCCCCC] text-[12px] focus:ring-0 focus:ring-offset-0">
             <div className="flex items-center gap-2">
               <Filter className="h-3.5 w-3.5 text-[#555555]" />
               <SelectValue placeholder="Status" />
@@ -228,7 +228,7 @@ export default function Debtors() {
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[12px] text-[#CCCCCC] focus:outline-none focus:border-[#303030] transition-colors [color-scheme:dark]"
+            className="w-full h-[38px] pl-9 pr-3 bg-[#111111] border border-[#262626] rounded-[2px] text-[12px] text-[#CCCCCC] focus:outline-none focus:border-[#303030] transition-colors [color-scheme:dark]"
           />
           {dateFilter && (
             <button 
@@ -242,9 +242,9 @@ export default function Debtors() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden" data-tour="debtors-list">
+      <div className="bg-[#111111] border border-[#262626] rounded-[2px] overflow-hidden" data-tour="debtors-list">
         {/* Table Header */}
-        <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 border-b border-[#1A1A1A] bg-[#0A0A0A]">
+        <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 border-b border-[#262626] bg-[#0A0A0A]">
           {["Customer", "Initiated", "Outstanding", "Due Date", "Actions"].map((col) => (
             <p key={col} className="text-[10px] font-medium text-[#555555] uppercase tracking-[1px]">{col}</p>
           ))}
@@ -423,7 +423,7 @@ export default function Debtors() {
 
         {/* Table Footer / Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#1A1A1A] bg-[#0A0A0A]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#262626] bg-[#0A0A0A]">
             <p className="text-[12px] text-[#555555]">
               Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredDebtors.length)} of {filteredDebtors.length}
             </p>
@@ -431,17 +431,17 @@ export default function Debtors() {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="h-7 w-7 rounded-[2px] border border-[#262626] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <div className="px-3 h-7 flex items-center text-[12px] text-[#CCCCCC] bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+              <div className="px-3 h-7 flex items-center text-[12px] text-[#CCCCCC] bg-[#111111] border border-[#262626] rounded-[2px]">
                 {currentPage} / {totalPages}
               </div>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="h-7 w-7 rounded-[2px] border border-[#262626] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -460,8 +460,8 @@ export default function Debtors() {
 
       {/* Full Pay Confirm */}
       <AlertDialog open={fullPayConfirmOpen} onOpenChange={setFullPayConfirmOpen}>
-        <AlertDialogContent className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] p-0 max-w-sm shadow-2xl">
-          <div className="px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
+        <AlertDialogContent className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] p-0 max-w-sm shadow-2xl">
+          <div className="px-6 pt-6 pb-4 border-b border-[#262626]">
             <div className="flex items-center gap-3 mb-3">
               <div className="h-8 w-8 rounded-[2px] bg-emerald-900/30 border border-emerald-800 flex items-center justify-center">
                 <Banknote className="h-4 w-4 text-emerald-400" />
@@ -471,7 +471,7 @@ export default function Debtors() {
                 <p className="text-[12px] text-[#555555]">Closing account for {selectedDebt?.customer_name}</p>
               </div>
             </div>
-            <div className="p-4 bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+            <div className="p-4 bg-[#111111] border border-[#262626] rounded-[2px]">
               <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mb-1">Amount Due</p>
               <p className="text-[28px] font-medium text-white">
                 रू {(parseFloat(selectedDebt?.amount_owed || "0") - parseFloat(selectedDebt?.amount_paid || "0")).toLocaleString()}
@@ -498,8 +498,8 @@ export default function Debtors() {
 
       {/* Delete Confirm */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] p-0 max-w-sm shadow-2xl">
-          <div className="px-6 pt-6 pb-4 border-b border-[#1A1A1A]">
+        <AlertDialogContent className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] p-0 max-w-sm shadow-2xl">
+          <div className="px-6 pt-6 pb-4 border-b border-[#262626]">
             <div className="flex items-center gap-3 mb-1">
               <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 border border-[#DA291C]/30 flex items-center justify-center">
                 <AlertCircle className="h-4 w-4 text-[#DA291C]" />

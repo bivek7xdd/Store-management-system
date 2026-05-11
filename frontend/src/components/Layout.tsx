@@ -134,7 +134,7 @@ export default function Layout({ children }: LayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
+    <div className="min-h-screen bg-[#030303] text-white font-sans">
 
       {/* Offline Banner */}
       {!isOnline && (
@@ -150,13 +150,13 @@ export default function Layout({ children }: LayoutProps) {
         animate={{ width: isCollapsed ? 64 : 240 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
-          "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-[#1A1A1A] bg-[#000000] z-40",
+          "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-[#262626] bg-[#000000] z-40",
           !isOnline && "top-7"
         )}
       >
         {/* Logo */}
         <div className={cn(
-          "flex items-center h-[64px] border-b border-[#1A1A1A] shrink-0 transition-all overflow-hidden",
+          "flex items-center h-[64px] border-b border-[#262626] shrink-0 transition-all overflow-hidden",
           isCollapsed ? "px-4 justify-center" : "px-6 gap-3"
         )}>
           <div className="w-7 h-7 flex items-center justify-center shrink-0">
@@ -248,7 +248,7 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* User + Notifications */}
           <div className={cn(
-            "pt-3 pb-4 border-t border-[#1A1A1A] mt-auto flex flex-col gap-2",
+            "pt-3 pb-4 border-t border-[#262626] mt-auto flex flex-col gap-2",
             isCollapsed ? "items-center px-2" : "px-3"
           )} data-tour="user-profile">
             <div className={cn("flex items-center gap-2", isCollapsed && "flex-col")}>
@@ -319,7 +319,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Mobile Header */}
       <div className={cn(
-        "lg:hidden fixed left-0 right-0 z-40 flex items-center justify-between border-b border-[#1A1A1A] bg-[#000000] px-4 h-[56px]",
+        "lg:hidden fixed left-0 right-0 z-40 flex items-center justify-between border-b border-[#262626] bg-[#000000] px-4 h-[56px]",
         !isOnline ? "top-7" : "top-0"
       )}>
         <div className="flex items-center gap-3">
@@ -409,7 +409,7 @@ export default function Layout({ children }: LayoutProps) {
       </motion.main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#1A1A1A] bg-[#000000]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#262626] bg-[#000000]">
         <ul className="flex justify-around py-2">
           {navItems.slice(0, 5).map((item) => {
             const Icon = item.icon;

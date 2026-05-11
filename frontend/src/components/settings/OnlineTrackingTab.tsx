@@ -50,12 +50,12 @@ export function OnlineTrackingTab() {
       })
     : [];
 
-  const inputCls = "h-12 bg-transparent border border-[#1A1A1A] rounded-[2px] px-4 font-bold text-sm text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors";
+  const inputCls = "h-12 bg-transparent border border-[#262626] rounded-[2px] px-4 font-bold text-sm text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors";
   const labelCls = "text-[10px] font-bold uppercase tracking-[2px] text-[#555555]";
 
   return (
-    <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
-      <div className="p-8 border-b border-[#1A1A1A] flex items-center justify-between">
+    <div className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] overflow-hidden">
+      <div className="p-8 border-b border-[#262626] flex items-center justify-between">
         <div>
           <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Online Storefront Protocol</h3>
           <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Configure products for digital synchronization.</p>
@@ -81,14 +81,14 @@ export function OnlineTrackingTab() {
           </div>
           
           {searchTerm.length >= 2 && (
-            <div className="border border-[#1A1A1A] rounded-[2px] bg-[#0F0F0F] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="border border-[#262626] rounded-[2px] bg-[#0F0F0F] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               <ScrollArea className="h-[240px]">
                 {searchResults.length === 0 ? (
                   <div className="p-10 text-center text-[10px] font-bold text-[#333333] uppercase tracking-[2px]">No matching records.</div>
                 ) : (
-                  <div className="divide-y divide-[#1A1A1A]">
+                  <div className="divide-y divide-[#262626]">
                     {searchResults.map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-4 hover:bg-[#1A1A1A] transition-colors group">
+                      <div key={product.id} className="flex items-center justify-between p-4 hover:bg-[#262626] transition-colors group">
                         <div className="space-y-1">
                           <div className="font-bold text-[11px] text-white uppercase tracking-[1px]">{product.name}</div>
                           <div className="text-[9px] font-bold text-[#555555] uppercase tracking-[1.5px]">
@@ -123,17 +123,17 @@ export function OnlineTrackingTab() {
           </div>
           
           {isLoading ? (
-            <div className="flex justify-center p-12 bg-[#0F0F0F] border border-[#1A1A1A] rounded-[2px]">
+            <div className="flex justify-center p-12 bg-[#0F0F0F] border border-[#262626] rounded-[2px]">
               <Loader2 className="h-5 w-5 animate-spin text-[#DA291C]" />
             </div>
           ) : trackedProducts.length === 0 ? (
-            <div className="text-center p-16 border border-[#1A1A1A] border-dashed rounded-[2px] bg-[#0F0F0F]">
+            <div className="text-center p-16 border border-[#262626] border-dashed rounded-[2px] bg-[#0F0F0F]">
               <Globe className="h-8 w-8 text-[#1A1A1A] mx-auto mb-4" />
               <p className="text-[10px] font-bold text-[#333333] uppercase tracking-[2px]">Offline Mode: No Active Nodes</p>
               <p className="text-[9px] text-[#222222] uppercase tracking-[1px] mt-1">Search and initialize product entities for online tracking.</p>
             </div>
           ) : (
-            <div className="border border-[#1A1A1A] rounded-[2px] divide-y divide-[#1A1A1A]">
+            <div className="border border-[#262626] rounded-[2px] divide-y divide-[#262626]">
               {trackedProducts.map(product => (
                 <div key={product.id} className="flex items-center justify-between p-5 bg-[#0A0A0A] hover:bg-[#0F0F0F] transition-colors">
                   <div className="flex items-center gap-5">

@@ -31,7 +31,7 @@ function FieldLabel({ icon: Icon, label }: { icon: React.ElementType; label: str
     );
 }
 
-const inputCls = "w-full h-[38px] bg-transparent border border-[#303030] rounded-[2px] px-3 text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#1EAEDB] transition-colors";
+const inputCls = "w-full h-[38px] bg-transparent border border-[#303030] rounded-[2px] px-3 text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#1EAEDB] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 const textareaCls = "w-full bg-transparent border border-[#303030] rounded-[2px] px-3 py-2.5 text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#1EAEDB] transition-colors resize-none min-h-[80px]";
 
 export function DebtDialog({ debt, onSuccess, children }: DebtDialogProps) {

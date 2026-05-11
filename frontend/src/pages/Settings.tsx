@@ -109,7 +109,7 @@ export default function Settings() {
     }
   };
 
-  const inputCls = "h-11 bg-transparent border border-[#1A1A1A] rounded-[2px] px-3 font-medium text-sm text-white placeholder:text-[#555555] focus:outline-none focus:border-[#DA291C] transition-colors";
+  const inputCls = "h-11 bg-transparent border border-[#262626] rounded-[2px] px-3 font-medium text-sm text-white placeholder:text-[#555555] focus:outline-none focus:border-[#DA291C] transition-colors";
   const labelCls = "text-[11px] font-bold uppercase tracking-[1.5px] text-[#555555]";
 
   return (
@@ -121,7 +121,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="flex w-full mb-10 bg-[#0A0A0A] border border-[#1A1A1A] p-1 rounded-[2px] h-12 overflow-x-auto hide-scrollbar space-x-1">
+        <TabsList className="flex w-full mb-10 bg-[#0A0A0A] border border-[#262626] p-1 rounded-[2px] h-12 overflow-x-auto hide-scrollbar space-x-1">
           <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
             <User className="h-3.5 w-3.5 shrink-0" />
             <span>Profile</span>
@@ -145,8 +145,8 @@ export default function Settings() {
         </TabsList>
 
         <TabsContent value="profile" className="focus-visible:outline-none focus-visible:ring-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
-            <div className="p-8 border-b border-[#1A1A1A]">
+          <div className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] overflow-hidden">
+            <div className="p-8 border-b border-[#262626]">
               <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Identity Parameters</h3>
               <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Update your administrative credentials.</p>
             </div>
@@ -188,7 +188,7 @@ export default function Settings() {
                   <p className="text-[9px] text-[#444444] uppercase tracking-[1px]">Verified accounts require support authorization for email updates.</p>
                 </div>
               </div>
-              <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
+              <div className="bg-[#111111] border-t border-[#262626] p-6 flex justify-end">
                 <Button
                   type="submit"
                   disabled={profileLoading}
@@ -204,8 +204,8 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="store" className="focus-visible:outline-none focus-visible:ring-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
-            <div className="p-8 border-b border-[#1A1A1A]">
+          <div className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] overflow-hidden">
+            <div className="p-8 border-b border-[#262626]">
               <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Business Entity Info</h3>
               <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Configure your commercial workspace and regional settings.</p>
             </div>
@@ -242,7 +242,7 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
+              <div className="bg-[#111111] border-t border-[#262626] p-6 flex justify-end">
                 <Button
                   type="submit"
                   disabled={storeLoading}
@@ -258,8 +258,8 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="security" className="focus-visible:outline-none focus-visible:ring-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden border-l-2 border-l-[#DA291C]">
-            <div className="p-8 border-b border-[#1A1A1A]">
+          <div className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] overflow-hidden border-l-2 border-l-[#DA291C]">
+            <div className="p-8 border-b border-[#262626]">
               <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Security & Encryption</h3>
               <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Rotate your authentication keys regularly.</p>
             </div>
@@ -303,14 +303,14 @@ export default function Settings() {
                     />
                   </div>
                 </div>
-                <div className="bg-[#111111] border border-[#1A1A1A] p-5 rounded-[2px] flex gap-4">
+                <div className="bg-[#111111] border border-[#262626] p-5 rounded-[2px] flex gap-4">
                   <AlertCircle className="h-5 w-5 text-[#DA291C] shrink-0" />
                   <p className="text-[10px] text-[#888888] uppercase tracking-[1px] leading-relaxed">
                     Changing your passkey will immediately invalidate current session tokens. You may be required to re-authenticate on other active nodes.
                   </p>
                 </div>
               </div>
-              <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
+              <div className="bg-[#111111] border-t border-[#262626] p-6 flex justify-end">
                 <Button
                   type="submit"
                   disabled={securityLoading}

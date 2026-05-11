@@ -60,20 +60,20 @@ export function LoyaltyTab() {
     }
   };
 
-  const inputCls = "h-12 bg-transparent border border-[#1A1A1A] rounded-[2px] px-4 font-bold text-lg text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors";
+  const inputCls = "h-12 bg-transparent border border-[#262626] rounded-[2px] px-4 font-bold text-lg text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
   const labelCls = "text-[10px] font-bold uppercase tracking-[2px] text-[#555555]";
 
   if (fetching) {
     return (
-      <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] min-h-[400px] flex items-center justify-center">
+      <div className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] min-h-[400px] flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-[#DA291C]" />
       </div>
     );
   }
 
   return (
-    <div className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
-      <div className="p-8 border-b border-[#1A1A1A] flex items-center justify-between">
+    <div className="bg-[#0A0A0A] border border-[#262626] rounded-[2px] overflow-hidden">
+      <div className="p-8 border-b border-[#262626] flex items-center justify-between">
         <div>
           <h3 className="text-[14px] font-bold uppercase tracking-[2px] text-white">Loyalty Protocol</h3>
           <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mt-1">Configure automated customer reward logic.</p>
@@ -119,7 +119,7 @@ export function LoyaltyTab() {
             </div>
           </div>
 
-          <div className="h-px bg-[#1A1A1A]" />
+          <div className="h-px bg-[#262626]" />
 
           {/* Discount Percentage */}
           <div className="grid lg:grid-cols-2 gap-10 items-start">
@@ -151,7 +151,7 @@ export function LoyaltyTab() {
 
         </div>
 
-        <div className="bg-[#111111] border-t border-[#1A1A1A] p-6 flex justify-end">
+        <div className="bg-[#111111] border-t border-[#262626] p-6 flex justify-end">
           <Button
             type="submit"
             disabled={loading || fetchError}
