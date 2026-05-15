@@ -4,7 +4,7 @@ import { inventoryService } from "@/services/inventory";
 import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Plus, FolderOpen, MoreVertical, Pencil, Trash2, WifiOff } from "lucide-react";
+import { Plus, FolderOpen, MoreHorizontal, Pencil, Trash2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryDialog } from "@/components/CreateInventoryDialogs";
 import { CategorySkeleton } from "@/components/CategorySkeleton";
@@ -70,16 +70,14 @@ export default function Categories() {
 
     if (isLoading || authLoading) {
         return (
-            <div className="space-y-6">
-                {/* Header Mockup */}
-                <div className="flex items-center justify-between">
+            <div className="space-y-6 pb-24 lg:pb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-                        <p className="text-gray-500 mt-1">Manage your product categories</p>
+                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+                        <h1 className="text-[22px] font-medium text-white tracking-tight">Categories</h1>
                     </div>
                 </div>
 
-                {/* Categories Grid Skeleton */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {[...Array(8)].map((_, i) => (
                         <CategorySkeleton key={i} />
@@ -92,23 +90,24 @@ export default function Categories() {
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <p className="text-red-500 mb-2">Failed to load categories</p>
-                    <p className="text-gray-500 text-sm">Please try again later</p>
+                <div className="text-center space-y-3">
+                    <FolderOpen className="h-10 w-10 text-[#DA291C] mx-auto" />
+                    <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Failed to load categories</p>
+                    <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Please try again later</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 pb-24 lg:pb-8">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-                    <p className="text-gray-500 mt-1">Manage your product categories</p>
+                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+                    <h1 className="text-[22px] font-medium text-white tracking-tight">Categories</h1>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     {/* Offline Status Indicator */}
                     <OfflineIndicator
                         isOnline={offlineStatus.isOnline}
@@ -120,8 +119,8 @@ export default function Categories() {
                         lastSyncTime={offlineStatus.lastSyncTime}
                     />
                     <CategoryDialog>
-                        <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                            <Plus className="h-4 w-4 mr-2" />
+                        <Button className="h-9 px-4 rounded-[2px] bg-white text-black text-[11px] font-bold uppercase tracking-[1px] hover:bg-[#EEEEEE] transition-colors">
+                            <Plus className="h-3.5 w-3.5 mr-2" />
                             Add Category
                         </Button>
                     </CategoryDialog>
@@ -130,104 +129,105 @@ export default function Categories() {
 
             {/* Offline Mode Banner */}
             {!offlineStatus.isOnline && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
-                    <WifiOff className="h-5 w-5 text-orange-600" />
+                <div className="border border-[#DA291C]/30 bg-[#DA291C]/5 rounded-[2px] p-4 flex items-center gap-4">
+                    <WifiOff className="h-5 w-5 text-[#DA291C]" />
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-orange-800">
-                            Working offline
-                        </p>
-                        <p className="text-xs text-orange-600">
-                            Changes will be saved locally and synced when connection is restored.
+                        <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Offline Mode Active</p>
+                        <p className="text-[11px] text-[#DA291C] uppercase tracking-[0.5px] mt-0.5 opacity-80">
+                            Changes will sync on reconnection.
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* Existing Categories Grid */}
-            <div className="space-y-4">
-
-                {categories && categories.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {categories.map((category) => (
-                            <div
-                                key={category.id}
-                                className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-teal-300 hover:shadow-md transition-all duration-200"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <Link to={`/inventory/category/${category.id}`} className="flex items-center gap-3 flex-1">
-                                        <div className="h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
-                                            <FolderOpen className="h-5 w-5 text-teal-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
-                                                {category.name}
-                                            </h3>
-                                            {category.description && (
-                                                <p className="text-sm text-gray-500 line-clamp-1 mt-0.5">
-                                                    {category.description}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </Link>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                                                <MoreVertical className="h-4 w-4 text-gray-400" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <CategoryDialog category={category}>
-                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                    <Pencil className="h-4 w-4 mr-2" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                            </CategoryDialog>
-                                            <DropdownMenuItem
-                                                className="text-red-600"
-                                                onClick={() => setCategoryToDelete(category.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                Delete
+            {/* Categories Grid */}
+            {categories && categories.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categories.map((category) => (
+                        <div
+                            key={category.id}
+                            className="group bg-[#111111] rounded-[2px] border border-[#1A1A1A] hover:border-[#303030] transition-all duration-200 relative overflow-hidden"
+                        >
+                            {/* Action Menu */}
+                            <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] bg-[#0A0A0A] flex items-center justify-center text-[#888888] hover:text-white hover:border-[#303030] transition-colors">
+                                            <MoreHorizontal className="h-3.5 w-3.5" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] min-w-[140px]">
+                                        <CategoryDialog category={category}>
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#CCCCCC] hover:text-white focus:text-white focus:bg-[#1A1A1A] rounded-[1px] cursor-pointer">
+                                                <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                Edit
                                             </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
+                                        </CategoryDialog>
+                                        <DropdownMenuItem
+                                            className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#DA291C] hover:text-[#DA291C] focus:text-[#DA291C] focus:bg-[#DA291C]/10 rounded-[1px] cursor-pointer"
+                                            onClick={() => setCategoryToDelete(category.id)}
+                                        >
+                                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                        <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                            <FolderOpen className="h-8 w-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No categories yet</h3>
-                        <p className="text-gray-500 mb-6">Create your first category to organize your products</p>
-                        <CategoryDialog>
-                            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Create Category
-                            </Button>
-                        </CategoryDialog>
-                    </div>
-                )}
-            </div>
 
+                            <Link to={`/inventory/category/${category.id}`} className="block p-6">
+                                <div className="flex items-center gap-3 mb-4 pr-8">
+                                    <div className="h-10 w-10 rounded-[2px] bg-[#0A0A0A] border border-[#303030] flex items-center justify-center shrink-0">
+                                        <FolderOpen className="h-4 w-4 text-[#DA291C]" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-[14px] text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors truncate">
+                                            {category.name}
+                                        </h3>
+                                        {category.description && (
+                                            <p className="text-[11px] text-[#888888] line-clamp-1 mt-0.5">
+                                                {category.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="bg-[#111111] rounded-[2px] border border-[#1A1A1A] p-16 text-center">
+                    <div className="h-14 w-14 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center mx-auto mb-5">
+                        <FolderOpen className="h-7 w-7 text-[#1A1A1A]" />
+                    </div>
+                    <h3 className="text-[13px] font-bold text-white uppercase tracking-[1px] mb-2">No Categories Created</h3>
+                    <p className="text-[11px] text-[#555555] uppercase tracking-[0.5px] mb-8">Create your first category to organize your products</p>
+                    <CategoryDialog>
+                        <Button className="h-10 px-6 rounded-[2px] bg-white text-black text-[11px] font-bold uppercase tracking-[1px] hover:bg-[#EEEEEE] transition-colors">
+                            <Plus className="h-3.5 w-3.5 mr-2" />
+                            Create Category
+                        </Button>
+                    </CategoryDialog>
+                </div>
+            )}
+
+            {/* Delete Confirmation */}
             <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the category
-                            and remove it from our servers.
+                        <AlertDialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">Confirm Deletion</AlertDialogTitle>
+                        <AlertDialogDescription className="text-[12px] text-[#888888] leading-relaxed">
+                            This action is irreversible. The category and all associated metadata will be permanently removed from the system.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel className="bg-transparent border-[#1A1A1A] hover:bg-[#1A1A1A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]">
+                            Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px] px-6"
                             onClick={handleDeleteCategory}
                         >
-                            Delete
+                            Delete Category
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

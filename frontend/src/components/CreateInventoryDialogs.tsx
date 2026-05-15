@@ -59,28 +59,28 @@ export function CategoryDialog({ category, onSuccess, children }: CategoryDialog
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {children || (
-                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-gray-100">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-[2px] hover:bg-[#1A1A1A]">
                         <Plus className="h-4 w-4" />
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px]">
                 <DialogHeader>
-                    <DialogTitle>{isEdit ? "Edit Category" : "Add Category"}</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">{isEdit ? "Edit Category" : "Add Category"}</DialogTitle>
+                    <DialogDescription className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">
                         {isEdit ? "Update category details." : "Create a new category for your products."}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input id="name" name="name" defaultValue={category?.name} required placeholder="e.g. Electronics" />
+                        <Label htmlFor="name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Name</Label>
+                        <Input id="name" name="name" defaultValue={category?.name} required placeholder="e.g. Electronics" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] focus:ring-[#DA291C] focus:border-[#DA291C] text-sm text-white placeholder:text-[#555555]" />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Input id="description" name="description" defaultValue={category?.description} required placeholder="Category description" />
+                        <Label htmlFor="description" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Description</Label>
+                        <Input id="description" name="description" defaultValue={category?.description} required placeholder="Category description" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] focus:ring-[#DA291C] focus:border-[#DA291C] text-sm text-white placeholder:text-[#555555]" />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button type="submit" className="w-full bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]" disabled={loading}>
                         {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Category" : "Create Category")}
                     </Button>
                 </form>
@@ -218,29 +218,29 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {children || (
-                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-gray-100">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-[2px] hover:bg-[#1A1A1A]">
                         <Plus className="h-4 w-4" />
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px]">
                 <DialogHeader>
-                    <DialogTitle>{isEdit ? "Edit Supplier" : "Add Supplier"}</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">{isEdit ? "Edit Supplier" : "Add Supplier"}</DialogTitle>
+                    <DialogDescription className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">
                         {isEdit ? "Update supplier details." : "Discover new suppliers or add manually."}
                     </DialogDescription>
                 </DialogHeader>
                 
                 {!isEdit ? (
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="discover">Discover</TabsTrigger>
-                            <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-2 bg-[#111111] rounded-[2px]">
+                            <TabsTrigger value="discover" className="text-[11px] font-bold uppercase tracking-[0.5px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white">Discover</TabsTrigger>
+                            <TabsTrigger value="manual" className="text-[11px] font-bold uppercase tracking-[0.5px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white">Manual Entry</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="discover" className="space-y-4 mt-4">
                             <div className="space-y-2">
-                                <Label htmlFor="search-query">Search Suppliers</Label>
+                                <Label htmlFor="search-query" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Search Suppliers</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="search-query"
@@ -248,8 +248,9 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         placeholder="e.g., shirt, electronics, groceries"
                                         onKeyDown={(e) => e.key === "Enter" && handleSearchSuppliers()}
+                                        className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]"
                                     />
-                                    <Button onClick={handleSearchSuppliers} disabled={searching}>
+                                    <Button onClick={handleSearchSuppliers} disabled={searching} className="bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]">
                                         <Search className="h-4 w-4 mr-2" />
                                         {searching ? "Searching..." : "Search"}
                                     </Button>
@@ -257,44 +258,45 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                             </div>
                             
                             <div className="space-y-2">
-                                <Label htmlFor="search-location">Location</Label>
+                                <Label htmlFor="search-location" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Location</Label>
                                 <Input
                                     id="search-location"
                                     value={searchLocation}
                                     onChange={(e) => setSearchLocation(e.target.value)}
                                     placeholder="City, Country"
+                                    className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]"
                                 />
                             </div>
 
                             {discoveredSuppliers.length > 0 && (
                                 <div className="space-y-3 max-h-96 overflow-y-auto mt-4">
-                                    <Label>Found Suppliers ({discoveredSuppliers.length})</Label>
+                                    <Label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Found Suppliers ({discoveredSuppliers.length})</Label>
                                     {discoveredSuppliers.map((supplier, idx) => (
                                         <div
                                             key={idx}
-                                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                                            className="border border-[#1A1A1A] rounded-[2px] bg-[#111111] p-4 hover:bg-[#1A1A1A] transition-colors cursor-pointer"
                                             onClick={() => handleUseDiscoveredSupplier(supplier)}
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
-                                                    <h4 className="font-semibold text-gray-900">{supplier.name}</h4>
-                                                    <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
+                                                    <h4 className="font-bold text-[13px] text-white uppercase tracking-tight">{supplier.name}</h4>
+                                                    <div className="flex items-center gap-1 mt-1 text-[11px] text-[#888888]">
                                                         <MapPin className="h-3 w-3" />
                                                         <span>{supplier.address}</span>
                                                     </div>
                                                     {supplier.phone && (
-                                                        <p className="text-sm text-gray-600 mt-1">{supplier.phone}</p>
+                                                        <p className="text-[11px] text-[#888888] mt-1">{supplier.phone}</p>
                                                     )}
                                                     <div className="flex items-center gap-2 mt-2">
                                                         {supplier.rating > 0 && (
-                                                            <div className="flex items-center gap-1 text-sm">
-                                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                                            <div className="flex items-center gap-1 text-[11px] text-[#888888]">
+                                                                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                                                                 <span>{supplier.rating}</span>
-                                                                <span className="text-gray-500">({supplier.reviews} reviews)</span>
+                                                                <span className="text-[#555555]">({supplier.reviews} reviews)</span>
                                                             </div>
                                                         )}
                                                         {supplier.category && (
-                                                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                                            <span className="text-[10px] bg-[#1A1A1A] text-[#888888] px-2 py-1 rounded-[2px] uppercase font-bold tracking-[0.5px]">
                                                                 {supplier.category}
                                                             </span>
                                                         )}
@@ -307,6 +309,7 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                                                         e.stopPropagation();
                                                         handleUseDiscoveredSupplier(supplier);
                                                     }}
+                                                    className="border-[#1A1A1A] bg-[#0A0A0A] text-white text-[10px] uppercase font-bold tracking-[0.5px] hover:bg-[#1A1A1A] rounded-[2px]"
                                                 >
                                                     Use
                                                 </Button>
@@ -316,7 +319,7 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                                                     href={supplier.website}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-2"
+                                                    className="inline-flex items-center gap-1 text-[10px] text-[#DA291C] hover:underline mt-2 uppercase tracking-[0.5px] font-bold"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     Visit Website <ExternalLink className="h-3 w-3" />
@@ -331,22 +334,22 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                         <TabsContent value="manual" className="mt-4">
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input id="name" name="name" defaultValue={supplier?.name} required placeholder="Supplier Name" />
+                                    <Label htmlFor="name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Name</Label>
+                                    <Input id="name" name="name" defaultValue={supplier?.name} required placeholder="Supplier Name" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="address">Address</Label>
-                                    <Input id="address" name="address" defaultValue={supplier?.address} required placeholder="Address" />
+                                    <Label htmlFor="address" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Address</Label>
+                                    <Input id="address" name="address" defaultValue={supplier?.address} required placeholder="Address" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="phone_number">Phone</Label>
-                                    <Input id="phone_number" name="phone_number" defaultValue={supplier?.phone_number} required placeholder="Phone Number" />
+                                    <Label htmlFor="phone_number" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Phone</Label>
+                                    <Input id="phone_number" name="phone_number" defaultValue={supplier?.phone_number} required placeholder="Phone Number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" />
+                                    <Label htmlFor="email" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Email</Label>
+                                    <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                                 </div>
-                                <Button type="submit" className="w-full" disabled={loading}>
+                                <Button type="submit" className="w-full bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]" disabled={loading}>
                                     {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Supplier" : "Create Supplier")}
                                 </Button>
                             </form>
@@ -355,22 +358,22 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
-                            <Input id="name" name="name" defaultValue={supplier?.name} required placeholder="Supplier Name" />
+                            <Label htmlFor="name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Name</Label>
+                            <Input id="name" name="name" defaultValue={supplier?.name} required placeholder="Supplier Name" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="address">Address</Label>
-                            <Input id="address" name="address" defaultValue={supplier?.address} required placeholder="Address" />
+                            <Label htmlFor="address" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Address</Label>
+                            <Input id="address" name="address" defaultValue={supplier?.address} required placeholder="Address" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="phone_number">Phone</Label>
-                            <Input id="phone_number" name="phone_number" defaultValue={supplier?.phone_number} required placeholder="Phone Number" />
+                            <Label htmlFor="phone_number" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Phone</Label>
+                            <Input id="phone_number" name="phone_number" defaultValue={supplier?.phone_number} required placeholder="Phone Number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" />
+                            <Label htmlFor="email" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Email</Label>
+                            <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                         </div>
-                        <Button type="submit" className="w-full" disabled={loading}>
+                        <Button type="submit" className="w-full bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]" disabled={loading}>
                             {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Supplier" : "Create Supplier")}
                         </Button>
                     </form>
