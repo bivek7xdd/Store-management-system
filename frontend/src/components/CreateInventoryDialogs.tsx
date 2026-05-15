@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MapPin, Star, ExternalLink } from "lucide-react";
+import { Plus, Search, MapPin, Star, ExternalLink, ChevronDown, ChevronUp, Building2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { inventoryService, DiscoveredSupplier } from "@/services/inventory";
 import { useQueryClient } from "@tanstack/react-query";
@@ -104,6 +104,7 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
     const [searchLocation, setSearchLocation] = useState("Nepal");
     const [searching, setSearching] = useState(false);
     const [discoveredSuppliers, setDiscoveredSuppliers] = useState<DiscoveredSupplier[]>([]);
+    const [showBankDetails, setShowBankDetails] = useState(false);
     const queryClient = useQueryClient();
 
     // Listen for prefill events from FindSuppliers page
@@ -349,6 +350,51 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                                     <Label htmlFor="email" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Email</Label>
                                     <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                                 </div>
+
+                                {/* Bank Details Toggle */}
+                                <button type="button" onClick={() => setShowBankDetails(!showBankDetails)}
+                                    className="w-full flex items-center justify-between p-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[11px] font-bold uppercase tracking-[0.5px] text-[#888888] hover:text-white transition-colors">
+                                    <span className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5" />Bank / Payment Details</span>
+                                    {showBankDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                                </button>
+
+                                {showBankDetails && (
+                                    <div className="space-y-3 p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="bank_name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Bank Name</Label>
+                                            <Input id="bank_name" name="bank_name" defaultValue={(supplier as any)?.bank_name} placeholder="e.g., Nepal Investment Bank" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="account_name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Account Name</Label>
+                                            <Input id="account_name" name="account_name" defaultValue={(supplier as any)?.account_name} placeholder="Account holder name" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="account_number" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Account Number</Label>
+                                            <Input id="account_number" name="account_number" defaultValue={(supplier as any)?.account_number} placeholder="Account number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="branch" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Branch</Label>
+                                                <Input id="branch" name="branch" defaultValue={(supplier as any)?.branch} placeholder="Branch" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="swift_code" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">SWIFT Code</Label>
+                                                <Input id="swift_code" name="swift_code" defaultValue={(supplier as any)?.swift_code} placeholder="SWIFT" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="esewa_id" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">eSewa ID</Label>
+                                                <Input id="esewa_id" name="esewa_id" defaultValue={(supplier as any)?.esewa_id} placeholder="eSewa number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="khalti_id" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Khalti ID</Label>
+                                                <Input id="khalti_id" name="khalti_id" defaultValue={(supplier as any)?.khalti_id} placeholder="Khalti number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <Button type="submit" className="w-full bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]" disabled={loading}>
                                     {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Supplier" : "Create Supplier")}
                                 </Button>
@@ -373,6 +419,51 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                             <Label htmlFor="email" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Email</Label>
                             <Input id="email" name="email" type="email" defaultValue={supplier?.email} required placeholder="Email" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
                         </div>
+
+                        {/* Bank Details Toggle */}
+                        <button type="button" onClick={() => setShowBankDetails(!showBankDetails)}
+                            className="w-full flex items-center justify-between p-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[11px] font-bold uppercase tracking-[0.5px] text-[#888888] hover:text-white transition-colors">
+                            <span className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5" />Bank / Payment Details</span>
+                            {showBankDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+
+                        {showBankDetails && (
+                            <div className="space-y-3 p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                                <div className="space-y-2">
+                                    <Label htmlFor="bank_name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Bank Name</Label>
+                                    <Input id="bank_name" name="bank_name" defaultValue={(supplier as any)?.bank_name} placeholder="e.g., Nepal Investment Bank" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="account_name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Account Name</Label>
+                                    <Input id="account_name" name="account_name" defaultValue={(supplier as any)?.account_name} placeholder="Account holder name" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="account_number" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Account Number</Label>
+                                    <Input id="account_number" name="account_number" defaultValue={(supplier as any)?.account_number} placeholder="Account number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="branch" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Branch</Label>
+                                        <Input id="branch" name="branch" defaultValue={(supplier as any)?.branch} placeholder="Branch" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="swift_code" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">SWIFT Code</Label>
+                                        <Input id="swift_code" name="swift_code" defaultValue={(supplier as any)?.swift_code} placeholder="SWIFT" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="esewa_id" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">eSewa ID</Label>
+                                        <Input id="esewa_id" name="esewa_id" defaultValue={(supplier as any)?.esewa_id} placeholder="eSewa number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="khalti_id" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Khalti ID</Label>
+                                        <Input id="khalti_id" name="khalti_id" defaultValue={(supplier as any)?.khalti_id} placeholder="Khalti number" className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-sm text-white placeholder:text-[#555555]" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <Button type="submit" className="w-full bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]" disabled={loading}>
                             {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Supplier" : "Create Supplier")}
                         </Button>

@@ -8,6 +8,8 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getReportStats, ReportStats } from "@/services/reportService";
+import { getExpenseSummary, type ExpenseSummary } from "@/services/expenseService";
+import { getSupplierPayableSummary, type PayableSummary } from "@/services/supplierPayableService";
 import { inventoryService } from "@/services/inventory";
 import { Product } from "@/types";
 import { CountUp } from "@/components/CountUp";
@@ -80,18 +82,24 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expenseSummary, setExpenseSummary] = useState<ExpenseSummary | null>(null);
+  const [payableSummary, setPayableSummary] = useState<PayableSummary | null>(null);
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     try {
-      const [reportStats, allProducts] = await Promise.all([
+      const [reportStats, allProducts, expenses, payables] = await Promise.all([
         getReportStats(range),
         inventoryService.getProducts(200, 0),
+        getExpenseSummary(range),
+        getSupplierPayableSummary(),
       ]);
       setStats(reportStats);
       setProducts(allProducts);
+      setExpenseSummary(expenses);
+      setPayableSummary(payables);
     } catch {
       setError("Failed to load dashboard data. Please try again.");
     } finally {
@@ -264,6 +272,71 @@ export default function Dashboard() {
                 <CountUp to={nearExpiryItems.length} />
               </div>
               <p className="text-[12px] text-[#DA291C]">Within 30 days</p>
+            </div>
+          </>
+        )}
+      </motion.div>
+
+      {/* Financial Stat Cards */}
+      <motion.div variants={fadeUp} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {loading ? (
+          <><StatSkeleton /><StatSkeleton /><StatSkeleton /><StatSkeleton /></>
+        ) : (
+          <>
+            {/* Total Expenses */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">{rangeLabel} Expenses</p>
+                <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+                  <TrendingDown className="h-4 w-4 text-[#DA291C]" />
+                </div>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                रू <CountUp to={expenseSummary?.summary?.total_amount ?? 0} />
+              </div>
+              <p className="text-[12px] text-[#555555]">{expenseSummary?.summary?.total_count ?? 0} transactions</p>
+            </div>
+
+            {/* Net Profit */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Net Profit</p>
+                <div className="h-8 w-8 rounded-[2px] bg-emerald-900/30 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-emerald-400" />
+                </div>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                रू <CountUp to={(stats?.profit?.gross_profit ?? 0) - (expenseSummary?.summary?.total_amount ?? 0)} />
+              </div>
+              <p className="text-[12px] text-[#555555]">After expenses</p>
+            </div>
+
+            {/* Supplier Payables */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Supplier Owed</p>
+                <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-amber-400" />
+                </div>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                रू <CountUp to={payableSummary?.summary?.total_outstanding ?? 0} />
+              </div>
+              <p className="text-[12px] text-[#555555]">{payableSummary?.summary?.total_count ?? 0} invoices</p>
+            </div>
+
+            {/* Overdue Payables */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Overdue</p>
+                <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-[#DA291C]" />
+                </div>
+              </div>
+              <div className="text-[24px] font-medium text-white mb-1">
+                रू <CountUp to={payableSummary?.summary?.total_overdue ?? 0} />
+              </div>
+              <p className="text-[12px] text-[#DA291C]">{payableSummary?.overdue?.length ?? 0} suppliers</p>
             </div>
           </>
         )}

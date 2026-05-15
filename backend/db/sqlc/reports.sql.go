@@ -11,6 +11,127 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getBalanceSheetAssets = `-- name: GetBalanceSheetAssets :one
+SELECT 
+    (SELECT COALESCE(SUM(d.amount_owed - d.amount_paid), 0)::DECIMAL(12,2) FROM debts d WHERE d.store_id = $1 AND d.amount_owed > d.amount_paid) as accounts_receivable,
+    (SELECT COALESCE(SUM(p.stock_quantity * p.cost_price), 0)::DECIMAL(12,2) FROM products p WHERE p.store_id = $1 AND p.status = 'active') as inventory_value
+`
+
+type GetBalanceSheetAssetsRow struct {
+	AccountsReceivable pgtype.Numeric `db:"accounts_receivable" json:"accounts_receivable"`
+	InventoryValue     pgtype.Numeric `db:"inventory_value" json:"inventory_value"`
+}
+
+func (q *Queries) GetBalanceSheetAssets(ctx context.Context, storeID pgtype.UUID) (GetBalanceSheetAssetsRow, error) {
+	row := q.db.QueryRow(ctx, getBalanceSheetAssets, storeID)
+	var i GetBalanceSheetAssetsRow
+	err := row.Scan(&i.AccountsReceivable, &i.InventoryValue)
+	return i, err
+}
+
+const getBalanceSheetLiabilities = `-- name: GetBalanceSheetLiabilities :one
+SELECT 
+    COALESCE(SUM(amount_owed - amount_paid), 0)::DECIMAL(12,2) as accounts_payable
+FROM supplier_payables sp
+WHERE sp.store_id = $1 AND sp.status != 'paid'
+`
+
+func (q *Queries) GetBalanceSheetLiabilities(ctx context.Context, storeID pgtype.UUID) (pgtype.Numeric, error) {
+	row := q.db.QueryRow(ctx, getBalanceSheetLiabilities, storeID)
+	var accounts_payable pgtype.Numeric
+	err := row.Scan(&accounts_payable)
+	return accounts_payable, err
+}
+
+const getCashFlowDaily = `-- name: GetCashFlowDaily :many
+WITH sales_inflow AS (
+    SELECT 
+        DATE(s.sale_date)::VARCHAR as date,
+        COALESCE(SUM(s.total_amount), 0)::DECIMAL(12,2) as amount
+    FROM sales s
+    WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3
+    GROUP BY DATE(s.sale_date)
+),
+expense_outflow AS (
+    SELECT 
+        DATE(e.expense_date)::VARCHAR as date,
+        COALESCE(SUM(e.amount), 0)::DECIMAL(12,2) as amount
+    FROM expenses e
+    WHERE e.store_id = $1 AND e.expense_date BETWEEN $2 AND $3
+    GROUP BY DATE(e.expense_date)
+),
+refund_outflow AS (
+    SELECT 
+        DATE(r.created_at)::VARCHAR as date,
+        COALESCE(SUM(r.refund_amount), 0)::DECIMAL(12,2) as amount
+    FROM returns r
+    WHERE r.store_id = $1 AND r.created_at BETWEEN $2 AND $3
+    GROUP BY DATE(r.created_at)
+),
+supplier_payment_outflow AS (
+    SELECT 
+        DATE(sp.payment_date)::VARCHAR as date,
+        COALESCE(SUM(sp.amount), 0)::DECIMAL(12,2) as amount
+    FROM supplier_payments sp
+    WHERE sp.store_id = $1 AND sp.payment_date BETWEEN $2 AND $3
+    GROUP BY DATE(sp.payment_date)
+)
+SELECT 
+    COALESCE(si.date, eo.date, ro.date, spo.date) as date,
+    COALESCE(si.amount, 0) as sales_inflow,
+    COALESCE(eo.amount, 0) as expense_outflow,
+    COALESCE(ro.amount, 0) as refund_outflow,
+    COALESCE(spo.amount, 0) as supplier_payment_outflow,
+    (COALESCE(si.amount, 0) - COALESCE(eo.amount, 0) - COALESCE(ro.amount, 0) - COALESCE(spo.amount, 0))::DECIMAL(12,2) as net_flow
+FROM sales_inflow si
+FULL OUTER JOIN expense_outflow eo ON si.date = eo.date
+FULL OUTER JOIN refund_outflow ro ON COALESCE(si.date, eo.date) = ro.date
+FULL OUTER JOIN supplier_payment_outflow spo ON COALESCE(si.date, eo.date, ro.date) = spo.date
+ORDER BY COALESCE(si.date, eo.date, ro.date, spo.date)
+`
+
+type GetCashFlowDailyParams struct {
+	StoreID    pgtype.UUID        `db:"store_id" json:"store_id"`
+	SaleDate   pgtype.Timestamptz `db:"sale_date" json:"sale_date"`
+	SaleDate_2 pgtype.Timestamptz `db:"sale_date_2" json:"sale_date_2"`
+}
+
+type GetCashFlowDailyRow struct {
+	Date                   string         `db:"date" json:"date"`
+	SalesInflow            pgtype.Numeric `db:"sales_inflow" json:"sales_inflow"`
+	ExpenseOutflow         pgtype.Numeric `db:"expense_outflow" json:"expense_outflow"`
+	RefundOutflow          pgtype.Numeric `db:"refund_outflow" json:"refund_outflow"`
+	SupplierPaymentOutflow pgtype.Numeric `db:"supplier_payment_outflow" json:"supplier_payment_outflow"`
+	NetFlow                pgtype.Numeric `db:"net_flow" json:"net_flow"`
+}
+
+func (q *Queries) GetCashFlowDaily(ctx context.Context, arg GetCashFlowDailyParams) ([]GetCashFlowDailyRow, error) {
+	rows, err := q.db.Query(ctx, getCashFlowDaily, arg.StoreID, arg.SaleDate, arg.SaleDate_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCashFlowDailyRow
+	for rows.Next() {
+		var i GetCashFlowDailyRow
+		if err := rows.Scan(
+			&i.Date,
+			&i.SalesInflow,
+			&i.ExpenseOutflow,
+			&i.RefundOutflow,
+			&i.SupplierPaymentOutflow,
+			&i.NetFlow,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDailySales = `-- name: GetDailySales :many
 SELECT 
     DATE(sale_date)::VARCHAR as sale_date,
@@ -258,6 +379,49 @@ func (q *Queries) GetInventoryStats(ctx context.Context, storeID pgtype.UUID) (G
 	row := q.db.QueryRow(ctx, getInventoryStats, storeID)
 	var i GetInventoryStatsRow
 	err := row.Scan(&i.TotalProducts, &i.TotalValue, &i.LowStockCount)
+	return i, err
+}
+
+const getNetProfit = `-- name: GetNetProfit :one
+SELECT 
+    COALESCE(SUM(si.total_price), 0)::DECIMAL(12,2) as total_revenue,
+    COALESCE(SUM(si.quantity * p.cost_price), 0)::DECIMAL(12,2) as total_cogs,
+    COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.store_id = $1 AND e.expense_date BETWEEN $2 AND $3), 0)::DECIMAL(12,2) as total_expenses,
+    COALESCE((SELECT SUM(refund_amount) FROM returns r WHERE r.store_id = $1 AND r.created_at BETWEEN $2 AND $3), 0)::DECIMAL(12,2) as total_refunds,
+    COALESCE((SELECT SUM(amount_owed - amount_paid) FROM supplier_payables sp WHERE sp.store_id = $1 AND sp.status != 'paid'), 0)::DECIMAL(12,2) as accounts_payable,
+    (COALESCE(SUM(si.total_price), 0) - COALESCE(SUM(si.quantity * p.cost_price), 0) - COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.store_id = $1 AND e.expense_date BETWEEN $2 AND $3), 0) - COALESCE((SELECT SUM(refund_amount) FROM returns r WHERE r.store_id = $1 AND r.created_at BETWEEN $2 AND $3), 0))::DECIMAL(12,2) as net_profit
+FROM sale_items si
+JOIN products p ON si.product_id = p.id
+JOIN sales s ON si.sale_id = s.id
+WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3
+`
+
+type GetNetProfitParams struct {
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	ExpenseDate   pgtype.Timestamptz `db:"expense_date" json:"expense_date"`
+	ExpenseDate_2 pgtype.Timestamptz `db:"expense_date_2" json:"expense_date_2"`
+}
+
+type GetNetProfitRow struct {
+	TotalRevenue    pgtype.Numeric `db:"total_revenue" json:"total_revenue"`
+	TotalCogs       pgtype.Numeric `db:"total_cogs" json:"total_cogs"`
+	TotalExpenses   pgtype.Numeric `db:"total_expenses" json:"total_expenses"`
+	TotalRefunds    pgtype.Numeric `db:"total_refunds" json:"total_refunds"`
+	AccountsPayable pgtype.Numeric `db:"accounts_payable" json:"accounts_payable"`
+	NetProfit       pgtype.Numeric `db:"net_profit" json:"net_profit"`
+}
+
+func (q *Queries) GetNetProfit(ctx context.Context, arg GetNetProfitParams) (GetNetProfitRow, error) {
+	row := q.db.QueryRow(ctx, getNetProfit, arg.StoreID, arg.ExpenseDate, arg.ExpenseDate_2)
+	var i GetNetProfitRow
+	err := row.Scan(
+		&i.TotalRevenue,
+		&i.TotalCogs,
+		&i.TotalExpenses,
+		&i.TotalRefunds,
+		&i.AccountsPayable,
+		&i.NetProfit,
+	)
 	return i, err
 }
 

@@ -308,6 +308,18 @@ type Debt struct {
 	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type Expense struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	Category      string             `db:"category" json:"category"`
+	Description   pgtype.Text        `db:"description" json:"description"`
+	Amount        pgtype.Numeric     `db:"amount" json:"amount"`
+	ExpenseDate   pgtype.Timestamptz `db:"expense_date" json:"expense_date"`
+	PaymentMethod pgtype.Text        `db:"payment_method" json:"payment_method"`
+	ReceiptUrl    pgtype.Text        `db:"receipt_url" json:"receipt_url"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
+}
+
 type Notification struct {
 	ID            pgtype.UUID        `db:"id" json:"id"`
 	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
@@ -450,4 +462,28 @@ type Supplier struct {
 	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
 	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type SupplierPayable struct {
+	ID          pgtype.UUID        `db:"id" json:"id"`
+	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
+	SupplierID  pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	Description pgtype.Text        `db:"description" json:"description"`
+	AmountOwed  pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid  pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate     pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status      string             `db:"status" json:"status"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type SupplierPayment struct {
+	ID            pgtype.UUID        `db:"id" json:"id"`
+	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
+	PayableID     pgtype.UUID        `db:"payable_id" json:"payable_id"`
+	Amount        pgtype.Numeric     `db:"amount" json:"amount"`
+	PaymentMethod pgtype.Text        `db:"payment_method" json:"payment_method"`
+	PaymentDate   pgtype.Timestamptz `db:"payment_date" json:"payment_date"`
+	Notes         pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
 }

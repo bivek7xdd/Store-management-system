@@ -233,3 +233,73 @@ GROUP BY
     EXTRACT(ISODOW FROM sale_date AT TIME ZONE 'Asia/Kathmandu'), 
     EXTRACT(HOUR FROM sale_date AT TIME ZONE 'Asia/Kathmandu')
 ORDER BY day_of_week, hour_of_day;
+
+-- name: GetCashFlowDaily :many
+WITH sales_inflow AS (
+    SELECT 
+        DATE(s.sale_date)::VARCHAR as date,
+        COALESCE(SUM(s.total_amount), 0)::DECIMAL(12,2) as amount
+    FROM sales s
+    WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3
+    GROUP BY DATE(s.sale_date)
+),
+expense_outflow AS (
+    SELECT 
+        DATE(e.expense_date)::VARCHAR as date,
+        COALESCE(SUM(e.amount), 0)::DECIMAL(12,2) as amount
+    FROM expenses e
+    WHERE e.store_id = $1 AND e.expense_date BETWEEN $2 AND $3
+    GROUP BY DATE(e.expense_date)
+),
+refund_outflow AS (
+    SELECT 
+        DATE(r.created_at)::VARCHAR as date,
+        COALESCE(SUM(r.refund_amount), 0)::DECIMAL(12,2) as amount
+    FROM returns r
+    WHERE r.store_id = $1 AND r.created_at BETWEEN $2 AND $3
+    GROUP BY DATE(r.created_at)
+),
+supplier_payment_outflow AS (
+    SELECT 
+        DATE(sp.payment_date)::VARCHAR as date,
+        COALESCE(SUM(sp.amount), 0)::DECIMAL(12,2) as amount
+    FROM supplier_payments sp
+    WHERE sp.store_id = $1 AND sp.payment_date BETWEEN $2 AND $3
+    GROUP BY DATE(sp.payment_date)
+)
+SELECT 
+    COALESCE(si.date, eo.date, ro.date, spo.date) as date,
+    COALESCE(si.amount, 0) as sales_inflow,
+    COALESCE(eo.amount, 0) as expense_outflow,
+    COALESCE(ro.amount, 0) as refund_outflow,
+    COALESCE(spo.amount, 0) as supplier_payment_outflow,
+    (COALESCE(si.amount, 0) - COALESCE(eo.amount, 0) - COALESCE(ro.amount, 0) - COALESCE(spo.amount, 0))::DECIMAL(12,2) as net_flow
+FROM sales_inflow si
+FULL OUTER JOIN expense_outflow eo ON si.date = eo.date
+FULL OUTER JOIN refund_outflow ro ON COALESCE(si.date, eo.date) = ro.date
+FULL OUTER JOIN supplier_payment_outflow spo ON COALESCE(si.date, eo.date, ro.date) = spo.date
+ORDER BY COALESCE(si.date, eo.date, ro.date, spo.date);
+
+-- name: GetBalanceSheetAssets :one
+SELECT 
+    (SELECT COALESCE(SUM(d.amount_owed - d.amount_paid), 0)::DECIMAL(12,2) FROM debts d WHERE d.store_id = $1 AND d.amount_owed > d.amount_paid) as accounts_receivable,
+    (SELECT COALESCE(SUM(p.stock_quantity * p.cost_price), 0)::DECIMAL(12,2) FROM products p WHERE p.store_id = $1 AND p.status = 'active') as inventory_value;
+
+-- name: GetBalanceSheetLiabilities :one
+SELECT 
+    COALESCE(SUM(amount_owed - amount_paid), 0)::DECIMAL(12,2) as accounts_payable
+FROM supplier_payables sp
+WHERE sp.store_id = $1 AND sp.status != 'paid';
+
+-- name: GetNetProfit :one
+SELECT 
+    COALESCE(SUM(si.total_price), 0)::DECIMAL(12,2) as total_revenue,
+    COALESCE(SUM(si.quantity * p.cost_price), 0)::DECIMAL(12,2) as total_cogs,
+    COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.store_id = $1 AND e.expense_date BETWEEN $2 AND $3), 0)::DECIMAL(12,2) as total_expenses,
+    COALESCE((SELECT SUM(refund_amount) FROM returns r WHERE r.store_id = $1 AND r.created_at BETWEEN $2 AND $3), 0)::DECIMAL(12,2) as total_refunds,
+    COALESCE((SELECT SUM(amount_owed - amount_paid) FROM supplier_payables sp WHERE sp.store_id = $1 AND sp.status != 'paid'), 0)::DECIMAL(12,2) as accounts_payable,
+    (COALESCE(SUM(si.total_price), 0) - COALESCE(SUM(si.quantity * p.cost_price), 0) - COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.store_id = $1 AND e.expense_date BETWEEN $2 AND $3), 0) - COALESCE((SELECT SUM(refund_amount) FROM returns r WHERE r.store_id = $1 AND r.created_at BETWEEN $2 AND $3), 0))::DECIMAL(12,2) as net_profit
+FROM sale_items si
+JOIN products p ON si.product_id = p.id
+JOIN sales s ON si.sale_id = s.id
+WHERE s.store_id = $1 AND s.sale_date BETWEEN $2 AND $3;

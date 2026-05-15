@@ -130,6 +130,10 @@ func main() {
 		reportRoutes.GET("/stats", handlers.GetReportStats)
 		reportRoutes.GET("/export/csv", handlers.ExportSalesReportCSV)
 		reportRoutes.GET("/export/pdf", handlers.ExportSalesReportPDF)
+		reportRoutes.GET("/cashflow", handlers.GetCashFlow)
+		reportRoutes.GET("/balance-sheet/assets", handlers.GetBalanceSheetAssets)
+		reportRoutes.GET("/balance-sheet/liabilities", handlers.GetBalanceSheetLiabilities)
+		reportRoutes.GET("/net-profit", handlers.GetNetProfit)
 	}
 
 	// Notification routes
@@ -167,6 +171,31 @@ func main() {
 		returnsRoutes.POST("/sync", handlers.SyncReturns)
 		returnsRoutes.GET("", handlers.ListReturns)
 		returnsRoutes.GET("/:id", handlers.GetReturnDetails)
+	}
+
+	// Expense routes
+	expenseRoutes := router.Group("/api/expenses")
+	expenseRoutes.Use(utils.JWTMiddleware())
+	{
+		expenseRoutes.POST("", handlers.CreateExpense)
+		expenseRoutes.GET("", handlers.ListExpenses)
+		expenseRoutes.GET("/summary", handlers.GetExpenseSummary)
+		expenseRoutes.GET("/:id", handlers.GetExpense)
+		expenseRoutes.PUT("/:id", handlers.UpdateExpense)
+		expenseRoutes.DELETE("/:id", handlers.DeleteExpense)
+	}
+
+	// Supplier payables routes
+	payableRoutes := router.Group("/api/supplier-payables")
+	payableRoutes.Use(utils.JWTMiddleware())
+	{
+		payableRoutes.POST("", handlers.CreateSupplierPayable)
+		payableRoutes.GET("", handlers.ListSupplierPayables)
+		payableRoutes.GET("/summary", handlers.GetSupplierPayableSummary)
+		payableRoutes.GET("/:id", handlers.GetSupplierPayable)
+		payableRoutes.PUT("/:id", handlers.UpdateSupplierPayable)
+		payableRoutes.DELETE("/:id", handlers.DeleteSupplierPayable)
+		payableRoutes.POST("/:id/payment", handlers.RecordSupplierPayment)
 	}
 	
 	PORT := os.Getenv("PORT")

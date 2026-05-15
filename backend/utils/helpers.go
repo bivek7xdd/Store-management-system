@@ -71,3 +71,26 @@ func RandomBarcode() string {
 	}
 	return string(digits)
 }
+
+// GetDateRange returns start and end dates for a given range type
+func GetDateRange(rangeType string) (time.Time, time.Time) {
+	now := time.Now()
+	endDate := now
+	var startDate time.Time
+
+	switch rangeType {
+	case "today":
+		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	case "week":
+		weekday := int(now.Weekday())
+		startDate = time.Date(now.Year(), now.Month(), now.Day()-weekday, 0, 0, 0, 0, now.Location())
+	case "month":
+		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	case "year":
+		startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+	default:
+		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	}
+
+	return startDate, endDate
+}

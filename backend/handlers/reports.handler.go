@@ -642,3 +642,85 @@ func ExportSalesReportPDF(c *gin.Context) {
 	c.Header("Content-Type", "application/pdf")
 	c.Data(http.StatusOK, "application/pdf", document.GetBytes())
 }
+
+func GetCashFlow(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+	rangeType := c.DefaultQuery("range", "month")
+
+	startDate, endDate := utils.GetDateRange(rangeType)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	cashFlow, err := utils.Queries.GetCashFlowDaily(ctx, db.GetCashFlowDailyParams{
+		StoreID:    storeID,
+		SaleDate:   pgtype.Timestamptz{Time: startDate, Valid: true},
+		SaleDate_2: pgtype.Timestamptz{Time: endDate, Valid: true},
+	})
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch cash flow", err)
+		return
+	}
+
+	if cashFlow == nil {
+		cashFlow = []db.GetCashFlowDailyRow{}
+	}
+
+	utils.SuccessResponse(c, "Cash flow fetched successfully", cashFlow)
+}
+
+func GetBalanceSheetAssets(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	assets, err := utils.Queries.GetBalanceSheetAssets(ctx, storeID)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch assets", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Assets fetched successfully", assets)
+}
+
+func GetBalanceSheetLiabilities(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	liabilities, err := utils.Queries.GetBalanceSheetLiabilities(ctx, storeID)
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch liabilities", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Liabilities fetched successfully", liabilities)
+}
+
+func GetNetProfit(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+	rangeType := c.DefaultQuery("range", "month")
+
+	startDate, endDate := utils.GetDateRange(rangeType)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	profit, err := utils.Queries.GetNetProfit(ctx, db.GetNetProfitParams{
+		StoreID:       storeID,
+		ExpenseDate:   pgtype.Timestamptz{Time: startDate, Valid: true},
+		ExpenseDate_2: pgtype.Timestamptz{Time: endDate, Valid: true},
+	})
+
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch net profit", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Net profit fetched successfully", profit)
+}

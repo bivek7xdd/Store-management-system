@@ -1,4 +1,4 @@
-h1:+l5jG1bX32JStN971+kSkq9nYpAzz+f3lNN3pOcnurA=
+h1:aKfGxpldfLN7ISea5FHKvjattPa+5FmZy8ortkLhgFM=
 20260412042618_init_schema.sql h1:20D0suekCKCFwTIu2Wsembx/0KBcUEo8vkPwHI6s7Lc=
 20260420015519_add_payments_and_loyalty.sql h1:1DbuxUz4UzRIaPKeST6Snu+NQMG22FuLmxCDjMmPauI=
 20260420015912.sql h1:Hjk4ba8rqA0uYDfhI8b54TkcgyDBuYgnUKqOWX1sZok=
@@ -6,3 +6,7 @@ h1:+l5jG1bX32JStN971+kSkq9nYpAzz+f3lNN3pOcnurA=
 20260501082438_setting.sql h1:kTa6Vk8tSt/POhb7cB+QmGZgsWkDzsHUuR0ooOrw+fI=
 20260501082742.sql h1:4TM+n5GvdxZ/vbH0UmSGXzyrGzQ0t4H5/hsaAAl47xQ=
 20260506041500_product_returns.sql h1:6+m8hhAL8rUjzvQ8p8EqiJ4DnHP3U4zBW17ktuF+jH4=
+20260515000001_expenses.sql h1:dFfWTmGGb4ymFCSyIw3QADYGufhI44lB86mVdUmx+oE=
+20260515000002_supplier_bank_details.sql h1:rChCu2VI3BDYC7HFGRhbSNl2vc4v6xbpRsOQh2A8XbA=
+20260515000003_supplier_payables.sql h1:Yoe9cKxXbu3vTrT/Gj5MJnAr9GmLLzXTShxQeRafDUA=
+20260515000004_supplier_payments.sql h1:CTGlgHN2NUMYI2auGgcUDUC7GFjr4qhhwrbw7EyHSrQ=

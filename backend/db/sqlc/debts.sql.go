@@ -81,10 +81,6 @@ func (q *Queries) DeleteDebt(ctx context.Context, arg DeleteDebtParams) error {
 }
 
 const getDebt = `-- name: GetDebt :one
-/*markdown
-This is test so dont mind
-*/
-
 SELECT 
     d.id, d.store_id, d.customer_id, d.sale_id, d.amount_owed, d.amount_paid, d.due_date, d.status, d.notes, d.created_at, d.updated_at,
     c.name as customer_name,

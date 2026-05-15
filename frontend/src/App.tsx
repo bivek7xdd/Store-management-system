@@ -34,6 +34,10 @@ import LandingPage from "./pages/LandingPage";
 import Settings from "./pages/Settings";
 import DevOfflineHandler from "./components/DevOfflineHandler";
 import { Agentation } from "agentation";
+import Expenses from "./pages/Expenses";
+import SupplierPayables from "./pages/SupplierPayables";
+import CashFlow from "./pages/CashFlow";
+import BalanceSheet from "./pages/BalanceSheet";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -212,6 +216,35 @@ const App = () => {
                         <ProtectedRoute>
                           <Layout>
                             <Settings />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/finance/expenses" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <Expenses />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/finance/payables" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <SupplierPayables />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/finance/cashflow" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <CashFlow />
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/finance/balance-sheet" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <BalanceSheet />
                           </Layout>
                         </ProtectedRoute>
                       } />

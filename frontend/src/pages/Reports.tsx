@@ -52,10 +52,14 @@ import {
   Flame,
   Brain,
   Info,
+  Wallet,
+  TrendingDown,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
 import { getReportStats } from "@/services/reportService";
+import { getExpenseSummary, getExpenses, EXPENSE_CATEGORIES } from "@/services/expenseService";
+import { getSupplierPayableSummary, getSupplierPayables } from "@/services/supplierPayableService";
 import type { Insight, ReportStats } from "@/services/reportService";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -630,6 +634,16 @@ export default function Reports() {
     queryFn: () => getReportStats(dateRange),
   });
 
+  const { data: expenseSummary } = useQuery({
+    queryKey: ["expenseSummary", dateRange],
+    queryFn: () => getExpenseSummary(dateRange),
+  });
+
+  const { data: payableSummary } = useQuery({
+    queryKey: ["payableSummary"],
+    queryFn: getSupplierPayableSummary,
+  });
+
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-[#DA291C] opacity-50" />
@@ -712,6 +726,7 @@ export default function Reports() {
           <TabsTrigger value="sales" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Sales</TabsTrigger>
           <TabsTrigger value="inventory" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Inventory</TabsTrigger>
           <TabsTrigger value="debtors" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Debtors</TabsTrigger>
+          <TabsTrigger value="finance" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Finance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales" className="space-y-4">
@@ -816,6 +831,137 @@ export default function Reports() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="finance" className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Expense Breakdown */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+              <div className="px-5 py-4 border-b border-[#1A1A1A] flex items-center gap-3">
+                <div className="h-7 w-7 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+                  <TrendingDown className="h-4 w-4 text-[#DA291C]" />
+                </div>
+                <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Expenses by Category</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {!expenseSummary?.by_category?.length ? (
+                  <p className="text-[13px] text-[#555555] text-center py-4">No expenses recorded for this period.</p>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                      <span className="text-[12px] text-[#8F8F8F]">Total Expenses</span>
+                      <span className="text-[14px] font-medium text-white">रू {(expenseSummary.summary?.total_amount ?? 0).toLocaleString()}</span>
+                    </div>
+                    {expenseSummary.by_category.slice(0, 8).map((cat: any) => {
+                      const maxTotal = Math.max(...expenseSummary.by_category.map((c: any) => c.total), 1);
+                      const pct = Math.round((cat.total / maxTotal) * 100);
+                      return (
+                        <div key={cat.category} className="space-y-1">
+                          <div className="flex justify-between text-[12px]">
+                            <span className="text-[#CCCCCC] capitalize">{cat.category}</span>
+                            <span className="text-[#8F8F8F]">रू {cat.total.toLocaleString()} ({cat.count})</span>
+                          </div>
+                          <div className="h-1.5 bg-[#1A1A1A] rounded-[2px] overflow-hidden">
+                            <div className="h-full rounded-[2px] bg-[#DA291C] transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Supplier Payables */}
+            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+              <div className="px-5 py-4 border-b border-[#1A1A1A] flex items-center gap-3">
+                <div className="h-7 w-7 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
+                  <Wallet className="h-4 w-4 text-amber-400" />
+                </div>
+                <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Supplier Payables</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {!payableSummary?.summary ? (
+                  <p className="text-[13px] text-[#555555] text-center py-4">No payables recorded.</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                        <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Total Outstanding</p>
+                        <p className="text-[16px] font-medium text-amber-400 mt-1">रू {(payableSummary.summary.total_outstanding ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                        <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Overdue</p>
+                        <p className="text-[16px] font-medium text-[#DA291C] mt-1">रू {(payableSummary.summary.total_overdue ?? 0).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    {payableSummary.overdue?.slice(0, 5).map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                        <div>
+                          <p className="text-[12px] text-white">{item.supplier_name}</p>
+                          <p className="text-[10px] text-[#555555]">Due: {new Date(item.due_date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[12px] font-medium text-amber-400">रू {(Number(item.amount_owed) - Number(item.amount_paid)).toLocaleString()}</p>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] border border-[#DA291C]/30 uppercase">{item.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Net Profit Summary */}
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
+            <div className="px-5 py-4 border-b border-[#1A1A1A] flex items-center gap-3">
+              <div className="h-7 w-7 rounded-[2px] bg-emerald-900/30 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-emerald-400" />
+              </div>
+              <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Net Profit Summary</span>
+            </div>
+            <div className="p-5">
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="p-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Gross Revenue</p>
+                  <p className="text-[18px] font-medium text-white mt-2">रू {(stats?.profit?.total_revenue ?? 0).toLocaleString()}</p>
+                </div>
+                <div className="p-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Cost of Goods</p>
+                  <p className="text-[18px] font-medium text-[#DA291C] mt-2">रू {(stats?.profit?.total_cost ?? 0).toLocaleString()}</p>
+                </div>
+                <div className="p-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
+                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Operating Expenses</p>
+                  <p className="text-[18px] font-medium text-[#DA291C] mt-2">रू {(expenseSummary?.summary?.total_amount ?? 0).toLocaleString()}</p>
+                </div>
+                <div className="p-4 bg-[#0A0A0A] border border-emerald-800/30 rounded-[2px]">
+                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Net Profit</p>
+                  <p className="text-[18px] font-medium text-emerald-400 mt-2">
+                    रू {((stats?.profit?.gross_profit ?? 0) - (expenseSummary?.summary?.total_amount ?? 0)).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Daily Expense Trend */}
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#1A1A1A]">
+              <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Daily Expense Trend</span>
+            </div>
+            <div className="p-5 h-64">
+              <ResponsiveContainer>
+                <BarChart data={expenseSummary?.daily ?? []}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
+                  <XAxis dataKey="expense_date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#555555' }} tickFormatter={(v) => new Date(v).toLocaleDateString([], { day: 'numeric', month: 'short' })} />
+                  <YAxis hide />
+                  <RechartsTooltip contentStyle={{ borderRadius: '2px', border: '1px solid #303030', backgroundColor: '#111111', color: '#CCCCCC' }} />
+                  <Bar dataKey="daily_total" fill="#DA291C" radius={[2, 2, 0, 0]} opacity={0.6} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </TabsContent>
