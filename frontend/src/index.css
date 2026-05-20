@@ -8,54 +8,54 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
-    --primary: 183 70% 42%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 15% 92%;
-    --secondary-foreground: 215 25% 15%;
-    --muted: 210 15% 95%;
-    --muted-foreground: 215 15% 45%;
-    --accent: 183 70% 42%;
-    --accent-foreground: 0 0% 100%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 16 100% 50%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 16 100% 50%;
+    --accent-foreground: 0 0% 4%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 98%;
     --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 183 70% 42%;
-    --radius: 0.75rem;
-    --hero-subtitle: 215 15% 45%;
+    --warning-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
+    --ring: 16 100% 50%;
+    --radius: 0px;
+    --hero-subtitle: 0 0% 45%;
   }
 
   .dark, .dark-landing {
-    --background: 222 47% 3%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 5%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 4%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 183 70% 50%;
-    --primary-foreground: 222 47% 3%;
-    --secondary: 217 32% 10%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 32% 12%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 183 70% 50%;
-    --accent-foreground: 210 40% 98%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 16 100% 50%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 16 100% 50%;
+    --accent-foreground: 0 0% 4%;
     --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 32% 15%;
-    --input: 217 32% 15%;
-    --ring: 183 70% 50%;
-    --hero-subtitle: 215 20% 75%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
+    --ring: 16 100% 50%;
+    --hero-subtitle: 0 0% 45%;
   }
 }
 
@@ -70,20 +70,16 @@ All colors MUST be HSL.
   button, 
   a.button-like,
   [role="button"] {
-    @apply transition-all duration-300 ease-premium active:scale-[0.98];
+    @apply transition-all duration-150 ease-bold active:translate-y-px;
   }
 
   /* High quality focus rings */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
   }
 }
 
 @layer utilities {
-  .liquid-glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)];
-  }
-  
   .dark-landing {
     color-scheme: dark;
   }

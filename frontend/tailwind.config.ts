@@ -64,7 +64,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Karla', 'ui-sans-serif', 'system-ui', 'sans-serif', '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"'],
+        sans: ['"Inter Tight"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -99,8 +101,7 @@ export default {
       },
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "out-quart": "cubic-bezier(0.25, 1, 0.5, 1)",
-        "premium": "cubic-bezier(0.21, 0.47, 0.32, 0.98)",
+        "bold": "cubic-bezier(0.25, 0, 0, 1)",
       },
     },
   },
