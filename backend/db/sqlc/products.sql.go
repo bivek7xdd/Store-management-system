@@ -142,11 +142,16 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 const deleteProduct = `-- name: DeleteProduct :exec
 UPDATE products
 SET status = 'discontinued'
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteProduct, id)
+type DeleteProductParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) error {
+	_, err := q.db.Exec(ctx, deleteProduct, arg.ID, arg.StoreID)
 	return err
 }
 
@@ -242,11 +247,16 @@ func (q *Queries) GetLowStockProducts(ctx context.Context, storeID pgtype.UUID) 
 
 const getProduct = `-- name: GetProduct :one
 SELECT id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at FROM products
-WHERE id = $1 LIMIT 1
+WHERE id = $1 AND store_id = $2 LIMIT 1
 `
 
-func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, error) {
-	row := q.db.QueryRow(ctx, getProduct, id)
+type GetProductParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getProduct, arg.ID, arg.StoreID)
 	var i Product
 	err := row.Scan(
 		&i.ID,
@@ -633,7 +643,7 @@ SET
     damaged_quantity = COALESCE($15, damaged_quantity),
     warranty_days = COALESCE($16, warranty_days),
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND store_id = $17
 RETURNING id, name, barcode, price, cost_price, market_price, stock_quantity, low_stock_threshold, damaged_quantity, warranty_days, expires_at, status, category_id, supplier_id, store_id, image_url, is_tracked, created_at, updated_at
 `
 
@@ -654,6 +664,7 @@ type UpdateProductParams struct {
 	IsTracked         pgtype.Bool        `db:"is_tracked" json:"is_tracked"`
 	DamagedQuantity   int32              `db:"damaged_quantity" json:"damaged_quantity"`
 	WarrantyDays      pgtype.Int4        `db:"warranty_days" json:"warranty_days"`
+	StoreID           pgtype.UUID        `db:"store_id" json:"store_id"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -674,6 +685,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.IsTracked,
 		arg.DamagedQuantity,
 		arg.WarrantyDays,
+		arg.StoreID,
 	)
 	var i Product
 	err := row.Scan(

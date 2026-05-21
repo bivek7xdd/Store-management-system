@@ -8,6 +8,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Categories from "./pages/Categories";
@@ -29,7 +30,6 @@ import SupplierDetails from "./pages/SupplierDetails";
 import MarketDiscovery from "./pages/MarketDiscovery";
 import Customers from "./pages/Customers";
 
-import React from "react";
 import LandingPage from "./pages/LandingPage";
 import Settings from "./pages/Settings";
 import DevOfflineHandler from "./components/DevOfflineHandler";
@@ -38,51 +38,6 @@ import Expenses from "./pages/Expenses";
 import SupplierPayables from "./pages/SupplierPayables";
 import CashFlow from "./pages/CashFlow";
 import BalanceSheet from "./pages/BalanceSheet";
-
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center p-8 max-w-md mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-              Something went wrong
-            </h1>
-            <p className="text-gray-600 mb-4">
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Reload App
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-
 
 export const queryClient = new QueryClient();
 
@@ -116,98 +71,98 @@ const App = () => {
                       <Route path="/dashboard" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Dashboard />
+                            <ErrorBoundary><Dashboard /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/inventory" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Inventory />
+                            <ErrorBoundary><Inventory /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/inventory/categories" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Categories />
+                            <ErrorBoundary><Categories /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/inventory/suppliers" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Suppliers />
+                            <ErrorBoundary><Suppliers /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/inventory/category/:id" element={
                         <ProtectedRoute>
                           <Layout>
-                            <CategoryDetails />
+                            <ErrorBoundary><CategoryDetails /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/inventory/supplier/:id" element={
                         <ProtectedRoute>
                           <Layout>
-                            <SupplierDetails />
+                            <ErrorBoundary><SupplierDetails /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/sales" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Sales />
+                            <ErrorBoundary><Sales /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/sales/history" element={
                         <ProtectedRoute>
                           <Layout>
-                            <SalesHistory />
+                            <ErrorBoundary><SalesHistory /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/sales/returns" element={
                         <ProtectedRoute>
                           <Layout>
-                            <ReturnsHistory />
+                            <ErrorBoundary><ReturnsHistory /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/debtors" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Debtors />
+                            <ErrorBoundary><Debtors /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/customers" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Customers />
+                            <ErrorBoundary><Customers /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/reports" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Reports />
+                            <ErrorBoundary><Reports /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/market" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Market />
+                            <ErrorBoundary><Market /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/market/discovery" element={
                         <ProtectedRoute>
                           <Layout>
-                            <MarketDiscovery />
+                            <ErrorBoundary><MarketDiscovery /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
@@ -215,7 +170,7 @@ const App = () => {
                       <Route path="/settings" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Settings />
+                            <ErrorBoundary><Settings /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
@@ -223,28 +178,28 @@ const App = () => {
                       <Route path="/finance/expenses" element={
                         <ProtectedRoute>
                           <Layout>
-                            <Expenses />
+                            <ErrorBoundary><Expenses /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/finance/payables" element={
                         <ProtectedRoute>
                           <Layout>
-                            <SupplierPayables />
+                            <ErrorBoundary><SupplierPayables /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/finance/cashflow" element={
                         <ProtectedRoute>
                           <Layout>
-                            <CashFlow />
+                            <ErrorBoundary><CashFlow /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
                       <Route path="/finance/balance-sheet" element={
                         <ProtectedRoute>
                           <Layout>
-                            <BalanceSheet />
+                            <ErrorBoundary><BalanceSheet /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />

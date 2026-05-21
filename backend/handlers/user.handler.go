@@ -191,7 +191,14 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Login successful", gin.H{"userData": user, "newToken": token})
+	utils.SuccessResponse(c, "Login successful", gin.H{
+		"userData": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"phone": user.Phone,
+		},
+		"newToken": token})
 }
 
 type StoreInfoParams struct {
@@ -483,7 +490,7 @@ func ResetPasswordHandler(c *gin.Context) {
 
 /*
 * * * ---------------------------------------------------- Handlers for Account Management (Settings) * * * ----------------------------------------
-*/
+ */
 
 type UpdateUserParams struct {
 	Name           string `json:"name"`
@@ -586,9 +593,9 @@ func UpdatePasswordHandler(c *gin.Context) {
 }
 
 type UpdateStoreParams struct {
-	Name                      string  `json:"name"`
-	Address                   string  `json:"address"`
-	CurrencyCode              string  `json:"currency_code"`
+	Name                      string   `json:"name"`
+	Address                   string   `json:"address"`
+	CurrencyCode              string   `json:"currency_code"`
 	LoyaltyProgressTarget     *int32   `json:"loyalty_progress_target"`
 	LoyaltyDiscountPercentage *float64 `json:"loyalty_discount_percentage"`
 }

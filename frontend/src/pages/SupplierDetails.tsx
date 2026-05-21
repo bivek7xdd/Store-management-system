@@ -42,9 +42,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import api from "@/services/api";
 
 // Helper to extract numeric values from pgtype
-const getNumericValue = (value: any): number => {
+const getNumericValue = (value: number | { Int64?: number; Int32?: number; String?: string }): number => {
     if (typeof value === 'number') return value;
     if (value && typeof value === 'object') {
         if ('Int64' in value) return value.Int64 || 0;
@@ -61,7 +62,7 @@ export default function SupplierDetails() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-    const [selectedPayable, setSelectedPayable] = useState<any>(null);
+    const [selectedPayable, setSelectedPayable] = useState<SupplierPayable | null>(null);
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [paymentNotes, setPaymentNotes] = useState("");
@@ -92,8 +93,8 @@ export default function SupplierDetails() {
     const { data: allPayables } = useQuery({
         queryKey: ["supplierPayables"],
         queryFn: () => {
-            const api = require("@/services/api").default;
-            return api.get("/supplier-payables").then((r: any) => r.data.data);
+                return api.get("/supplier-payables").then((r) => 
+                    r.data.data as SupplierPayable[]);
         },
     });
 
@@ -291,7 +292,7 @@ export default function SupplierDetails() {
                     </div>
 
                     {/* Bank / Payment Details */}
-                    {((supplier as any)?.bank_name || (supplier as any)?.account_number || (supplier as any)?.esewa_id || (supplier as any)?.khalti_id) && (
+                    {((supplier)?.bank_name || (supplier)?.account_number || (supplier)?.esewa_id || (supplier)?.khalti_id) && (
                         <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden">
                             <div className="p-5 border-b border-[#1A1A1A] flex items-center gap-3">
                                 <div className="h-7 w-7 bg-[#0A0A0A] border border-[#303030] rounded-[2px] flex items-center justify-center">
@@ -300,48 +301,48 @@ export default function SupplierDetails() {
                                 <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Payment Details</p>
                             </div>
                             <div className="p-6 space-y-5">
-                                {(supplier as any)?.bank_name && (
+                                {(supplier)?.bank_name && (
                                     <div>
                                         <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Bank</p>
-                                        <p className="text-[12px] text-white font-medium">{(supplier as any).bank_name}</p>
-                                        {(supplier as any)?.branch && <p className="text-[11px] text-[#888888] mt-0.5">{(supplier as any).branch}</p>}
+                                        <p className="text-[12px] text-white font-medium">{(supplier).bank_name}</p>
+                                        {(supplier)?.branch && <p className="text-[11px] text-[#888888] mt-0.5">{(supplier).branch}</p>}
                                     </div>
                                 )}
-                                {(supplier as any)?.account_name && (
+                                {(supplier)?.account_name && (
                                     <div>
                                         <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Account Name</p>
-                                        <p className="text-[12px] text-white font-medium">{(supplier as any).account_name}</p>
+                                        <p className="text-[12px] text-white font-medium">{(supplier).account_name}</p>
                                     </div>
                                 )}
-                                {(supplier as any)?.account_number && (
+                                {(supplier)?.account_number && (
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Account Number</p>
-                                            <p className="text-[12px] text-white font-mono font-medium">{(supplier as any).account_number}</p>
+                                            <p className="text-[12px] text-white font-mono font-medium">{(supplier).account_number}</p>
                                         </div>
-                                        <button onClick={() => { navigator.clipboard.writeText((supplier as any).account_number); toast.success("Copied"); }}
+                                        <button onClick={() => { navigator.clipboard.writeText((supplier).account_number); toast.success("Copied"); }}
                                             className="p-1.5 hover:bg-[#1A1A1A] rounded-[2px] text-[#555555] hover:text-white transition-colors">
                                             <Copy className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 )}
-                                {(supplier as any)?.swift_code && (
+                                {(supplier)?.swift_code && (
                                     <div>
                                         <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">SWIFT Code</p>
-                                        <p className="text-[12px] text-white font-mono font-medium">{(supplier as any).swift_code}</p>
+                                        <p className="text-[12px] text-white font-mono font-medium">{(supplier).swift_code}</p>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[#1A1A1A]">
-                                    {(supplier as any)?.esewa_id && (
+                                    {(supplier)?.esewa_id && (
                                         <div>
                                             <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">eSewa</p>
-                                            <p className="text-[12px] text-emerald-400 font-medium">{(supplier as any).esewa_id}</p>
+                                            <p className="text-[12px] text-emerald-400 font-medium">{(supplier).esewa_id}</p>
                                         </div>
                                     )}
-                                    {(supplier as any)?.khalti_id && (
+                                    {(supplier)?.khalti_id && (
                                         <div>
                                             <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Khalti</p>
-                                            <p className="text-[12px] text-purple-400 font-medium">{(supplier as any).khalti_id}</p>
+                                            <p className="text-[12px] text-purple-400 font-medium">{(supplier).khalti_id}</p>
                                         </div>
                                     )}
                                 </div>
@@ -553,7 +554,7 @@ export default function SupplierDetails() {
                         <DialogDescription className="text-[12px] text-[#888888]">
                             {selectedPayable && `Invoice: ${selectedPayable.invoice_number || 'N/A'} | Outstanding: रू ${(Number(selectedPayable.amount_owed) - Number(selectedPayable.amount_paid)).toLocaleString()}`}
                         </DialogDescription>
-                    </DialogHeader>
+                    </DialogHeader> 
                     <div className="space-y-4 py-4">
                         <div>
                             <label className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1.5 block">Amount (रू)</label>

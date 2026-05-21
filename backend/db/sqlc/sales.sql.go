@@ -155,12 +155,18 @@ func (q *Queries) GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, e
 }
 
 const getSaleItem = `-- name: GetSaleItem :one
-SELECT id, sale_id, product_id, variant_id, quantity, unit_price, total_price FROM sale_items
-WHERE id = $1 LIMIT 1
+SELECT si.id, si.sale_id, si.product_id, si.variant_id, si.quantity, si.unit_price, si.total_price FROM sale_items si
+JOIN sales s ON si.sale_id = s.id
+WHERE si.id = $1 AND s.store_id = $2 LIMIT 1
 `
 
-func (q *Queries) GetSaleItem(ctx context.Context, id pgtype.UUID) (SaleItem, error) {
-	row := q.db.QueryRow(ctx, getSaleItem, id)
+type GetSaleItemParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) GetSaleItem(ctx context.Context, arg GetSaleItemParams) (SaleItem, error) {
+	row := q.db.QueryRow(ctx, getSaleItem, arg.ID, arg.StoreID)
 	var i SaleItem
 	err := row.Scan(
 		&i.ID,
@@ -294,15 +300,16 @@ func (q *Queries) ListSales(ctx context.Context, storeID pgtype.UUID) ([]ListSal
 const updateSaleAmount = `-- name: UpdateSaleAmount :exec
 UPDATE sales
 SET total_amount = $1
-WHERE id = $2
+WHERE id = $2 AND store_id = $3
 `
 
 type UpdateSaleAmountParams struct {
 	TotalAmount pgtype.Numeric `db:"total_amount" json:"total_amount"`
 	ID          pgtype.UUID    `db:"id" json:"id"`
+	StoreID     pgtype.UUID    `db:"store_id" json:"store_id"`
 }
 
 func (q *Queries) UpdateSaleAmount(ctx context.Context, arg UpdateSaleAmountParams) error {
-	_, err := q.db.Exec(ctx, updateSaleAmount, arg.TotalAmount, arg.ID)
+	_, err := q.db.Exec(ctx, updateSaleAmount, arg.TotalAmount, arg.ID, arg.StoreID)
 	return err
 }

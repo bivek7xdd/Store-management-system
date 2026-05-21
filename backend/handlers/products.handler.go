@@ -310,6 +310,7 @@ func GetProducts(c *gin.Context) {
 
 func GetProduct(c *gin.Context) {
 	idParam := c.Param("id")
+	storeID := c.MustGet("store_id").(pgtype.UUID)
 
 	productUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -320,7 +321,10 @@ func GetProduct(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
 
-	product, err := utils.Queries.GetProduct(ctx, pgtype.UUID{Bytes: productUUID, Valid: true})
+	product, err := utils.Queries.GetProduct(ctx, db.GetProductParams{
+		ID:      pgtype.UUID{Bytes: productUUID, Valid: true},
+		StoreID: storeID,
+	})
 	if err != nil {
 		log.Printf("error getting product: %v", err)
 		utils.ErrorResponse(c, http.StatusNotFound, "Product not found", err)
@@ -359,6 +363,7 @@ type updateProductReq struct {
 
 func UpdateProduct(c *gin.Context) {
 	idParam := c.Param("id")
+	storeID := c.MustGet("store_id").(pgtype.UUID)
 
 	productUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -376,7 +381,10 @@ func UpdateProduct(c *gin.Context) {
 	defer cancel()
 
 	// Get existing product first
-	existingProduct, err := utils.Queries.GetProduct(ctx, pgtype.UUID{Bytes: productUUID, Valid: true})
+	existingProduct, err := utils.Queries.GetProduct(ctx, db.GetProductParams{
+		ID:      pgtype.UUID{Bytes: productUUID, Valid: true},
+		StoreID: storeID,
+	})
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusNotFound, "Product not found", err)
 		return
@@ -503,6 +511,9 @@ func UpdateProduct(c *gin.Context) {
 		SupplierID:        supplierID,
 		ImageUrl:          imageUrl,
 		IsTracked:         isTracked,
+		DamagedQuantity:   existingProduct.DamagedQuantity,
+		WarrantyDays:      existingProduct.WarrantyDays,
+		StoreID:           storeID,
 	}
 
 	if len(req.Variants) > 0 {
@@ -578,6 +589,7 @@ func UpdateProduct(c *gin.Context) {
 
 func DeleteProduct(c *gin.Context) {
 	idParam := c.Param("id")
+	storeID := c.MustGet("store_id").(pgtype.UUID)
 
 	productUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -588,7 +600,10 @@ func DeleteProduct(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 	defer cancel()
 
-	err = utils.Queries.DeleteProduct(ctx, pgtype.UUID{Bytes: productUUID, Valid: true})
+	err = utils.Queries.DeleteProduct(ctx, db.DeleteProductParams{
+		ID:      pgtype.UUID{Bytes: productUUID, Valid: true},
+		StoreID: storeID,
+	})
 	if err != nil {
 		log.Printf("error deleting product: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to delete product", err)

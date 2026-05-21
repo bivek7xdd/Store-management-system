@@ -12,16 +12,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+var cronTicker *time.Ticker
+
+func StopCronJobs() {
+	cronTicker.Stop()
+	log.Println("[Cron] Cron jobs stopped")
+}
+
 // StartCronJobs initializes and starts periodic background tasks
 func StartCronJobs() {
 	// Daily ticker for expiry detection and notifications
-	ticker := time.NewTicker(24 * time.Hour)
+	cronTicker = time.NewTicker(24 * time.Hour)
 
 	// Run immediately on start
 	go func() {
 		runExpiryCheck()
 		checkAndCreateNotifications()
-		for range ticker.C {
+		for range cronTicker.C {
 			runExpiryCheck()
 			checkAndCreateNotifications()
 		}

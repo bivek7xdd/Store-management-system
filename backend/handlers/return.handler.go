@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"strconv"
 	db "storemanagement/db/sqlc"
@@ -59,39 +58,44 @@ func CreateReturn(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	// Parse refund amount
 	refundAmount, err := utils.StringToNumeric(req.RefundAmount)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid refund amount", err)
 		return
 	}
 
-	// This should ideally be wrapped in a transaction, but we will use individual queries here for simplicity
-	ret, err := utils.Queries.CreateReturn(ctx, db.CreateReturnParams{
-		SaleID:       pgtype.UUID{Bytes: saleUUID, Valid: true},
-		StoreID:      storeID,
-		RefundAmount: refundAmount,
-		RefundMethod: req.RefundMethod,
-	})
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to create return", err)
-		return
-	}
-
-	for _, item := range req.Items {
+	txItems := make([]db.CreateReturnItemTxParams, len(req.Items))
+	for i, item := range req.Items {
 		saleItemUUID, _ := uuid.Parse(item.SaleItemID)
-		_, err = utils.Queries.CreateReturnItem(ctx, db.CreateReturnItemParams{
-			ReturnID:   ret.ID,
+		saleItem, err := utils.Queries.GetSaleItem(ctx, db.GetSaleItemParams{
+			ID:      pgtype.UUID{Bytes: saleItemUUID, Valid: true},
+			StoreID: storeID,
+		})
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch sale item", err)
+			return
+		}
+
+		txItems[i] = db.CreateReturnItemTxParams{
 			SaleItemID: pgtype.UUID{Bytes: saleItemUUID, Valid: true},
 			Quantity:   item.Quantity,
 			Reason:     item.Reason,
 			Condition:  item.Condition,
-		})
-
-		if err == nil {
-			// Adjust stock based on condition
-			handleStockAdjustment(ctx, storeID, saleItemUUID, item.Quantity, item.Condition)
+			ProductID:  saleItem.ProductID,
+			VariantID:  saleItem.VariantID,
 		}
+	}
+
+	ret, err := utils.Store.CreateReturnTx(ctx, db.CreateReturnTxParams{
+		SaleID:       pgtype.UUID{Bytes: saleUUID, Valid: true},
+		StoreID:      storeID,
+		RefundAmount: refundAmount,
+		RefundMethod: req.RefundMethod,
+		Items:        txItems,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to create return", err)
+		return
 	}
 
 	utils.SuccessResponse(c, "Return processed successfully", ret)
@@ -120,33 +124,49 @@ func SyncReturns(c *gin.Context) {
 
 		refundAmount, _ := utils.StringToNumeric(retReq.RefundAmount)
 
-		ret, err := utils.Queries.CreateReturn(ctx, db.CreateReturnParams{
+		txItems := make([]db.CreateReturnItemTxParams, len(retReq.Items))
+		var parseErr bool
+		for i, item := range retReq.Items {
+			saleItemUUID, pErr := uuid.Parse(item.SaleItemID)
+			if pErr != nil {
+				parseErr = true
+				break
+			}
+			saleItem, gErr := utils.Queries.GetSaleItem(ctx, db.GetSaleItemParams{
+				ID:      pgtype.UUID{Bytes: saleItemUUID, Valid: true},
+				StoreID: storeID,
+			})
+			if gErr != nil {
+				parseErr = true
+				break
+			}
+			txItems[i] = db.CreateReturnItemTxParams{
+				SaleItemID: pgtype.UUID{Bytes: saleItemUUID, Valid: true},
+				Quantity:   item.Quantity,
+				Reason:     item.Reason,
+				Condition:  item.Condition,
+				ProductID:  saleItem.ProductID,
+				VariantID:  saleItem.VariantID,
+			}
+		}
+		if parseErr {
+			failed = append(failed, map[string]interface{}{"offline_id": retReq.OfflineID, "error": "failed to fetch sale items"})
+			continue
+		}
+
+		_, err = utils.Store.CreateReturnTx(ctx, db.CreateReturnTxParams{
 			SaleID:       pgtype.UUID{Bytes: saleUUID, Valid: true},
 			StoreID:      storeID,
 			RefundAmount: refundAmount,
 			RefundMethod: retReq.RefundMethod,
+			Items:        txItems,
 		})
-		
+
 		if err != nil {
 			failed = append(failed, map[string]interface{}{"offline_id": retReq.OfflineID, "error": "failed to create return"})
 			continue
 		}
 
-		for _, item := range retReq.Items {
-			saleItemUUID, _ := uuid.Parse(item.SaleItemID)
-			_, err := utils.Queries.CreateReturnItem(ctx, db.CreateReturnItemParams{
-				ReturnID:   ret.ID,
-				SaleItemID: pgtype.UUID{Bytes: saleItemUUID, Valid: true},
-				Quantity:   item.Quantity,
-				Reason:     item.Reason,
-				Condition:  item.Condition,
-			})
-
-			if err == nil {
-				handleStockAdjustment(ctx, storeID, saleItemUUID, item.Quantity, item.Condition)
-			}
-		}
-		
 		synced = append(synced, retReq.OfflineID)
 	}
 
@@ -199,42 +219,4 @@ func GetReturnDetails(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, "Return details fetched successfully", items)
-}
-
-func handleStockAdjustment(ctx context.Context, storeID pgtype.UUID, saleItemID uuid.UUID, quantity int32, condition string) {
-	saleItem, err := utils.Queries.GetSaleItem(ctx, pgtype.UUID{Bytes: saleItemID, Valid: true})
-	if err != nil {
-		log.Printf("[Returns] Failed to fetch sale item %s: %v", saleItemID, err)
-		return
-	}
-
-	if condition == "damaged" || condition == "defective" {
-		// Increase damaged quantity
-		if saleItem.VariantID.Valid {
-			utils.Queries.AddDamagedVariantStock(ctx, db.AddDamagedVariantStockParams{
-				ID:           saleItem.VariantID,
-				DamagedStockLevel: quantity,
-			})
-		} else {
-			utils.Queries.AddDamagedProductStock(ctx, db.AddDamagedProductStockParams{
-				ID:              saleItem.ProductID,
-				DamagedQuantity: quantity,
-				StoreID:         storeID,
-			})
-		}
-	} else {
-		// Resellable: Increase normal stock level
-		if saleItem.VariantID.Valid {
-			utils.Queries.ReturnVariantStock(ctx, db.ReturnVariantStockParams{
-				ID:         saleItem.VariantID,
-				StockLevel: quantity,
-			})
-		} else {
-			utils.Queries.ReturnProductStock(ctx, db.ReturnProductStockParams{
-				ID:            saleItem.ProductID,
-				StockQuantity: quantity,
-				StoreID:       storeID,
-			})
-		}
-	}
 }

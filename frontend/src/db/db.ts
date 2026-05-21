@@ -6,6 +6,7 @@ import { Debt } from '../services/debts';
 
 
 export interface SaleItem {
+    id?: string;
     product_id: string;
     variant_id?: string;
     quantity: number;
@@ -22,6 +23,7 @@ export interface Sale {
     sales_type: 'cash' | 'credit' | 'online' | 'mixed';
     amount_paid?: number;
     total_amount: number;
+    total?: number;
     discount_applied: number;
     note?: string;
     sale_date: string;
@@ -31,6 +33,7 @@ export interface Sale {
     synced: number; // 0 = false, 1 = true
     customer_name?: string;
     customer_phone?: string;
+    is_paid?: boolean;
 }
 
 

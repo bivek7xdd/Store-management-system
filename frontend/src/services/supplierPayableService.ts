@@ -6,6 +6,7 @@ export interface SupplierPayable {
     supplier_id: string;
     supplier_name: string;
     supplier_phone: string;
+    invoice_number?: string;
     description: string;
     amount_owed: number;
     amount_paid: number;

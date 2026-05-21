@@ -22,7 +22,7 @@ INSERT INTO products (
 
 -- name: GetProduct :one
 SELECT * FROM products
-WHERE id = $1 LIMIT 1;
+WHERE id = $1 AND store_id = $2 LIMIT 1;
 
 -- name: ListProducts :many
 SELECT * FROM products
@@ -49,13 +49,13 @@ SET
     damaged_quantity = COALESCE($15, damaged_quantity),
     warranty_days = COALESCE($16, warranty_days),
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND store_id = $17
 RETURNING *;
 
 -- name: DeleteProduct :exec
 UPDATE products
 SET status = 'discontinued'
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- name: SearchProducts :many
 SELECT * FROM products

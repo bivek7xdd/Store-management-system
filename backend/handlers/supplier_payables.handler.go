@@ -32,6 +32,18 @@ func CreateSupplierPayable(c *gin.Context) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	_, err = utils.Queries.GetSupplier(ctx, db.GetSupplierParams{
+		ID:      supplierUUID,
+		StoreID: storeID,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "Supplier not found or does not belong to your store", err)
+		return
+	}
+
 	var dueDate pgtype.Timestamptz
 	if req.DueDate != "" {
 		t, err := time.Parse("2006-01-02", req.DueDate)
@@ -41,9 +53,6 @@ func CreateSupplierPayable(c *gin.Context) {
 		}
 		dueDate = pgtype.Timestamptz{Time: t, Valid: true}
 	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
 
 	payable, err := utils.Queries.CreateSupplierPayable(ctx, db.CreateSupplierPayableParams{
 		StoreID:     storeID,

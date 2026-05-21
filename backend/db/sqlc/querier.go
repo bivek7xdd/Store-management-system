@@ -39,13 +39,13 @@ type Querier interface {
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) error
 	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
 	DeleteOldNotifications(ctx context.Context, storeID pgtype.UUID) error
-	DeleteProduct(ctx context.Context, id pgtype.UUID) error
+	DeleteProduct(ctx context.Context, arg DeleteProductParams) error
 	DeleteProductVariant(ctx context.Context, id pgtype.UUID) error
-	DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error
+	DeleteStoreInfo(ctx context.Context, arg DeleteStoreInfoParams) error
 	DeleteStoreOwner(ctx context.Context, id pgtype.UUID) error
 	DeleteSupplier(ctx context.Context, arg DeleteSupplierParams) error
 	DeleteSupplierPayable(ctx context.Context, arg DeleteSupplierPayableParams) error
-	DeleteVariantsByProduct(ctx context.Context, productID pgtype.UUID) error
+	DeleteVariantsByProduct(ctx context.Context, arg DeleteVariantsByProductParams) error
 	DismissNotification(ctx context.Context, arg DismissNotificationParams) (Notification, error)
 	FlagExpiringProducts(ctx context.Context) error
 	GetAllStores(ctx context.Context) ([]StoreInfo, error)
@@ -79,16 +79,16 @@ type Querier interface {
 	GetOverduePayables(ctx context.Context, storeID pgtype.UUID) ([]GetOverduePayablesRow, error)
 	GetPOSCatalog(ctx context.Context, storeID pgtype.UUID) ([]GetPOSCatalogRow, error)
 	GetPaymentTotalsByStore(ctx context.Context, storeID pgtype.UUID) ([]GetPaymentTotalsByStoreRow, error)
-	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
+	GetProduct(ctx context.Context, arg GetProductParams) (Product, error)
 	GetProductPairFrequency(ctx context.Context, storeID pgtype.UUID) ([]GetProductPairFrequencyRow, error)
-	GetProductVariant(ctx context.Context, id pgtype.UUID) (ProductVariant, error)
+	GetProductVariant(ctx context.Context, arg GetProductVariantParams) (ProductVariant, error)
 	GetProductVelocity(ctx context.Context, storeID pgtype.UUID) ([]GetProductVelocityRow, error)
 	GetProfitStats(ctx context.Context, arg GetProfitStatsParams) (GetProfitStatsRow, error)
 	GetRecentSales(ctx context.Context, arg GetRecentSalesParams) ([]GetRecentSalesRow, error)
 	GetReturnItems(ctx context.Context, returnID pgtype.UUID) ([]GetReturnItemsRow, error)
 	GetRevenueByCategory(ctx context.Context, arg GetRevenueByCategoryParams) ([]GetRevenueByCategoryRow, error)
 	GetSale(ctx context.Context, arg GetSaleParams) (GetSaleRow, error)
-	GetSaleItem(ctx context.Context, id pgtype.UUID) (SaleItem, error)
+	GetSaleItem(ctx context.Context, arg GetSaleItemParams) (SaleItem, error)
 	GetSaleItems(ctx context.Context, saleID pgtype.UUID) ([]GetSaleItemsRow, error)
 	GetSalesByType(ctx context.Context, arg GetSalesByTypeParams) ([]GetSalesByTypeRow, error)
 	GetSalesForPeriod(ctx context.Context, arg GetSalesForPeriodParams) (pgtype.Numeric, error)

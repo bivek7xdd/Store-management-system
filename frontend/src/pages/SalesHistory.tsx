@@ -36,6 +36,12 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof B
   mixed: { label: "Mixed", color: "text-purple-400 border-purple-500/30 bg-purple-500/10", icon: ArrowUpRight },
 };
 
+const escapeHtml = (str: string): string => {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+};
+
 // ---------- Sale Row ----------
 const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,13 +83,13 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     <div class="row"><span>Date:</span><span>${formatDate(sale.sale_date)}</span></div>
     <div class="row"><span>Time:</span><span>${formatTime(sale.sale_date)}</span></div>
     <div class="row"><span>Type:</span><span>${sale.sales_type.toUpperCase()}</span></div>
-    ${sale.customer_name ? `<div class="row"><span>Customer:</span><span>${sale.customer_name}</span></div>` : ""}
+    ${sale.customer_name ? `<div class="row"><span>Customer:</span><span>${escapeHtml(sale.customer_name)}</span></div>` : ""}
     <div class="div"></div>
     <div class="row b"><span>ITEM</span><span>AMOUNT</span></div>
     <div class="div"></div>
     ${items.map(i => {
-      const variantSuffix = i.variant_attributes && Object.keys(i.variant_attributes).length > 0 ? ` (${Object.values(i.variant_attributes).join("/")})` : "";
-      return `<div style="margin:6px 0"><div>${i.product_name}${variantSuffix}</div>
+      const variantSuffix = i.variant_attributes && Object.keys(i.variant_attributes).length > 0 ? ` (${escapeHtml(Object.values(i.variant_attributes).join("/"))})` : "";
+      return `<div style="margin:6px 0"><div>${escapeHtml(i.product_name)}${variantSuffix}</div>
       <div class="row" style="padding-left:8px;color:#333"><span>${i.quantity} x Rs.${i.unit_price.toLocaleString()}</span><span>Rs.${i.total_price.toLocaleString()}</span></div></div>`;
     }).join("")}
     <div class="div"></div>
@@ -135,8 +141,8 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     <div class="meta-item"><div class="meta-label">Type</div><div class="meta-value">${sale.sales_type.toUpperCase()}</div></div>
     </div><table><thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead><tbody>
     ${items.map(i => {
-      const variantSuffix = i.variant_attributes && Object.keys(i.variant_attributes).length > 0 ? ` <span style="color:#6b7280;font-size:12px">(${Object.values(i.variant_attributes).join("/")})</span>` : "";
-      return `<tr><td><div style="font-weight:500">${i.product_name}${variantSuffix}</div><div style="color:#6b7280;font-size:13px">${i.quantity} × Rs.${i.unit_price.toLocaleString()}</div></td><td>Rs.${i.total_price.toLocaleString()}</td></tr>`;
+      const variantSuffix = i.variant_attributes && Object.keys(i.variant_attributes).length > 0 ? ` <span style="color:#6b7280;font-size:12px">(${escapeHtml(Object.values(i.variant_attributes).join("/"))})</span>` : "";
+      return `<tr><td><div style="font-weight:500">${escapeHtml(i.product_name)}${variantSuffix}</div><div style="color:#6b7280;font-size:13px">${i.quantity} × Rs.${i.unit_price.toLocaleString()}</div></td><td>Rs.${i.total_price.toLocaleString()}</td></tr>`;
     }).join("")}
     </tbody></table><div class="totals">
     <div class="t-row"><span>Subtotal</span><span>Rs.${((sale.total_amount || 0) + (sale.discount_applied || 0)).toLocaleString()}</span></div>
@@ -191,7 +197,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                   {formatDate(sale.sale_date)} · {formatTime(sale.sale_date)}
                 </span>
                 {sale.customer_phone && (
-                  <span className="flex items-center gap-1 hidden sm:flex">
+                  <span className="flex items-center gap-1  sm:flex">
                     <Phone className="h-3 w-3" />
                     {sale.customer_phone}
                   </span>
@@ -342,6 +348,9 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     </Collapsible>
   );
 };
+
+
+
 
 // ---------- Main Page ----------
 export default function SalesHistory() {

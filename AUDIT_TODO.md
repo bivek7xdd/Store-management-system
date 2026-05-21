@@ -6,16 +6,16 @@
 
 ## Critical (10 items)
 
-- [ ] C1: Add multi-tenant middleware to scope all queries to authenticated user's store
-- [ ] C2: Wrap return handler in a database transaction (return.handler.go:70-95)
-- [ ] C3: Remove password hash from login response (user.handler.go:194)
+- [x] C1: Add multi-tenant middleware to scope all queries to authenticated user's store
+- [x] C2: Wrap return handler in a database transaction (return.handler.go:70-95)
+- [x] C3: Remove password hash from login response (user.handler.go:194)
 - [ ] C4: Fix auth token in URL — use POST with Authorization header for exports (reportService.ts:134-142)
-- [ ] C5: Add ErrorBoundary wrapping all routes in App.tsx
-- [ ] C6: Sanitize print HTML in SalesHistory to prevent stored XSS (SalesHistory.tsx:67-157)
-- [ ] C7: Fix require() call in SupplierDetails — replace with ES module import (SupplierDetails.tsx:95-98)
-- [ ] C8: Add graceful shutdown to main.go with SIGTERM/SIGINT handling
+- [x] C5: Add ErrorBoundary wrapping all routes in App.tsx
+- [x] C6: Sanitize print HTML in SalesHistory to prevent stored XSS (SalesHistory.tsx:67-157)
+- [x] C7: Fix require() call in SupplierDetails — replace with ES module import (SupplierDetails.tsx:95-98)
+- [x] C8: Add graceful shutdown to main.go with SIGTERM/SIGINT handling
 - [ ] C9: Add sync mutex/lock to prevent concurrent sync (syncService.ts:659-676)
-- [ ] C10: Clear ALL IndexedDB tables on logout (AuthContext.tsx:114-119)
+- [x] C10: Clear ALL IndexedDB tables on logout (AuthContext.tsx:114-119)
 
 ## High (58 items)
 
@@ -90,7 +90,7 @@
 - [ ] H55: Add rate limiting to protected routes
 - [ ] H56: Fix CORS to use dynamic Vercel URLs instead of hardcoded
 - [ ] H57: Add HTTPS enforcement
-- [ ] H58: Remove fmt.Println("Hello World") from main.go:23
+- [x] H58: Remove fmt.Println("Hello World") from main.go:23
 
 ## Medium (64 items)
 
@@ -141,7 +141,7 @@
 - [ ] M59: Fix MarketDiscovery triggerSearch to use callable function instead of DOM query
 - [ ] M60: Add supplier_payment_outflow column to CashFlow table
 - [ ] M61: Add null check for product.status in CategoryDetails (CategoryDetails.tsx:227)
-- [ ] M62: Fix Supplier interface to include bank/payment fields instead of using as any
+- [x] M62: Fix Supplier interface to include bank/payment fields instead of using as any
 - [ ] M63: Dynamically import canvas-confetti in Sales.tsx
 - [ ] M64: Memoize Dashboard today date with useState initializer
 

@@ -22,6 +22,16 @@ func IsRedisAvailable() bool {
 	return RedisClient != nil
 }
 
+func Disconnect() {
+	if RedisClient != nil {
+		if err := RedisClient.Close(); err != nil {
+			log.Printf("[Redis] Error closing Redis client: %v", err)
+		} else {
+			log.Println("[Redis] Redis client disconnected successfully.")
+		}
+	}
+}
+
 // ConnectToRedis initialises the Redis client using environment variables.
 // Supports both plain ("host:port") and full URL ("redis[s]://..." / "rediss://...") formats
 // so it works with local Redis and Upstash out of the box.
@@ -130,4 +140,3 @@ func InvalidateNotificationCount(ctx context.Context, storeID pgtype.UUID) {
 	key := fmt.Sprintf("notif_unread:%s", storeID.String())
 	RedisClient.Del(ctx, key)
 }
-

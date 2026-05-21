@@ -59,3 +59,10 @@ func ConnectToDB() {
 	Queries = db.New(conn)
 	Store = db.NewStore(conn)
 }
+
+func CloseDB() {
+	if DBPool != nil {
+		DBPool.Close()
+		log.Println("Database connection pool closed.")
+	}
+}

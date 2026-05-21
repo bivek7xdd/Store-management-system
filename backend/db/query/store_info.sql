@@ -36,12 +36,12 @@ SET
   loyalty_progress_target = COALESCE(sqlc.narg('loyalty_progress_target'), loyalty_progress_target),
   loyalty_discount_percentage = COALESCE(sqlc.narg('loyalty_discount_percentage'), loyalty_discount_percentage),
   updated_at = CURRENT_TIMESTAMP
-WHERE id = sqlc.arg('id')
+WHERE id = sqlc.arg('id') AND owner_id = sqlc.arg('owner_id')
 RETURNING *;
 
 -- name: DeleteStoreInfo :exec
 DELETE FROM store_info
-WHERE id = $1;
+WHERE id = $1 AND owner_id = $2;
 
 -- name: GetStoreWithOwner :one
 SELECT 

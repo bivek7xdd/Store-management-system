@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
 	"storemanagement/handlers"
 	"storemanagement/redis"
 	"storemanagement/utils"
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -202,5 +206,36 @@ func main() {
 	if PORT == "" {
 		PORT = "8000"
 	}
-	router.Run(":" + PORT)
+
+	srv := &http.Server{
+		Addr:    ":" + PORT,
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("Server error: %v\n", err)
+			os.Exit(1)
+		}
+	}()
+
+	fmt.Printf("Server started on port %s\n", PORT)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	fmt.Println("\nShutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		fmt.Printf("Server forced to shutdown: %v\n", err)
+	}
+
+	utils.StopCronJobs()
+	redis.Disconnect()
+	utils.CloseDB()
+
+	fmt.Println("Server exited gracefully")
 }

@@ -250,7 +250,10 @@ func (store *Store) UpdateProductWithVariantsTx(ctx context.Context, arg UpdateP
 		}
 
 		// Delete existing variants
-		err = q.DeleteVariantsByProduct(ctx, product.ID)
+		err = q.DeleteVariantsByProduct(ctx, DeleteVariantsByProductParams{
+			ProductID: product.ID,
+			StoreID:   product.StoreID,
+		})
 		if err != nil {
 			return err
 		}
@@ -291,4 +294,87 @@ func (store *Store) UpdateProductWithVariantsTx(ctx context.Context, arg UpdateP
 	})
 
 	return product, variants, err
+}
+
+type CreateReturnItemTxParams struct {
+	SaleItemID pgtype.UUID
+	Quantity   int32
+	Reason     string
+	Condition  string
+	ProductID  pgtype.UUID
+	VariantID  pgtype.UUID
+}
+
+type CreateReturnTxParams struct {
+	SaleID       pgtype.UUID
+	StoreID      pgtype.UUID
+	RefundAmount pgtype.Numeric
+	RefundMethod string
+	Items        []CreateReturnItemTxParams
+}
+
+func (store *Store) CreateReturnTx(ctx context.Context, arg CreateReturnTxParams) (Return, error) {
+	var ret Return
+
+	err := store.ExecTx(ctx, func(q *Queries) error {
+		var err error
+
+		ret, err = q.CreateReturn(ctx, CreateReturnParams{
+			SaleID:       arg.SaleID,
+			StoreID:      arg.StoreID,
+			RefundAmount: arg.RefundAmount,
+			RefundMethod: arg.RefundMethod,
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, item := range arg.Items {
+			_, err = q.CreateReturnItem(ctx, CreateReturnItemParams{
+				ReturnID:   ret.ID,
+				SaleItemID: item.SaleItemID,
+				Quantity:   item.Quantity,
+				Reason:     item.Reason,
+				Condition:  item.Condition,
+			})
+			if err != nil {
+				return err
+			}
+
+			if item.Condition == "damaged" || item.Condition == "defective" {
+				if item.VariantID.Valid {
+					_, err = q.AddDamagedVariantStock(ctx, AddDamagedVariantStockParams{
+						ID:                item.VariantID,
+						DamagedStockLevel: item.Quantity,
+					})
+				} else {
+					_, err = q.AddDamagedProductStock(ctx, AddDamagedProductStockParams{
+						ID:              item.ProductID,
+						DamagedQuantity: item.Quantity,
+						StoreID:         arg.StoreID,
+					})
+				}
+			} else {
+				if item.VariantID.Valid {
+					_, err = q.ReturnVariantStock(ctx, ReturnVariantStockParams{
+						ID:         item.VariantID,
+						StockLevel: item.Quantity,
+					})
+				} else {
+					_, err = q.ReturnProductStock(ctx, ReturnProductStockParams{
+						ID:            item.ProductID,
+						StockQuantity: item.Quantity,
+						StoreID:       arg.StoreID,
+					})
+				}
+			}
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return ret, err
 }

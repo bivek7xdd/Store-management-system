@@ -59,11 +59,16 @@ func (q *Queries) CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams
 
 const deleteStoreInfo = `-- name: DeleteStoreInfo :exec
 DELETE FROM store_info
-WHERE id = $1
+WHERE id = $1 AND owner_id = $2
 `
 
-func (q *Queries) DeleteStoreInfo(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteStoreInfo, id)
+type DeleteStoreInfoParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	OwnerID pgtype.UUID `db:"owner_id" json:"owner_id"`
+}
+
+func (q *Queries) DeleteStoreInfo(ctx context.Context, arg DeleteStoreInfoParams) error {
+	_, err := q.db.Exec(ctx, deleteStoreInfo, arg.ID, arg.OwnerID)
 	return err
 }
 
@@ -237,7 +242,7 @@ SET
   loyalty_progress_target = COALESCE($4, loyalty_progress_target),
   loyalty_discount_percentage = COALESCE($5, loyalty_discount_percentage),
   updated_at = CURRENT_TIMESTAMP
-WHERE id = $6
+WHERE id = $6 AND owner_id = $7
 RETURNING id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at
 `
 
@@ -248,6 +253,7 @@ type UpdateStoreInfoParams struct {
 	LoyaltyProgressTarget     pgtype.Int4    `db:"loyalty_progress_target" json:"loyalty_progress_target"`
 	LoyaltyDiscountPercentage pgtype.Numeric `db:"loyalty_discount_percentage" json:"loyalty_discount_percentage"`
 	ID                        pgtype.UUID    `db:"id" json:"id"`
+	OwnerID                   pgtype.UUID    `db:"owner_id" json:"owner_id"`
 }
 
 func (q *Queries) UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams) (StoreInfo, error) {
@@ -258,6 +264,7 @@ func (q *Queries) UpdateStoreInfo(ctx context.Context, arg UpdateStoreInfoParams
 		arg.LoyaltyProgressTarget,
 		arg.LoyaltyDiscountPercentage,
 		arg.ID,
+		arg.OwnerID,
 	)
 	var i StoreInfo
 	err := row.Scan(

@@ -13,8 +13,9 @@ INSERT INTO product_variants (
 ) RETURNING *;
 
 -- name: GetProductVariant :one
-SELECT * FROM product_variants
-WHERE id = $1 LIMIT 1;
+SELECT pv.* FROM product_variants pv
+JOIN products p ON pv.product_id = p.id
+WHERE pv.id = $1 AND p.store_id = $2 LIMIT 1;
 
 -- name: GetVariantBySKU :one
 SELECT * FROM product_variants
@@ -67,7 +68,7 @@ RETURNING *;
 
 -- name: DeleteVariantsByProduct :exec
 DELETE FROM product_variants
-WHERE product_id = $1;
+WHERE product_id = $1 AND product_id IN (SELECT id FROM products WHERE id = $1 AND store_id = $2);
 
 -- name: ReturnVariantStock :one
 UPDATE product_variants

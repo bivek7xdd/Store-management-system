@@ -60,8 +60,9 @@ WHERE si.sale_id = $1;
 -- name: UpdateSaleAmount :exec
 UPDATE sales
 SET total_amount = $1
-WHERE id = $2;
+WHERE id = $2 AND store_id = $3;
 
 -- name: GetSaleItem :one
-SELECT * FROM sale_items
-WHERE id = $1 LIMIT 1;
+SELECT si.* FROM sale_items si
+JOIN sales s ON si.sale_id = s.id
+WHERE si.id = $1 AND s.store_id = $2 LIMIT 1;

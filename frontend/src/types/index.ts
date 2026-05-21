@@ -23,7 +23,7 @@ export interface Product {
 }
 
 export interface Sale {
-  id: string;
+  id?: string | number;
   sale_date: string;
   items: SaleItem[];
   total: number;
@@ -62,7 +62,7 @@ export interface Customer {
 }
 
 export interface SaleItem {
-  id: string;
+  id?: string;
   product_id: string;
   variant_id?: string;
   product_name: string;
@@ -111,6 +111,14 @@ export interface Supplier {
   created_at?: string;
   updated_at?: string;
   synced?: number; // 0 = not synced, 1 = synced
+  //newer ones
+  bank_name?: string;
+  branch?: string;
+  account_name?: string;
+  account_number?: string;
+  swift_code?: string;
+  esewa_id?: string;
+  khalti_id?: string;
 }
 
 export interface OfflineStatus {

@@ -125,21 +125,32 @@ func (q *Queries) DeleteProductVariant(ctx context.Context, id pgtype.UUID) erro
 
 const deleteVariantsByProduct = `-- name: DeleteVariantsByProduct :exec
 DELETE FROM product_variants
-WHERE product_id = $1
+WHERE product_id = $1 AND product_id IN (SELECT id FROM products WHERE id = $1 AND store_id = $2)
 `
 
-func (q *Queries) DeleteVariantsByProduct(ctx context.Context, productID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteVariantsByProduct, productID)
+type DeleteVariantsByProductParams struct {
+	ProductID pgtype.UUID `db:"product_id" json:"product_id"`
+	StoreID   pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) DeleteVariantsByProduct(ctx context.Context, arg DeleteVariantsByProductParams) error {
+	_, err := q.db.Exec(ctx, deleteVariantsByProduct, arg.ProductID, arg.StoreID)
 	return err
 }
 
 const getProductVariant = `-- name: GetProductVariant :one
-SELECT id, product_id, sku, barcode, attributes, cost_price, selling_price, stock_level, damaged_stock_level, image_url, archived_at, created_at, updated_at FROM product_variants
-WHERE id = $1 LIMIT 1
+SELECT pv.id, pv.product_id, pv.sku, pv.barcode, pv.attributes, pv.cost_price, pv.selling_price, pv.stock_level, pv.damaged_stock_level, pv.image_url, pv.archived_at, pv.created_at, pv.updated_at FROM product_variants pv
+JOIN products p ON pv.product_id = p.id
+WHERE pv.id = $1 AND p.store_id = $2 LIMIT 1
 `
 
-func (q *Queries) GetProductVariant(ctx context.Context, id pgtype.UUID) (ProductVariant, error) {
-	row := q.db.QueryRow(ctx, getProductVariant, id)
+type GetProductVariantParams struct {
+	ID      pgtype.UUID `db:"id" json:"id"`
+	StoreID pgtype.UUID `db:"store_id" json:"store_id"`
+}
+
+func (q *Queries) GetProductVariant(ctx context.Context, arg GetProductVariantParams) (ProductVariant, error) {
+	row := q.db.QueryRow(ctx, getProductVariant, arg.ID, arg.StoreID)
 	var i ProductVariant
 	err := row.Scan(
 		&i.ID,

@@ -73,7 +73,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    try {
       const response = await api.post("/users/login", {
         email,
         password,
@@ -95,9 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Set default authorization header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-    } catch (error) {
-      throw error; // Re-throw to handle in component
-    }
+    
   };
 
   const logout = async () => {
@@ -111,13 +108,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Clear Dexie database to prevent cross-account data leakage
     try {
-      await Promise.all([
-        db.products.clear(),
-        db.categories.clear(),
-        db.suppliers.clear(),
-        db.sales.clear(),
-        db.customers.clear(),
-      ]);
+        await Promise.all([
+          db.products.clear(),
+          db.categories.clear(),
+          db.suppliers.clear(),
+          db.sales.clear(),
+          db.customers.clear(),
+          db.notifications.clear(),
+          db.debts.clear(),
+          db.product_variants.clear(),
+          db.pending_returns.clear(),
+        ])
       console.log("Local database cleared on logout");
     } catch (error) {
       console.error("Failed to clear local database:", error);
