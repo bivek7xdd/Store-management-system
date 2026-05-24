@@ -72,8 +72,8 @@ export default function Customers() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">CRM</p>
-            <h1 className="text-[22px] font-medium text-white tracking-tight">Customer Database</h1>
+            <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">CRM</p>
+            <h1 className="text-[24px] font-bold text-white tracking-tight">Customer Database</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -88,14 +88,14 @@ export default function Customers() {
         {/* Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-            <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Managed</p>
+            <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Managed</p>
             <div className="flex items-end justify-between">
               <h2 className="text-3xl font-bold text-white">{customers.length}</h2>
               <Users className="h-5 w-5 text-[#DA291C]" />
             </div>
           </div>
           <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-            <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Loyal Customers</p>
+            <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Loyal Customers</p>
             <div className="flex items-end justify-between">
               <h2 className="text-3xl font-bold text-white">
                   {customers.filter(c => c.loyalty_status !== 'regular').length}
@@ -104,7 +104,7 @@ export default function Customers() {
             </div>
           </div>
           <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-            <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Sales Vol.</p>
+            <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Sales Vol.</p>
             <div className="flex items-end justify-between">
               <h2 className="text-3xl font-bold text-white">
                   {customers.reduce((sum, c) => sum + c.purchase_count, 0)}
@@ -116,7 +116,7 @@ export default function Customers() {
 
         {/* Filter Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555555]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#888888]" />
           <input
             type="text"
             placeholder="SEARCH BY NAME OR PHONE..."
@@ -130,7 +130,7 @@ export default function Customers() {
         <div className="border border-[#1A1A1A] rounded-[2px] bg-[#000000] overflow-hidden">
           <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 bg-[#111111] border-b border-[#1A1A1A]">
             {["Customer", "Identity", "Orders", "Loyalty Status", "Progress", ""].map(h => (
-              <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#555555]">{h}</span>
+              <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#888888]">{h}</span>
             ))}
           </div>
 
@@ -160,7 +160,7 @@ export default function Customers() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Smartphone className="h-3 w-3 text-[#555555]" />
+                    <Smartphone className="h-3 w-3 text-[#888888]" />
                     <span className="text-[12px] text-[#AAAAAA] font-medium">{customer.phone || '—'}</span>
                   </div>
 
@@ -180,7 +180,7 @@ export default function Customers() {
                     ) : (
                       <>
                         <div className="flex justify-between items-center pr-4">
-                          <span className="text-[9px] font-black uppercase text-[#555555]">
+                          <span className="text-[9px] font-black uppercase text-[#888888]">
                             {loyaltyTarget > 0 ? (customer.purchase_count % loyaltyTarget) : 0} / {loyaltyTarget}
                           </span>
                         </div>
@@ -212,7 +212,7 @@ export default function Customers() {
             ) : (
               <div className="py-20 text-center space-y-4">
                 <UserMinus className="h-12 w-12 text-[#1A1A1A] mx-auto" />
-                <p className="text-[10px] font-black uppercase tracking-[2px] text-[#555555]">No Customers Found</p>
+                <p className="text-[10px] font-black uppercase tracking-[2px] text-[#888888]">No Customers Found</p>
               </div>
             )}
           </div>
@@ -241,7 +241,7 @@ export default function Customers() {
           }}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Full Name</Label>
+                <Label htmlFor="name" className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Full Name</Label>
                 <Input
                   id="name"
                   name="name"
@@ -251,7 +251,7 @@ export default function Customers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Phone Number</Label>
+                <Label htmlFor="phone" className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Phone Number</Label>
                 <Input
                   id="phone"
                   name="phone"

@@ -144,8 +144,8 @@ export default function Debtors() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-          <h1 className="text-[22px] font-medium text-white tracking-tight">Debt Management</h1>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+          <h1 className="text-[24px] font-bold text-white tracking-tight">Debt Management</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -162,7 +162,7 @@ export default function Debtors() {
       <div className="grid gap-3 sm:grid-cols-3" data-tour="debtors-summary">
         <div className="bg-[#111111] border border-[#262626] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Total Outstanding</p>
+            <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Total Outstanding</p>
             <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
               <Wallet className="h-4 w-4 text-amber-400" />
             </div>
@@ -172,18 +172,18 @@ export default function Debtors() {
 
         <div className="bg-[#111111] border border-[#262626] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Pending Accounts</p>
+            <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Pending Accounts</p>
             <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
               <Users className="h-4 w-4 text-amber-400" />
             </div>
           </div>
           <p className="text-[24px] font-medium text-white">{pendingCount}</p>
-          <p className="text-[12px] text-[#555555] mt-1">of {debts.length} total</p>
+          <p className="text-[12px] text-[#888888] mt-1">of {debts.length} total</p>
         </div>
 
         <div className="bg-[#111111] border border-[#262626] rounded-[2px] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Recovery Rate</p>
+            <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Recovery Rate</p>
             <span className="text-[13px] font-medium text-emerald-400">{recoveryRate}%</span>
           </div>
           <div className="h-1.5 w-full bg-[#262626] rounded-full overflow-hidden">
@@ -192,14 +192,14 @@ export default function Debtors() {
               style={{ width: `${recoveryRate}%` }}
             />
           </div>
-          <p className="text-[12px] text-[#555555] mt-2">Accounts fully settled</p>
+          <p className="text-[12px] text-[#888888] mt-2">Accounts fully settled</p>
         </div>
       </div>
 
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-2" data-tour="debtors-filters">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555555]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#888888]" />
           <input
             type="text"
             placeholder="Search by name or phone..."
@@ -211,7 +211,7 @@ export default function Debtors() {
         <Select value={statusFilter} onValueChange={(v: "all" | "pending" | "paid") => setStatusFilter(v)}>
           <SelectTrigger className="w-full sm:w-[160px] h-[38px] rounded-[2px] border border-[#262626] bg-[#111111] text-[#CCCCCC] text-[12px] focus:ring-0 focus:ring-offset-0">
             <div className="flex items-center gap-2">
-              <Filter className="h-3.5 w-3.5 text-[#555555]" />
+              <Filter className="h-3.5 w-3.5 text-[#888888]" />
               <SelectValue placeholder="Status" />
             </div>
           </SelectTrigger>
@@ -223,7 +223,7 @@ export default function Debtors() {
         </Select>
 
         <div className="relative w-full sm:w-[180px]">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555] pointer-events-none" />
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#888888] pointer-events-none" />
           <input
             type="date"
             value={dateFilter}
@@ -233,7 +233,7 @@ export default function Debtors() {
           {dateFilter && (
             <button 
               onClick={() => setDateFilter("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center text-[#555555] hover:text-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center text-[#888888] hover:text-white"
             >
               <X className="h-3 w-3" />
             </button>
@@ -246,7 +246,7 @@ export default function Debtors() {
         {/* Table Header */}
         <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3 border-b border-[#262626] bg-[#0A0A0A]">
           {["Customer", "Initiated", "Outstanding", "Due Date", "Actions"].map((col) => (
-            <p key={col} className="text-[10px] font-medium text-[#555555] uppercase tracking-[1px]">{col}</p>
+            <p key={col} className="text-[10px] font-medium text-[#888888] uppercase tracking-[1px]">{col}</p>
           ))}
         </div>
 
@@ -268,7 +268,7 @@ export default function Debtors() {
             <p className="text-[14px] font-medium text-white mb-1">
               {debts.length === 0 ? "No Debtors Yet" : "No Match Found"}
             </p>
-            <p className="text-[12px] text-[#555555] max-w-xs">
+            <p className="text-[12px] text-[#888888] max-w-xs">
               {debts.length === 0
                 ? "Credit sales appear here automatically, or add a debtor manually."
                 : "Try adjusting your search or filter."}
@@ -292,7 +292,8 @@ export default function Debtors() {
             {paginatedDebtors.map((debtor) => {
               const outstanding = parseFloat(debtor.amount_owed) - parseFloat(debtor.amount_paid);
               const isFullyPaid = outstanding <= 0;
-              const paidPct = (parseFloat(debtor.amount_paid) / parseFloat(debtor.amount_owed)) * 100;
+              const owed = parseFloat(debtor.amount_owed);
+              const paidPct = owed > 0 ? (parseFloat(debtor.amount_paid) / owed) * 100 : 0;
               const isOverdue = debtor.due_date && new Date(debtor.due_date) < new Date() && !isFullyPaid;
 
               return (
@@ -305,7 +306,7 @@ export default function Debtors() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[13px] text-white font-medium truncate">{debtor.customer_name || "Unknown"}</p>
-                      <p className="text-[11px] text-[#555555] flex items-center gap-1 mt-0.5">
+                      <p className="text-[11px] text-[#888888] flex items-center gap-1 mt-0.5">
                         <Phone className="h-2.5 w-2.5" />
                         {debtor.customer_phone || "No phone"}
                       </p>
@@ -315,12 +316,12 @@ export default function Debtors() {
                   {/* Initiated */}
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-1.5 text-[12px] text-[#CCCCCC]">
-                      <Calendar className="h-3 w-3 text-[#555555]" />
+                      <Calendar className="h-3 w-3 text-[#888888]" />
                       {new Date(debtor.created_at).toLocaleDateString("en-NP")}
                     </div>
                     {debtor.sale_id && (
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] font-bold text-[#888888] border border-[#303030] rounded-[1px] px-1.5 py-0.5 uppercase tracking-[0.5px]">
+                        <span className="text-[9px] font-bold text-[#888888] border border-[#303030] rounded-[2px] px-1.5 py-0.5 uppercase tracking-[0.5px]">
                           #{String(debtor.sale_id).slice(0, 8)}
                         </span>
                         <button 
@@ -345,7 +346,7 @@ export default function Debtors() {
                         <div className="flex-1 h-1 bg-[#1A1A1A] rounded-full overflow-hidden max-w-[80px]">
                           <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(paidPct, 100)}%` }} />
                         </div>
-                        <span className="text-[10px] text-[#555555]">{Math.round(paidPct)}%</span>
+                        <span className="text-[10px] text-[#888888]">{Math.round(paidPct)}%</span>
                       </div>
                     )}
                   </div>
@@ -354,14 +355,14 @@ export default function Debtors() {
                   <div className="flex items-center gap-1.5">
                     {debtor.due_date ? (
                       <>
-                        <Calendar className={`h-3 w-3 shrink-0 ${isOverdue ? "text-[#F13A2C]" : "text-[#555555]"}`} />
+                        <Calendar className={`h-3 w-3 shrink-0 ${isOverdue ? "text-[#F13A2C]" : "text-[#888888]"}`} />
                         <p className={`text-[12px] ${isOverdue ? "text-[#F13A2C]" : "text-[#CCCCCC]"}`}>
                           {new Date(debtor.due_date).toLocaleDateString("en-NP")}
                           {isOverdue && <span className="ml-1 text-[10px] uppercase tracking-[0.5px] font-bold">(overdue)</span>}
                         </p>
                       </>
                     ) : (
-                      <p className="text-[12px] text-[#555555]">No Due Date</p>
+                      <p className="text-[12px] text-[#888888]">No Due Date</p>
                     )}
                   </div>
 
@@ -385,7 +386,7 @@ export default function Debtors() {
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#1A1A1A] transition-colors">
+                        <button className="h-7 w-7 rounded-[2px] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#1A1A1A] transition-colors">
                           <MoreVertical className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
@@ -424,14 +425,14 @@ export default function Debtors() {
         {/* Table Footer / Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-[#262626] bg-[#0A0A0A]">
-            <p className="text-[12px] text-[#555555]">
+            <p className="text-[12px] text-[#888888]">
               Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredDebtors.length)} of {filteredDebtors.length}
             </p>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="h-7 w-7 rounded-[2px] border border-[#262626] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="h-7 w-7 rounded-[2px] border border-[#262626] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -441,7 +442,7 @@ export default function Debtors() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="h-7 w-7 rounded-[2px] border border-[#262626] flex items-center justify-center text-[#555555] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="h-7 w-7 rounded-[2px] border border-[#262626] flex items-center justify-center text-[#888888] hover:text-white hover:bg-[#262626] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -468,11 +469,11 @@ export default function Debtors() {
               </div>
               <div>
                 <h3 className="text-[15px] font-medium text-white">Full Settlement</h3>
-                <p className="text-[12px] text-[#555555]">Closing account for {selectedDebt?.customer_name}</p>
+                <p className="text-[12px] text-[#888888]">Closing account for {selectedDebt?.customer_name}</p>
               </div>
             </div>
             <div className="p-4 bg-[#111111] border border-[#262626] rounded-[2px]">
-              <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mb-1">Amount Due</p>
+              <p className="text-[11px] text-[#888888] uppercase tracking-[1px] mb-1">Amount Due</p>
               <p className="text-[28px] font-medium text-white">
                 रू {(parseFloat(selectedDebt?.amount_owed || "0") - parseFloat(selectedDebt?.amount_paid || "0")).toLocaleString()}
               </p>
@@ -506,7 +507,7 @@ export default function Debtors() {
               </div>
               <div>
                 <h3 className="text-[15px] font-medium text-white">Delete Account?</h3>
-                <p className="text-[12px] text-[#555555]">This action cannot be undone</p>
+                <p className="text-[12px] text-[#888888]">This action cannot be undone</p>
               </div>
             </div>
             <p className="text-[13px] text-[#CCCCCC] mt-3 leading-relaxed">

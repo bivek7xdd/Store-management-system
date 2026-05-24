@@ -105,8 +105,8 @@ export default function Expenses() {
             <div className="space-y-6 pb-24 lg:pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">Expenses</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">Expenses</h1>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -122,8 +122,8 @@ export default function Expenses() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                    <h1 className="text-[22px] font-medium text-white tracking-tight">Expenses</h1>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Expenses</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <Select value={dateRange} onValueChange={setDateRange}>
@@ -161,21 +161,21 @@ export default function Expenses() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Expenses</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Expenses</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-[#DA291C]">रू {totalAmount.toLocaleString()}</h2>
                         <Wallet className="h-5 w-5 text-[#DA291C]" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Transactions</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Transactions</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">{(summary as ExpenseSummary)?.summary?.total_count || 0}</h2>
                         <Pencil className="h-5 w-5 text-[#888888]" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Top Category</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Top Category</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-xl font-bold text-white truncate">
                             {byCategory[0]?.category ? byCategory[0].category.charAt(0).toUpperCase() + byCategory[0].category.slice(1) : "—"}
@@ -193,7 +193,7 @@ export default function Expenses() {
                     </div>
                     <div className="p-5">
                         {byCategory.length === 0 ? (
-                            <p className="text-[13px] text-[#555555] text-center py-8">No expense data</p>
+                            <p className="text-[13px] text-[#888888] text-center py-8">No expense data</p>
                         ) : (
                             <div className="space-y-3">
                                 {byCategory.map((cat, i) => (
@@ -222,7 +222,7 @@ export default function Expenses() {
                     </div>
                     <div className="p-5 h-64">
                         {daily.length === 0 ? (
-                            <p className="text-[13px] text-[#555555] text-center py-8">No daily data</p>
+                            <p className="text-[13px] text-[#888888] text-center py-8">No daily data</p>
                         ) : (
                             <ResponsiveContainer>
                                 <LineChart data={daily}>
@@ -241,7 +241,7 @@ export default function Expenses() {
             <div className="border border-[#1A1A1A] rounded-[2px] bg-[#0A0A0A] overflow-hidden">
                 <div className="hidden sm:grid grid-cols-[1fr_2fr_1fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 bg-[#111111] border-b border-[#1A1A1A]">
                     {["Date", "Description", "Category", "Payment", "Amount", ""].map(h => (
-                        <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#555555]">{h}</span>
+                        <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#888888]">{h}</span>
                     ))}
                 </div>
 
@@ -249,7 +249,7 @@ export default function Expenses() {
                     {expenseList.length === 0 ? (
                         <div className="py-20 text-center space-y-4">
                             <Wallet className="h-12 w-12 text-[#1A1A1A] mx-auto" />
-                            <p className="text-[10px] font-black uppercase tracking-[2px] text-[#555555]">No Expenses Recorded</p>
+                            <p className="text-[10px] font-black uppercase tracking-[2px] text-[#888888]">No Expenses Recorded</p>
                         </div>
                     ) : (
                         expenseList.map((expense: Expense) => (
@@ -280,13 +280,13 @@ export default function Expenses() {
                         <DialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">
                             {editingExpense ? "Edit Expense" : "Record Expense"}
                         </DialogTitle>
-                        <DialogDescription className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">
+                        <DialogDescription className="text-[11px] text-[#888888] uppercase tracking-[0.5px]">
                             {editingExpense ? "Update expense details" : "Add a new operating expense"}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Category</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Category</label>
                             <Select name="category" defaultValue={editingExpense?.category}>
                                 <SelectTrigger className="h-10 bg-[#111111] border-[#1A1A1A] rounded-[2px] text-[13px] text-white">
                                     <SelectValue placeholder="Select category" />
@@ -299,23 +299,23 @@ export default function Expenses() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Amount (रू)</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Amount (रू)</label>
                             <input name="amount" type="number" step="0.01" defaultValue={editingExpense?.amount} placeholder="0.00" required
-                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333]" />
+                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#333333]" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Description</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Description</label>
                             <input name="description" defaultValue={editingExpense?.description} placeholder="What was this expense for?"
-                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333]" />
+                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#333333]" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Date</label>
+                                <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Date</label>
                                 <input name="expense_date" type="date" defaultValue={editingExpense ? new Date(editingExpense.expense_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
                                     className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white focus:outline-none focus:border-[#333333]" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Payment</label>
+                                <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Payment</label>
                                 <Select name="payment_method" defaultValue={editingExpense?.payment_method || "cash"}>
                                     <SelectTrigger className="h-10 bg-[#111111] border-[#1A1A1A] rounded-[2px] text-[13px] text-white">
                                         <SelectValue />

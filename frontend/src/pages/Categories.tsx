@@ -73,8 +73,8 @@ export default function Categories() {
             <div className="space-y-6 pb-24 lg:pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Warehouse</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">Categories</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">Categories</h1>
                     </div>
                 </div>
 
@@ -93,7 +93,7 @@ export default function Categories() {
                 <div className="text-center space-y-3">
                     <FolderOpen className="h-10 w-10 text-[#DA291C] mx-auto" />
                     <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Failed to load categories</p>
-                    <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Please try again later</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Please try again later</p>
                 </div>
             </div>
         );
@@ -104,8 +104,8 @@ export default function Categories() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Warehouse</p>
-                    <h1 className="text-[22px] font-medium text-white tracking-tight">Categories</h1>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Categories</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     {/* Offline Status Indicator */}
@@ -158,13 +158,13 @@ export default function Categories() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] min-w-[140px]">
                                         <CategoryDialog category={category}>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#CCCCCC] hover:text-white focus:text-white focus:bg-[#1A1A1A] rounded-[1px] cursor-pointer">
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#CCCCCC] hover:text-white focus:text-white focus:bg-[#1A1A1A] rounded-[2px] cursor-pointer">
                                                 <Pencil className="mr-2 h-3.5 w-3.5" />
                                                 Edit
                                             </DropdownMenuItem>
                                         </CategoryDialog>
                                         <DropdownMenuItem
-                                            className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#DA291C] hover:text-[#DA291C] focus:text-[#DA291C] focus:bg-[#DA291C]/10 rounded-[1px] cursor-pointer"
+                                            className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#DA291C] hover:text-[#DA291C] focus:text-[#DA291C] focus:bg-[#DA291C]/10 rounded-[2px] cursor-pointer"
                                             onClick={() => setCategoryToDelete(category.id)}
                                         >
                                             <Trash2 className="mr-2 h-3.5 w-3.5" />
@@ -200,7 +200,7 @@ export default function Categories() {
                         <FolderOpen className="h-7 w-7 text-[#1A1A1A]" />
                     </div>
                     <h3 className="text-[13px] font-bold text-white uppercase tracking-[1px] mb-2">No Categories Created</h3>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[0.5px] mb-8">Create your first category to organize your products</p>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[0.5px] mb-8">Create your first category to organize your products</p>
                     <CategoryDialog>
                         <Button className="h-10 px-6 rounded-[2px] bg-white text-black text-[11px] font-bold uppercase tracking-[1px] hover:bg-[#EEEEEE] transition-colors">
                             <Plus className="h-3.5 w-3.5 mr-2" />

@@ -75,30 +75,31 @@ export default function FindSuppliers() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24 lg:pb-8">
             {/* Header */}
             <div className="flex items-center gap-4">
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => navigate(-1)}
-                    className="h-10 w-10"
+                    className="h-10 w-10 text-white"
                 >
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Find Suppliers</h1>
-                    <p className="text-gray-500 mt-1">
-                        Discover wholesale suppliers near you using Serper API
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Suppliers</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Find Suppliers</h1>
+                    <p className="text-[#888888] text-sm mt-1">
+                        Discover wholesale suppliers near you
                     </p>
                 </div>
             </div>
 
             {/* Search Form */}
-            <Card>
+            <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Search className="h-5 w-5 text-teal-600" />
+                    <CardTitle className="flex items-center gap-2 text-white text-[14px]">
+                        <Search className="h-5 w-5 text-[#DA291C]" />
                         Search for Suppliers
                     </CardTitle>
                 </CardHeader>
@@ -106,29 +107,31 @@ export default function FindSuppliers() {
                     <form onSubmit={handleSearch} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="search-query">Product or Category</Label>
+                                <Label htmlFor="search-query" className="text-[#888888] text-[11px] uppercase tracking-[1px] font-bold">Product or Category</Label>
                                 <Input
                                     id="search-query"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="e.g., shirt, electronics, groceries"
                                     required
+                                    className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-white text-[13px] focus:border-[#DA291C] placeholder:text-[#555555]"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="search-location">Location</Label>
+                                <Label htmlFor="search-location" className="text-[#888888] text-[11px] uppercase tracking-[1px] font-bold">Location</Label>
                                 <Input
                                     id="search-location"
                                     value={searchLocation}
                                     onChange={(e) => setSearchLocation(e.target.value)}
                                     placeholder="City, Country"
+                                    className="bg-[#111111] border-[#1A1A1A] rounded-[2px] text-white text-[13px] focus:border-[#DA291C] placeholder:text-[#555555]"
                                 />
                             </div>
                         </div>
                         <Button
                             type="submit"
                             disabled={searching}
-                            className="w-full md:w-auto bg-teal-600 hover:bg-teal-700"
+                            className="w-full md:w-auto bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]"
                         >
                             <Search className="h-4 w-4 mr-2" />
                             {searching ? "Searching..." : "Search Suppliers"}
@@ -143,12 +146,12 @@ export default function FindSuppliers() {
                     {searching ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {[...Array(6)].map((_, i) => (
-                                <Card key={i}>
+                                <Card key={i} className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
                                     <CardContent className="p-6 space-y-3">
-                                        <Skeleton className="h-6 w-3/4" />
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-1/2" />
-                                        <Skeleton className="h-8 w-20" />
+                                        <Skeleton className="h-6 w-3/4 bg-[#1A1A1A]" />
+                                        <Skeleton className="h-4 w-full bg-[#1A1A1A]" />
+                                        <Skeleton className="h-4 w-1/2 bg-[#1A1A1A]" />
+                                        <Skeleton className="h-8 w-20 bg-[#1A1A1A]" />
                                     </CardContent>
                                 </Card>
                             ))}
@@ -156,7 +159,7 @@ export default function FindSuppliers() {
                     ) : suppliers.length > 0 ? (
                         <>
                             <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900">
+                                <h2 className="text-[16px] font-bold text-white">
                                     Found {suppliers.length} Suppliers
                                 </h2>
                             </div>
@@ -164,21 +167,21 @@ export default function FindSuppliers() {
                                 {suppliers.map((supplier, index) => (
                                     <Card
                                         key={index}
-                                        className="hover:shadow-lg transition-shadow cursor-pointer"
+                                        className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] hover:border-[#DA291C]/40 transition-all cursor-pointer"
                                         onClick={() => handleUseSupplier(supplier)}
                                     >
                                         <CardContent className="p-6 space-y-4">
                                             {/* Header */}
                                             <div className="space-y-2">
                                                 <div className="flex items-start justify-between">
-                                                    <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+                                                    <h3 className="font-semibold text-[14px] text-white line-clamp-2">
                                                         {supplier.name}
                                                     </h3>
-                                                    <Building2 className="h-5 w-5 text-teal-600 flex-shrink-0 ml-2" />
+                                                    <Building2 className="h-5 w-5 text-[#DA291C] flex-shrink-0 ml-2" />
                                                 </div>
 
                                                 {supplier.category && (
-                                                    <Badge variant="secondary" className="text-xs">
+                                                    <Badge variant="secondary" className="text-[10px] bg-[#DA291C]/10 text-[#DA291C] border-[#DA291C]/20 rounded-[2px]">
                                                         {supplier.category}
                                                     </Badge>
                                                 )}
@@ -189,11 +192,11 @@ export default function FindSuppliers() {
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex items-center gap-1">
                                                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                        <span className="font-medium text-sm">
+                                                        <span className="font-medium text-sm text-white">
                                                             {supplier.rating}
                                                         </span>
                                                     </div>
-                                                    <span className="text-sm text-gray-500">
+                                                    <span className="text-sm text-[#888888]">
                                                         ({supplier.reviews} reviews)
                                                     </span>
                                                 </div>
@@ -202,7 +205,7 @@ export default function FindSuppliers() {
                                             {/* Details */}
                                             <div className="space-y-2 text-sm">
                                                 {supplier.address && (
-                                                    <div className="flex items-start gap-2 text-gray-600">
+                                                    <div className="flex items-start gap-2 text-[#888888]">
                                                         <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
                                                         <span className="line-clamp-2">
                                                             {supplier.address}
@@ -210,7 +213,7 @@ export default function FindSuppliers() {
                                                     </div>
                                                 )}
                                                 {supplier.phone && (
-                                                    <div className="flex items-center gap-2 text-gray-600">
+                                                    <div className="flex items-center gap-2 text-[#888888]">
                                                         <Phone className="h-4 w-4 flex-shrink-0" />
                                                         <span>{supplier.phone}</span>
                                                     </div>
@@ -221,7 +224,7 @@ export default function FindSuppliers() {
                                             <div className="flex gap-2 pt-2">
                                                 <Button
                                                     size="sm"
-                                                    className="flex-1 bg-teal-600 hover:bg-teal-700"
+                                                    className="flex-1 bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest h-9 rounded-[2px]"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleUseSupplier(supplier);
@@ -240,7 +243,7 @@ export default function FindSuppliers() {
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-9 w-9 p-0"
+                                                            className="h-9 w-9 p-0 border-[#1A1A1A] text-[#888888] rounded-[2px]"
                                                         >
                                                             <ExternalLink className="h-4 w-4" />
                                                         </Button>
@@ -253,17 +256,17 @@ export default function FindSuppliers() {
                             </div>
                         </>
                     ) : (
-                        <Card>
+                        <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
                             <CardContent className="p-12 text-center">
-                                <Search className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                <Search className="h-16 w-16 mx-auto text-[#303030] mb-4" />
+                                <h3 className="text-[16px] font-bold text-white mb-2">
                                     No Suppliers Found
                                 </h3>
-                                <p className="text-gray-500 mb-4">
+                                <p className="text-[#888888] text-sm mb-4">
                                     Try different search keywords or change the location
                                 </p>
-                                <div className="space-y-2 text-sm text-gray-400">
-                                    <p>💡 Tips:</p>
+                                <div className="space-y-2 text-sm text-[#666666]">
+                                    <p>Tips:</p>
                                     <ul className="text-left inline-block">
                                         <li>• Use general terms: "shirt", "electronics", "groceries"</li>
                                         <li>• Try "wholesale" + product name</li>
@@ -278,31 +281,30 @@ export default function FindSuppliers() {
 
             {/* Empty State */}
             {!hasSearched && (
-                <Card>
+                <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
                     <CardContent className="p-12 text-center">
-                        <Building2 className="h-20 w-20 mx-auto text-teal-200 mb-6" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                        <Building2 className="h-20 w-20 mx-auto text-[#DA291C]/30 mb-6" />
+                        <h3 className="text-[18px] font-bold text-white mb-3">
                             Find Wholesale Suppliers
                         </h3>
-                        <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                            Search for suppliers in your area using our powerful discovery tool.
-                            Find verified businesses with ratings, reviews, and contact information.
+                        <p className="text-[#888888] text-sm mb-6 max-w-md mx-auto">
+                            Search for suppliers near you using our discovery tool.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto text-sm">
-                            <div className="p-4 bg-teal-50 rounded-lg">
-                                <Search className="h-6 w-6 mx-auto text-teal-600 mb-2" />
-                                <p className="font-medium text-gray-900">Search</p>
-                                <p className="text-gray-500">Enter product category</p>
+                            <div className="p-4 bg-[#DA291C]/10 rounded-[2px] border border-[#DA291C]/20">
+                                <Search className="h-6 w-6 mx-auto text-[#DA291C] mb-2" />
+                                <p className="font-medium text-white">Search</p>
+                                <p className="text-[#888888] text-xs">Enter product category</p>
                             </div>
-                            <div className="p-4 bg-teal-50 rounded-lg">
-                                <MapPin className="h-6 w-6 mx-auto text-teal-600 mb-2" />
-                                <p className="font-medium text-gray-900">Location</p>
-                                <p className="text-gray-500">Set your preferred area</p>
+                            <div className="p-4 bg-[#DA291C]/10 rounded-[2px] border border-[#DA291C]/20">
+                                <MapPin className="h-6 w-6 mx-auto text-[#DA291C] mb-2" />
+                                <p className="font-medium text-white">Location</p>
+                                <p className="text-[#888888] text-xs">Set your preferred area</p>
                             </div>
-                            <div className="p-4 bg-teal-50 rounded-lg">
-                                <Star className="h-6 w-6 mx-auto text-teal-600 mb-2" />
-                                <p className="font-medium text-gray-900">Discover</p>
-                                <p className="text-gray-500">Browse rated suppliers</p>
+                            <div className="p-4 bg-[#DA291C]/10 rounded-[2px] border border-[#DA291C]/20">
+                                <Star className="h-6 w-6 mx-auto text-[#DA291C] mb-2" />
+                                <p className="font-medium text-white">Discover</p>
+                                <p className="text-[#888888] text-xs">Browse rated suppliers</p>
                             </div>
                         </div>
                     </CardContent>

@@ -70,12 +70,6 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || "";
 
-// Color theme matching the app
-const colors = {
-    primary: "#0d9488",
-    primaryDark: "#115e59",
-};
-
 // Types
 interface Coordinates {
     lat: number;
@@ -968,29 +962,30 @@ export default function MarketDiscovery() {
     // If no API key is configured, show setup instructions
     if (!hasApiKey) {
         return (
-            <div className="space-y-6 pb-20 lg:pb-6">
+            <div className="space-y-6 pb-24 lg:pb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Market Discovery</h1>
-                    <p className="text-gray-500 mt-1">
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Discovery</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Market Discovery</h1>
+                    <p className="text-[#888888] text-sm mt-1">
                         Find wholesale suppliers near you
                     </p>
                 </div>
 
-                <Card className="border-0 shadow-sm border-l-4 border-l-amber-500">
+                <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] border-l-[3px] border-l-amber-500">
                     <CardContent className="pt-6">
                         <div className="flex items-start gap-4">
                             <AlertCircle className="h-6 w-6 text-amber-500 shrink-0 mt-0.5" />
                             <div className="space-y-3">
-                                <h3 className="font-semibold text-gray-900">Geoapify API Key Required</h3>
-                                <p className="text-sm text-gray-600">
+                                <h3 className="font-semibold text-white">Geoapify API Key Required</h3>
+                                <p className="text-sm text-[#888888]">
                                     To use Market Discovery, you need to configure a Geoapify API key (Free):
                                 </p>
-                                <ol className="text-sm text-gray-600 list-decimal list-inside space-y-2">
-                                    <li>Go to <a href="https://myprojects.geoapify.com/" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">Geoapify MyProjects</a></li>
+                                <ol className="text-sm text-[#888888] list-decimal list-inside space-y-2">
+                                    <li>Go to <a href="https://myprojects.geoapify.com/" target="_blank" rel="noopener noreferrer" className="text-[#DA291C] hover:underline">Geoapify MyProjects</a></li>
                                     <li>Sign up and create a new project</li>
                                     <li>Copy the <strong>API Key</strong></li>
-                                    <li>Add it to your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.env</code> file:
-                                        <pre className="mt-2 bg-gray-100 p-3 rounded-lg text-xs overflow-x-auto">
+                                    <li>Add it to your <code className="bg-[#1A1A1A] px-1.5 py-0.5 rounded-[2px] text-xs text-[#888888]">.env</code> file:
+                                        <pre className="mt-2 bg-[#111111] p-3 rounded-[2px] text-xs overflow-x-auto text-[#888888] border border-[#1A1A1A]">
                                             VITE_GEOAPIFY_API_KEY=your_api_key_here
                                         </pre>
                                     </li>
@@ -999,7 +994,7 @@ export default function MarketDiscovery() {
                                 <Button
                                     onClick={() => setHasApiKey(true)}
                                     variant="outline"
-                                    className="mt-2"
+                                    className="mt-2 border-[#1A1A1A] text-[#888888] rounded-[2px]"
                                 >
                                     I've configured the API key
                                 </Button>
@@ -1012,35 +1007,36 @@ export default function MarketDiscovery() {
     }
 
     return (
-        <div className="space-y-6 pb-20 lg:pb-6">
+        <div className="space-y-6 pb-24 lg:pb-8">
             {/* Header */}
             <div data-tour="market-discovery-header">
-                <h1 className="text-3xl font-bold text-gray-900">Market Discovery</h1>
-                <p className="text-gray-500 mt-1">
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Discovery</p>
+                <h1 className="text-[24px] font-bold text-white tracking-tight">Market Discovery</h1>
+                <p className="text-[#888888] text-sm mt-1">
                     Find wholesale suppliers and distributors near you
                 </p>
             </div>
 
             {/* Search Section */}
-            <Card className="border-0 shadow-sm" style={{ background: colors.primaryDark }} data-tour="market-discovery-search">
+            <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]" data-tour="market-discovery-search">
                 <CardContent className="pt-6">
                     <form onSubmit={handleSearch} className="space-y-4">
                         {/* Search Input */}
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#555555]" />
                                 <Input
                                     type="text"
                                     placeholder="Enter product name (e.g., Paint, Hardware, Cement, Rice)"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10 bg-white/95 border-0 h-12 text-base"
+                                    className="pl-10 bg-[#111111] border-[#1A1A1A] h-12 text-[13px] text-white rounded-[2px] focus:border-[#DA291C] placeholder:text-[#555555]"
                                 />
                             </div>
                             <Button
                                 type="submit"
                                 disabled={isSearching || !userLocation}
-                                className="h-12 px-6 bg-white text-teal-700 hover:bg-white/90"
+                                className="h-12 px-6 bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest rounded-[2px]"
                             >
                                 {isSearching ? (
                                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -1057,7 +1053,7 @@ export default function MarketDiscovery() {
                                 variant="outline"
                                 onClick={getUserLocation}
                                 disabled={isLoadingLocation}
-                                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                                className="border-[#1A1A1A] text-[#888888] rounded-[2px]"
                             >
                                 {isLoadingLocation ? (
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1068,7 +1064,7 @@ export default function MarketDiscovery() {
                             </Button>
 
                             {userLocation && (
-                                <Badge className="bg-white/20 text-white border-0">
+                                <Badge className="bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/20 rounded-[2px]">
                                     <MapPin className="h-3 w-3 mr-1" />
                                     Location enabled
                                 </Badge>
@@ -1076,22 +1072,22 @@ export default function MarketDiscovery() {
                         </div>
 
                         {/* Help Text */}
-                        <p className="text-xs text-white/70">
-                            💡 Tip: We search for suppliers, wholesalers, and distributors near you. Results are sorted by relevance and distance.
+                        <p className="text-xs text-[#888888]">
+                            Tip: We search for suppliers, wholesalers, and distributors near you. Results are sorted by relevance and distance.
                         </p>
 
                         {/* API Diagnostics (Development Only) - Removed as per request */}
                     </form>
                     {/* Store Product Categories - Primary */}
                     {storeCategories.length > 0 && (
-                        <div className="pt-2 border-t border-white/10">
-                            <p className="text-xs text-white/70 mb-2">Search by your product categories:</p>
+                        <div className="pt-2 border-t border-[#1A1A1A]">
+                            <p className="text-xs text-[#888888] mb-2">Search by your product categories:</p>
                             <div className="flex flex-wrap gap-2">
                                 {storeCategories.map((category, index) => (
                                     <Badge
                                         key={index}
                                         variant="secondary"
-                                        className="bg-teal-500/30 hover:bg-teal-500/50 text-white border-0 cursor-pointer transition-colors"
+                                        className="bg-[#DA291C]/10 hover:bg-[#DA291C]/20 text-[#DA291C] border-[#DA291C]/20 cursor-pointer transition-colors rounded-[2px]"
                                         onClick={() => triggerSearch(category)}
                                     >
                                         {category}
@@ -1102,14 +1098,14 @@ export default function MarketDiscovery() {
                     )}
                     {/* Suggested Search Terms - Secondary fallback */}
                     {storeCategories.length === 0 && suggestedSearchTerms.length > 0 && (
-                        <div className="pt-2 border-t border-white/10">
-                            <p className="text-xs text-white/70 mb-2">Suggested based on your business:</p>
+                        <div className="pt-2 border-t border-[#1A1A1A]">
+                            <p className="text-xs text-[#888888] mb-2">Suggested based on your business:</p>
                             <div className="flex flex-wrap gap-2">
                                 {suggestedSearchTerms.map((term, index) => (
                                     <Badge
                                         key={index}
                                         variant="secondary"
-                                        className="bg-white/10 hover:bg-white/20 text-white border-0 cursor-pointer transition-colors"
+                                        className="bg-[#222222] hover:bg-[#333333] text-[#888888] border-[#1A1A1A] cursor-pointer transition-colors rounded-[2px]"
                                         onClick={() => triggerSearch(term)}
                                     >
                                         {term}
@@ -1123,16 +1119,16 @@ export default function MarketDiscovery() {
 
             {/* Error Display */}
             {error && (
-                <Card className="border-0 shadow-sm border-l-4 border-l-red-500">
+                <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] border-l-[3px] border-l-red-500">
                     <CardContent className="py-4">
                         <div className="flex items-center gap-3">
                             <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-                            <p className="text-sm text-red-700">{error}</p>
+                            <p className="text-sm text-red-400">{error}</p>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setError(null)}
-                                className="ml-auto"
+                                className="ml-auto text-[#888888] rounded-[2px]"
                             >
                                 <X className="h-4 w-4" />
                             </Button>
@@ -1144,7 +1140,7 @@ export default function MarketDiscovery() {
             {/* Map and Results Grid */}
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Map Container */}
-                <Card className="border-0 shadow-sm lg:col-span-2 overflow-hidden h-[500px] relative z-0" data-tour="market-discovery-map">
+                <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] lg:col-span-2 overflow-hidden h-[500px] relative z-0" data-tour="market-discovery-map">
                     {currentMapCenter ? (
                         <MapContainer
                             center={[currentMapCenter.lat, currentMapCenter.lng]}
@@ -1169,7 +1165,7 @@ export default function MarketDiscovery() {
                                     icon={UserLocationIcon}
                                 >
                                     <Popup>
-                                        <div className="font-semibold text-blue-600">📍 Your Location</div>
+                                        <div className="font-semibold text-blue-600">Your Location</div>
                                     </Popup>
                                 </Marker>
                             )}
@@ -1192,27 +1188,27 @@ export default function MarketDiscovery() {
                                             <p className="text-xs text-gray-600 mb-2">{place.formattedAddress}</p>
                                             {place.distance && (
                                                 <p className="text-xs text-blue-600 mb-2 font-medium">
-                                                    📏 {formatDistance(place.distance)} away
+                                                    {formatDistance(place.distance)} away
                                                 </p>
                                             )}
                                             {place.phone && (
-                                                <a href={`tel:${place.phone}`} className="block text-xs text-teal-600 mb-1 hover:underline">
-                                                    📞 {place.phone}
+                                                <a href={`tel:${place.phone}`} className="block text-xs text-[#DA291C] mb-1 hover:underline">
+                                                    {place.phone}
                                                 </a>
                                             )}
                                             {place.email && (
-                                                <a href={`mailto:${place.email}`} className="block text-xs text-teal-600 mb-1 hover:underline">
-                                                    ✉️ {place.email}
+                                                <a href={`mailto:${place.email}`} className="block text-xs text-[#DA291C] mb-1 hover:underline">
+                                                    {place.email}
                                                 </a>
                                             )}
                                             {place.website && (
-                                                <a href={place.website} target="_blank" rel="noopener noreferrer" className="block text-xs text-teal-600 hover:underline">
-                                                    🌐 Visit Website
+                                                <a href={place.website} target="_blank" rel="noopener noreferrer" className="block text-xs text-[#DA291C] hover:underline">
+                                                    Visit Website
                                                 </a>
                                             )}
                                             {place.rating && (
                                                 <p className="text-xs text-yellow-600 mt-1">
-                                                    ⭐ {place.rating}/5
+                                                    {place.rating}/5
                                                 </p>
                                             )}
                                         </div>
@@ -1239,7 +1235,7 @@ export default function MarketDiscovery() {
                                             <Polyline
                                                 positions={routeCoordinates}
                                                 pathOptions={{
-                                                    color: '#0d9488',
+                                                    color: '#DA291C',
                                                     weight: 4,
                                                     opacity: 1,
                                                 }}
@@ -1265,7 +1261,7 @@ export default function MarketDiscovery() {
                                                     [selectedPlace.location.lat, selectedPlace.location.lng]
                                                 ]}
                                                 pathOptions={{
-                                                    color: '#0d9488',
+                                                    color: '#DA291C',
                                                     weight: 3,
                                                     opacity: 1,
                                                     dashArray: '10, 10', // Dashed for straight line
@@ -1277,9 +1273,9 @@ export default function MarketDiscovery() {
                             )}
                         </MapContainer>
                     ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <div className="text-center text-gray-500">
-                                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-teal-600" />
+                        <div className="w-full h-full bg-[#111111] flex items-center justify-center">
+                            <div className="text-center text-[#888888]">
+                                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-[#DA291C]" />
                                 <p>Loading map...</p>
                             </div>
                         </div>
@@ -1287,13 +1283,13 @@ export default function MarketDiscovery() {
                 </Card>
 
                 {/* Results List */}
-                <Card className="border-0 shadow-sm h-[500px] flex flex-col">
+                <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] h-[500px] flex flex-col">
                     <CardHeader className="shrink-0">
-                        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <Building2 className="h-5 w-5" style={{ color: colors.primary }} />
+                        <CardTitle className="text-[14px] font-bold text-white flex items-center gap-2">
+                            <Building2 className="h-5 w-5 text-[#DA291C]" />
                             Suppliers Found
                             {places.length > 0 && (
-                                <Badge variant="secondary" className="ml-auto">
+                                <Badge variant="secondary" className="ml-auto bg-[#DA291C]/10 text-[#DA291C] border-[#DA291C]/20 rounded-[2px]">
                                     {places.length}
                                 </Badge>
                             )}
@@ -1303,20 +1299,20 @@ export default function MarketDiscovery() {
                         {isSearching ? (
                             <div className="space-y-3">
                                 {[1, 2, 3].map((i) => (
-                                    <div key={i} className="p-3 rounded-lg bg-gray-50">
-                                        <Skeleton className="h-5 w-3/4 mb-2" />
-                                        <Skeleton className="h-4 w-full mb-1" />
-                                        <Skeleton className="h-4 w-1/2" />
+                                    <div key={i} className="p-3 rounded-[2px] bg-[#111111]">
+                                        <Skeleton className="h-5 w-3/4 mb-2 bg-[#1A1A1A]" />
+                                        <Skeleton className="h-4 w-full mb-1 bg-[#1A1A1A]" />
+                                        <Skeleton className="h-4 w-1/2 bg-[#1A1A1A]" />
                                     </div>
                                 ))}
                             </div>
                         ) : places.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                <Search className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-                                <p className="text-sm font-medium text-gray-900 mb-1">
+                            <div className="text-center py-8 text-[#888888]">
+                                <Search className="h-10 w-10 mx-auto mb-3 text-[#303030]" />
+                                <p className="text-sm font-medium text-white mb-1">
                                     {searchQuery ? "No suppliers found" : "Search for suppliers"}
                                 </p>
-                                <p className="text-xs text-gray-400 mb-4">
+                                <p className="text-xs text-[#555555] mb-4">
                                     {searchQuery
                                         ? `We couldn't find any "${searchQuery}" suppliers nearby.`
                                         : 'Enter a product name like "Paint", "Hardware", or "Rice" details.'}
@@ -1327,7 +1323,7 @@ export default function MarketDiscovery() {
                                         variant="outline"
                                         size="sm"
                                         onClick={openGoogleMaps}
-                                        className="text-teal-600 border-teal-200 hover:bg-teal-50"
+                                        className="border-[#1A1A1A] text-[#888888] rounded-[2px]"
                                     >
                                         <ExternalLink className="h-3 w-3 mr-2" />
                                         Search on Google Maps
@@ -1340,41 +1336,41 @@ export default function MarketDiscovery() {
                                     <div
                                         key={place.id}
                                         onClick={() => handlePlaceSelect(place)}
-                                        className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedPlace?.id === place.id
-                                            ? "bg-teal-50 ring-1 ring-teal-200"
-                                            : "bg-gray-50 hover:bg-gray-100"
+                                        className={`p-3 rounded-[2px] cursor-pointer transition-colors ${selectedPlace?.id === place.id
+                                            ? "bg-[#DA291C]/10 ring-1 ring-[#DA291C]/30"
+                                            : "bg-[#111111] hover:bg-[#1A1A1A]"
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-1">
-                                            <h4 className="font-medium text-gray-900 text-sm flex items-center gap-2">
+                                            <h4 className="font-medium text-white text-sm flex items-center gap-2">
                                                 {place.displayName}
                                                 {selectedPlace?.id === place.id && (
-                                                    <Navigation className="h-3 w-3 text-teal-600" />
+                                                    <Navigation className="h-3 w-3 text-[#DA291C]" />
                                                 )}
                                                 {loadingDetails === place.id && (
-                                                    <Loader2 className="inline h-3 w-3 animate-spin text-teal-600" />
+                                                    <Loader2 className="inline h-3 w-3 animate-spin text-[#DA291C]" />
                                                 )}
                                             </h4>
                                             <div className="flex items-center gap-2 shrink-0 ml-2">
                                                 {index < 3 && (
-                                                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                                                    <Badge variant="secondary" className="text-[10px] bg-[#DA291C]/10 text-[#DA291C] border-[#DA291C]/20 rounded-[2px]">
                                                         #{index + 1}
                                                     </Badge>
                                                 )}
                                                 {place.distance && (
-                                                    <Badge variant="outline" className="text-xs">
+                                                    <Badge variant="outline" className="text-[10px] border-[#1A1A1A] text-[#888888] rounded-[2px]">
                                                         {formatDistance(place.distance)}
                                                     </Badge>
                                                 )}
                                                 {/* Show relevance score in development */}
                                                 {import.meta.env.DEV && place.relevanceScore && (
-                                                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                                                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/20 rounded-[2px]">
                                                         {place.relevanceScore}
                                                     </Badge>
                                                 )}
                                             </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mb-2 truncate">
+                                        <p className="text-xs text-[#666666] mb-2 truncate">
                                             {place.formattedAddress}
                                         </p>
 
@@ -1383,11 +1379,11 @@ export default function MarketDiscovery() {
                                             {place.rating && (
                                                 <div className="flex items-center gap-1">
                                                     <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                                                    <span className="text-xs text-gray-600">{place.rating}</span>
+                                                    <span className="text-xs text-[#888888]">{place.rating}</span>
                                                 </div>
                                             )}
                                             {place.businessStatus === 'OPERATIONAL' && (
-                                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                                <Badge variant="outline" className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/20 rounded-[2px]">
                                                     Open
                                                 </Badge>
                                             )}
@@ -1399,7 +1395,7 @@ export default function MarketDiscovery() {
                                                 <a
                                                     href={`tel:${place.phone}`}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700"
+                                                    className="inline-flex items-center gap-1 text-xs text-[#DA291C] hover:text-[#B01E0A]"
                                                 >
                                                     <Phone className="h-3 w-3" />
                                                     Call
@@ -1409,7 +1405,7 @@ export default function MarketDiscovery() {
                                                 <a
                                                     href={`mailto:${place.email}`}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700"
+                                                    className="inline-flex items-center gap-1 text-xs text-[#DA291C] hover:text-[#B01E0A]"
                                                 >
                                                     <Mail className="h-3 w-3" />
                                                     Email
@@ -1421,7 +1417,7 @@ export default function MarketDiscovery() {
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700"
+                                                    className="inline-flex items-center gap-1 text-xs text-[#DA291C] hover:text-[#B01E0A]"
                                                 >
                                                     <Globe className="h-3 w-3" />
                                                     Website
@@ -1431,8 +1427,8 @@ export default function MarketDiscovery() {
 
                                         {/* Opening Hours Preview */}
                                         {place.openingHours && place.openingHours.length > 0 && (
-                                            <div className="mt-2 pt-2 border-t border-gray-200">
-                                                <div className="flex items-center gap-1 text-xs text-gray-600">
+                                            <div className="mt-2 pt-2 border-t border-[#1A1A1A]">
+                                                <div className="flex items-center gap-1 text-xs text-[#888888]">
                                                     <Clock className="h-3 w-3" />
                                                     <span>{place.openingHours[0]}</span>
                                                 </div>
@@ -1440,12 +1436,12 @@ export default function MarketDiscovery() {
                                         )}
                                     </div>
                                 ))}
-                                <div className="pt-4 border-t border-gray-100 flex justify-center">
+                                <div className="pt-4 border-t border-[#1A1A1A] flex justify-center">
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={openGoogleMaps}
-                                        className="text-gray-500 hover:text-teal-600 text-xs"
+                                        className="text-[#888888] hover:text-[#DA291C] text-[10px] rounded-[2px]"
                                     >
                                         <ExternalLink className="h-3 w-3 mr-1" />
                                         Don't see what you're looking for? Search Google Maps
@@ -1459,24 +1455,24 @@ export default function MarketDiscovery() {
 
             {/* Detailed Contact Information Panel */}
             {selectedPlace && (
-                <Card className="border-0 shadow-sm">
+                <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
                     <CardHeader>
                         <div className="flex items-start justify-between">
                             <div>
-                                <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                    <Building2 className="h-5 w-5" style={{ color: colors.primary }} />
+                                <CardTitle className="text-[14px] font-bold text-white flex items-center gap-2">
+                                    <Building2 className="h-5 w-5 text-[#DA291C]" />
                                     {selectedPlace.displayName}
                                     {loadingDetails === selectedPlace.id && (
-                                        <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+                                        <Loader2 className="h-4 w-4 animate-spin text-[#DA291C]" />
                                     )}
                                 </CardTitle>
-                                <p className="text-sm text-gray-500 mt-1">{selectedPlace.formattedAddress}</p>
+                                <p className="text-sm text-[#888888] mt-1">{selectedPlace.formattedAddress}</p>
                             </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setSelectedPlace(null)}
-                                className="shrink-0"
+                                className="shrink-0 text-[#888888] rounded-[2px]"
                             >
                                 <X className="h-4 w-4" />
                             </Button>
@@ -1484,14 +1480,14 @@ export default function MarketDiscovery() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {/* Distance and Route Information */}
-                        <div className="flex items-center gap-4 p-3 bg-teal-50 rounded-lg border border-teal-200">
+                        <div className="flex items-center gap-4 p-3 bg-[#111111] rounded-[2px] border border-[#1A1A1A]">
                             {selectedPlace.distance && (
-                                <div className="flex items-center gap-2 text-sm text-teal-700">
+                                <div className="flex items-center gap-2 text-sm text-[#DA291C]">
                                     <MapPin className="h-4 w-4" />
                                     <span className="font-medium">{formatDistance(selectedPlace.distance)} away</span>
                                 </div>
                             )}
-                            <div className="flex items-center gap-2 text-sm text-teal-600">
+                            <div className="flex items-center gap-2 text-sm text-[#888888]">
                                 {loadingRoute ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -1510,13 +1506,13 @@ export default function MarketDiscovery() {
                                 )}
                             </div>
                             {selectedPlace.rating && (
-                                <div className="flex items-center gap-1 text-sm text-gray-600 ml-auto">
+                                <div className="flex items-center gap-1 text-sm text-[#888888] ml-auto">
                                     <Star className="h-4 w-4 text-yellow-500 fill-current" />
                                     <span>{selectedPlace.rating}/5</span>
                                 </div>
                             )}
                             {selectedPlace.businessStatus === 'OPERATIONAL' && (
-                                <Badge className="bg-green-100 text-green-700 border-green-200">
+                                <Badge className="bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/20 rounded-[2px]">
                                     Currently Open
                                 </Badge>
                             )}
@@ -1525,13 +1521,13 @@ export default function MarketDiscovery() {
                         {/* Contact Information Grid */}
                         <div className="grid gap-3 sm:grid-cols-2">
                             {selectedPlace.phone && (
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                    <Phone className="h-5 w-5 text-teal-600 shrink-0" />
+                                <div className="flex items-center gap-3 p-3 bg-[#111111] rounded-[2px] border border-[#1A1A1A]">
+                                    <Phone className="h-5 w-5 text-[#DA291C] shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
+                                        <p className="text-[10px] text-[#666666] uppercase tracking-wide">Phone</p>
                                         <a
                                             href={`tel:${selectedPlace.phone}`}
-                                            className="text-sm font-medium text-gray-900 hover:text-teal-600 transition-colors"
+                                            className="text-sm font-medium text-white hover:text-[#DA291C] transition-colors"
                                         >
                                             {selectedPlace.phone}
                                         </a>
@@ -1540,13 +1536,13 @@ export default function MarketDiscovery() {
                             )}
 
                             {selectedPlace.email && (
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                    <Mail className="h-5 w-5 text-teal-600 shrink-0" />
+                                <div className="flex items-center gap-3 p-3 bg-[#111111] rounded-[2px] border border-[#1A1A1A]">
+                                    <Mail className="h-5 w-5 text-[#DA291C] shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
+                                        <p className="text-[10px] text-[#666666] uppercase tracking-wide">Email</p>
                                         <a
                                             href={`mailto:${selectedPlace.email}`}
-                                            className="text-sm font-medium text-gray-900 hover:text-teal-600 transition-colors truncate block"
+                                            className="text-sm font-medium text-white hover:text-[#DA291C] transition-colors truncate block"
                                         >
                                             {selectedPlace.email}
                                         </a>
@@ -1555,15 +1551,15 @@ export default function MarketDiscovery() {
                             )}
 
                             {selectedPlace.website && (
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg sm:col-span-2">
-                                    <Globe className="h-5 w-5 text-teal-600 shrink-0" />
+                                <div className="flex items-center gap-3 p-3 bg-[#111111] rounded-[2px] border border-[#1A1A1A] sm:col-span-2">
+                                    <Globe className="h-5 w-5 text-[#DA291C] shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide">Website</p>
+                                        <p className="text-[10px] text-[#666666] uppercase tracking-wide">Website</p>
                                         <a
                                             href={selectedPlace.website}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-sm font-medium text-gray-900 hover:text-teal-600 transition-colors truncate block"
+                                            className="text-sm font-medium text-white hover:text-[#DA291C] transition-colors truncate block"
                                         >
                                             {selectedPlace.website.replace(/^https?:\/\//, '')}
                                             <ExternalLink className="inline h-3 w-3 ml-1" />
@@ -1577,13 +1573,13 @@ export default function MarketDiscovery() {
                         {selectedPlace.openingHours && selectedPlace.openingHours.length > 0 && (
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-gray-500" />
-                                    <h4 className="text-sm font-medium text-gray-900">Opening Hours</h4>
+                                    <Clock className="h-4 w-4 text-[#666666]" />
+                                    <h4 className="text-sm font-medium text-white">Opening Hours</h4>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
+                                <div className="bg-[#111111] rounded-[2px] p-3 border border-[#1A1A1A]">
                                     <div className="space-y-1">
                                         {selectedPlace.openingHours.slice(0, 7).map((hours, index) => (
-                                            <p key={index} className="text-xs text-gray-600">
+                                            <p key={index} className="text-xs text-[#888888]">
                                                 {hours}
                                             </p>
                                         ))}
@@ -1595,10 +1591,10 @@ export default function MarketDiscovery() {
                         {/* Categories */}
                         {selectedPlace.categories && selectedPlace.categories.length > 0 && (
                             <div className="space-y-2">
-                                <h4 className="text-sm font-medium text-gray-900">Categories</h4>
+                                <h4 className="text-sm font-medium text-white">Categories</h4>
                                 <div className="flex flex-wrap gap-1">
                                     {selectedPlace.categories.slice(0, 5).map((category, index) => (
-                                        <Badge key={index} variant="outline" className="text-xs">
+                                        <Badge key={index} variant="outline" className="text-[10px] border-[#1A1A1A] text-[#888888] rounded-[2px]">
                                             {category}
                                         </Badge>
                                     ))}
@@ -1611,8 +1607,7 @@ export default function MarketDiscovery() {
                             {selectedPlace.phone && (
                                 <Button
                                     asChild
-                                    className="flex-1"
-                                    style={{ backgroundColor: colors.primary }}
+                                    className="flex-1 bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase font-black tracking-widest rounded-[2px]"
                                 >
                                     <a href={`tel:${selectedPlace.phone}`}>
                                         <Phone className="h-4 w-4 mr-2" />
@@ -1624,7 +1619,7 @@ export default function MarketDiscovery() {
                                 <Button
                                     asChild
                                     variant="outline"
-                                    className="flex-1"
+                                    className="flex-1 border-[#1A1A1A] text-[#888888] rounded-[2px]"
                                 >
                                     <a href={selectedPlace.website} target="_blank" rel="noopener noreferrer">
                                         <Globe className="h-4 w-4 mr-2" />
@@ -1638,7 +1633,7 @@ export default function MarketDiscovery() {
                         <Button
                             asChild
                             variant="outline"
-                            className="w-full"
+                            className="w-full border-[#1A1A1A] text-[#888888] rounded-[2px]"
                         >
                             <a
                                 href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.location.lat},${selectedPlace.location.lng}`}

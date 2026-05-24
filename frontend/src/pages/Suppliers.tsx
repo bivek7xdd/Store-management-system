@@ -74,8 +74,8 @@ export default function Suppliers() {
             <div className="space-y-6 pb-24 lg:pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Supply Chain</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">Vendor Directory</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Supply Chain</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">Vendor Directory</h1>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,7 +103,7 @@ export default function Suppliers() {
                 <div className="text-center space-y-3">
                     <Truck className="h-10 w-10 text-[#DA291C] mx-auto" />
                     <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Failed to load suppliers</p>
-                    <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Please try again later</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Please try again later</p>
                 </div>
             </div>
         );
@@ -114,8 +114,8 @@ export default function Suppliers() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Supply Chain</p>
-                    <h1 className="text-[22px] font-medium text-white tracking-tight">Vendor Directory</h1>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Supply Chain</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Vendor Directory</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <OfflineIndicator
@@ -152,14 +152,14 @@ export default function Suppliers() {
             {/* Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Vendors</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Vendors</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">{suppliers?.length || 0}</h2>
                         <Truck className="h-5 w-5 text-[#DA291C]" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Products</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Products</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">
                             {suppliers?.reduce((sum, s) => sum + (s.product_count || 0), 0) || 0}
@@ -168,7 +168,7 @@ export default function Suppliers() {
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Low Stock Alerts</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Low Stock Alerts</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">
                             {suppliers?.reduce((sum, s) => sum + (s.low_stock_count ?? 0), 0) || 0}
@@ -196,13 +196,13 @@ export default function Suppliers() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] min-w-[140px]">
                                         <SupplierDialog supplier={supplier} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["suppliers"] })}>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#CCCCCC] hover:text-white focus:text-white focus:bg-[#1A1A1A] rounded-[1px] cursor-pointer">
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#CCCCCC] hover:text-white focus:text-white focus:bg-[#1A1A1A] rounded-[2px] cursor-pointer">
                                                 <Pencil className="mr-2 h-3.5 w-3.5" />
                                                 Edit
                                             </DropdownMenuItem>
                                         </SupplierDialog>
                                         <DropdownMenuItem
-                                            className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#DA291C] hover:text-[#DA291C] focus:text-[#DA291C] focus:bg-[#DA291C]/10 rounded-[1px] cursor-pointer"
+                                            className="text-[11px] font-bold uppercase tracking-[0.5px] text-[#DA291C] hover:text-[#DA291C] focus:text-[#DA291C] focus:bg-[#DA291C]/10 rounded-[2px] cursor-pointer"
                                             onClick={() => {
                                                 setSupplierToDelete(supplier.id);
                                                 setDeleteDialogOpen(true);
@@ -229,7 +229,7 @@ export default function Suppliers() {
                                 <div className="flex flex-wrap gap-2 mb-4">
                                     <div className="flex items-center gap-1.5 px-2 py-1 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
                                         <span className="text-[12px] font-bold text-white">{supplier.product_count || 0}</span>
-                                        <span className="text-[9px] uppercase tracking-[1px] text-[#555555] font-black">Products</span>
+                                        <span className="text-[9px] uppercase tracking-[1px] text-[#888888] font-black">Products</span>
                                     </div>
                                     {(supplier.low_stock_count ?? 0) > 0 && (
                                         <div className="flex items-center gap-1.5 px-2 py-1 bg-[#DA291C]/10 border border-[#DA291C]/20 rounded-[2px]">
@@ -249,13 +249,13 @@ export default function Suppliers() {
                                     )}
                                     {supplier.phone_number && (
                                         <div className="flex items-center gap-2 text-[#888888]">
-                                            <Phone className="h-3 w-3 text-[#555555] shrink-0" />
+                                            <Phone className="h-3 w-3 text-[#888888] shrink-0" />
                                             <span className="text-[11px]">{supplier.phone_number}</span>
                                         </div>
                                     )}
                                     {supplier.email && (
                                         <div className="flex items-center gap-2 text-[#888888]">
-                                            <Mail className="h-3 w-3 text-[#555555] shrink-0" />
+                                            <Mail className="h-3 w-3 text-[#888888] shrink-0" />
                                             <span className="text-[11px] truncate">{supplier.email}</span>
                                         </div>
                                     )}
@@ -270,7 +270,7 @@ export default function Suppliers() {
                         <Truck className="h-7 w-7 text-[#1A1A1A]" />
                     </div>
                     <h3 className="text-[13px] font-bold text-white uppercase tracking-[1px] mb-2">No Vendors Registered</h3>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[0.5px] mb-8">Add your first vendor to track supply chain sources</p>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[0.5px] mb-8">Add your first vendor to track supply chain sources</p>
                     <SupplierDialog onSuccess={() => queryClient.invalidateQueries({ queryKey: ["suppliers"] })}>
                         <Button className="h-10 px-6 rounded-[2px] bg-white text-black text-[11px] font-bold uppercase tracking-[1px] hover:bg-[#EEEEEE] transition-colors">
                             <Plus className="h-3.5 w-3.5 mr-2" />

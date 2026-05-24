@@ -152,7 +152,7 @@ export default function SupplierDetails() {
     if (!supplier) return (
         <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
             <Truck className="h-10 w-10 text-[#1A1A1A]" />
-            <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#555555]">Vendor Not Found</span>
+            <span className="text-[11px] font-bold uppercase tracking-[2px] text-[#888888]">Vendor Not Found</span>
         </div>
     );
 
@@ -189,9 +189,9 @@ export default function SupplierDetails() {
                         <ArrowLeft className="h-4 w-4" />
                     </button>
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Vendor Profile</p>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Vendor Profile</p>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-[22px] font-medium text-white tracking-tight">{supplier.name}</h1>
+                            <h1 className="text-[24px] font-bold text-white tracking-tight">{supplier.name}</h1>
                             <Badge className="rounded-[2px] bg-[#DA291C] text-white text-[9px] font-black uppercase tracking-[1px] border-none px-2 py-0.5 h-auto">
                                 Vendor
                             </Badge>
@@ -227,7 +227,7 @@ export default function SupplierDetails() {
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">{stat.title}</p>
+                                        <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">{stat.title}</p>
                                         <h3 className="text-2xl font-bold text-white tracking-tight">{stat.value}</h3>
                                     </div>
                                     <div className={`${stat.accent} group-hover:scale-110 transition-transform duration-300`}>
@@ -249,10 +249,10 @@ export default function SupplierDetails() {
                         <div className="p-6 space-y-6">
                             <div className="flex items-start gap-4">
                                 <div className="h-8 w-8 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center shrink-0">
-                                    <Mail className="h-3.5 w-3.5 text-[#555555]" />
+                                    <Mail className="h-3.5 w-3.5 text-[#888888]" />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Email Address</p>
+                                    <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Email Address</p>
                                     {supplier.email ? (
                                         <a href={`mailto:${supplier.email}`} className="text-[12px] text-[#DA291C] hover:underline font-medium break-all">
                                             {supplier.email}
@@ -264,10 +264,10 @@ export default function SupplierDetails() {
                             </div>
                             <div className="flex items-start gap-4">
                                 <div className="h-8 w-8 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center shrink-0">
-                                    <Phone className="h-3.5 w-3.5 text-[#555555]" />
+                                    <Phone className="h-3.5 w-3.5 text-[#888888]" />
                                 </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Phone Number</p>
+                                    <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Phone Number</p>
                                     {supplier.phone_number ? (
                                         <a href={`tel:${supplier.phone_number}`} className="text-[12px] text-white font-medium">
                                             {supplier.phone_number}
@@ -279,10 +279,10 @@ export default function SupplierDetails() {
                             </div>
                             <div className="flex items-start gap-4">
                                 <div className="h-8 w-8 rounded-[2px] bg-[#0A0A0A] border border-[#1A1A1A] flex items-center justify-center shrink-0">
-                                    <MapPin className="h-3.5 w-3.5 text-[#555555]" />
+                                    <MapPin className="h-3.5 w-3.5 text-[#888888]" />
                                 </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Office Address</p>
+                                    <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Office Address</p>
                                     <p className="text-[12px] text-[#AAAAAA] leading-relaxed font-medium">
                                         {supplier.address || <span className="text-[#333333] italic">No address recorded</span>}
                                     </p>
@@ -303,45 +303,45 @@ export default function SupplierDetails() {
                             <div className="p-6 space-y-5">
                                 {(supplier)?.bank_name && (
                                     <div>
-                                        <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Bank</p>
+                                        <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Bank</p>
                                         <p className="text-[12px] text-white font-medium">{(supplier).bank_name}</p>
                                         {(supplier)?.branch && <p className="text-[11px] text-[#888888] mt-0.5">{(supplier).branch}</p>}
                                     </div>
                                 )}
                                 {(supplier)?.account_name && (
                                     <div>
-                                        <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Account Name</p>
+                                        <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Account Name</p>
                                         <p className="text-[12px] text-white font-medium">{(supplier).account_name}</p>
                                     </div>
                                 )}
                                 {(supplier)?.account_number && (
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Account Number</p>
+                                            <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Account Number</p>
                                             <p className="text-[12px] text-white font-mono font-medium">{(supplier).account_number}</p>
                                         </div>
                                         <button onClick={() => { navigator.clipboard.writeText((supplier).account_number); toast.success("Copied"); }}
-                                            className="p-1.5 hover:bg-[#1A1A1A] rounded-[2px] text-[#555555] hover:text-white transition-colors">
+                                            className="p-1.5 hover:bg-[#1A1A1A] rounded-[2px] text-[#888888] hover:text-white transition-colors">
                                             <Copy className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 )}
                                 {(supplier)?.swift_code && (
                                     <div>
-                                        <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">SWIFT Code</p>
+                                        <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">SWIFT Code</p>
                                         <p className="text-[12px] text-white font-mono font-medium">{(supplier).swift_code}</p>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[#1A1A1A]">
                                     {(supplier)?.esewa_id && (
                                         <div>
-                                            <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">eSewa</p>
+                                            <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">eSewa</p>
                                             <p className="text-[12px] text-emerald-400 font-medium">{(supplier).esewa_id}</p>
                                         </div>
                                     )}
                                     {(supplier)?.khalti_id && (
                                         <div>
-                                            <p className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1">Khalti</p>
+                                            <p className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1">Khalti</p>
                                             <p className="text-[12px] text-purple-400 font-medium">{(supplier).khalti_id}</p>
                                         </div>
                                     )}
@@ -358,10 +358,10 @@ export default function SupplierDetails() {
                         <div className="p-5 border-b border-[#1A1A1A] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                                 <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Associated Products</p>
-                                <p className="text-[10px] text-[#555555] uppercase tracking-[0.5px] mt-0.5">All items sourced from this vendor</p>
+                                <p className="text-[10px] text-[#888888] uppercase tracking-[0.5px] mt-0.5">All items sourced from this vendor</p>
                             </div>
                             <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555]" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#888888]" />
                                 <input
                                     placeholder="SEARCH BY NAME OR BARCODE..."
                                     value={searchTerm}
@@ -378,7 +378,7 @@ export default function SupplierDetails() {
                                     {/* Table Header */}
                                     <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 px-6 py-3 bg-[#0A0A0A] border-b border-[#1A1A1A] sticky top-0 z-10">
                                         {["Product", "Stock", "Price", ""].map(h => (
-                                            <span key={h} className={`text-[9px] font-black uppercase tracking-widest text-[#555555] ${h === 'Price' ? 'text-right' : ''}`}>{h}</span>
+                                            <span key={h} className={`text-[9px] font-black uppercase tracking-widest text-[#888888] ${h === 'Price' ? 'text-right' : ''}`}>{h}</span>
                                         ))}
                                     </div>
 
@@ -390,14 +390,14 @@ export default function SupplierDetails() {
                                                 <div key={product.id} className="group grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 items-center hover:bg-[#0A0A0A] transition-colors">
                                                     <div className="flex flex-col">
                                                         <span className="text-[13px] font-bold text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</span>
-                                                        <span className="text-[10px] text-[#555555] font-medium">{typeof product.barcode === 'string' ? product.barcode : product.barcode?.String || "No Barcode"}</span>
+                                                        <span className="text-[10px] text-[#888888] font-medium">{typeof product.barcode === 'string' ? product.barcode : product.barcode?.String || "No Barcode"}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <span className={`text-[13px] font-bold ${isLowStock ? "text-amber-500" : "text-white"}`}>
                                                             {product.stock_quantity}
                                                         </span>
                                                         {isLowStock && (
-                                                            <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[8px] uppercase font-black py-0 h-4 rounded-[1px]">Low</Badge>
+                                                            <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[8px] uppercase font-black py-0 h-4 rounded-[2px]">Low</Badge>
                                                         )}
                                                     </div>
                                                     <div className="text-right">
@@ -406,7 +406,7 @@ export default function SupplierDetails() {
                                                     <div className="flex justify-end">
                                                         <Link 
                                                             to="/inventory"
-                                                            className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-[#DA291C] hover:border-[#DA291C]/30 transition-colors"
+                                                            className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-[#DA291C] hover:border-[#DA291C]/30 transition-colors"
                                                         >
                                                             <ExternalLink className="h-3.5 w-3.5" />
                                                         </Link>
@@ -422,7 +422,7 @@ export default function SupplierDetails() {
                                         <Package className="h-7 w-7 text-[#1A1A1A]" />
                                     </div>
                                     <h3 className="text-[13px] font-bold text-white uppercase tracking-[1px] mb-2">No Products Found</h3>
-                                    <p className="text-[11px] text-[#555555] uppercase tracking-[0.5px] max-w-xs">
+                                    <p className="text-[11px] text-[#888888] uppercase tracking-[0.5px] max-w-xs">
                                         {searchTerm ? `No products match "${searchTerm}"` : "This vendor hasn't been associated with any products yet."}
                                     </p>
                                     {!searchTerm && (
@@ -448,7 +448,7 @@ export default function SupplierDetails() {
                         <div className="p-5 border-b border-[#1A1A1A] flex items-center justify-between">
                             <div>
                                 <p className="text-[12px] font-bold text-white uppercase tracking-[1px]">Payables & Payment History</p>
-                                <p className="text-[10px] text-[#555555] uppercase tracking-[0.5px] mt-0.5">Outstanding invoices and recorded payments</p>
+                                <p className="text-[10px] text-[#888888] uppercase tracking-[0.5px] mt-0.5">Outstanding invoices and recorded payments</p>
                             </div>
                             {supplierOutstanding > 0 && (
                                 <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-black uppercase tracking-widest py-1 h-6 rounded-[2px]">
@@ -461,7 +461,7 @@ export default function SupplierDetails() {
                             <div>
                                 <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.5fr] gap-4 px-6 py-3 bg-[#0A0A0A] border-b border-[#1A1A1A]">
                                     {["Invoice", "Total", "Paid", "Owed", "Status", ""].map(h => (
-                                        <span key={h} className={`text-[9px] font-black uppercase tracking-widest text-[#555555] ${h === 'Total' || h === 'Paid' || h === 'Owed' ? 'text-right' : ''}`}>{h}</span>
+                                        <span key={h} className={`text-[9px] font-black uppercase tracking-widest text-[#888888] ${h === 'Total' || h === 'Paid' || h === 'Owed' ? 'text-right' : ''}`}>{h}</span>
                                     ))}
                                 </div>
                                 <div className="divide-y divide-[#1A1A1A]">
@@ -472,7 +472,7 @@ export default function SupplierDetails() {
                                             <div key={payable.id} className="group grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 items-center hover:bg-[#0A0A0A] transition-colors">
                                                 <div>
                                                     <span className="text-[13px] font-bold text-white uppercase tracking-tight">{payable.invoice_number || `INV-${payable.id.substring(0, 8)}`}</span>
-                                                    <p className="text-[10px] text-[#555555] mt-0.5">{payable.description || "No description"}</p>
+                                                    <p className="text-[10px] text-[#888888] mt-0.5">{payable.description || "No description"}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="font-mono text-[13px] text-white font-bold">रू {Number(payable.amount_owed).toLocaleString()}</span>
@@ -484,7 +484,7 @@ export default function SupplierDetails() {
                                                     <span className={`font-mono text-[13px] font-bold ${owed > 0 ? 'text-amber-400' : 'text-[#333333]'}`}>रू {owed.toLocaleString()}</span>
                                                 </div>
                                                 <div>
-                                                    <Badge className={`text-[8px] uppercase font-black py-0 h-5 rounded-[1px] ${isPaid ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
+                                                    <Badge className={`text-[8px] uppercase font-black py-0 h-5 rounded-[2px] ${isPaid ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
                                                         {isPaid ? "Paid" : "Pending"}
                                                     </Badge>
                                                 </div>
@@ -492,7 +492,7 @@ export default function SupplierDetails() {
                                                     {!isPaid && (
                                                         <button
                                                             onClick={() => { setSelectedPayable(payable); setPaymentDialogOpen(true); }}
-                                                            className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#555555] hover:text-[#DA291C] hover:border-[#DA291C]/30 transition-colors"
+                                                            className="h-7 w-7 rounded-[2px] border border-[#1A1A1A] flex items-center justify-center text-[#888888] hover:text-[#DA291C] hover:border-[#DA291C]/30 transition-colors"
                                                         >
                                                             <Wallet className="h-3.5 w-3.5" />
                                                         </button>
@@ -509,7 +509,7 @@ export default function SupplierDetails() {
                                     <CreditCard className="h-7 w-7 text-[#1A1A1A]" />
                                 </div>
                                 <h3 className="text-[13px] font-bold text-white uppercase tracking-[1px] mb-2">No Payables Recorded</h3>
-                                <p className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">No invoices or payment records found for this supplier.</p>
+                                <p className="text-[11px] text-[#888888] uppercase tracking-[0.5px]">No invoices or payment records found for this supplier.</p>
                             </div>
                         )}
                     </div>
@@ -557,14 +557,14 @@ export default function SupplierDetails() {
                     </DialogHeader> 
                     <div className="space-y-4 py-4">
                         <div>
-                            <label className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1.5 block">Amount (रू)</label>
+                            <label className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1.5 block">Amount (रू)</label>
                             <input value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} type="number" step="0.01"
                                 max={selectedPayable ? Number(selectedPayable.amount_owed) - Number(selectedPayable.amount_paid) : 0}
                                 className="w-full h-10 px-4 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[12px] font-bold text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors"
                                 placeholder="Enter payment amount" />
                         </div>
                         <div>
-                            <label className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1.5 block">Payment Method</label>
+                            <label className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1.5 block">Payment Method</label>
                             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                                 <SelectTrigger className="w-full h-10 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[12px] font-bold text-white focus:outline-none focus:border-[#DA291C]">
                                     <SelectValue />
@@ -579,7 +579,7 @@ export default function SupplierDetails() {
                             </Select>
                         </div>
                         <div>
-                            <label className="text-[9px] font-black text-[#555555] uppercase tracking-[1.5px] mb-1.5 block">Notes (Optional)</label>
+                            <label className="text-[9px] font-black text-[#888888] uppercase tracking-[1.5px] mb-1.5 block">Notes (Optional)</label>
                             <textarea value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} rows={2}
                                 className="w-full px-4 py-2 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[12px] text-white placeholder:text-[#333333] focus:outline-none focus:border-[#DA291C] transition-colors resize-none"
                                 placeholder="Reference number, remarks..." />

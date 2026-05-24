@@ -110,8 +110,8 @@ export default function CategoryDetails() {
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Warehouse</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">{category.name}</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Warehouse</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">{category.name}</h1>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -134,21 +134,21 @@ export default function CategoryDetails() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Products</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Products</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">{stats?.product_count || 0}</h2>
                         <Archive className="h-5 w-5 text-[#DA291C]" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Stock</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Stock</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">{stats?.total_stock || 0}</h2>
                         <Package className="h-5 w-5 text-emerald-500" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Value</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Value</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">
                             रू{Number(stats?.total_value || 0).toLocaleString()}
@@ -167,13 +167,13 @@ export default function CategoryDetails() {
                             <Package className="h-4 w-4 text-[#DA291C]" />
                         </div>
                         <div>
-                            <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black">Name</p>
+                            <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black">Name</p>
                             <p className="text-[14px] font-bold text-white uppercase tracking-tight">{category.name}</p>
                         </div>
                     </div>
                     {category.description && (
                         <div className="border-t border-[#1A1A1A] pt-4">
-                            <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Description</p>
+                            <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Description</p>
                             <p className="text-[12px] text-[#888888] leading-relaxed">{category.description}</p>
                         </div>
                     )}
@@ -186,7 +186,7 @@ export default function CategoryDetails() {
                 <div className="border border-[#1A1A1A] rounded-[2px] bg-[#0A0A0A] overflow-hidden">
                     <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 bg-[#111111] border-b border-[#1A1A1A]">
                         {["Product", "Price", "Stock", "Status", ""].map(h => (
-                            <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#555555]">{h}</span>
+                            <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#888888]">{h}</span>
                         ))}
                     </div>
 
@@ -199,7 +199,7 @@ export default function CategoryDetails() {
                                             <img src={product.image_url.String} alt={product.name} className="h-10 w-10 rounded-[2px] object-cover border border-[#1A1A1A]" />
                                         ) : (
                                             <div className="h-10 w-10 bg-[#1A1A1A] rounded-[2px] flex items-center justify-center">
-                                                <Package className="h-4 w-4 text-[#555555]" />
+                                                <Package className="h-4 w-4 text-[#888888]" />
                                             </div>
                                         )}
                                         <p className="text-sm font-bold text-white uppercase tracking-tight">{product.name}</p>
@@ -232,7 +232,7 @@ export default function CategoryDetails() {
                                     <div className="flex justify-end">
                                         <Link
                                             to={`/inventory/products/${product.id}`}
-                                            className="text-[10px] text-[#555555] hover:text-white uppercase tracking-[1px] font-bold transition-colors opacity-0 group-hover:opacity-100"
+                                            className="text-[10px] text-[#888888] hover:text-white uppercase tracking-[1px] font-bold transition-colors opacity-0 group-hover:opacity-100"
                                         >
                                             View
                                         </Link>
@@ -242,7 +242,7 @@ export default function CategoryDetails() {
                         ) : (
                             <div className="py-20 text-center space-y-4">
                                 <Package className="h-12 w-12 text-[#1A1A1A] mx-auto" />
-                                <p className="text-[10px] font-black uppercase tracking-[2px] text-[#555555]">No Products Found</p>
+                                <p className="text-[10px] font-black uppercase tracking-[2px] text-[#888888]">No Products Found</p>
                             </div>
                         )}
                     </div>

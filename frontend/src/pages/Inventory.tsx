@@ -12,6 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -427,9 +437,16 @@ export default function Inventory() {
     setAddDialogOpen(true);
   };
 
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+
   const handleDeleteClick = (product: Product) => {
-    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
-      deleteProductMutation.mutate(product.id);
+    setDeleteTarget(product);
+  };
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      deleteProductMutation.mutate(deleteTarget.id);
+      setDeleteTarget(null);
     }
   };
 
@@ -684,7 +701,7 @@ export default function Inventory() {
 
   if (productsLoading || authLoading) {
     return (
-      <div className="space-y-6 pb-20 lg:pb-6">
+      <div className="space-y-6 pb-24 lg:pb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Warehouse</p>
@@ -714,7 +731,7 @@ export default function Inventory() {
   const isSubmitting = createProductMutation.isPending || updateProductMutation.isPending;
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
+    <div className="space-y-6 pb-24 lg:pb-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="inventory-header">
         <div>
@@ -1271,6 +1288,29 @@ export default function Inventory() {
         onOpenChange={setSearchScannerOpen}
         onScanSuccess={handleSearchScanSuccess}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-[12px] text-[#888888] leading-relaxed">
+              Are you sure you want to delete <span className="text-white font-medium">&quot;{deleteTarget?.name}&quot;</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-transparent border-[#1A1A1A] hover:bg-[#1A1A1A] text-white text-[10px] uppercase font-black tracking-widest h-10 rounded-[2px]">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-[#DA291C] text-white text-[10px] uppercase font-black tracking-widest h-10 px-6 rounded-[2px] hover:bg-[#B01E0A] transition-colors"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

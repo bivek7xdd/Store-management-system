@@ -138,8 +138,8 @@ export default function Dashboard() {
       {/* Header */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Overview</p>
-          <h1 className="text-[22px] font-medium text-white tracking-tight">Dashboard</h1>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Overview</p>
+          <h1 className="text-[24px] font-bold text-white tracking-tight">Dashboard</h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Range Selector */}
@@ -214,7 +214,7 @@ export default function Dashboard() {
             {/* Sales */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">{rangeLabel} Sales</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">{rangeLabel} Sales</p>
                 <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
                   <TrendingUp className="h-4 w-4 text-[#DA291C]" />
                 </div>
@@ -228,14 +228,14 @@ export default function Dashboard() {
                   {stats.sales.growth >= 0 ? "+" : ""}{stats.sales.growth.toFixed(1)}% vs prev. period
                 </p>
               ) : (
-                <p className="text-[12px] text-[#555555]"><CountUp to={stats?.sales?.count ?? 0} /> transactions</p>
+                <p className="text-[12px] text-[#888888]"><CountUp to={stats?.sales?.count ?? 0} /> transactions</p>
               )}
             </div>
 
             {/* Debts */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Outstanding Debts</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Outstanding Debts</p>
                 <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
                   <Users className="h-4 w-4 text-amber-400" />
                 </div>
@@ -243,13 +243,13 @@ export default function Dashboard() {
               <div className="text-[24px] font-medium text-white mb-1">
                 रू <CountUp to={stats?.debts?.total_outstanding ?? 0} />
               </div>
-              <p className="text-[12px] text-[#555555]"><CountUp to={stats?.debts?.total_debtors ?? 0} /> customers</p>
+              <p className="text-[12px] text-[#888888]"><CountUp to={stats?.debts?.total_debtors ?? 0} /> customers</p>
             </div>
 
             {/* Low Stock */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Low Stock</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Low Stock</p>
                 <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
                   <AlertTriangle className="h-4 w-4 text-amber-400" />
                 </div>
@@ -263,7 +263,7 @@ export default function Dashboard() {
             {/* Near Expiry */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Near Expiry</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Near Expiry</p>
                 <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
                   <Calendar className="h-4 w-4 text-[#DA291C]" />
                 </div>
@@ -286,7 +286,7 @@ export default function Dashboard() {
             {/* Total Expenses */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">{rangeLabel} Expenses</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">{rangeLabel} Expenses</p>
                 <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
                   <TrendingDown className="h-4 w-4 text-[#DA291C]" />
                 </div>
@@ -294,13 +294,13 @@ export default function Dashboard() {
               <div className="text-[24px] font-medium text-white mb-1">
                 रू <CountUp to={expenseSummary?.summary?.total_amount ?? 0} />
               </div>
-              <p className="text-[12px] text-[#555555]">{expenseSummary?.summary?.total_count ?? 0} transactions</p>
+              <p className="text-[12px] text-[#888888]">{expenseSummary?.summary?.total_count ?? 0} transactions</p>
             </div>
 
             {/* Net Profit */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Net Profit</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Net Profit</p>
                 <div className="h-8 w-8 rounded-[2px] bg-emerald-900/30 flex items-center justify-center">
                   <DollarSign className="h-4 w-4 text-emerald-400" />
                 </div>
@@ -308,13 +308,13 @@ export default function Dashboard() {
               <div className="text-[24px] font-medium text-white mb-1">
                 रू <CountUp to={(stats?.profit?.gross_profit ?? 0) - (expenseSummary?.summary?.total_amount ?? 0)} />
               </div>
-              <p className="text-[12px] text-[#555555]">After expenses</p>
+              <p className="text-[12px] text-[#888888]">After expenses</p>
             </div>
 
             {/* Supplier Payables */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Supplier Owed</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Supplier Owed</p>
                 <div className="h-8 w-8 rounded-[2px] bg-amber-900/30 flex items-center justify-center">
                   <Users className="h-4 w-4 text-amber-400" />
                 </div>
@@ -322,13 +322,13 @@ export default function Dashboard() {
               <div className="text-[24px] font-medium text-white mb-1">
                 रू <CountUp to={payableSummary?.summary?.total_outstanding ?? 0} />
               </div>
-              <p className="text-[12px] text-[#555555]">{payableSummary?.summary?.total_count ?? 0} invoices</p>
+              <p className="text-[12px] text-[#888888]">{payableSummary?.summary?.total_count ?? 0} invoices</p>
             </div>
 
             {/* Overdue Payables */}
             <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 hover:border-[#303030] transition-colors">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Overdue</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Overdue</p>
                 <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
                   <AlertTriangle className="h-4 w-4 text-[#DA291C]" />
                 </div>
@@ -385,7 +385,7 @@ export default function Dashboard() {
                         <div className="flex-1 min-w-0">
                           <p className={`text-[13px] ${colors.text}`}>{insight.message}</p>
                           {insight.details && insight.details.length > 0 && (
-                            <p className="text-[11px] text-[#555555] mt-0.5">
+                            <p className="text-[11px] text-[#888888] mt-0.5">
                               {insight.details.slice(0, 3).join(", ")}
                               {insight.details.length > 3 ? ` +${insight.details.length - 3} more` : ""}
                             </p>
@@ -460,14 +460,14 @@ export default function Dashboard() {
         {/* Low Stock */}
         <SectionCard title="Low Stock Alerts" icon={AlertTriangle}>
           {loading ? <ListSkeleton /> : lowStockItems.length === 0 ? (
-            <p className="text-[13px] text-[#555555]">All items are well stocked.</p>
+            <p className="text-[13px] text-[#888888]">All items are well stocked.</p>
           ) : (
             <div className="space-y-2">
               {lowStockItems.slice(0, 3).map(product => (
                 <div key={product.id} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
                   <div>
                     <p className="text-[13px] text-white font-medium">{product.name}</p>
-                    <p className="text-[11px] text-[#555555]">Stock: {product.stock_quantity} units</p>
+                    <p className="text-[11px] text-[#888888]">Stock: {product.stock_quantity} units</p>
                   </div>
                   <span className="text-[10px] uppercase tracking-[1px] px-2 py-1 rounded-[2px] bg-amber-900/30 text-amber-400 border border-amber-800">Low</span>
                 </div>
@@ -484,7 +484,7 @@ export default function Dashboard() {
         {/* Near Expiry */}
         <SectionCard title="Near Expiry Products" icon={Calendar}>
           {loading ? <ListSkeleton /> : nearExpiryItems.length === 0 ? (
-            <p className="text-[13px] text-[#555555]">No products expiring soon.</p>
+            <p className="text-[13px] text-[#888888]">No products expiring soon.</p>
           ) : (
             <div className="space-y-2">
               {nearExpiryItems.slice(0, 3).map(product => {
@@ -494,7 +494,7 @@ export default function Dashboard() {
                   <div key={product.id} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
                     <div>
                       <p className="text-[13px] text-white font-medium">{product.name}</p>
-                      <p className="text-[11px] text-[#555555]">Expires: {new Date(expiresAt.Time).toLocaleDateString("en-NP")}</p>
+                      <p className="text-[11px] text-[#888888]">Expires: {new Date(expiresAt.Time).toLocaleDateString("en-NP")}</p>
                     </div>
                     <span className="text-[10px] uppercase tracking-[1px] px-2 py-1 rounded-[2px] bg-[#DA291C]/10 text-[#DA291C] border border-[#DA291C]/30">{days}d</span>
                   </div>
@@ -514,7 +514,7 @@ export default function Dashboard() {
       <motion.div variants={fadeUp} className="grid gap-3 lg:grid-cols-2">
         <SectionCard title="Top Selling Products" icon={Package}>
           {loading ? <ListSkeleton /> : !stats?.sales?.top_products?.length ? (
-            <p className="text-[13px] text-[#555555]">No sales data for this period.</p>
+            <p className="text-[13px] text-[#888888]">No sales data for this period.</p>
           ) : (
             <div className="space-y-2">
               {stats.sales.top_products.slice(0, 5).map((product, i) => (
@@ -532,18 +532,18 @@ export default function Dashboard() {
 
         <SectionCard title="Top Debtors" icon={Users}>
           {loading ? <ListSkeleton /> : !stats?.debts?.top_debtors?.length ? (
-            <p className="text-[13px] text-[#555555]">No outstanding debts.</p>
+            <p className="text-[13px] text-[#888888]">No outstanding debts.</p>
           ) : (
             <div className="space-y-2">
               {stats.debts.top_debtors.slice(0, 5).map((debtor, i) => (
                 <div key={i} className="flex items-center justify-between border border-[#1A1A1A] rounded-[2px] p-3 hover:bg-[#1A1A1A] transition-colors">
                   <div>
                     <p className="text-[13px] text-white font-medium">{debtor.customer_name}</p>
-                    <p className="text-[11px] text-[#555555]">{debtor.customer_phone}</p>
+                    <p className="text-[11px] text-[#888888]">{debtor.customer_phone}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[13px] font-medium text-[#DA291C]">रू {debtor.total_debt.toLocaleString()}</p>
-                    <p className="text-[10px] text-[#555555]">awaiting pay</p>
+                    <p className="text-[10px] text-[#888888]">awaiting pay</p>
                   </div>
                 </div>
               ))}
@@ -559,7 +559,7 @@ export default function Dashboard() {
       <motion.div variants={fadeUp}>
         <SectionCard title="Recent Transactions" icon={Receipt}>
           {loading ? <ListSkeleton rows={5} /> : !stats?.sales?.recent?.length ? (
-            <p className="text-[13px] text-[#555555]">No recent transactions.</p>
+            <p className="text-[13px] text-[#888888]">No recent transactions.</p>
           ) : (
             <div className="space-y-2">
               {stats.sales.recent.map(sale => {
@@ -570,7 +570,7 @@ export default function Dashboard() {
                       <div className={`h-2 w-2 rounded-full shrink-0 ${c.dot}`} />
                       <div>
                         <p className="text-[13px] text-white">{sale.customer_name || "Walk-in Customer"}</p>
-                        <p className="text-[11px] text-[#555555]">
+                        <p className="text-[11px] text-[#888888]">
                           {new Date(sale.sale_date).toLocaleString("en-NP", { dateStyle: "medium", timeStyle: "short" })}
                         </p>
                       </div>

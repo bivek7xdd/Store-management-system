@@ -114,8 +114,8 @@ export default function SupplierPayables() {
             <div className="space-y-6 pb-24 lg:pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">Supplier Payables</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">Supplier Payables</h1>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -130,8 +130,8 @@ export default function SupplierPayables() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                    <h1 className="text-[22px] font-medium text-white tracking-tight">Supplier Payables</h1>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Supplier Payables</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -159,21 +159,21 @@ export default function SupplierPayables() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Outstanding</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Outstanding</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-[#DA291C]">रू {totalOutstanding.toLocaleString()}</h2>
                         <CreditCard className="h-5 w-5 text-[#DA291C]" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Overdue</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Overdue</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-amber-400">रू {totalOverdue.toLocaleString()}</h2>
                         <AlertTriangle className="h-5 w-5 text-amber-400" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Due This Week</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Due This Week</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-white">रू {dueThisWeek.toLocaleString()}</h2>
                         <Truck className="h-5 w-5 text-[#888888]" />
@@ -185,7 +185,7 @@ export default function SupplierPayables() {
             <div className="border border-[#1A1A1A] rounded-[2px] bg-[#0A0A0A] overflow-hidden">
                 <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_0.5fr] gap-4 px-6 py-4 bg-[#111111] border-b border-[#1A1A1A]">
                     {["Supplier", "Description", "Owed", "Paid", "Balance", "Due Date", ""].map(h => (
-                        <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#555555]">{h}</span>
+                        <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#888888]">{h}</span>
                     ))}
                 </div>
 
@@ -193,7 +193,7 @@ export default function SupplierPayables() {
                     {payableList.length === 0 ? (
                         <div className="py-20 text-center space-y-4">
                             <CreditCard className="h-12 w-12 text-[#1A1A1A] mx-auto" />
-                            <p className="text-[10px] font-black uppercase tracking-[2px] text-[#555555]">No Outstanding Payables</p>
+                            <p className="text-[10px] font-black uppercase tracking-[2px] text-[#888888]">No Outstanding Payables</p>
                         </div>
                     ) : (
                         payableList.map((payable: SupplierPayable) => {
@@ -207,7 +207,7 @@ export default function SupplierPayables() {
                                         </div>
                                         <div>
                                             <p className="text-[13px] text-white font-bold uppercase tracking-tight">{payable.supplier_name}</p>
-                                            <p className="text-[10px] text-[#555555]">{payable.supplier_phone}</p>
+                                            <p className="text-[10px] text-[#888888]">{payable.supplier_phone}</p>
                                         </div>
                                     </div>
                                     <span className="text-[12px] text-[#888888] truncate">{payable.description || "—"}</span>
@@ -244,11 +244,11 @@ export default function SupplierPayables() {
                 <DialogContent className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">Record Purchase</DialogTitle>
-                        <DialogDescription className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">Record a supplier purchase on credit</DialogDescription>
+                        <DialogDescription className="text-[11px] text-[#888888] uppercase tracking-[0.5px]">Record a supplier purchase on credit</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleCreatePayable} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Supplier</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Supplier</label>
                             <Select name="supplier_id" required>
                                 <SelectTrigger className="h-10 bg-[#111111] border-[#1A1A1A] rounded-[2px] text-[13px] text-white">
                                     <SelectValue placeholder="Select supplier" />
@@ -261,17 +261,17 @@ export default function SupplierPayables() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Amount Owed (रू)</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Amount Owed (रू)</label>
                             <input name="amount_owed" type="number" step="0.01" placeholder="0.00" required
-                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333]" />
+                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#333333]" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Description</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Description</label>
                             <input name="description" placeholder="e.g., 100 units of Product X"
-                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333]" />
+                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#333333]" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Due Date</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Due Date</label>
                             <input name="due_date" type="date" required
                                 className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white focus:outline-none focus:border-[#333333]" />
                         </div>
@@ -295,18 +295,18 @@ export default function SupplierPayables() {
                 <DialogContent className="bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px] max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">Make Payment</DialogTitle>
-                        <DialogDescription className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">
+                        <DialogDescription className="text-[11px] text-[#888888] uppercase tracking-[0.5px]">
                             {selectedPayable?.supplier_name} — Balance: रू {(Number(selectedPayable?.amount_owed) - Number(selectedPayable?.amount_paid)).toLocaleString()}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handlePayment} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Payment Amount (रू)</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Payment Amount (रू)</label>
                             <input name="amount" type="number" step="0.01" max={selectedPayable ? Number(selectedPayable.amount_owed) - Number(selectedPayable.amount_paid) : 0} placeholder="0.00" required
-                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333]" />
+                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#333333]" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Payment Method</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Payment Method</label>
                             <Select name="payment_method" defaultValue="cash">
                                 <SelectTrigger className="h-10 bg-[#111111] border-[#1A1A1A] rounded-[2px] text-[13px] text-white">
                                     <SelectValue />
@@ -320,9 +320,9 @@ export default function SupplierPayables() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-widest font-black text-[#555555]">Notes</label>
+                            <label className="text-[10px] uppercase tracking-widest font-black text-[#888888]">Notes</label>
                             <input name="notes" placeholder="Optional notes"
-                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#555555] focus:outline-none focus:border-[#333333]" />
+                                className="w-full h-10 px-3 bg-[#111111] border border-[#1A1A1A] rounded-[2px] text-[13px] text-white placeholder:text-[#888888] focus:outline-none focus:border-[#333333]" />
                         </div>
                         <DialogFooter>
                             <button type="button" onClick={() => { setPaymentDialogOpen(false); setSelectedPayable(null); }}

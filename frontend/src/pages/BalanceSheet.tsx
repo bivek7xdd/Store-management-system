@@ -22,7 +22,7 @@ export default function BalanceSheet() {
     });
 
     const { data: balanceSheetData, isLoading: balanceLoading } = useQuery({
-        queryKey: ["balanceSheet"],
+        queryKey: ["balanceSheet", dateRange],
         queryFn: async () => {
             const [assets, liabilities] = await Promise.all([
                 api.get("/reports/balance-sheet/assets"),
@@ -40,8 +40,8 @@ export default function BalanceSheet() {
             <div className="space-y-6 pb-24 lg:pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">Balance Sheet</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">Balance Sheet</h1>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -74,8 +74,8 @@ export default function BalanceSheet() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                    <h1 className="text-[22px] font-medium text-white tracking-tight">Balance Sheet</h1>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Balance Sheet</h1>
                 </div>
                 <Select value={dateRange} onValueChange={setDateRange}>
                     <SelectTrigger className="w-28 h-9 text-[11px] rounded-[2px] bg-[#111111] border-[#1A1A1A] text-[#8F8F8F] uppercase tracking-[0.5px]">

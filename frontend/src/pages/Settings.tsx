@@ -113,32 +113,32 @@ export default function Settings() {
   const labelCls = "text-[11px] font-bold uppercase tracking-[1.5px] text-[#555555]";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20 lg:pb-10">
+    <div className="max-w-4xl mx-auto space-y-8 pb-24 lg:pb-8">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-white uppercase italic">System Configuration</h1>
+        <h1 className="text-[24px] font-bold tracking-tight text-white">System Configuration</h1>
         <div className="h-0.5 w-12 bg-[#DA291C]" />
         <p className="text-[#888888] mt-2 text-sm uppercase tracking-[0.5px]">Manage enterprise preferences and security protocols.</p>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="flex w-full mb-10 bg-[#0A0A0A] border border-[#262626] p-1 rounded-[2px] h-12 overflow-x-auto hide-scrollbar space-x-1">
-          <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
+          <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-2 rounded-[2px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
             <User className="h-3.5 w-3.5 shrink-0" />
             <span>Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="store" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
+          <TabsTrigger value="store" className="flex-1 flex items-center justify-center gap-2 rounded-[2px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
             <Store className="h-3.5 w-3.5 shrink-0" />
             <span>Business</span>
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
+          <TabsTrigger value="security" className="flex-1 flex items-center justify-center gap-2 rounded-[2px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[120px] uppercase text-[10px] font-bold tracking-[1.5px]">
             <Shield className="h-3.5 w-3.5 shrink-0" />
             <span>Security</span>
           </TabsTrigger>
-          <TabsTrigger value="online" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[140px] uppercase text-[10px] font-bold tracking-[1.5px]">
+          <TabsTrigger value="online" className="flex-1 flex items-center justify-center gap-2 rounded-[2px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[140px] uppercase text-[10px] font-bold tracking-[1.5px]">
             <Globe className="h-3.5 w-3.5 shrink-0" />
             <span>Tracking</span>
           </TabsTrigger>
-          <TabsTrigger value="loyalty" className="flex-1 flex items-center justify-center gap-2 rounded-[1px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[140px] uppercase text-[10px] font-bold tracking-[1.5px]">
+          <TabsTrigger value="loyalty" className="flex-1 flex items-center justify-center gap-2 rounded-[2px] data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white text-[#555555] transition-all h-full min-w-[140px] uppercase text-[10px] font-bold tracking-[1.5px]">
             <Heart className="h-3.5 w-3.5 shrink-0" />
             <span>Loyalty</span>
           </TabsTrigger>

@@ -56,8 +56,8 @@ export default function CashFlow() {
             <div className="space-y-6 pb-24 lg:pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                        <h1 className="text-[22px] font-medium text-white tracking-tight">Cash Flow</h1>
+                        <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                        <h1 className="text-[24px] font-bold text-white tracking-tight">Cash Flow</h1>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -73,8 +73,8 @@ export default function CashFlow() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Finance</p>
-                    <h1 className="text-[22px] font-medium text-white tracking-tight">Cash Flow</h1>
+                    <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Finance</p>
+                    <h1 className="text-[24px] font-bold text-white tracking-tight">Cash Flow</h1>
                 </div>
                 <Select value={dateRange} onValueChange={setDateRange}>
                     <SelectTrigger className="w-28 h-9 text-[11px] rounded-[2px] bg-[#111111] border-[#1A1A1A] text-[#8F8F8F] uppercase tracking-[0.5px]">
@@ -92,21 +92,21 @@ export default function CashFlow() {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Inflow</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Inflow</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-emerald-400">रू {totalInflow.toLocaleString()}</h2>
                         <ArrowUpRight className="h-5 w-5 text-emerald-400" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Total Outflow</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Total Outflow</p>
                     <div className="flex items-end justify-between">
                         <h2 className="text-3xl font-bold text-[#DA291C]">रू {totalOutflow.toLocaleString()}</h2>
                         <ArrowDownRight className="h-5 w-5 text-[#DA291C]" />
                     </div>
                 </div>
                 <div className="bg-[#111111] border border-[#1A1A1A] p-6 rounded-[2px]">
-                    <p className="text-[10px] text-[#555555] uppercase tracking-widest font-black mb-2">Net Cash Flow</p>
+                    <p className="text-[10px] text-[#888888] uppercase tracking-widest font-black mb-2">Net Cash Flow</p>
                     <div className="flex items-end justify-between">
                         <h2 className={`text-3xl font-bold ${netFlow >= 0 ? "text-emerald-400" : "text-[#DA291C]"}`}>
                             रू {netFlow.toLocaleString()}
@@ -123,7 +123,7 @@ export default function CashFlow() {
                 </div>
                 <div className="p-5 h-72">
                     {balanceData.length === 0 ? (
-                        <p className="text-[13px] text-[#555555] text-center py-8">No cash flow data</p>
+                        <p className="text-[13px] text-[#888888] text-center py-8">No cash flow data</p>
                     ) : (
                         <ResponsiveContainer>
                             <ComposedChart data={balanceData}>
@@ -147,7 +147,7 @@ export default function CashFlow() {
                 </div>
                 <div className="p-5 h-56">
                     {balanceData.length === 0 ? (
-                        <p className="text-[13px] text-[#555555] text-center py-8">No balance data</p>
+                        <p className="text-[13px] text-[#888888] text-center py-8">No balance data</p>
                     ) : (
                         <ResponsiveContainer>
                             <LineChart data={balanceData}>
@@ -166,14 +166,14 @@ export default function CashFlow() {
             <div className="border border-[#1A1A1A] rounded-[2px] bg-[#0A0A0A] overflow-hidden">
                 <div className="hidden sm:grid grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 bg-[#111111] border-b border-[#1A1A1A]">
                     {["Date", "Sales Inflow", "Expenses", "Refunds", "Net Flow"].map(h => (
-                        <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#555555]">{h}</span>
+                        <span key={h} className="text-[10px] font-black uppercase tracking-widest text-[#888888]">{h}</span>
                     ))}
                 </div>
                 <div className="divide-y divide-[#1A1A1A]">
                     {balanceData.length === 0 ? (
                         <div className="py-20 text-center">
                             <Wallet className="h-12 w-12 text-[#1A1A1A] mx-auto" />
-                            <p className="text-[10px] font-black uppercase tracking-[2px] text-[#555555] mt-4">No Data Available</p>
+                            <p className="text-[10px] font-black uppercase tracking-[2px] text-[#888888] mt-4">No Data Available</p>
                         </div>
                     ) : (
                         balanceData.map((d, i) => (

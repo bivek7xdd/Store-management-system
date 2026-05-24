@@ -5,15 +5,9 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, Lightbulb, Users, Loader2, RefreshCw, AlertCircle, ExternalLink, Package } from "lucide-react";
 import { toast } from "sonner";
 
-const colors = {
-  primary: "#0d9488",
-  primaryDark: "#115e59",
-};
-
 const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || "";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
 import { inventoryService } from "@/services/inventory";
 import { marketService, MarketPriceItem } from "@/services/marketService";
 import { Product } from "@/types";
@@ -148,25 +142,25 @@ export default function Market() {
   };
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
+    <div className="space-y-6 pb-24 lg:pb-8">
       <div data-tour="market-header">
-        <h1 className="text-3xl font-bold text-gray-900">Market Insights</h1>
-        <p className="text-gray-500 mt-1">Real-time competitor analysis and market trends</p>
+        <h1 className="text-[24px] font-bold text-white tracking-tight">Market Insights</h1>
+        <p className="text-[#888888] text-sm mt-1">Real-time competitor analysis and market trends</p>
       </div>
 
-      <Card className="border-0 shadow-sm overflow-hidden relative" data-tour="market-competitors">
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-900 to-teal-800 opacity-90 z-0" />
+      <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] overflow-hidden relative" data-tour="market-competitors">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#8B1A1A] to-[#DA291C] opacity-90 z-0" />
         <CardContent className="pt-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white">
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
+              <div className="h-12 w-12 rounded-[2px] bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Users className="h-6 w-6" />}
               </div>
               <div>
                 <h3 className="text-xl font-bold mb-1">Local Market Intelligence</h3>
                 <p className="text-white/80 text-sm max-w-md">Analyzed businesses within 5km radius of your location.</p>
                 {error && (
-                  <div className="flex items-center gap-2 mt-2 text-red-200 bg-red-900/30 px-3 py-1 rounded-lg text-sm">
+                  <div className="flex items-center gap-2 mt-2 text-red-200 bg-red-900/30 px-3 py-1 rounded-[2px] text-sm">
                     <AlertCircle className="h-4 w-4" /> {error}
                   </div>
                 )}
@@ -174,7 +168,7 @@ export default function Market() {
             </div>
 
             {!loading && !error && competitorStats ? (
-              <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm min-w-[200px] border border-white/20">
+              <div className="bg-white/10 rounded-[2px] p-4 backdrop-blur-sm min-w-[200px] border border-white/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-white/70">Competitors</span>
                   <Badge className={`${competitorStats.color} border-0`}>{competitorStats.status}</Badge>
@@ -193,10 +187,10 @@ export default function Market() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-teal-50">
-              <TrendingUp className="h-5 w-5 text-teal-600" />
+            <div className="p-2 rounded-[2px] bg-[#DA291C]/10">
+              <TrendingUp className="h-5 w-5 text-[#DA291C]" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900" data-tour="market-prices">Tracked Online Prices</h2>
+            <h2 className="text-[16px] font-bold text-white" data-tour="market-prices">Tracked Online Prices</h2>
           </div>
           <Button
             variant="outline"
@@ -211,17 +205,17 @@ export default function Market() {
         </div>
 
         {trackedProducts.length === 0 ? (
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
             <CardContent className="py-12 text-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-teal-50 flex items-center justify-center">
-                  <Package className="h-6 w-6 text-teal-600" />
+                <div className="h-12 w-12 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
+                  <Package className="h-6 w-6 text-[#DA291C]" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">No tracked products</h3>
-                  <p className="text-sm text-gray-500 mt-1">Select up to 6 products from your inventory to track prices here.</p>
+                  <h3 className="font-medium text-white">No tracked products</h3>
+                  <p className="text-sm text-[#888888] mt-1">Select up to 6 products from your inventory to track prices here.</p>
                 </div>
-                <Button variant="subtle" size="sm" className="mt-2" asChild>
+                <Button variant="subtle" size="sm" className="mt-2 text-[#DA291C]" asChild>
                   <a href="/inventory">Go to Inventory</a>
                 </Button>
               </div>
@@ -235,31 +229,31 @@ export default function Market() {
               const storePrice = typeof product.price === 'number' ? product.price : 0;
 
               return (
-                <Card key={product.id} className="border-0 shadow-sm overflow-hidden">
-                  <CardHeader className="bg-gray-50/50 pb-4">
+                <Card key={product.id} className="border border-[#1A1A1A] bg-[#000000] rounded-[2px] overflow-hidden">
+                  <CardHeader className="bg-[#0A0A0A] pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0">
-                          <Package className="h-5 w-5 text-teal-600" />
+                        <div className="h-10 w-10 rounded-[2px] bg-[#111111] border border-[#1A1A1A] flex items-center justify-center shrink-0">
+                          <Package className="h-5 w-5 text-[#DA291C]" />
                         </div>
                         <div>
-                          <CardTitle className="text-base font-bold text-gray-900">{product.name}</CardTitle>
-                          <p className="text-xs text-gray-500">Your Price: रू {storePrice.toLocaleString()}</p>
+                          <CardTitle className="text-base font-bold text-white">{product.name}</CardTitle>
+                          <p className="text-xs text-[#888888]">Your Price: रू {storePrice.toLocaleString()}</p>
                         </div>
                       </div>
-                      <Badge className="bg-white text-teal-700 border-teal-100 text-[10px]">Tracking Active</Badge>
+                      <Badge className="bg-[#DA291C]/10 text-[#DA291C] border-[#DA291C]/20 text-[10px]">Tracking Active</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4">
                     {isLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
-                        <span className="ml-2 text-sm text-gray-500">Fetching latest prices...</span>
+                        <Loader2 className="h-6 w-6 animate-spin text-[#DA291C]" />
+                        <span className="ml-2 text-sm text-[#888888]">Fetching latest prices...</span>
                       </div>
                     ) : prices.length === 0 ? (
-                      <div className="text-center py-8 bg-gray-50 rounded-xl">
-                        <p className="text-sm text-gray-400">No online matches found.</p>
-                        <Button variant="ghost" size="sm" className="mt-2 text-teal-600 text-[10px]" onClick={() => fetchPricesForProduct(product)}>Retry</Button>
+                      <div className="text-center py-8 bg-[#0A0A0A] rounded-[2px]">
+                        <p className="text-sm text-[#666666]">No online matches found.</p>
+                        <Button variant="ghost" size="sm" className="mt-2 text-[#DA291C] text-[10px]" onClick={() => fetchPricesForProduct(product)}>Retry</Button>
                       </div>
                     ) : (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
@@ -271,33 +265,33 @@ export default function Market() {
                           const diff = storePrice - marketNum;
 
                           return (
-                            <div key={idx} className="p-3 rounded-xl border border-gray-100 bg-white hover:border-teal-100 transition-colors">
+                            <div key={idx} className="p-3 rounded-[2px] border border-[#1A1A1A] bg-[#0A0A0A] hover:border-[#DA291C]/30 transition-colors">
                               <div className="flex items-start justify-between gap-2 mb-3">
-                                <p className="text-[11px] font-semibold text-gray-900 line-clamp-2 flex-1">{item.title}</p>
-                                <Badge variant="outline" className="text-[9px] h-4 px-1.5 whitespace-nowrap bg-teal-50 text-teal-700 border-teal-100">{item.source}</Badge>
+                                <p className="text-[11px] font-semibold text-white line-clamp-2 flex-1">{item.title}</p>
+                                <Badge variant="outline" className="text-[9px] h-4 px-1.5 whitespace-nowrap bg-[#DA291C]/10 text-[#DA291C] border-[#DA291C]/20">{item.source}</Badge>
                               </div>
                               <div className="flex items-end justify-between">
                                 <div>
-                                  <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Online Price</p>
-                                  <p className="text-sm font-bold text-teal-700">{item.price}</p>
+                                  <p className="text-[10px] text-[#666666] uppercase tracking-wider mb-0.5">Online Price</p>
+                                  <p className="text-sm font-bold text-[#DA291C]">{item.price}</p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Gap</p>
+                                  <p className="text-[10px] text-[#666666] uppercase tracking-wider mb-0.5">Gap</p>
                                   {marketNum > 0 ? (
-                                    <p className={`text-xs font-bold ${diff > 0 ? 'text-rose-500' : 'text-green-600'}`}>
+                                    <p className={`text-xs font-bold ${diff > 0 ? 'text-[#DA291C]' : 'text-[#22C55E]'}`}>
                                       {diff > 0 ? '+' : ''}रू {Math.abs(diff).toLocaleString()}
                                     </p>
                                   ) : (
-                                    <p className="text-xs font-bold text-gray-300">N/A</p>
+                                    <p className="text-xs font-bold text-[#555555]">N/A</p>
                                   )}
                                 </div>
                               </div>
-                              <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
-                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-teal-600 hover:underline flex items-center">
+                              <div className="mt-3 pt-3 border-t border-[#1A1A1A] flex items-center justify-between">
+                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#DA291C] hover:underline flex items-center">
                                   View Item <ExternalLink className="ml-1 h-2 w-2" />
                                 </a>
                                 {marketNum > 0 && diff < 0 && (
-                                  <Badge className="bg-green-50 text-green-700 border-green-100 text-[9px] px-1.5">
+                                  <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-[9px] px-1.5">
                                     Higher Profit
                                   </Badge>
                                 )}
@@ -316,11 +310,11 @@ export default function Market() {
       </div>
 
 
-      <Card className="border-0 shadow-sm">
+      <Card className="border border-[#1A1A1A] bg-[#000000] rounded-[2px]">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-center justify-center">
             <Lightbulb className="h-5 w-5 text-amber-500" />
-            <p className="text-sm text-gray-500">Sources: Daraz, Hamrobazar, OkDam. Competition data from Geoapify.</p>
+            <p className="text-sm text-[#888888]">Sources: Daraz, Hamrobazar, OkDam. Competition data from Geoapify.</p>
           </div>
         </CardContent>
       </Card>

@@ -52,15 +52,15 @@
 - [ ] H26: Convert div-grid data tables to semantic <table> elements
 - [ ] H27: Fix Market/FindSuppliers/NotFound to use dark theme (#030303 / #DA291C)
 - [ ] H28: Add GSAP animation cleanup on component unmount (Login.tsx, OTP.tsx)
-- [ ] H29: Fix ReturnsHistory Filter button — add onClick handler (ReturnsHistory.tsx:82-86)
-- [ ] H30: Fix BalanceSheet query key to include dateRange (BalanceSheet.tsx:25)
-- [ ] H31: Fix Debtors division by zero (Debtors.tsx:345)
+- [x] H29: Fix ReturnsHistory Filter button — add onClick handler (ReturnsHistory.tsx:82-86)
+- [x] H30: Fix BalanceSheet query key to include dateRange (BalanceSheet.tsx:25)
+- [x] H31: Fix Debtors division by zero (Debtors.tsx:345)
 - [ ] H32: Add pagination to all finance/list pages
-- [ ] H33: Fix Sales cart UNITS label to show total quantity not item count (Sales.tsx:610)
-- [ ] H34: Replace window.confirm() with AlertDialog in Inventory delete (Inventory.tsx:430-433)
+- [x] H33: Fix Sales cart UNITS label to show total quantity not item count (Sales.tsx:610)
+- [x] H34: Replace window.confirm() with AlertDialog in Inventory delete (Inventory.tsx:430-433)
 - [ ] H35: Add password strength indicator to Settings (Settings.tsx:280-301)
 - [ ] H36: Add resize listener to Layout.tsx for window.innerWidth (Layout.tsx:406)
-- [ ] H37: Fix ProtectedRoute to redirect directly to /login (ProtectedRoute.tsx:23)
+- [x] H37: Fix ProtectedRoute to redirect directly to /login (ProtectedRoute.tsx:23)
 
 ### Services & Contexts
 

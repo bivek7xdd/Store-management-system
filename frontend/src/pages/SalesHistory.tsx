@@ -187,7 +187,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
                 <p className="font-bold text-[13px] text-white uppercase tracking-tight truncate">
                   {sale.customer_name || "Walk-in Customer"}
                 </p>
-                <span className="text-[9px] font-bold text-[#888888] border border-[#303030] rounded-[1px] px-1.5 py-0.5 uppercase tracking-[0.5px]">
+                <span className="text-[9px] font-bold text-[#888888] border border-[#303030] rounded-[2px] px-1.5 py-0.5 uppercase tracking-[0.5px]">
                   #{String(sale.id).slice(0, 8)}
                 </span>
               </div>
@@ -210,7 +210,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
               <p className="text-[18px] font-bold text-white tracking-tight">
                 रू {(sale.total_amount || 0).toLocaleString()}
               </p>
-              <span className={cn("text-[9px] font-bold uppercase tracking-[1px] border rounded-[1px] px-1.5 py-0.5 mt-0.5 inline-block", typeConf.color)}>
+              <span className={cn("text-[9px] font-bold uppercase tracking-[1px] border rounded-[2px] px-1.5 py-0.5 mt-0.5 inline-block", typeConf.color)}>
                 {typeConf.label}
               </span>
             </div>
@@ -433,7 +433,7 @@ export default function SalesHistory() {
   );
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
+    <div className="space-y-6 pb-24 lg:pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -553,15 +553,15 @@ export default function SalesHistory() {
           <div className="flex items-center gap-2 flex-wrap pt-1">
             <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Active:</p>
             {filterType !== "all" && (
-              <span className="text-[10px] font-bold border border-[#303030] rounded-[1px] px-2 py-0.5 text-[#CCCCCC] uppercase tracking-[0.5px]">{filterType}</span>
+              <span className="text-[10px] font-bold border border-[#303030] rounded-[2px] px-2 py-0.5 text-[#CCCCCC] uppercase tracking-[0.5px]">{filterType}</span>
             )}
             {selectedDate && (
-              <span className="text-[10px] font-bold border border-[#DA291C]/30 bg-[#DA291C]/5 rounded-[1px] px-2 py-0.5 text-[#DA291C] uppercase tracking-[0.5px]">
+              <span className="text-[10px] font-bold border border-[#DA291C]/30 bg-[#DA291C]/5 rounded-[2px] px-2 py-0.5 text-[#DA291C] uppercase tracking-[0.5px]">
                 {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-NP", { day: "2-digit", month: "short" })}
               </span>
             )}
             {filterTime !== "all" && !selectedDate && (
-              <span className="text-[10px] font-bold border border-[#303030] rounded-[1px] px-2 py-0.5 text-[#CCCCCC] uppercase tracking-[0.5px]">{filterTime}</span>
+              <span className="text-[10px] font-bold border border-[#303030] rounded-[2px] px-2 py-0.5 text-[#CCCCCC] uppercase tracking-[0.5px]">{filterTime}</span>
             )}
             <button
               onClick={() => { setFilterType("all"); setFilterTime("all"); clearDateFilter(); }}

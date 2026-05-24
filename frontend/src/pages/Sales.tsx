@@ -427,7 +427,7 @@ export default function Sales() {
   );
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-6">
+    <div className="space-y-6 pb-24 lg:pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -567,12 +567,12 @@ export default function Sales() {
                             <div className="flex items-center gap-2">
                               <p className="font-bold text-[14px] text-white uppercase tracking-tight group-hover:text-[#DA291C] transition-colors">{product.name}</p>
                               {hasVariants && (
-                                <div className="px-1.5 py-0.5 text-[8px] font-black border border-[#DA291C]/40 text-[#DA291C] uppercase rounded-[1px] tracking-[1px]">
+                                <div className="px-1.5 py-0.5 text-[8px] font-black border border-[#DA291C]/40 text-[#DA291C] uppercase rounded-[2px] tracking-[1px]">
                                   {product.variants!.length} VAR
                                 </div>
                               )}
                               {!offlineStatus.isOnline && (
-                                <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#888888] uppercase rounded-[1px]">Vault</div>
+                                <div className="px-1 text-[8px] font-bold border border-[#555555] text-[#888888] uppercase rounded-[2px]">Vault</div>
                               )}
                             </div>
                             <p className="text-[11px] text-[#888888] font-medium uppercase tracking-[0.5px] mt-0.5">
@@ -607,7 +607,7 @@ export default function Sales() {
                 <p className="text-[13px] font-bold text-white uppercase tracking-[1px]">Active Cart</p>
               </div>
               <div className="h-6 px-2 bg-[#1A1A1A] rounded-[2px] flex items-center">
-                <span className="text-[10px] font-bold text-[#CCCCCC] uppercase tracking-[1px]">{cart.length} UNITS</span>
+                <span className="text-[10px] font-bold text-[#CCCCCC] uppercase tracking-[1px]">{cart.reduce((sum, item) => sum + item.quantity, 0)} UNITS</span>
               </div>
             </div>
             
@@ -698,7 +698,7 @@ export default function Sales() {
                     <p className="font-bold text-[13px] text-white uppercase tracking-tight truncate">{selectedCustomer.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <p className="text-[10px] text-[#888888] font-medium tracking-[0.5px] uppercase">{selectedCustomer.phone}</p>
-                      <div className="h-3 px-1.5 bg-[#DA291C] text-white text-[8px] font-black uppercase flex items-center rounded-[1px]">
+                      <div className="h-3 px-1.5 bg-[#DA291C] text-white text-[8px] font-black uppercase flex items-center rounded-[2px]">
                         {selectedCustomer.loyalty_status}
                       </div>
                     </div>
@@ -744,7 +744,7 @@ export default function Sales() {
                   <div className="flex h-11 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] p-1 flex-1 max-w-[120px]">
                     <button
                       className={cn(
-                        "flex-1 rounded-[1px] text-[10px] font-bold transition-all uppercase",
+                        "flex-1 rounded-[2px] text-[10px] font-bold transition-all uppercase",
                         discountType === 'percent' ? 'bg-[#DA291C] text-white' : 'text-[#666666] hover:text-white'
                       )}
                       onClick={() => setDiscountType('percent')}
@@ -753,7 +753,7 @@ export default function Sales() {
                     </button>
                     <button
                       className={cn(
-                        "flex-1 rounded-[1px] text-[10px] font-bold transition-all uppercase",
+                        "flex-1 rounded-[2px] text-[10px] font-bold transition-all uppercase",
                         discountType === 'amount' ? 'bg-[#DA291C] text-white' : 'text-[#666666] hover:text-white'
                       )}
                       onClick={() => setDiscountType('amount')}

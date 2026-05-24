@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { returnsService } from "@/services/returns";
 import { Return, ReturnItem } from "@/types";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
@@ -23,6 +23,8 @@ const ReturnsHistory = () => {
   const [returns, setReturns] = useState<Return[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterPeriod, setFilterPeriod] = useState<string | null>(null);
 
   const fetchReturns = async () => {
     setLoading(true);
@@ -40,10 +42,20 @@ const ReturnsHistory = () => {
     fetchReturns();
   }, []);
 
-  const filteredReturns = returns.filter(ret => 
-    ret.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ret.sale_id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredReturns = returns.filter(ret => {
+    const matchesSearch = ret.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ret.sale_id.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (!filterPeriod) return true;
+    const retDate = parseISO(ret.created_at);
+    const now = new Date();
+    switch (filterPeriod) {
+      case "today": return retDate >= startOfDay(now);
+      case "week": return retDate >= startOfWeek(now, { weekStartsOn: 1 });
+      case "month": return retDate >= startOfMonth(now);
+      default: return true;
+    }
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -56,10 +68,10 @@ const ReturnsHistory = () => {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <RefreshCcw className="w-6 h-6 text-[#DA291C]" />
-              Returns History
-            </h1>
+              <h1 className="text-[24px] font-bold tracking-tight text-white">Returns History</h1>
+            </div>
             <p className="text-[#888888] text-sm mt-1">
               View and manage processed product returns and refunds.
             </p>
@@ -79,11 +91,40 @@ const ReturnsHistory = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#111111] border border-[#303030] rounded-[2px] text-sm hover:bg-[#1A1A1A] transition-colors whitespace-nowrap">
-          <Filter className="w-4 h-4 text-[#DA291C]" />
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 px-4 py-2 border rounded-[2px] text-sm transition-colors whitespace-nowrap ${
+            showFilters || filterPeriod ? "bg-[#DA291C]/10 border-[#DA291C]/30 text-[#DA291C]" : "bg-[#111111] border-[#303030] hover:bg-[#1A1A1A]"
+          }`}
+        >
+          <Filter className="w-4 h-4" />
           Filter
         </button>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "All", value: null },
+            { label: "Today", value: "today" },
+            { label: "This Week", value: "week" },
+            { label: "This Month", value: "month" },
+          ].map((f) => (
+            <button
+              key={f.value || "all"}
+              onClick={() => setFilterPeriod(f.value)}
+              className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1px] rounded-[2px] transition-colors ${
+                filterPeriod === f.value
+                  ? "bg-[#DA291C] text-white"
+                  : "bg-[#111111] border border-[#303030] text-[#888888] hover:border-[#555555]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

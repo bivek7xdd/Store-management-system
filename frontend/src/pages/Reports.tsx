@@ -159,7 +159,7 @@ function InsightsFeed({ insights }: { insights: Insight[] }) {
               {insights.length} new
             </span>
           </div>
-          <span className="text-[11px] text-[#555555]">Smart Analysis · Just Now</span>
+          <span className="text-[11px] text-[#888888]">Smart Analysis · Just Now</span>
         </div>
         <div className="p-5 space-y-2.5">
           <AnimatePresence mode="popLayout">
@@ -193,7 +193,7 @@ function InsightsFeed({ insights }: { insights: Insight[] }) {
 
           {insights.length > 3 && (
             <button
-              className="w-full text-[#555555] hover:text-[#8F8F8F] text-[11px] uppercase tracking-[1px] py-2 flex items-center justify-center gap-1 transition-colors"
+              className="w-full text-[#888888] hover:text-[#8F8F8F] text-[11px] uppercase tracking-[1px] py-2 flex items-center justify-center gap-1 transition-colors"
               onClick={() => setExpanded(!expanded)}
             >
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -299,7 +299,7 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
                     {(deadStock?.items || []).map((item, idx) => (
                       <li key={idx} className="truncate">
                         {item.product_name} 
-                        <span className="text-[#555555] ml-1">(-{discountPercent}%)</span>
+                        <span className="text-[#888888] ml-1">(-{discountPercent}%)</span>
                       </li>
                     ))}
                   </ul>
@@ -323,11 +323,11 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
           <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <p className="text-[11px] text-[#555555] uppercase tracking-[1px] mb-1">Capital Tied Up</p>
+                <p className="text-[11px] text-[#888888] uppercase tracking-[1px] mb-1">Capital Tied Up</p>
                 <p className="text-[28px] font-medium text-amber-400">
                   रू <CountUp to={total} />
                 </p>
-                <p className="text-[12px] text-[#555555] mt-1">Unsold for 60+ days</p>
+                <p className="text-[12px] text-[#888888] mt-1">Unsold for 60+ days</p>
               </div>
               <div className="space-y-2">
                 {thresholdData.map((t) => (
@@ -350,9 +350,9 @@ function DeadStockWidget({ deadStock }: { deadStock: ReportStats["dead_stock"] }
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">By Category</p>
+              <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">By Category</p>
               {byCategory.length === 0 ? (
-                <p className="text-[13px] text-[#555555] py-4 text-center">Clear! 🎉</p>
+                <p className="text-[13px] text-[#888888] py-4 text-center">Clear! 🎉</p>
               ) : (
                 byCategory.slice(0, 5).map((cat) => (
                   <div key={cat.category} className="space-y-1">
@@ -400,23 +400,23 @@ function VelocityTable({ items }: { items: ReportStats["velocity"] }) {
             </div>
             <span className="text-[12px] font-normal text-[#8F8F8F] uppercase tracking-[1px]">Velocity Tracking</span>
           </div>
-          <span className="text-[11px] text-[#555555]">Predictive Restock Analysis</span>
+          <span className="text-[11px] text-[#888888]">Predictive Restock Analysis</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
               <tr className="bg-[#0A0A0A]">
-                <th className="text-left px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Product</th>
-                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Stock</th>
-                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Daily Avg</th>
-                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Days Left</th>
-                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#555555] uppercase tracking-[1px]">Status</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-normal text-[#888888] uppercase tracking-[1px]">Product</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#888888] uppercase tracking-[1px]">Stock</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#888888] uppercase tracking-[1px]">Daily Avg</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#888888] uppercase tracking-[1px]">Days Left</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-normal text-[#888888] uppercase tracking-[1px]">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1A1A1A]">
               {(items || []).length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-[#555555] italic text-[13px]">
+                  <td colSpan={5} className="px-4 py-8 text-center text-[#888888] italic text-[13px]">
                     No velocity data available for this period. 
                   </td>
                 </tr>
@@ -543,12 +543,12 @@ function TrafficHeatmap({ cells }: { cells: ReportStats["traffic_heatmap"] }) {
             <div className="min-w-[540px]">
               <div className="flex mb-2 ml-12">
                 {DAY_LABELS.map((d) => (
-                  <div key={d} className="flex-1 text-center text-[10px] font-medium text-[#555555] uppercase tracking-[0.5px]">{d}</div>
+                  <div key={d} className="flex-1 text-center text-[10px] font-medium text-[#888888] uppercase tracking-[0.5px]">{d}</div>
                 ))}
               </div>
               {Array.from({ length: 24 }, (_, hour) => (
                 <div key={hour} className="flex items-center mb-0.5">
-                  <div className="w-12 text-right pr-2 text-[9px] font-normal text-[#555555] shrink-0 tabular-nums">
+                  <div className="w-12 text-right pr-2 text-[9px] font-normal text-[#888888] shrink-0 tabular-nums">
                     {hour % 3 === 0 ? HOUR_LABELS[hour] : ""}
                   </div>
                   {Array.from({ length: 7 }, (_, day) => {
@@ -559,7 +559,7 @@ function TrafficHeatmap({ cells }: { cells: ReportStats["traffic_heatmap"] }) {
                           <TooltipTrigger asChild>
                             <motion.div
                               whileHover={{ scale: 1.15, zIndex: 10 }}
-                              className="flex-1 h-3.5 mx-0.5 rounded-[1px] cursor-help"
+                              className="flex-1 h-3.5 mx-0.5 rounded-[2px] cursor-help"
                               style={{ backgroundColor: cellColor(count) }}
                               onMouseEnter={() => setHoveredCell({ day, hour, count })}
                             />
@@ -595,16 +595,16 @@ function KPICard({ icon, label, value, sub, iconBg, valueColor }: {
     <motion.div whileHover={{ y: -2 }}>
       <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5 h-full hover:border-[#303030] transition-colors">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">{label}</p>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">{label}</p>
           <div className={cn("h-8 w-8 rounded-[2px] flex items-center justify-center", iconBg ?? "bg-[#DA291C]/10")}>
             {icon}
           </div>
         </div>
         <div className={cn("text-[24px] font-medium flex items-baseline gap-1", valueColor ?? "text-white")}>
-          {value.includes("रू") && <span className="text-[12px] text-[#555555]">रू</span>}
+          {value.includes("रू") && <span className="text-[12px] text-[#888888]">रू</span>}
           <CountUp to={numericValue} />
         </div>
-        {sub && <p className="text-[12px] text-[#555555] mt-1 truncate">{sub}</p>}
+        {sub && <p className="text-[12px] text-[#888888] mt-1 truncate">{sub}</p>}
       </div>
     </motion.div>
   );
@@ -647,14 +647,14 @@ export default function Reports() {
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
       <Loader2 className="h-10 w-10 animate-spin text-[#DA291C] opacity-50" />
-      <p className="text-[11px] text-[#555555] uppercase tracking-[1px] animate-pulse">Analyzing Store Pulse...</p>
+      <p className="text-[11px] text-[#888888] uppercase tracking-[1px] animate-pulse">Analyzing Store Pulse...</p>
     </div>
   );
 
   if (isError || !stats) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
       <AlertTriangle className="h-10 w-10 text-[#DA291C]/50" />
-      <p className="text-[11px] text-[#555555] uppercase tracking-[1px]">Intelligence Service Offline</p>
+      <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">Intelligence Service Offline</p>
     </div>
   );
 
@@ -664,20 +664,20 @@ export default function Reports() {
 
   return (
     <motion.div 
-      className="space-y-6 pb-20"
+      className="space-y-6 pb-24 lg:pb-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-tour="reports-header">
         <div>
-          <p className="text-[11px] text-[#555555] uppercase tracking-[1.5px] mb-1">Analytics</p>
-          <h1 className="text-[22px] font-medium text-white tracking-tight">Intelligence Hub</h1>
+          <p className="text-[11px] text-[#888888] uppercase tracking-[1.5px] mb-1">Analytics</p>
+          <h1 className="text-[24px] font-bold text-white tracking-tight">Intelligence Hub</h1>
         </div>
         <div className="flex items-center gap-2" data-tour="reports-export">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-32 h-9 text-[11px] rounded-[2px] bg-[#111111] border-[#1A1A1A] text-[#8F8F8F] uppercase tracking-[0.5px]">
-              <Calendar className="h-3 w-3 mr-2 text-[#555555]" />
+              <Calendar className="h-3 w-3 mr-2 text-[#888888]" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-[2px] border-[#303030] bg-[#111111]">
@@ -811,7 +811,7 @@ export default function Reports() {
           <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#1A1A1A]">
               <span className="text-[12px] text-[#8F8F8F] uppercase tracking-[1px]">Largest Receivables</span>
-              <span className="text-[10px] text-[#555555]">Follow up required</span>
+              <span className="text-[10px] text-[#888888]">Follow up required</span>
             </div>
             <div className="p-5 space-y-2">
               {debts.top_debtors?.map(d => (
@@ -822,12 +822,12 @@ export default function Reports() {
                     </div>
                     <div>
                       <p className="text-[12px] text-white">{d.customer_name}</p>
-                      <p className="text-[10px] text-[#555555]">{d.customer_phone}</p>
+                      <p className="text-[10px] text-[#888888]">{d.customer_phone}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-[12px] font-medium text-[#DA291C]">रू {Number(d.total_debt).toLocaleString()}</p>
-                    <p className="text-[9px] text-[#555555]">Last: {new Date(d.last_transaction).toLocaleDateString()}</p>
+                    <p className="text-[9px] text-[#888888]">Last: {new Date(d.last_transaction).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}
@@ -847,7 +847,7 @@ export default function Reports() {
               </div>
               <div className="p-5 space-y-4">
                 {!expenseSummary?.by_category?.length ? (
-                  <p className="text-[13px] text-[#555555] text-center py-4">No expenses recorded for this period.</p>
+                  <p className="text-[13px] text-[#888888] text-center py-4">No expenses recorded for this period.</p>
                 ) : (
                   <>
                     <div className="flex items-center justify-between p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
@@ -884,16 +884,16 @@ export default function Reports() {
               </div>
               <div className="p-5 space-y-4">
                 {!payableSummary?.summary ? (
-                  <p className="text-[13px] text-[#555555] text-center py-4">No payables recorded.</p>
+                  <p className="text-[13px] text-[#888888] text-center py-4">No payables recorded.</p>
                 ) : (
                   <>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
-                        <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Total Outstanding</p>
+                        <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Total Outstanding</p>
                         <p className="text-[16px] font-medium text-amber-400 mt-1">रू {(payableSummary.summary.total_outstanding ?? 0).toLocaleString()}</p>
                       </div>
                       <div className="p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
-                        <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Overdue</p>
+                        <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Overdue</p>
                         <p className="text-[16px] font-medium text-[#DA291C] mt-1">रू {(payableSummary.summary.total_overdue ?? 0).toLocaleString()}</p>
                       </div>
                     </div>
@@ -901,7 +901,7 @@ export default function Reports() {
                       <div key={item.id} className="flex items-center justify-between p-3 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
                         <div>
                           <p className="text-[12px] text-white">{item.supplier_name}</p>
-                          <p className="text-[10px] text-[#555555]">Due: {new Date(item.due_date).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-[#888888]">Due: {new Date(item.due_date).toLocaleDateString()}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-[12px] font-medium text-amber-400">रू {(Number(item.amount_owed) - Number(item.amount_paid)).toLocaleString()}</p>
@@ -926,19 +926,19 @@ export default function Reports() {
             <div className="p-5">
               <div className="grid md:grid-cols-4 gap-4">
                 <div className="p-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
-                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Gross Revenue</p>
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Gross Revenue</p>
                   <p className="text-[18px] font-medium text-white mt-2">रू {(stats?.profit?.total_revenue ?? 0).toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
-                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Cost of Goods</p>
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Cost of Goods</p>
                   <p className="text-[18px] font-medium text-[#DA291C] mt-2">रू {(stats?.profit?.total_cost ?? 0).toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px]">
-                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Operating Expenses</p>
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Operating Expenses</p>
                   <p className="text-[18px] font-medium text-[#DA291C] mt-2">रू {(expenseSummary?.summary?.total_amount ?? 0).toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-[#0A0A0A] border border-emerald-800/30 rounded-[2px]">
-                  <p className="text-[10px] text-[#555555] uppercase tracking-[1px]">Net Profit</p>
+                  <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Net Profit</p>
                   <p className="text-[18px] font-medium text-emerald-400 mt-2">
                     रू {((stats?.profit?.gross_profit ?? 0) - (expenseSummary?.summary?.total_amount ?? 0)).toLocaleString()}
                   </p>
