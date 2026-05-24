@@ -41,11 +41,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Check if the error is 401 and we are not already on the login page
-    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
-      // Token expired or invalid
+    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+      // Token expired or invalid — preserve React state by dispatching an event
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.dispatchEvent(new CustomEvent('auth:logout'));
     }
     return Promise.reject(error);
   }

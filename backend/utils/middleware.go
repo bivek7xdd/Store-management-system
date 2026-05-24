@@ -28,9 +28,6 @@ func JWTMiddleware() gin.HandlerFunc {
 				return
 			}
 			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
-		} else {
-			// Try to get token from query parameter (for direct downloads)
-			tokenString = c.Query("token")
 		}
 
 		if tokenString == "" {

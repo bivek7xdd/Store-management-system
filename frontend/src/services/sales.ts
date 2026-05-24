@@ -32,8 +32,6 @@ export type { Sale };
 
 export const salesService = {
     createSale: async (data: CreateSaleData) => {
-        console.log('[Sales] createSale called', data);
-
         // 1. Save to Dexie first (Offline First)
         const saleId = await db.sales.add({
             ...data,
@@ -57,14 +55,12 @@ export const salesService = {
                                 await db.product_variants.update(item.variant_id, {
                                     stock_level: newVariantStock
                                 });
-                                console.log(`[Sales] Updated stock for variant ${variant.sku}: ${variant.stock_level} -> ${newVariantStock}`);
                             }
                         } else {
                             newStock = Math.max(0, product.stock_quantity - item.quantity);
                             await db.products.update(item.product_id, {
                                 stock_quantity: newStock
                             });
-                            console.log(`[Sales] Updated stock for ${product.name}: ${product.stock_quantity} -> ${newStock}`);
                         }
 
                         // 1.6 Local Low Stock Check
@@ -74,11 +70,7 @@ export const salesService = {
                                 ? (product.low_stock_threshold as any).Int32
                                 : 0);
 
-                        console.log(`[Sales] Low stock check for ${product.name}: stock=${newStock}, threshold=${threshold}`);
-
                         if (newStock <= threshold) {
-                            // Check if we already have a local unread notification for this product
-                            // or one created in the last 24h
                             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
                             const existing = await db.notifications.where('reference_id').equals(item.product_id)
                                 .and(n => n.type === 'low_stock' && n.created_at > twentyFourHoursAgo)
@@ -97,9 +89,6 @@ export const salesService = {
                                     created_at: new Date().toISOString(),
                                     updated_at: new Date().toISOString()
                                 });
-                                console.log(`[Sales] Created local low stock notification for ${product.name}`);
-                            } else {
-                                console.log(`[Sales] Notification already exists for ${product.name}, skipping`);
                             }
                         }
                     }

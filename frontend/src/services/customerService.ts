@@ -24,7 +24,7 @@ export const customerService = {
     const isOnline = syncService.getStatus().isOnline;
     if (isOnline) {
       try {
-        const response = await api.get(`/customers/search?q=${query}`);
+        const response = await api.get(`/customers/search?q=${encodeURIComponent(query)}`);
         return response.data.data;
       } catch (error) {
         console.error('Search online failed, falling back to cache:', error);

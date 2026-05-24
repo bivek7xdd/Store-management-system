@@ -473,7 +473,14 @@ func GetReportStats(c *gin.Context) {
 
 func ExportSalesReportCSV(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
-	rangeType := c.DefaultQuery("range", "today")
+
+	var body struct {
+		Range string `json:"range"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		body.Range = "today"
+	}
+	rangeType := body.Range
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -535,7 +542,14 @@ func ExportSalesReportCSV(c *gin.Context) {
 
 func ExportSalesReportPDF(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
-	rangeType := c.DefaultQuery("range", "today")
+
+	var body struct {
+		Range string `json:"range"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		body.Range = "today"
+	}
+	rangeType := body.Range
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 20*time.Second)
 	defer cancel()

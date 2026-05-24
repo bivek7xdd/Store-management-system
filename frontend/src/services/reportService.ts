@@ -130,14 +130,22 @@ export const getReportStats = async (range: string = "today"): Promise<ReportSta
     return response.data.data;
 };
 
+const downloadBlob = async (endpoint: string, range: string, filename: string) => {
+    const response = await api.post(endpoint, { range }, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+};
+
 export const exportReportCSV = async (range: string = "today") => {
-    const token = localStorage.getItem('token');
-    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/reports/export/csv?range=${range}&token=${token}`;
-    window.open(url, '_blank');
+    await downloadBlob('/reports/export/csv', range, `sales_report_${range}.csv`);
 };
 
 export const exportReportPDF = async (range: string = "today") => {
-    const token = localStorage.getItem('token');
-    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/reports/export/pdf?range=${range}&token=${token}`;
-    window.open(url, '_blank');
+    await downloadBlob('/reports/export/pdf', range, `sales_report_${range}.pdf`);
 };

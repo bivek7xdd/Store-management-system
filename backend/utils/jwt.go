@@ -42,7 +42,7 @@ func GenerateJWT(userID pgtype.UUID, name string, storeId pgtype.UUID, emailVeri
 		StoreId:       storeId.String(),
 		VerifiedEmail: emailVerified,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // Token expires in 1 hour
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "storemanagement",

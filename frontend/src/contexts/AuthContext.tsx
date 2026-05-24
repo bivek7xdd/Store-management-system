@@ -48,6 +48,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Initialize auth state from localStorage
+  // Listen for forced logout events from API interceptor
+  useEffect(() => {
+    const handleForceLogout = () => {
+      setUser(null);
+      setToken(null);
+    };
+    window.addEventListener('auth:logout', handleForceLogout);
+    return () => window.removeEventListener('auth:logout', handleForceLogout);
+  }, []);
+
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -119,7 +129,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           db.product_variants.clear(),
           db.pending_returns.clear(),
         ])
-      console.log("Local database cleared on logout");
     } catch (error) {
       console.error("Failed to clear local database:", error);
     }

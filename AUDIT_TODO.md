@@ -9,12 +9,12 @@
 - [x] C1: Add multi-tenant middleware to scope all queries to authenticated user's store
 - [x] C2: Wrap return handler in a database transaction (return.handler.go:70-95)
 - [x] C3: Remove password hash from login response (user.handler.go:194)
-- [ ] C4: Fix auth token in URL — use POST with Authorization header for exports (reportService.ts:134-142)
+- [x] C4: Fix auth token in URL — use POST with Authorization header for exports (reportService.ts:134-142)
 - [x] C5: Add ErrorBoundary wrapping all routes in App.tsx
 - [x] C6: Sanitize print HTML in SalesHistory to prevent stored XSS (SalesHistory.tsx:67-157)
 - [x] C7: Fix require() call in SupplierDetails — replace with ES module import (SupplierDetails.tsx:95-98)
 - [x] C8: Add graceful shutdown to main.go with SIGTERM/SIGINT handling
-- [ ] C9: Add sync mutex/lock to prevent concurrent sync (syncService.ts:659-676)
+- [x] C9: Add sync mutex/lock to prevent concurrent sync (syncService.ts:659-676)
 - [x] C10: Clear ALL IndexedDB tables on logout (AuthContext.tsx:114-119)
 
 ## High (58 items)
@@ -23,19 +23,19 @@
 
 - [ ] H1: Add pagination to all list endpoints (sales, debts, customers, suppliers, categories)
 - [ ] H2: Fix CreateSale to return 400 on invalid product_id instead of silently skipping (sales.handler.go:119-121)
-- [ ] H3: Fix RefreshTokenHandler unchecked type assertions (user.handler.go:281)
+- [x] H3: Fix RefreshTokenHandler unchecked type assertions (user.handler.go:281)
 - [ ] H4: Fix UpdateDebt to bypass direct amount_paid modification (debts.handler.go:129-211)
 - [ ] H5: Fix RecordSupplierPayment race condition with atomic SQL UPDATE (supplier_payables.handler.go:230-265)
 - [ ] H6: Add return quantity validation ≤ sold quantity (return.handler.go:44-98)
 - [ ] H7: Fix handleStockAdjustment to propagate errors (return.handler.go:204-239)
-- [ ] H8: Add password validation on registration (user.handler.go:34-156)
-- [ ] H9: Fix ForgotPasswordHandler timing leak (user.handler.go:355-412)
-- [ ] H10: Add non-negative price validation to CreateSale (sales.handler.go:18-22)
+- [x] H8: Add password validation on registration (user.handler.go:34-156)
+- [x] H9: Fix ForgotPasswordHandler timing leak (user.handler.go:355-412)
+- [x] H10: Add non-negative price validation to CreateSale (sales.handler.go:18-22)
 - [ ] H11: Add payment record check before DeleteDebt (debts.handler.go:95-119)
 - [ ] H12: Add memory limits to report exports (reports.handler.go:504, 566)
 - [ ] H13: Add rate limiting to Market API calls (market.handler.go:73-160)
-- [ ] H14: Remove JWT from query param in middleware (middleware.go:32)
-- [ ] H15: Reduce JWT expiry to 1hr with refresh tokens (jwt.go:45)
+- [x] H14: Remove JWT from query param in middleware (middleware.go:32)
+- [x] H15: Reduce JWT expiry to 1hr with refresh tokens (jwt.go:45)
 - [ ] H16: Validate payments sum ≤ total in CreateSale (sales.handler.go:52-75)
 - [ ] H17: Add duplicate offline ID check to SyncReturns (return.handler.go:100-157)
 - [ ] H18: Validate limit/offset in ListReturns (return.handler.go:162-175)
@@ -67,11 +67,11 @@
 - [ ] H38: Add offline support to deleteProduct (inventory.ts:633-637)
 - [ ] H39: Add pagination loop to syncProducts (syncService.ts:345)
 - [ ] H40: Fix returns sync partial success handling (syncService.ts:596-656)
-- [ ] H41: Fix 401 interceptor to preserve React state (api.ts:40-52)
-- [ ] H42: Add encodeURIComponent to customerService search query (customerService.ts:27)
+- [x] H41: Fix 401 interceptor to preserve React state (api.ts:40-52)
+- [x] H42: Add encodeURIComponent to customerService search query (customerService.ts:27)
 - [ ] H43: Add retry logic to all services (expenseService, supplierPayableService, notifications, etc.)
 - [ ] H44: Fix @ts-ignore suppressions in inventory.ts — fix backend API inconsistency
-- [ ] H45: Remove console.log statements from production code
+- [x] H45: Remove console.log statements from production code
 
 ### Database
 
@@ -85,11 +85,11 @@
 
 ### Server Configuration
 
-- [ ] H53: Add security headers middleware (HSTS, CSP, X-Frame-Options, etc.)
-- [ ] H54: Add request size limit middleware (gin.MaxBodySize)
-- [ ] H55: Add rate limiting to protected routes
-- [ ] H56: Fix CORS to use dynamic Vercel URLs instead of hardcoded
-- [ ] H57: Add HTTPS enforcement
+- [x] H53: Add security headers middleware (HSTS, CSP, X-Frame-Options, etc.)
+- [x] H54: Add request size limit middleware (gin.MaxBodySize)
+- [x] H55: Add rate limiting to protected routes
+- [x] H56: Fix CORS to use dynamic Vercel URLs instead of hardcoded
+- [x] H57: Add HTTPS enforcement
 - [x] H58: Remove fmt.Println("Hello World") from main.go:23
 
 ## Medium (64 items)

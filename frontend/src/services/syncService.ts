@@ -666,13 +666,23 @@ export const syncService = {
       return false;
     }
 
-    const salesSuccess = await syncService.syncSales();
-    const categoriesSuccess = await syncService.syncCategories();
-    const suppliersSuccess = await syncService.syncSuppliers();
-    const productsSuccess = await syncService.syncProducts();
-    const returnsSuccess = await syncService.syncReturns();
+    if (syncStatus.isSyncing) {
+      return false;
+    }
 
-    return salesSuccess && categoriesSuccess && suppliersSuccess && productsSuccess && returnsSuccess;
+    updateSyncStatus({ isSyncing: true });
+
+    try {
+      const salesSuccess = await syncService.syncSales();
+      const categoriesSuccess = await syncService.syncCategories();
+      const suppliersSuccess = await syncService.syncSuppliers();
+      const productsSuccess = await syncService.syncProducts();
+      const returnsSuccess = await syncService.syncReturns();
+
+      return salesSuccess && categoriesSuccess && suppliersSuccess && productsSuccess && returnsSuccess;
+    } finally {
+      updateSyncStatus({ isSyncing: false });
+    }
   },
 
   // Initialize sync service

@@ -49,6 +49,18 @@ func CreateSale(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
+	// Validate items
+	for _, item := range req.Items {
+		if item.Quantity <= 0 {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Item quantity must be greater than 0", nil)
+			return
+		}
+		if item.UnitPrice < 0 {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Item unit price must be non-negative", nil)
+			return
+		}
+	}
+
 	// Calculate total amount from items
 	var totalAmount float64
 	for _, item := range req.Items {

@@ -9,6 +9,7 @@ import (
 	db "storemanagement/db/sqlc"
 	"storemanagement/redis"
 	"storemanagement/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -23,12 +24,44 @@ import (
 type RegisterStoreOwnerParams struct {
 	Name           string `json:"name" binding:"required"`
 	Email          string `json:"email" binding:"required,email"`
-	Password       string `json:"password" binding:"required"`
+	Password       string `json:"password" binding:"required,min=8"`
 	Phone          string `json:"phone"`
 	ProfilePicture string `db:"profile_picture" json:"profile_picture"`
 	StoreName      string `json:"store_name" binding:"required"`
 	StoreAddress   string `json:"store_address" binding:"required"`
 	CurrencyCode   string `json:"currency_code" binding:"required"`
+}
+
+func validatePassword(password string) string {
+	if len(password) < 8 {
+		return "Password must be at least 8 characters long"
+	}
+	hasUpper, hasLower, hasDigit, hasSpecial := false, false, false, false
+	for _, ch := range password {
+		switch {
+		case ch >= 'A' && ch <= 'Z':
+			hasUpper = true
+		case ch >= 'a' && ch <= 'z':
+			hasLower = true
+		case ch >= '0' && ch <= '9':
+			hasDigit = true
+		case ch == '!' || ch == '@' || ch == '#' || ch == '$' || ch == '%' || ch == '^' || ch == '&' || ch == '*' || ch == '(' || ch == ')' || ch == '-' || ch == '_' || ch == '+' || ch == '=' || ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '|' || ch == ':' || ch == ';' || ch == '"' || ch == '\'' || ch == '<' || ch == '>' || ch == ',' || ch == '.' || ch == '?' || ch == '/' || ch == '~' || ch == '`' || ch == ' ':
+			hasSpecial = true
+		}
+	}
+	if !hasUpper {
+		return "Password must contain at least one uppercase letter"
+	}
+	if !hasLower {
+		return "Password must contain at least one lowercase letter"
+	}
+	if !hasDigit {
+		return "Password must contain at least one digit"
+	}
+	if !hasSpecial {
+		return "Password must contain at least one special character"
+	}
+	return ""
 }
 
 func RegisterUserHandler(c *gin.Context) {
@@ -49,6 +82,12 @@ func RegisterUserHandler(c *gin.Context) {
 
 		// Handle other errors (e.g., invalid JSON)
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
+		return
+	}
+
+	// Validate password strength
+	if errMsg := validatePassword(req.Password); errMsg != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, errMsg, nil)
 		return
 	}
 
@@ -280,12 +319,38 @@ func RefreshTokenHandler(c *gin.Context) {
 		return
 	}
 
-	userName, _ := c.Get("user_name")
-	storeId, _ := c.Get("store_id")
-	verifiedEmail, _ := c.Get("verified_email")
+	userName, userNameExists := c.Get("user_name")
+	storeId, storeIdExists := c.Get("store_id")
+	verifiedEmail, emailExists := c.Get("verified_email")
+
+	if !exists || !userNameExists || !storeIdExists || !emailExists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "User context incomplete", nil)
+		return
+	}
+
+	userIDTyped, ok := userID.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID in context", nil)
+		return
+	}
+	userNameTyped, ok := userName.(string)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user name in context", nil)
+		return
+	}
+	storeIdTyped, ok := storeId.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid store ID in context", nil)
+		return
+	}
+	verifiedEmailTyped, ok := verifiedEmail.(bool)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid verified email in context", nil)
+		return
+	}
 
 	// Generate new JWT token
-	token, err := utils.GenerateJWT(userID.(pgtype.UUID), userName.(string), storeId.(pgtype.UUID), verifiedEmail.(bool))
+	token, err := utils.GenerateJWT(userIDTyped, userNameTyped, storeIdTyped, verifiedEmailTyped)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return
@@ -370,7 +435,8 @@ func ForgotPasswordHandler(c *gin.Context) {
 	// Check if user exists
 	user, err := utils.Queries.GetStoreOwnerByEmail(context.Background(), req.Email)
 	if err != nil {
-		// Don't reveal whether user exists or not for security
+		// Constant delay to prevent timing-based email enumeration
+		time.Sleep(300 * time.Millisecond)
 		utils.SuccessResponse(c, "If an account with that email exists, we have sent a password reset code", nil)
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"storemanagement/handlers"
 	"storemanagement/redis"
 	"storemanagement/utils"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,13 +23,49 @@ func init() {
 	redis.ConnectToRedis()
 }
 
+func securityHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		c.Header("Cross-Origin-Opener-Policy", "same-origin")
+		c.Header("Cross-Origin-Resource-Policy", "same-origin")
+		if os.Getenv("ENV") == "production" {
+			c.Header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+			c.Header("Content-Security-Policy", "default-src 'self'")
+		}
+		c.Next()
+	}
+}
+
 func main() {
 	utils.StartCronJobs()
-	fmt.Println("Hello World")
 
 	router := gin.Default()
+
+	// Security headers
+	router.Use(securityHeadersMiddleware())
+
+	// Request body size limit (10MB)
+	router.Use(func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10<<20)
+		c.Next()
+	})
+
+	// CORS with dynamic origins
+	allowedOrigins := os.Getenv("CORS_ORIGINS")
+	originsList := []string{"http://localhost:8080", "http://localhost:4173"}
+	if allowedOrigins != "" {
+		parts := strings.Split(allowedOrigins, ",")
+		for i, p := range parts {
+			parts[i] = strings.TrimSpace(p)
+		}
+		originsList = append(originsList, parts...)
+	}
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:4173", "https://store-management-system-liart.vercel.app", "https://store-management-system-bca8g5aaz.vercel.app"},
+		AllowOrigins:     originsList,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -46,7 +83,7 @@ func main() {
 
 		// Protected routes (require JWT token)
 		protected := userRoutes.Group("/")
-		protected.Use(utils.JWTMiddleware())
+		protected.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 		{
 			protected.POST("/refresh-token", handlers.RefreshTokenHandler)
 			protected.POST("/store-info", handlers.CreateStoreInfoHandler)
@@ -59,7 +96,7 @@ func main() {
 	}
 	// Category routes
 	categoryRoutes := router.Group("/api/categories")
-	categoryRoutes.Use(utils.JWTMiddleware())
+	categoryRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		categoryRoutes.POST("/create", handlers.CreateCategories)
 		categoryRoutes.GET("", handlers.GetAllCategories)
@@ -72,7 +109,7 @@ func main() {
 
 	// Supplier routes
 	supplierRoutes := router.Group("/api/suppliers")
-	supplierRoutes.Use(utils.JWTMiddleware())
+	supplierRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		supplierRoutes.POST("/create", handlers.CreateSuppliers)
 		supplierRoutes.GET("", handlers.GetAllSuppliers)
@@ -85,7 +122,7 @@ func main() {
 
 	// Product routes
 	productRoutes := router.Group("/api/products")
-	productRoutes.Use(utils.JWTMiddleware())
+	productRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		productRoutes.POST("/create", handlers.CreateProduct)
 		productRoutes.GET("", handlers.GetProducts)
@@ -98,7 +135,7 @@ func main() {
 
 	// Sales routes
 	salesRoutes := router.Group("/api/sales")
-	salesRoutes.Use(utils.JWTMiddleware())
+	salesRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		salesRoutes.POST("/create", handlers.CreateSale)
 		salesRoutes.GET("", handlers.ListSales)
@@ -107,7 +144,7 @@ func main() {
 
 	// Customer routes
 	customerRoutes := router.Group("/api/customers")
-	customerRoutes.Use(utils.JWTMiddleware())
+	customerRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		customerRoutes.GET("", handlers.ListCustomers)
 		customerRoutes.GET("/search", handlers.SearchCustomers)
@@ -117,7 +154,7 @@ func main() {
 
 	// Debt routes
 	debtRoutes := router.Group("/api/debts")
-	debtRoutes.Use(utils.JWTMiddleware())
+	debtRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		debtRoutes.POST("/create", handlers.CreateDebt)
 		debtRoutes.GET("", handlers.GetDebts)
@@ -129,11 +166,11 @@ func main() {
 
 	// Report routes
 	reportRoutes := router.Group("/api/reports")
-	reportRoutes.Use(utils.JWTMiddleware())
+	reportRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		reportRoutes.GET("/stats", handlers.GetReportStats)
-		reportRoutes.GET("/export/csv", handlers.ExportSalesReportCSV)
-		reportRoutes.GET("/export/pdf", handlers.ExportSalesReportPDF)
+		reportRoutes.POST("/export/csv", handlers.ExportSalesReportCSV)
+		reportRoutes.POST("/export/pdf", handlers.ExportSalesReportPDF)
 		reportRoutes.GET("/cashflow", handlers.GetCashFlow)
 		reportRoutes.GET("/balance-sheet/assets", handlers.GetBalanceSheetAssets)
 		reportRoutes.GET("/balance-sheet/liabilities", handlers.GetBalanceSheetLiabilities)
@@ -142,7 +179,7 @@ func main() {
 
 	// Notification routes
 	notificationRoutes := router.Group("/api/notifications")
-	notificationRoutes.Use(utils.JWTMiddleware())
+	notificationRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		notificationRoutes.GET("", handlers.GetNotifications)
 		notificationRoutes.GET("/unread-count", handlers.GetUnreadCount)
@@ -154,7 +191,7 @@ func main() {
 
 	// Market routes
 	marketRoutes := router.Group("/api/market")
-	marketRoutes.Use(utils.JWTMiddleware())
+	marketRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		marketRoutes.GET("/prices", handlers.GetMarketPrices)
 		marketRoutes.GET("/suppliers", handlers.FindSuppliers)
@@ -162,14 +199,14 @@ func main() {
 
 	// POS routes
 	posRoutes := router.Group("/api/pos")
-	posRoutes.Use(utils.JWTMiddleware())
+	posRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		posRoutes.GET("/catalog", handlers.GetPOSCatalog)
 	}
 
 	// Returns routes
 	returnsRoutes := router.Group("/api/returns")
-	returnsRoutes.Use(utils.JWTMiddleware())
+	returnsRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		returnsRoutes.POST("", handlers.CreateReturn)
 		returnsRoutes.POST("/sync", handlers.SyncReturns)
@@ -179,7 +216,7 @@ func main() {
 
 	// Expense routes
 	expenseRoutes := router.Group("/api/expenses")
-	expenseRoutes.Use(utils.JWTMiddleware())
+	expenseRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		expenseRoutes.POST("", handlers.CreateExpense)
 		expenseRoutes.GET("", handlers.ListExpenses)
@@ -191,7 +228,7 @@ func main() {
 
 	// Supplier payables routes
 	payableRoutes := router.Group("/api/supplier-payables")
-	payableRoutes.Use(utils.JWTMiddleware())
+	payableRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
 	{
 		payableRoutes.POST("", handlers.CreateSupplierPayable)
 		payableRoutes.GET("", handlers.ListSupplierPayables)
@@ -208,8 +245,11 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:    ":" + PORT,
-		Handler: router,
+		Addr:         ":" + PORT,
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	go func() {
