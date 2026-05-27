@@ -1,4 +1,4 @@
-h1:aKfGxpldfLN7ISea5FHKvjattPa+5FmZy8ortkLhgFM=
+h1:l94aSgLCXtyLalB6ZnrLOsFDVQ3h+ENT1NaJ/cden5E=
 20260412042618_init_schema.sql h1:20D0suekCKCFwTIu2Wsembx/0KBcUEo8vkPwHI6s7Lc=
 20260420015519_add_payments_and_loyalty.sql h1:1DbuxUz4UzRIaPKeST6Snu+NQMG22FuLmxCDjMmPauI=
 20260420015912.sql h1:Hjk4ba8rqA0uYDfhI8b54TkcgyDBuYgnUKqOWX1sZok=
@@ -10,3 +10,4 @@ h1:aKfGxpldfLN7ISea5FHKvjattPa+5FmZy8ortkLhgFM=
 20260515000002_supplier_bank_details.sql h1:rChCu2VI3BDYC7HFGRhbSNl2vc4v6xbpRsOQh2A8XbA=
 20260515000003_supplier_payables.sql h1:Yoe9cKxXbu3vTrT/Gj5MJnAr9GmLLzXTShxQeRafDUA=
 20260515000004_supplier_payments.sql h1:CTGlgHN2NUMYI2auGgcUDUC7GFjr4qhhwrbw7EyHSrQ=
+20260527000001_create_purchase_orders.sql h1:IhWU+zQervBUkOlLXHO0L8tkmnit4xlndjZF2/kNmBk=
