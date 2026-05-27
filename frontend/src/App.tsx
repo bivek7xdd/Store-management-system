@@ -38,6 +38,10 @@ import Expenses from "./pages/Expenses";
 import SupplierPayables from "./pages/SupplierPayables";
 import CashFlow from "./pages/CashFlow";
 import BalanceSheet from "./pages/BalanceSheet";
+import PurchaseOrders from "./pages/PurchaseOrders";
+import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
+import ReceivePurchaseOrder from "./pages/ReceivePurchaseOrder";
+import PurchaseOrderDetails from "./pages/PurchaseOrderDetails";
 
 export const queryClient = new QueryClient();
 
@@ -103,14 +107,42 @@ const App = () => {
                           </Layout>
                         </ProtectedRoute>
                       } />
-                      <Route path="/inventory/supplier/:id" element={
-                        <ProtectedRoute>
-                          <Layout>
-                            <ErrorBoundary><SupplierDetails /></ErrorBoundary>
-                          </Layout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/sales" element={
+                        <Route path="/inventory/supplier/:id" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <ErrorBoundary><SupplierDetails /></ErrorBoundary>
+                                </Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/inventory/purchase-orders" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <ErrorBoundary><PurchaseOrders /></ErrorBoundary>
+                                </Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/inventory/purchase-orders/new" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <ErrorBoundary><CreatePurchaseOrder /></ErrorBoundary>
+                                </Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/inventory/purchase-orders/:id" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <ErrorBoundary><PurchaseOrderDetails /></ErrorBoundary>
+                                </Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/inventory/purchase-orders/:id/receive" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <ErrorBoundary><ReceivePurchaseOrder /></ErrorBoundary>
+                                </Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/sales" element={
                         <ProtectedRoute>
                           <Layout>
                             <ErrorBoundary><Sales /></ErrorBoundary>

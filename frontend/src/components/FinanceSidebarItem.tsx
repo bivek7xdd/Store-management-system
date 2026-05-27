@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Wallet, TrendingUp, PieChart, CreditCard } from "lucide-react";
+import { Wallet, TrendingUp, PieChart, CreditCard, ShoppingCart } from "lucide-react";
 import {
     Accordion,
     AccordionContent,
@@ -27,6 +27,7 @@ export function FinanceSidebarItem({ isActive }: { isActive: boolean }) {
     const financeLinks = [
         { icon: Wallet, label: "Expenses", path: "/finance/expenses" },
         { icon: CreditCard, label: "Supplier Payables", path: "/finance/payables" },
+        { icon: ShoppingCart, label: "Purchase Orders", path: "/inventory/purchase-orders" },
         { icon: TrendingUp, label: "Cash Flow", path: "/finance/cashflow" },
         { icon: PieChart, label: "Balance Sheet", path: "/finance/balance-sheet" },
     ];
