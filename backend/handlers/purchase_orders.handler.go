@@ -313,9 +313,9 @@ func ReceivePurchaseOrder(c *gin.Context) {
 
 		// Update PO item with received/damaged quantities
 		_, err = qtx.UpdatePOItemReceive(ctx, db.UpdatePOItemReceiveParams{
-			ID:      poItem.ID,
-			Column2: item.ReceivedQty,
-			Column3: item.DamagedQty,
+			ID:               poItem.ID,
+			ReceivedQuantity: item.ReceivedQty,
+			DamagedQuantity:  item.DamagedQty,
 		})
 		if err != nil {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update item", err)
