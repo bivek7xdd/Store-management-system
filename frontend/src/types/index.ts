@@ -194,3 +194,38 @@ export interface PendingReturn {
   synced: number;
 }
 
+export interface PurchaseOrder {
+  id: string;
+  store_id: string;
+  order_date: string;
+  expected_delivery_date?: string;
+  status: 'draft' | 'ordered' | 'partially_received' | 'received' | 'cancelled';
+  notes?: string;
+  total_cost: number;
+  created_at: string;
+  updated_at: string;
+  items_json?: string;
+  suppliers_json?: string;
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  purchase_order_id: string;
+  supplier_id: string;
+  supplier_name: string;
+  product_id?: string;
+  product_name: string;
+  ordered_quantity: number;
+  received_quantity: number;
+  damaged_quantity: number;
+  unit_cost: number;
+  created_at: string;
+  updated_at: string;
+  product_name_lookup?: string;
+}
+
+export interface PurchaseOrderSupplier {
+  id: string;
+  name: string;
+}
+
