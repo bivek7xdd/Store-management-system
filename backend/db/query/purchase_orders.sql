@@ -103,3 +103,7 @@ SELECT poi.*, s.name as supplier_name
 FROM purchase_order_items poi
 JOIN suppliers s ON poi.supplier_id = s.id
 WHERE poi.id = $1;
+
+-- name: DeletePOItemsByOrder :exec
+DELETE FROM purchase_order_items
+WHERE purchase_order_id = $1;

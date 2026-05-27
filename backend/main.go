@@ -246,6 +246,7 @@ func main() {
 		poRoutes.POST("", handlers.CreatePurchaseOrder)
 		poRoutes.GET("", handlers.ListPurchaseOrders)
 		poRoutes.GET("/:id", handlers.GetPurchaseOrder)
+		poRoutes.PUT("/:id", handlers.UpdatePurchaseOrder)
 		poRoutes.PUT("/:id/status", handlers.UpdatePurchaseOrderStatus)
 		poRoutes.POST("/:id/receive", handlers.ReceivePurchaseOrder)
 		poRoutes.DELETE("/:id", handlers.DeletePurchaseOrder)

@@ -42,8 +42,17 @@ import PurchaseOrders from "./pages/PurchaseOrders";
 import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
 import ReceivePurchaseOrder from "./pages/ReceivePurchaseOrder";
 import PurchaseOrderDetails from "./pages/PurchaseOrderDetails";
+import EditPurchaseOrder from "./pages/EditPurchaseOrder";
 
-export const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 300000,
+            refetchOnWindowFocus: false,
+            retry: 1,
+        },
+    },
+});
 
 const App = () => {
   return (
@@ -139,6 +148,13 @@ const App = () => {
                             <ProtectedRoute>
                                 <Layout>
                                     <ErrorBoundary><ReceivePurchaseOrder /></ErrorBoundary>
+                                </Layout>
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/inventory/purchase-orders/:id/edit" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <ErrorBoundary><EditPurchaseOrder /></ErrorBoundary>
                                 </Layout>
                             </ProtectedRoute>
                         } />

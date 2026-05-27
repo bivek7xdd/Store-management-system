@@ -91,6 +91,16 @@ func (q *Queries) CreatePurchaseOrderItem(ctx context.Context, arg CreatePurchas
 	return i, err
 }
 
+const deletePOItemsByOrder = `-- name: DeletePOItemsByOrder :exec
+DELETE FROM purchase_order_items
+WHERE purchase_order_id = $1
+`
+
+func (q *Queries) DeletePOItemsByOrder(ctx context.Context, purchaseOrderID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deletePOItemsByOrder, purchaseOrderID)
+	return err
+}
+
 const deletePurchaseOrder = `-- name: DeletePurchaseOrder :exec
 DELETE FROM purchase_orders
 WHERE id = $1 AND store_id = $2 AND status = 'draft'

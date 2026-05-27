@@ -540,7 +540,7 @@ export default function SupplierDetails() {
                                     <Link key={po.id} to={`/inventory/purchase-orders/${po.id}`}
                                         className="flex items-center justify-between bg-[#111111] p-3 rounded-[2px] hover:bg-[#1A1A1A] transition-colors">
                                         <div>
-                                            <p className="text-white text-sm">${Number(po.total_cost).toFixed(2)}</p>
+                                            <p className="text-white text-sm">रू {Number(po.total_cost).toLocaleString()}</p>
                                             <p className="text-[#555555] text-xs">{new Date(po.created_at).toLocaleDateString()}</p>
                                         </div>
                                         <Badge className={

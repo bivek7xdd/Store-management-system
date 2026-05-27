@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { inventoryService } from "@/services/inventory";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,15 @@ interface POItem {
     unit_cost: number;
 }
 
-export default function CreatePurchaseOrder() {
+export default function EditPurchaseOrder() {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const [notes, setNotes] = useState("");
-    const [expectedDelivery, setExpectedDelivery] = useState("");
-    const [items, setItems] = useState<POItem[]>([
-        { key: crypto.randomUUID(), supplier_id: "", product_id: "", product_name: "", ordered_quantity: 1, unit_cost: 0 }
-    ]);
+
+    const { data: order, isLoading: orderLoading } = useQuery({
+        queryKey: ["purchase-order", id],
+        queryFn: () => purchaseOrderService.get(id!),
+        enabled: !!id,
+    });
 
     const { data: suppliers } = useQuery({
         queryKey: ["suppliers"],
@@ -44,7 +46,34 @@ export default function CreatePurchaseOrder() {
         retry: 1,
     });
 
-    const createMutation = useMutation({
+    const parseItems = (): POItem[] => {
+        if (!order?.items_json) return [{ key: crypto.randomUUID(), supplier_id: "", product_id: "", product_name: "", ordered_quantity: 1, unit_cost: 0 }];
+        const parsed = JSON.parse(order.items_json);
+        return parsed.map((i: any) => ({
+            key: crypto.randomUUID(),
+            supplier_id: i.supplier_id || "",
+            product_id: i.product_id || "",
+            product_name: i.product_name || "",
+            ordered_quantity: i.ordered_quantity || 1,
+            unit_cost: parseFloat(i.unit_cost) || 0,
+        }));
+    };
+
+    const [notes, setNotes] = useState("");
+    const [expectedDelivery, setExpectedDelivery] = useState("");
+    const [items, setItems] = useState<POItem[]>([]);
+    const [initialized, setInitialized] = useState(false);
+
+    if (order && !initialized) {
+        setNotes(order.notes || "");
+        setExpectedDelivery(order.expected_delivery_date
+            ? new Date(order.expected_delivery_date).toISOString().split("T")[0]
+            : "");
+        setItems(parseItems());
+        setInitialized(true);
+    }
+
+    const updateMutation = useMutation({
         mutationFn: () => {
             const data = {
                 notes: notes || undefined,
@@ -57,13 +86,13 @@ export default function CreatePurchaseOrder() {
                     unit_cost: item.unit_cost,
                 })),
             };
-            return purchaseOrderService.create(data);
+            return purchaseOrderService.update(id!, data);
         },
         onSuccess: () => {
-            toast.success("Purchase order created");
-            navigate("/inventory/purchase-orders");
+            toast.success("Purchase order updated");
+            navigate(`/inventory/purchase-orders/${id}`);
         },
-        onError: () => toast.error("Failed to create order"),
+        onError: () => toast.error("Failed to update order"),
     });
 
     const addItem = () => {
@@ -93,15 +122,35 @@ export default function CreatePurchaseOrder() {
 
     const totalCost = items.reduce((sum, i) => sum + (i.ordered_quantity * i.unit_cost), 0);
 
+    if (orderLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin text-[#888888]" />
+            </div>
+        );
+    }
+
+    if (order && order.status !== "draft") {
+        return (
+            <div className="p-6">
+                <p className="text-[#DA291C]">Only draft orders can be edited.</p>
+                <Button variant="outline" onClick={() => navigate(`/inventory/purchase-orders/${id}`)}
+                    className="mt-4 border-[#303030] text-[#888888] rounded-[2px]">
+                    Back to Order
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6">
             <div className="flex items-center gap-3 mb-6">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/purchase-orders")} className="rounded-[2px]">
+                <Button variant="ghost" size="icon" onClick={() => navigate(`/inventory/purchase-orders/${id}`)} className="rounded-[2px]">
                     <ArrowLeft className="h-5 w-5 text-[#888888]" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">New Purchase Order</h1>
-                    <p className="text-[#888888] text-sm mt-1">Create an order to track supplier deliveries</p>
+                    <h1 className="text-2xl font-bold text-white">Edit Purchase Order</h1>
+                    <p className="text-[#888888] text-sm mt-1">Update items, costs, or delivery date</p>
                 </div>
             </div>
 
@@ -150,9 +199,9 @@ export default function CreatePurchaseOrder() {
                                             {!item.product_id && item.product_name && products && (
                                                 <div className="mt-1 bg-[#111111] border border-[#1A1A1A] max-h-32 overflow-y-auto rounded-[2px]">
                                                     {products
-                                                        .filter(p => p.name.toLowerCase().includes(item.product_name.toLowerCase()))
+                                                        .filter((p: Product) => p.name.toLowerCase().includes(item.product_name.toLowerCase()))
                                                         .slice(0, 5)
-                                                        .map(p => (
+                                                        .map((p: Product) => (
                                                             <button key={p.id}
                                                                 className="block w-full text-left px-3 py-1.5 text-xs text-[#AAAAAA] hover:bg-[#1A1A1A] hover:text-white"
                                                                 onClick={() => selectProduct(item.key, p)}>
@@ -205,15 +254,15 @@ export default function CreatePurchaseOrder() {
                     <span className="text-white font-bold text-lg">रू {totalCost.toLocaleString()}</span>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => navigate("/inventory/purchase-orders")}
+                    <Button variant="outline" onClick={() => navigate(`/inventory/purchase-orders/${id}`)}
                         className="border-[#303030] text-[#888888] rounded-[2px]">
                         Cancel
                     </Button>
-                    <Button onClick={() => createMutation.mutate()}
+                    <Button onClick={() => updateMutation.mutate()}
                         className="bg-[#DA291C] hover:bg-[#DA291C]/90 text-white rounded-[2px]"
-                        disabled={createMutation.isPending || items.some(i => !i.supplier_id || !i.product_name || i.ordered_quantity <= 0)}>
-                        {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                        Save Order
+                        disabled={updateMutation.isPending || items.some(i => !i.supplier_id || !i.product_name || i.ordered_quantity <= 0)}>
+                        {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Save Changes
                     </Button>
                 </div>
             </div>

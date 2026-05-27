@@ -101,7 +101,7 @@ export default function PurchaseOrders() {
                                                 </Badge>
                                             </div>
                                             <p className="text-[#888888] text-xs mt-1">
-                                                {new Date(order.created_at).toLocaleDateString()} · ${Number(order.total_cost).toFixed(2)}
+                                                {new Date(order.created_at).toLocaleDateString()} · रू {Number(order.total_cost).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>

@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Truck, Loader2, Package, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Truck, Loader2, Package, AlertTriangle, Pencil, Send, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
     draft: { bg: "bg-[#1A1A1A]", text: "text-[#888888]", border: "border-[#303030]", label: "Draft" },
@@ -18,10 +19,32 @@ export default function PurchaseOrderDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
 
+    const queryClient = useQueryClient();
+
     const { data: order, isLoading } = useQuery({
         queryKey: ["purchase-order", id],
         queryFn: () => purchaseOrderService.get(id!),
         enabled: !!id,
+    });
+
+    const placeOrder = useMutation({
+        mutationFn: () => purchaseOrderService.updateStatus(id!, "ordered"),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+            queryClient.invalidateQueries({ queryKey: ["purchase-order", id] });
+            toast.success("Order placed");
+        },
+        onError: () => toast.error("Failed to place order"),
+    });
+
+    const cancelOrder = useMutation({
+        mutationFn: () => purchaseOrderService.updateStatus(id!, "cancelled"),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+            queryClient.invalidateQueries({ queryKey: ["purchase-order", id] });
+            toast.success("Order cancelled");
+        },
+        onError: () => toast.error("Failed to cancel order"),
     });
 
     if (isLoading) {
@@ -52,6 +75,25 @@ export default function PurchaseOrderDetails() {
                     </div>
                     <p className="text-[#888888] text-sm mt-1">{new Date(order.created_at).toLocaleDateString()}</p>
                 </div>
+                {order.status === "draft" && (
+                    <>
+                        <Button onClick={() => navigate(`/inventory/purchase-orders/${id}/edit`)}
+                            className="bg-[#303030] hover:bg-[#404040] text-white rounded-[2px]">
+                            <Pencil className="h-4 w-4 mr-2" /> Edit
+                        </Button>
+                        <Button onClick={() => cancelOrder.mutate()}
+                            className="bg-transparent border border-[#555555] text-[#888888] hover:text-[#DA291C] hover:border-[#DA291C] rounded-[2px]"
+                            disabled={cancelOrder.isPending}>
+                            <XCircle className="h-4 w-4 mr-2" /> Cancel
+                        </Button>
+                        <Button onClick={() => placeOrder.mutate()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-[2px]"
+                            disabled={placeOrder.isPending}>
+                            {placeOrder.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                            Place Order
+                        </Button>
+                    </>
+                )}
                 {order.status === "ordered" && (
                     <Button onClick={() => navigate(`/inventory/purchase-orders/${id}/receive`)}
                         className="bg-amber-600 hover:bg-amber-700 text-white rounded-[2px]">
@@ -94,7 +136,7 @@ export default function PurchaseOrderDetails() {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[#888888] text-xs">Unit cost</p>
-                                        <p className="text-white text-sm">${parseFloat(item.unit_cost).toFixed(2)}</p>
+                                        <p className="text-white text-sm">रू {parseFloat(item.unit_cost).toLocaleString()}</p>
                                     </div>
                                 </div>
                             );
@@ -104,7 +146,7 @@ export default function PurchaseOrderDetails() {
             </Card>
 
             <div className="mt-4 text-right">
-                <p className="text-[#888888] text-sm">Total: <span className="text-white font-bold text-lg">${Number(order.total_cost).toFixed(2)}</span></p>
+                <p className="text-[#888888] text-sm">Total: <span className="text-white font-bold text-lg">रू {Number(order.total_cost).toLocaleString()}</span></p>
             </div>
         </div>
     );

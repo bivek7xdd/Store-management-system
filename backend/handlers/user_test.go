@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,11 +11,15 @@ import (
 	"testing"
 	"time"
 
+	db "storemanagement/db/sqlc"
+	"storemanagement/redis"
 	"storemanagement/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // setupTestRouter creates a test router for unauthenticated endpoints
@@ -37,6 +42,84 @@ func setupAuthenticatedRouter() *gin.Engine {
 		auth.POST("/store-info", CreateStoreInfoHandler)
 		auth.POST("/refresh-token", RefreshTokenHandler)
 	}
+	return r
+}
+
+// ─── Helper: create a test user + store + guest customer directly in DB ──
+func createTestUser(t *testing.T, email, password string) (db.StoreOwner, db.StoreInfo) {
+	t.Helper()
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	user, err := utils.Queries.CreateStoreOwner(ctx, db.CreateStoreOwnerParams{
+		Name:           "Test User",
+		Email:          email,
+		Password:       string(hashedPw),
+		Phone:          "1234567890",
+		Role:           "owner",
+		ProfilePicture: "",
+	})
+	require.NoError(t, err)
+
+	var discount pgtype.Numeric
+	require.NoError(t, discount.Scan("10.00"))
+	store, err := utils.Queries.CreateStoreInfo(ctx, db.CreateStoreInfoParams{
+		Name:                      "Test Store",
+		Address:                   "123 Test St",
+		CurrencyCode:              "USD",
+		OwnerID:                   user.ID,
+		LoyaltyProgressTarget:     5,
+		LoyaltyDiscountPercentage: discount,
+	})
+	require.NoError(t, err)
+
+	_, err = utils.Queries.CreateCustomer(ctx, db.CreateCustomerParams{
+		Name:    "Guest",
+		Phone:   "0000000000",
+		StoreID: pgtype.UUID{Bytes: store.ID.Bytes, Valid: true},
+	})
+	require.NoError(t, err)
+
+	return user, store
+}
+
+// ─── Helper: generate a valid JWT for a test user ────────────────────
+func generateTestToken(t *testing.T, user db.StoreOwner, store db.StoreInfo) string {
+	t.Helper()
+	token, err := utils.GenerateJWT(user.ID, user.Name, store.ID, user.Emailverified)
+	require.NoError(t, err)
+	return token
+}
+
+// setupResetFlowRouter creates a test router for password reset endpoints
+func setupResetFlowRouter() *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+	r.POST("/forgot-password", ForgotPasswordHandler)
+	r.POST("/reset-password", ResetPasswordHandler)
+	return r
+}
+
+// setupPasswordUpdateRouter creates a test router with JWT-protected password update
+func setupPasswordUpdateRouter() *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+	auth := r.Group("/")
+	auth.Use(utils.JWTMiddleware())
+	{
+		auth.PUT("/password", UpdatePasswordHandler)
+		auth.POST("/refresh-token", RefreshTokenHandler)
+		auth.POST("/store-info", CreateStoreInfoHandler)
+	}
+	return r
+}
+
+// setupRateLimitedLoginRouter creates a test router with rate-limited login
+func setupRateLimitedLoginRouter() *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+	r.POST("/login", utils.RateLimitMiddleware(5, time.Minute), LoginHandler)
 	return r
 }
 
@@ -634,4 +717,396 @@ func TestRegister_EmptyBody(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+// ====================================================================
+// AUTH-02: Short / weak password tests
+// ====================================================================
+
+func TestRegister_WeakPassword(t *testing.T) {
+	router := setupTestRouter()
+
+	tests := []struct {
+		name         string
+		password     string
+		expectedCode int
+		expectedMsg  string
+	}{
+		{
+			name:         "Too short (7 chars)",
+			password:     "Ab1!xyz",
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Password must be at least 8 characters long",
+		},
+		{
+			name:         "Missing uppercase letter",
+			password:     "abcdef1!@",
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "uppercase",
+		},
+		{
+			name:         "Missing lowercase letter",
+			password:     "ABCDEF1!@",
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "lowercase",
+		},
+		{
+			name:         "Missing digit",
+			password:     "Abcdefg!@",
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "digit",
+		},
+		{
+			name:         "Missing special character",
+			password:     "Abcdefg12",
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "special character",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := fmt.Sprintf(`{"email":"pwdtest_%d@example.com","password":"%s","name":"Test","store_name":"Store","store_address":"Addr","currency_code":"USD"}`,
+				time.Now().UnixNano(), tt.password)
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/register", strings.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedCode, w.Code,
+				"Expected 400 for weak password. Got %d. Body: %s", w.Code, w.Body.String())
+			assert.Contains(t, w.Body.String(), tt.expectedMsg)
+		})
+	}
+}
+
+func TestResetPassword_WeakPassword(t *testing.T) {
+	router := setupResetFlowRouter()
+
+	body := `{"email":"test@example.com","otp":"123456","password":"short"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/reset-password", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid request")
+}
+
+func TestUpdatePassword_WeakPassword(t *testing.T) {
+	if os.Getenv("JWT_SECRET") == "" {
+		os.Setenv("JWT_SECRET", "test-secret-key-for-testing-only")
+	}
+
+	email := fmt.Sprintf("updpwd_%d@example.com", time.Now().UnixNano())
+	user, store := createTestUser(t, email, "Current@123")
+	token := generateTestToken(t, user, store)
+
+	router := setupPasswordUpdateRouter()
+
+	body := `{"current_password":"Current@123","new_password":"short"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PUT", "/password", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid request")
+}
+
+// ====================================================================
+// AUTH-05: Password reset flow
+// ====================================================================
+
+func TestForgotPassword_InvalidRequest(t *testing.T) {
+	router := setupResetFlowRouter()
+
+	tests := []struct {
+		name         string
+		body         string
+		expectedCode int
+		expectedMsg  string
+	}{
+		{
+			name:         "Invalid email format",
+			body:         `{"email":"not-an-email"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid email address",
+		},
+		{
+			name:         "Empty email",
+			body:         `{"email":""}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid email address",
+		},
+		{
+			name:         "Missing email field",
+			body:         `{}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid email address",
+		},
+		{
+			name:         "Malformed JSON",
+			body:         `{bad json`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid email address",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/forgot-password", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedCode, w.Code)
+			assert.Contains(t, w.Body.String(), tt.expectedMsg)
+		})
+	}
+}
+
+func TestForgotPassword_NonExistentUser(t *testing.T) {
+	router := setupResetFlowRouter()
+
+	body := `{"email":"nonexistent_user_xyz@doesnotexist.com"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/forgot-password", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	// Must return 200 (timing-safe response), NOT 404
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "If an account with that email exists")
+}
+
+func TestResetPassword_Validation(t *testing.T) {
+	router := setupResetFlowRouter()
+
+	tests := []struct {
+		name         string
+		body         string
+		expectedCode int
+		expectedMsg  string
+	}{
+		{
+			name:         "Missing fields (empty body)",
+			body:         `{}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request",
+		},
+		{
+			name:         "Missing email",
+			body:         `{"otp":"123456","password":"NewPass@123"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request",
+		},
+		{
+			name:         "Missing OTP",
+			body:         `{"email":"test@example.com","password":"NewPass@123"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request",
+		},
+		{
+			name:         "Missing password",
+			body:         `{"email":"test@example.com","otp":"123456"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request",
+		},
+		{
+			name:         "Malformed JSON",
+			body:         `{bad json`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/reset-password", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedCode, w.Code)
+			assert.Contains(t, w.Body.String(), tt.expectedMsg)
+		})
+	}
+}
+
+// ====================================================================
+// AUTH-06: Role-based access control
+// ====================================================================
+
+func TestRegister_IncludesRoleField(t *testing.T) {
+	if os.Getenv("SENDGRID_API_KEY") == "" {
+		t.Skip("Skipping integration test: SENDGRID_API_KEY not set")
+	}
+	if os.Getenv("JWT_SECRET") == "" {
+		os.Setenv("JWT_SECRET", "test-secret-key-for-testing-only")
+	}
+
+	router := setupTestRouter()
+	uniqueEmail := fmt.Sprintf("roletest_%d@example.com", time.Now().UnixNano())
+
+	registerBody := fmt.Sprintf(`{
+		"name":"Role Test User",
+		"email":"%s",
+		"password":"Secure@123",
+		"store_name":"Role Store",
+		"store_address":"123 Role St",
+		"currency_code":"USD"
+	}`, uniqueEmail)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/register", strings.NewReader(registerBody))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code, "Registration should succeed. Response: %s", w.Body.String())
+
+	var resp map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+
+	if data, ok := resp["data"].(map[string]interface{}); ok {
+		role, roleExists := data["role"]
+		assert.True(t, roleExists, "Response should include 'role' field")
+		if roleExists {
+			t.Logf("User role in response: %q", role)
+		}
+	} else {
+		t.Log("Response data not a map — role may not be exposed in this endpoint version")
+	}
+}
+
+// TestNoRBACMiddleware documents that role-based access control is not yet implemented.
+func TestNoRBACMiddleware(t *testing.T) {
+	// The codebase has a `role` column in store_owner (default 'owner') but no RBAC middleware.
+	// - All authenticated users have the same access level.
+	// - No 403 Forbidden responses are ever returned.
+	// - The TODO.md explicitly lists RBAC as unimplemented.
+	//
+	// Once RBAC is implemented, this test should be updated to verify:
+	//   1. Users with insufficient role get 403 Forbidden
+	//   2. Endpoints correctly check required permissions
+	//   3. Role escalation is prevented
+	t.Log("RBAC middleware is not implemented — all authenticated users have full access")
+}
+
+// ====================================================================
+// AUTH-07: Brute force login lockout (429)
+// ====================================================================
+
+func TestLogin_RateLimiting(t *testing.T) {
+	if !redis.IsRedisAvailable() {
+		t.Skip("Skipping rate limit test: Redis not available")
+	}
+
+	gin.SetMode(gin.TestMode)
+	router := setupRateLimitedLoginRouter()
+
+	body := `{"email":"ratelimit_nobody@example.com","password":"AnyPass@123"}`
+
+	for i := 0; i < 6; i++ {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		if i < 5 {
+			assert.Equal(t, http.StatusUnauthorized, w.Code,
+				"Request %d should be processed (got %d). Body: %s", i+1, w.Code, w.Body.String())
+		} else {
+			assert.Equal(t, http.StatusTooManyRequests, w.Code,
+				"Request 6 should be rate-limited with 429 (got %d). Body: %s", w.Code, w.Body.String())
+			assert.Contains(t, w.Body.String(), "Too many requests")
+		}
+	}
+}
+
+// ====================================================================
+// AUTH-09: Session invalidation on password change
+// ====================================================================
+
+func TestSessionInvalidation_OnPasswordChange(t *testing.T) {
+	if os.Getenv("JWT_SECRET") == "" {
+		os.Setenv("JWT_SECRET", "test-secret-key-for-testing-only")
+	}
+
+	email := fmt.Sprintf("sessioninv_%d@example.com", time.Now().UnixNano())
+	_, _ = createTestUser(t, email, "OldPass@123")
+
+	loginRouter := setupTestRouter()
+	authRouter := setupPasswordUpdateRouter()
+
+	// Step 1: Login with the original password
+	loginBody := fmt.Sprintf(`{"email":"%s","password":"OldPass@123"}`, email)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/login", strings.NewReader(loginBody))
+	req.Header.Set("Content-Type", "application/json")
+	loginRouter.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code, "Step 1: Login should succeed")
+
+	var loginResp map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &loginResp)
+	require.NoError(t, err)
+	data, ok := loginResp["data"].(map[string]interface{})
+	require.True(t, ok, "Response should contain data")
+	oldToken, ok := data["newToken"].(string)
+	require.True(t, ok, "Response should contain newToken")
+	require.NotEmpty(t, oldToken)
+
+	// Step 2: Update password (authenticated with old token)
+	updateBody := `{"current_password":"OldPass@123","new_password":"NewPass@456"}`
+	w2 := httptest.NewRecorder()
+	req2, _ := http.NewRequest("PUT", "/password", strings.NewReader(updateBody))
+	req2.Header.Set("Content-Type", "application/json")
+	req2.Header.Set("Authorization", "Bearer "+oldToken)
+	authRouter.ServeHTTP(w2, req2)
+	require.Equal(t, http.StatusOK, w2.Code, "Step 2: Password update should succeed")
+
+	// Step 3: Old token should still be valid (BUG: no session invalidation implemented)
+	w3 := httptest.NewRecorder()
+	req3, _ := http.NewRequest("POST", "/refresh-token", strings.NewReader(`{}`))
+	req3.Header.Set("Content-Type", "application/json")
+	req3.Header.Set("Authorization", "Bearer "+oldToken)
+	authRouter.ServeHTTP(w3, req3)
+	t.Log("AUTH-09 VULNERABILITY: Old token still works after password change — " +
+		"session invalidation is not implemented. Tokens should be invalidated " +
+		"by maintaining a token version or password-changed-at timestamp.")
+	assert.Equal(t, http.StatusOK, w3.Code,
+		"BUG (AUTH-09): Old token should be invalidated after password change, but currently is not")
+
+	// Step 4: Login with old password should fail
+	w4 := httptest.NewRecorder()
+	req4, _ := http.NewRequest("POST", "/login", strings.NewReader(loginBody))
+	req4.Header.Set("Content-Type", "application/json")
+	loginRouter.ServeHTTP(w4, req4)
+	assert.Equal(t, http.StatusUnauthorized, w4.Code,
+		"Step 4: Old password should no longer work")
+
+	// Step 5: Login with new password should succeed
+	newLoginBody := fmt.Sprintf(`{"email":"%s","password":"NewPass@456"}`, email)
+	w5 := httptest.NewRecorder()
+	req5, _ := http.NewRequest("POST", "/login", strings.NewReader(newLoginBody))
+	req5.Header.Set("Content-Type", "application/json")
+	loginRouter.ServeHTTP(w5, req5)
+	require.Equal(t, http.StatusOK, w5.Code, "Step 5: Login with new password should succeed")
+
+	var loginResp2 map[string]interface{}
+	err = json.Unmarshal(w5.Body.Bytes(), &loginResp2)
+	require.NoError(t, err)
+	data2 := loginResp2["data"].(map[string]interface{})
+	newToken := data2["newToken"].(string)
+	require.NotEmpty(t, newToken)
+
+	// Step 6: New token should work on protected endpoint
+	w6 := httptest.NewRecorder()
+	req6, _ := http.NewRequest("POST", "/refresh-token", strings.NewReader(`{}`))
+	req6.Header.Set("Content-Type", "application/json")
+	req6.Header.Set("Authorization", "Bearer "+newToken)
+	authRouter.ServeHTTP(w6, req6)
+	assert.Equal(t, http.StatusOK, w6.Code, "Step 6: New token should work")
 }

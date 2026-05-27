@@ -60,6 +60,11 @@ export const purchaseOrderService = {
         return response.data.data;
     },
 
+    update: async (id: string, data: CreatePurchaseOrderData) => {
+        const response = await api.put(`/purchase-orders/${id}`, data);
+        return response.data.data;
+    },
+
     delete: async (id: string) => {
         const response = await api.delete(`/purchase-orders/${id}`);
         return response.data;

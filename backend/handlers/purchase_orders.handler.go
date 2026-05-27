@@ -145,6 +145,126 @@ func GetPurchaseOrder(c *gin.Context) {
 	utils.SuccessResponse(c, "Order fetched", order)
 }
 
+func UpdatePurchaseOrder(c *gin.Context) {
+	storeID := c.MustGet("store_id").(pgtype.UUID)
+	orderID, err := utils.ParseUUID(c.Param("id"))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)
+		return
+	}
+
+	var req struct {
+		ExpectedDeliverDate string `json:"expected_delivery_date"`
+		Notes               string `json:"notes"`
+		Items               []struct {
+			SupplierID     string  `json:"supplier_id"`
+			ProductID      string  `json:"product_id"`
+			ProductName    string  `json:"product_name"`
+			OrderedQty     int32   `json:"ordered_quantity"`
+			UnitCost       float64 `json:"unit_cost"`
+		} `json:"items" binding:"required,min=1"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Verify PO exists and is in 'draft' status
+	po, err := utils.Queries.GetPurchaseOrder(ctx, db.GetPurchaseOrderParams{
+		ID:      orderID,
+		StoreID: storeID,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "Order not found", err)
+		return
+	}
+	if po.Status != "draft" {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Only draft orders can be edited", nil)
+		return
+	}
+
+	var expectedDelivery pgtype.Timestamptz
+	if req.ExpectedDeliverDate != "" {
+		t, err := time.Parse("2006-01-02", req.ExpectedDeliverDate)
+		if err == nil {
+			expectedDelivery = pgtype.Timestamptz{Time: t, Valid: true}
+		}
+	}
+
+	// Calculate total cost
+	var totalCost float64
+	for _, item := range req.Items {
+		totalCost += float64(item.OrderedQty) * item.UnitCost
+	}
+
+	// Update PO header
+	_, err = utils.Queries.UpdatePurchaseOrder(ctx, db.UpdatePurchaseOrderParams{
+		ID:                   orderID,
+		StoreID:              storeID,
+		Status:               "draft",
+		Notes:                utils.OptionalText(req.Notes),
+		ExpectedDeliveryDate: expectedDelivery,
+		TotalCost:            utils.Numeric(totalCost),
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update order", err)
+		return
+	}
+
+	// Delete existing items
+	err = utils.Queries.DeletePOItemsByOrder(ctx, orderID)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to replace items", err)
+		return
+	}
+
+	// Re-insert items
+	for _, item := range req.Items {
+		supplierUUID, err := utils.ParseUUID(item.SupplierID)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid supplier ID", err)
+			return
+		}
+
+		var productUUID pgtype.UUID
+		if item.ProductID != "" {
+			pid, err := utils.ParseUUID(item.ProductID)
+			if err == nil {
+				productUUID = pid
+			}
+		}
+
+		_, err = utils.Queries.CreatePurchaseOrderItem(ctx, db.CreatePurchaseOrderItemParams{
+			PurchaseOrderID: orderID,
+			SupplierID:      supplierUUID,
+			ProductID:       productUUID,
+			ProductName:     item.ProductName,
+			OrderedQuantity: item.OrderedQty,
+			UnitCost:        utils.Numeric(item.UnitCost),
+		})
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create order item", err)
+			return
+		}
+	}
+
+	// Return updated order
+	updated, err := utils.Queries.GetPurchaseOrder(ctx, db.GetPurchaseOrderParams{
+		ID:      orderID,
+		StoreID: storeID,
+	})
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch updated order", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Order updated", updated)
+}
+
 func UpdatePurchaseOrderStatus(c *gin.Context) {
 	storeID := c.MustGet("store_id").(pgtype.UUID)
 	orderID, err := utils.ParseUUID(c.Param("id"))

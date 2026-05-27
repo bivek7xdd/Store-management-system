@@ -41,6 +41,7 @@ type Querier interface {
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) error
 	DeleteOTPToken(ctx context.Context, id pgtype.UUID) error
 	DeleteOldNotifications(ctx context.Context, storeID pgtype.UUID) error
+	DeletePOItemsByOrder(ctx context.Context, purchaseOrderID pgtype.UUID) error
 	DeleteProduct(ctx context.Context, arg DeleteProductParams) error
 	DeleteProductVariant(ctx context.Context, id pgtype.UUID) error
 	DeletePurchaseOrder(ctx context.Context, arg DeletePurchaseOrderParams) error

@@ -40,7 +40,12 @@ export default function ReceivePurchaseOrder() {
                 damaged_quantity: vals.damaged,
             }));
 
-            const paymentsArr = Object.values(payments).filter(p => p.totalDue > 0);
+            const paymentsArr = Object.values(payments).filter(p => p.totalDue > 0).map(p => ({
+                supplier_id: p.supplierId,
+                payment_amount: p.paymentAmount,
+                payment_method: p.paymentMethod,
+                payment_notes: p.paymentNotes || undefined,
+            }));
 
             return purchaseOrderService.receive(id!, { items, payments: paymentsArr });
         },
@@ -146,20 +151,20 @@ export default function ReceivePurchaseOrder() {
                                         <div className="flex-1">
                                             <p className="text-white text-sm">{item.product_name}</p>
                                             <p className="text-[#555555] text-xs">Ordered: {item.ordered_quantity} · Previously received: {item.received_quantity} · Remaining: {remaining}</p>
-                                            <p className="text-[#555555] text-xs">Unit cost: ${parseFloat(item.unit_cost).toFixed(2)}</p>
+                                            <p className="text-[#555555] text-xs">Unit cost: रू {parseFloat(item.unit_cost).toLocaleString()}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div>
                                                 <label className="text-[#888888] text-[10px] block mb-0.5">Good</label>
-                                                <Input type="number" min={0} max={remaining} value={rcv.received}
+                                                <Input type="number" min={0} max={remaining} value={rcv.received || ''}
                                                     onChange={e => updateReceive(item.id, 'received', parseInt(e.target.value) || 0)}
-                                                    className="w-20 bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-sm h-8" />
+                                                    className="w-20 bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-sm h-8 no-spinner" />
                                             </div>
                                             <div>
                                                 <label className="text-[#888888] text-[10px] block mb-0.5">Damaged</label>
-                                                <Input type="number" min={0} max={remaining - rcv.received} value={rcv.damaged}
+                                                <Input type="number" min={0} max={remaining - rcv.received} value={rcv.damaged || ''}
                                                     onChange={e => updateReceive(item.id, 'damaged', parseInt(e.target.value) || 0)}
-                                                    className="w-20 bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-sm h-8" />
+                                                    className="w-20 bg-[#0A0A0A] border-[#1A1A1A] text-white rounded-[2px] text-sm h-8 no-spinner" />
                                             </div>
                                         </div>
                                         {overReceive && (
@@ -173,15 +178,15 @@ export default function ReceivePurchaseOrder() {
                             {payments[supplierId] && (
                                 <div className="border-t border-[#1A1A1A] pt-3 mt-3">
                                     <p className="text-[#888888] text-xs mb-2">
-                                        Total due for {payments[supplierId].supplierName}: <span className="text-white font-medium">${payments[supplierId].totalDue.toFixed(2)}</span>
+                                        Total due for {payments[supplierId].supplierName}: <span className="text-white font-medium">रू {payments[supplierId].totalDue.toLocaleString()}</span>
                                     </p>
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1">
                                             <label className="text-[#888888] text-[10px] block mb-0.5">Pay Amount</label>
                                             <Input type="number" min={0} max={payments[supplierId].totalDue} step="0.01"
-                                                value={payments[supplierId].paymentAmount}
+                                                value={payments[supplierId].paymentAmount || ''}
                                                 onChange={e => updatePayment(supplierId, 'paymentAmount', parseFloat(e.target.value) || 0)}
-                                                className="bg-[#111111] border-[#1A1A1A] text-white rounded-[2px] text-sm h-8" />
+                                                className="bg-[#111111] border-[#1A1A1A] text-white rounded-[2px] text-sm h-8 no-spinner" />
                                         </div>
                                         <div className="flex-1">
                                             <label className="text-[#888888] text-[10px] block mb-0.5">Method</label>
