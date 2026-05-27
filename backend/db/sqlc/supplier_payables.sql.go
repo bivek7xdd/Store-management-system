@@ -14,7 +14,7 @@ import (
 const createSupplierPayable = `-- name: CreateSupplierPayable :one
 INSERT INTO supplier_payables (store_id, supplier_id, description, amount_owed, amount_paid, due_date, status)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, store_id, supplier_id, description, amount_owed, amount_paid, due_date, status, created_at, updated_at
+RETURNING id, store_id, supplier_id, description, amount_owed, amount_paid, due_date, status, purchase_order_id, created_at, updated_at
 `
 
 type CreateSupplierPayableParams struct {
@@ -47,6 +47,7 @@ func (q *Queries) CreateSupplierPayable(ctx context.Context, arg CreateSupplierP
 		&i.AmountPaid,
 		&i.DueDate,
 		&i.Status,
+		&i.PurchaseOrderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -111,7 +112,7 @@ func (q *Queries) GetDailySupplierPayments(ctx context.Context, arg GetDailySupp
 
 const getOverduePayables = `-- name: GetOverduePayables :many
 SELECT 
-    sp.id, sp.store_id, sp.supplier_id, sp.description, sp.amount_owed, sp.amount_paid, sp.due_date, sp.status, sp.created_at, sp.updated_at,
+    sp.id, sp.store_id, sp.supplier_id, sp.description, sp.amount_owed, sp.amount_paid, sp.due_date, sp.status, sp.purchase_order_id, sp.created_at, sp.updated_at,
     s.name as supplier_name
 FROM supplier_payables sp
 JOIN suppliers s ON sp.supplier_id = s.id
@@ -122,17 +123,18 @@ ORDER BY sp.due_date ASC
 `
 
 type GetOverduePayablesRow struct {
-	ID           pgtype.UUID        `db:"id" json:"id"`
-	StoreID      pgtype.UUID        `db:"store_id" json:"store_id"`
-	SupplierID   pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
-	Description  pgtype.Text        `db:"description" json:"description"`
-	AmountOwed   pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
-	AmountPaid   pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
-	DueDate      pgtype.Timestamptz `db:"due_date" json:"due_date"`
-	Status       string             `db:"status" json:"status"`
-	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	SupplierName pgtype.Text        `db:"supplier_name" json:"supplier_name"`
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	SupplierID      pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	Description     pgtype.Text        `db:"description" json:"description"`
+	AmountOwed      pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid      pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate         pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status          string             `db:"status" json:"status"`
+	PurchaseOrderID pgtype.UUID        `db:"purchase_order_id" json:"purchase_order_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	SupplierName    pgtype.Text        `db:"supplier_name" json:"supplier_name"`
 }
 
 func (q *Queries) GetOverduePayables(ctx context.Context, storeID pgtype.UUID) ([]GetOverduePayablesRow, error) {
@@ -153,6 +155,7 @@ func (q *Queries) GetOverduePayables(ctx context.Context, storeID pgtype.UUID) (
 			&i.AmountPaid,
 			&i.DueDate,
 			&i.Status,
+			&i.PurchaseOrderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SupplierName,
@@ -169,7 +172,7 @@ func (q *Queries) GetOverduePayables(ctx context.Context, storeID pgtype.UUID) (
 
 const getSupplierPayable = `-- name: GetSupplierPayable :one
 SELECT 
-    sp.id, sp.store_id, sp.supplier_id, sp.description, sp.amount_owed, sp.amount_paid, sp.due_date, sp.status, sp.created_at, sp.updated_at,
+    sp.id, sp.store_id, sp.supplier_id, sp.description, sp.amount_owed, sp.amount_paid, sp.due_date, sp.status, sp.purchase_order_id, sp.created_at, sp.updated_at,
     s.name as supplier_name,
     s.phone_number as supplier_phone
 FROM supplier_payables sp
@@ -183,18 +186,19 @@ type GetSupplierPayableParams struct {
 }
 
 type GetSupplierPayableRow struct {
-	ID            pgtype.UUID        `db:"id" json:"id"`
-	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
-	SupplierID    pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
-	Description   pgtype.Text        `db:"description" json:"description"`
-	AmountOwed    pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
-	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
-	DueDate       pgtype.Timestamptz `db:"due_date" json:"due_date"`
-	Status        string             `db:"status" json:"status"`
-	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	SupplierName  pgtype.Text        `db:"supplier_name" json:"supplier_name"`
-	SupplierPhone pgtype.Text        `db:"supplier_phone" json:"supplier_phone"`
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	SupplierID      pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	Description     pgtype.Text        `db:"description" json:"description"`
+	AmountOwed      pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid      pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate         pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status          string             `db:"status" json:"status"`
+	PurchaseOrderID pgtype.UUID        `db:"purchase_order_id" json:"purchase_order_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	SupplierName    pgtype.Text        `db:"supplier_name" json:"supplier_name"`
+	SupplierPhone   pgtype.Text        `db:"supplier_phone" json:"supplier_phone"`
 }
 
 func (q *Queries) GetSupplierPayable(ctx context.Context, arg GetSupplierPayableParams) (GetSupplierPayableRow, error) {
@@ -209,6 +213,7 @@ func (q *Queries) GetSupplierPayable(ctx context.Context, arg GetSupplierPayable
 		&i.AmountPaid,
 		&i.DueDate,
 		&i.Status,
+		&i.PurchaseOrderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SupplierName,
@@ -327,7 +332,7 @@ func (q *Queries) ListPaymentsByPayable(ctx context.Context, arg ListPaymentsByP
 
 const listSupplierPayables = `-- name: ListSupplierPayables :many
 SELECT 
-    sp.id, sp.store_id, sp.supplier_id, sp.description, sp.amount_owed, sp.amount_paid, sp.due_date, sp.status, sp.created_at, sp.updated_at,
+    sp.id, sp.store_id, sp.supplier_id, sp.description, sp.amount_owed, sp.amount_paid, sp.due_date, sp.status, sp.purchase_order_id, sp.created_at, sp.updated_at,
     s.name as supplier_name,
     s.phone_number as supplier_phone
 FROM supplier_payables sp
@@ -350,18 +355,19 @@ type ListSupplierPayablesParams struct {
 }
 
 type ListSupplierPayablesRow struct {
-	ID            pgtype.UUID        `db:"id" json:"id"`
-	StoreID       pgtype.UUID        `db:"store_id" json:"store_id"`
-	SupplierID    pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
-	Description   pgtype.Text        `db:"description" json:"description"`
-	AmountOwed    pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
-	AmountPaid    pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
-	DueDate       pgtype.Timestamptz `db:"due_date" json:"due_date"`
-	Status        string             `db:"status" json:"status"`
-	CreatedAt     pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	SupplierName  pgtype.Text        `db:"supplier_name" json:"supplier_name"`
-	SupplierPhone pgtype.Text        `db:"supplier_phone" json:"supplier_phone"`
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	SupplierID      pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	Description     pgtype.Text        `db:"description" json:"description"`
+	AmountOwed      pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid      pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate         pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status          string             `db:"status" json:"status"`
+	PurchaseOrderID pgtype.UUID        `db:"purchase_order_id" json:"purchase_order_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	SupplierName    pgtype.Text        `db:"supplier_name" json:"supplier_name"`
+	SupplierPhone   pgtype.Text        `db:"supplier_phone" json:"supplier_phone"`
 }
 
 func (q *Queries) ListSupplierPayables(ctx context.Context, arg ListSupplierPayablesParams) ([]ListSupplierPayablesRow, error) {
@@ -382,6 +388,7 @@ func (q *Queries) ListSupplierPayables(ctx context.Context, arg ListSupplierPaya
 			&i.AmountPaid,
 			&i.DueDate,
 			&i.Status,
+			&i.PurchaseOrderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SupplierName,
@@ -437,7 +444,7 @@ const updatePayableAfterPayment = `-- name: UpdatePayableAfterPayment :one
 UPDATE supplier_payables
 SET amount_paid = $2, status = $3, updated_at = NOW()
 WHERE id = $1 AND store_id = $4
-RETURNING id, store_id, supplier_id, description, amount_owed, amount_paid, due_date, status, created_at, updated_at
+RETURNING id, store_id, supplier_id, description, amount_owed, amount_paid, due_date, status, purchase_order_id, created_at, updated_at
 `
 
 type UpdatePayableAfterPaymentParams struct {
@@ -464,6 +471,7 @@ func (q *Queries) UpdatePayableAfterPayment(ctx context.Context, arg UpdatePayab
 		&i.AmountPaid,
 		&i.DueDate,
 		&i.Status,
+		&i.PurchaseOrderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -474,7 +482,7 @@ const updateSupplierPayable = `-- name: UpdateSupplierPayable :one
 UPDATE supplier_payables
 SET description = $2, amount_owed = $3, due_date = $4, status = $5, updated_at = NOW()
 WHERE id = $1 AND store_id = $6
-RETURNING id, store_id, supplier_id, description, amount_owed, amount_paid, due_date, status, created_at, updated_at
+RETURNING id, store_id, supplier_id, description, amount_owed, amount_paid, due_date, status, purchase_order_id, created_at, updated_at
 `
 
 type UpdateSupplierPayableParams struct {
@@ -505,6 +513,7 @@ func (q *Queries) UpdateSupplierPayable(ctx context.Context, arg UpdateSupplierP
 		&i.AmountPaid,
 		&i.DueDate,
 		&i.Status,
+		&i.PurchaseOrderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

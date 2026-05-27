@@ -389,6 +389,32 @@ type ProductVariant struct {
 	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type PurchaseOrder struct {
+	ID                   pgtype.UUID        `db:"id" json:"id"`
+	StoreID              pgtype.UUID        `db:"store_id" json:"store_id"`
+	OrderDate            pgtype.Timestamptz `db:"order_date" json:"order_date"`
+	ExpectedDeliveryDate pgtype.Timestamptz `db:"expected_delivery_date" json:"expected_delivery_date"`
+	Status               string             `db:"status" json:"status"`
+	Notes                pgtype.Text        `db:"notes" json:"notes"`
+	TotalCost            pgtype.Numeric     `db:"total_cost" json:"total_cost"`
+	CreatedAt            pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type PurchaseOrderItem struct {
+	ID               pgtype.UUID        `db:"id" json:"id"`
+	PurchaseOrderID  pgtype.UUID        `db:"purchase_order_id" json:"purchase_order_id"`
+	SupplierID       pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	ProductID        pgtype.UUID        `db:"product_id" json:"product_id"`
+	ProductName      string             `db:"product_name" json:"product_name"`
+	OrderedQuantity  int32              `db:"ordered_quantity" json:"ordered_quantity"`
+	ReceivedQuantity int32              `db:"received_quantity" json:"received_quantity"`
+	DamagedQuantity  int32              `db:"damaged_quantity" json:"damaged_quantity"`
+	UnitCost         pgtype.Numeric     `db:"unit_cost" json:"unit_cost"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
 type Return struct {
 	ID           pgtype.UUID        `db:"id" json:"id"`
 	SaleID       pgtype.UUID        `db:"sale_id" json:"sale_id"`
@@ -465,16 +491,17 @@ type Supplier struct {
 }
 
 type SupplierPayable struct {
-	ID          pgtype.UUID        `db:"id" json:"id"`
-	StoreID     pgtype.UUID        `db:"store_id" json:"store_id"`
-	SupplierID  pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
-	Description pgtype.Text        `db:"description" json:"description"`
-	AmountOwed  pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
-	AmountPaid  pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
-	DueDate     pgtype.Timestamptz `db:"due_date" json:"due_date"`
-	Status      string             `db:"status" json:"status"`
-	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID              pgtype.UUID        `db:"id" json:"id"`
+	StoreID         pgtype.UUID        `db:"store_id" json:"store_id"`
+	SupplierID      pgtype.UUID        `db:"supplier_id" json:"supplier_id"`
+	Description     pgtype.Text        `db:"description" json:"description"`
+	AmountOwed      pgtype.Numeric     `db:"amount_owed" json:"amount_owed"`
+	AmountPaid      pgtype.Numeric     `db:"amount_paid" json:"amount_paid"`
+	DueDate         pgtype.Timestamptz `db:"due_date" json:"due_date"`
+	Status          string             `db:"status" json:"status"`
+	PurchaseOrderID pgtype.UUID        `db:"purchase_order_id" json:"purchase_order_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 type SupplierPayment struct {
