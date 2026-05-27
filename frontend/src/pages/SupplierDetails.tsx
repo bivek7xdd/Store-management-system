@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService } from "@/services/inventory";
+import { purchaseOrderService } from "@/services/purchaseOrderService";
 import { getSupplierPayableSummary, recordSupplierPayment, SupplierPayable } from "@/services/supplierPayableService";
 import { Button } from "@/components/ui/button";
 import { 
@@ -22,7 +23,8 @@ import {
     Building2,
     Wallet,
     CreditCard,
-    Copy
+    Copy,
+    ShoppingCart
 } from "lucide-react";
 import { SupplierDialog } from "@/components/CreateInventoryDialogs";
 import {
@@ -82,6 +84,12 @@ export default function SupplierDetails() {
     const { data: products, isLoading: productsLoading } = useQuery({
         queryKey: ["supplier-products", id],
         queryFn: () => inventoryService.getSupplierProducts(id!),
+        enabled: !!id,
+    });
+
+    const { data: supplierOrders } = useQuery({
+        queryKey: ["supplier-orders", id],
+        queryFn: () => purchaseOrderService.getBySupplier(id!),
         enabled: !!id,
     });
 
@@ -514,6 +522,40 @@ export default function SupplierDetails() {
                         )}
                     </div>
                 </div>
+
+                    {/* Purchase Orders */}
+                    {supplierOrders && supplierOrders.length > 0 && (
+                        <div className="mt-6 bg-[#0A0A0A] border border-[#1A1A1A] rounded-[2px] p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-white text-sm font-medium flex items-center gap-2">
+                                    <ShoppingCart className="h-4 w-4 text-[#DA291C]" />
+                                    Purchase Orders
+                                </h3>
+                                <Link to={`/inventory/purchase-orders`} className="text-[#888888] hover:text-white text-xs">
+                                    View All
+                                </Link>
+                            </div>
+                            <div className="space-y-2">
+                                {supplierOrders.map((po: any) => (
+                                    <Link key={po.id} to={`/inventory/purchase-orders/${po.id}`}
+                                        className="flex items-center justify-between bg-[#111111] p-3 rounded-[2px] hover:bg-[#1A1A1A] transition-colors">
+                                        <div>
+                                            <p className="text-white text-sm">${Number(po.total_cost).toFixed(2)}</p>
+                                            <p className="text-[#555555] text-xs">{new Date(po.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                        <Badge className={
+                                            po.status === 'draft' ? 'bg-[#1A1A1A] text-[#888888] border-[#303030] rounded-[2px] text-[10px]' :
+                                            po.status === 'ordered' ? 'bg-blue-900/20 text-blue-400 border-blue-800 rounded-[2px] text-[10px]' :
+                                            po.status === 'received' ? 'bg-emerald-900/20 text-emerald-400 border-emerald-800 rounded-[2px] text-[10px]' :
+                                            'bg-[#1A1A1A] text-[#888888] border-[#303030] rounded-[2px] text-[10px]'
+                                        }>
+                                            {po.status.replace('_', ' ')}
+                                        </Badge>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
             </div>
 
             {/* Delete Dialog */}
