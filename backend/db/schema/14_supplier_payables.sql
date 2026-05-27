@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS supplier_payables (
     amount_paid DECIMAL(12,2) NOT NULL DEFAULT 0,
     due_date TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    purchase_order_id UUID,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
