@@ -239,6 +239,21 @@ func main() {
 		payableRoutes.POST("/:id/payment", handlers.RecordSupplierPayment)
 	}
 	
+	// Purchase order routes
+	poRoutes := router.Group("/api/purchase-orders")
+	poRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
+	{
+		poRoutes.POST("", handlers.CreatePurchaseOrder)
+		poRoutes.GET("", handlers.ListPurchaseOrders)
+		poRoutes.GET("/:id", handlers.GetPurchaseOrder)
+		poRoutes.PUT("/:id/status", handlers.UpdatePurchaseOrderStatus)
+		poRoutes.POST("/:id/receive", handlers.ReceivePurchaseOrder)
+		poRoutes.DELETE("/:id", handlers.DeletePurchaseOrder)
+	}
+
+	// Supplier purchase orders route
+	router.GET("/api/suppliers/:id/purchase-orders", utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute), handlers.GetSupplierPurchaseOrders)
+
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "8000"
