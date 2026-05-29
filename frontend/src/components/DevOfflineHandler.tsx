@@ -4,6 +4,7 @@ import { WifiOff, RefreshCw } from 'lucide-react';
 export function DevOfflineHandler({ children }: { children: React.ReactNode }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showOfflineMessage, setShowOfflineMessage] = useState(false);
+  const [swActive, setSwActive] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -13,15 +14,18 @@ export function DevOfflineHandler({ children }: { children: React.ReactNode }) {
 
     const handleOffline = () => {
       setIsOnline(false);
-      setShowOfflineMessage(true);
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check if we're in development mode and offline
-    if (import.meta.env.DEV && !navigator.onLine) {
-      setShowOfflineMessage(true);
+    // Check if service worker is actually active
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        setSwActive(true);
+      }).catch(() => {
+        setSwActive(false);
+      });
     }
 
     return () => {
@@ -30,8 +34,9 @@ export function DevOfflineHandler({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // In development mode, show a less intrusive offline message
-  if (import.meta.env.DEV && showOfflineMessage && !isOnline) {
+  // Only show warning if offline AND service worker is NOT active
+  // If SW is active, offline features work fine
+  if (import.meta.env.DEV && !isOnline && !swActive) {
     return (
       <div className="fixed top-4 right-4 z-50 max-w-sm">
         <div className="bg-orange-100 border border-orange-200 rounded-lg p-4 shadow-lg">
@@ -42,7 +47,7 @@ export function DevOfflineHandler({ children }: { children: React.ReactNode }) {
                 Development Mode - Offline
               </h3>
               <p className="text-xs text-orange-700 mt-1">
-                Limited offline functionality in dev mode. Some features may not work.
+                Service worker not active. Offline features won't work until you reload.
               </p>
             </div>
             <button 

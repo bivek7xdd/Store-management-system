@@ -38,12 +38,29 @@ const RETRY_CONFIG = {
   maxDelay: 30000, // 30 seconds
 };
 
+// Minimum time between sync cycles (prevents rapid re-triggering)
+const SYNC_COOLDOWN_MS = 60000; // 1 minute
+let lastSyncFinishTime = 0;
+
 // Utility function for exponential backoff
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const calculateRetryDelay = (attempt: number): number => {
   const exponentialDelay = RETRY_CONFIG.baseDelay * Math.pow(2, attempt);
   return Math.min(exponentialDelay, RETRY_CONFIG.maxDelay);
+};
+
+// Check if error is a 429 rate limit and return appropriate delay
+const getRetryDelayForError = (error: any, attempt: number): number => {
+  if (error?.response?.status === 429) {
+    // Respect Retry-After header if present, otherwise wait 60s for rate limit window reset
+    const retryAfter = error.response.headers?.['retry-after'];
+    if (retryAfter) {
+      return Math.min(parseInt(retryAfter, 10) * 1000, 120000);
+    }
+    return 60000; // Wait full minute for rate limit window to reset
+  }
+  return calculateRetryDelay(attempt);
 };
 
 // Update sync status and emit events
@@ -240,7 +257,7 @@ export const syncService = {
 
       // Implement retry logic
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
-        const retryDelay = calculateRetryDelay(retryAttempt);
+        const retryDelay = getRetryDelayForError(error, retryAttempt);
         console.log(`Retrying sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         updateSyncStatus({
@@ -408,7 +425,7 @@ export const syncService = {
 
       // Implement retry logic for products too
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
-        const retryDelay = calculateRetryDelay(retryAttempt);
+        const retryDelay = getRetryDelayForError(error, retryAttempt);
         console.log(`Retrying product sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         await delay(retryDelay);
@@ -494,7 +511,7 @@ export const syncService = {
 
       // Implement retry logic
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
-        const retryDelay = calculateRetryDelay(retryAttempt);
+        const retryDelay = getRetryDelayForError(error, retryAttempt);
         console.log(`Retrying category sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         await delay(retryDelay);
@@ -582,7 +599,7 @@ export const syncService = {
 
       // Implement retry logic
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
-        const retryDelay = calculateRetryDelay(retryAttempt);
+        const retryDelay = getRetryDelayForError(error, retryAttempt);
         console.log(`Retrying supplier sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         await delay(retryDelay);
@@ -646,7 +663,7 @@ export const syncService = {
       console.error('Return sync failed:', error);
 
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
-        const retryDelay = calculateRetryDelay(retryAttempt);
+        const retryDelay = getRetryDelayForError(error, retryAttempt);
         await delay(retryDelay);
         return syncService.syncReturns(retryAttempt + 1);
       }
@@ -670,6 +687,13 @@ export const syncService = {
       return false;
     }
 
+    // Respect cooldown between sync cycles
+    const now = Date.now();
+    if (now - lastSyncFinishTime < SYNC_COOLDOWN_MS) {
+      console.log('Sync cooldown active, skipping...');
+      return false;
+    }
+
     updateSyncStatus({ isSyncing: true });
 
     try {
@@ -679,6 +703,7 @@ export const syncService = {
       const productsSuccess = await syncService.syncProducts();
       const returnsSuccess = await syncService.syncReturns();
 
+      lastSyncFinishTime = Date.now();
       return salesSuccess && categoriesSuccess && suppliersSuccess && productsSuccess && returnsSuccess;
     } finally {
       updateSyncStatus({ isSyncing: false });
