@@ -34,10 +34,7 @@ import LandingPage from "./pages/LandingPage";
 import Settings from "./pages/Settings";
 import DevOfflineHandler from "./components/DevOfflineHandler";
 import { Agentation } from "agentation";
-import Expenses from "./pages/Expenses";
-import SupplierPayables from "./pages/SupplierPayables";
-import CashFlow from "./pages/CashFlow";
-import BalanceSheet from "./pages/BalanceSheet";
+import Finance from "./pages/Finance";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
 import ReceivePurchaseOrder from "./pages/ReceivePurchaseOrder";
@@ -200,6 +197,13 @@ const App = () => {
                           </Layout>
                         </ProtectedRoute>
                       } />
+                      <Route path="/reports/finance" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <ErrorBoundary><Finance /></ErrorBoundary>
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
                       <Route path="/market" element={
                         <ProtectedRoute>
                           <Layout>
@@ -219,35 +223,6 @@ const App = () => {
                         <ProtectedRoute>
                           <Layout>
                             <ErrorBoundary><Settings /></ErrorBoundary>
-                          </Layout>
-                        </ProtectedRoute>
-                      } />
-
-                      <Route path="/finance/expenses" element={
-                        <ProtectedRoute>
-                          <Layout>
-                            <ErrorBoundary><Expenses /></ErrorBoundary>
-                          </Layout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/finance/payables" element={
-                        <ProtectedRoute>
-                          <Layout>
-                            <ErrorBoundary><SupplierPayables /></ErrorBoundary>
-                          </Layout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/finance/cashflow" element={
-                        <ProtectedRoute>
-                          <Layout>
-                            <ErrorBoundary><CashFlow /></ErrorBoundary>
-                          </Layout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/finance/balance-sheet" element={
-                        <ProtectedRoute>
-                          <Layout>
-                            <ErrorBoundary><BalanceSheet /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />
