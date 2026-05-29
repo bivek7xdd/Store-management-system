@@ -32,7 +32,7 @@ import { inventoryService } from "@/services/inventory";
 import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
 import { MarketSidebarItem } from "./MarketSidebarItem";
-import { FinanceSidebarItem } from "./FinanceSidebarItem";
+
 import NotificationBell from "./NotificationBell";
 import categoryPreferencesService from "@/services/categoryPreferences";
 import { BUSINESS_CATEGORIES } from "@/data/businessCategories";
@@ -56,7 +56,6 @@ const navItems = [
   { icon: ShoppingCart, label: "Sales", path: "/sales" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: Wallet, label: "Debtors", path: "/debtors" },
-  { icon: Wallet, label: "Finance", path: "/finance" },
   { icon: BarChart3, label: "Reports", path: "/reports" },
   { icon: TrendingUp, label: "Market", path: "/market" },
 ];
@@ -193,7 +192,6 @@ export default function Layout({ children }: LayoutProps) {
               if (item.label === "Inventory") return <InventorySidebarItem key={item.path} isActive={isActive} />;
               if (item.label === "Sales") return <SalesSidebarItem key={item.path} isActive={isActive} />;
               if (item.label === "Market") return <MarketSidebarItem key={item.path} isActive={isActive} isOnline={isOnline} />;
-              if (item.label === "Finance") return <FinanceSidebarItem key={item.path} isActive={isActive} />;
 
               const isOfflineDisabled = !isOnline && item.label === "Reports";
 
