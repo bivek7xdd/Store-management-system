@@ -32,6 +32,7 @@ import { inventoryService } from "@/services/inventory";
 import { InventorySidebarItem } from "./InventorySidebarItem";
 import { SalesSidebarItem } from "./SalesSidebarItem";
 import { MarketSidebarItem } from "./MarketSidebarItem";
+import { ReportsSidebarItem } from "./ReportsSidebarItem";
 
 import NotificationBell from "./NotificationBell";
 import categoryPreferencesService from "@/services/categoryPreferences";
@@ -56,7 +57,6 @@ const navItems = [
   { icon: ShoppingCart, label: "Sales", path: "/sales" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: Wallet, label: "Debtors", path: "/debtors" },
-  { icon: BarChart3, label: "Reports", path: "/reports" },
   { icon: TrendingUp, label: "Market", path: "/market" },
 ];
 
@@ -185,6 +185,10 @@ export default function Layout({ children }: LayoutProps) {
             Navigation
           </p>
           <div className={cn("flex flex-1 flex-col gap-0.5", isCollapsed ? "px-2" : "px-3")}>
+            {(() => {
+              const reportsActive = location.pathname === "/reports" || location.pathname.startsWith("/reports");
+              return <ReportsSidebarItem isActive={reportsActive} />;
+            })()}
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));

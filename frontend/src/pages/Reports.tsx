@@ -726,7 +726,6 @@ export default function Reports() {
           <TabsTrigger value="sales" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Sales</TabsTrigger>
           <TabsTrigger value="inventory" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Inventory</TabsTrigger>
           <TabsTrigger value="debtors" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Debtors</TabsTrigger>
-          <TabsTrigger value="finance" className="rounded-[2px] px-5 text-[11px] uppercase tracking-[1px] text-[#666666] data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">Finance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales" className="space-y-4">
@@ -832,31 +831,6 @@ export default function Reports() {
                 </div>
               ))}
             </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="finance" className="space-y-4">
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
-              <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Total Expenses</p>
-              <p className="text-[18px] font-medium text-[#DA291C] mt-2">रू {(expenseSummary?.summary?.total_amount ?? 0).toLocaleString()}</p>
-            </div>
-            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
-              <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Outstanding Payables</p>
-              <p className="text-[18px] font-medium text-amber-400 mt-2">रू {(payableSummary?.summary?.total_outstanding ?? 0).toLocaleString()}</p>
-            </div>
-            <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-5">
-              <p className="text-[10px] text-[#888888] uppercase tracking-[1px]">Net Profit</p>
-              <p className="text-[18px] font-medium text-emerald-400 mt-2">
-                रू {((stats?.profit?.gross_profit ?? 0) - (expenseSummary?.summary?.total_amount ?? 0)).toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="flex justify-center">
-            <a href="/reports/finance" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1A9B8E] text-white rounded-[2px] text-[13px] hover:bg-[#15897d] transition-colors">
-              View Full Finance
-              <ArrowRight className="h-4 w-4" />
-            </a>
           </div>
         </TabsContent>
       </Tabs>
