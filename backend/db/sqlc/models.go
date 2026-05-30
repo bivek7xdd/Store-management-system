@@ -273,6 +273,142 @@ func (ns NullSalesTypes) Value() (driver.Value, error) {
 	return string(ns.SalesTypes), nil
 }
 
+type StockAdjustmentReason string
+
+const (
+	StockAdjustmentReasonPhysicalCount StockAdjustmentReason = "physical_count"
+	StockAdjustmentReasonDamaged       StockAdjustmentReason = "damaged"
+	StockAdjustmentReasonExpired       StockAdjustmentReason = "expired"
+	StockAdjustmentReasonTheft         StockAdjustmentReason = "theft"
+	StockAdjustmentReasonCorrection    StockAdjustmentReason = "correction"
+	StockAdjustmentReasonReturn        StockAdjustmentReason = "return"
+	StockAdjustmentReasonOther         StockAdjustmentReason = "other"
+)
+
+func (e *StockAdjustmentReason) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = StockAdjustmentReason(s)
+	case string:
+		*e = StockAdjustmentReason(s)
+	default:
+		return fmt.Errorf("unsupported scan type for StockAdjustmentReason: %T", src)
+	}
+	return nil
+}
+
+type NullStockAdjustmentReason struct {
+	StockAdjustmentReason StockAdjustmentReason `json:"stock_adjustment_reason"`
+	Valid                 bool                  `json:"valid"` // Valid is true if StockAdjustmentReason is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStockAdjustmentReason) Scan(value interface{}) error {
+	if value == nil {
+		ns.StockAdjustmentReason, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.StockAdjustmentReason.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStockAdjustmentReason) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.StockAdjustmentReason), nil
+}
+
+type StockMovementType string
+
+const (
+	StockMovementTypeSale       StockMovementType = "sale"
+	StockMovementTypePurchase   StockMovementType = "purchase"
+	StockMovementTypeAdjustment StockMovementType = "adjustment"
+	StockMovementTypeReturn     StockMovementType = "return"
+	StockMovementTypeTransfer   StockMovementType = "transfer"
+)
+
+func (e *StockMovementType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = StockMovementType(s)
+	case string:
+		*e = StockMovementType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for StockMovementType: %T", src)
+	}
+	return nil
+}
+
+type NullStockMovementType struct {
+	StockMovementType StockMovementType `json:"stock_movement_type"`
+	Valid             bool              `json:"valid"` // Valid is true if StockMovementType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStockMovementType) Scan(value interface{}) error {
+	if value == nil {
+		ns.StockMovementType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.StockMovementType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStockMovementType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.StockMovementType), nil
+}
+
+type StockReferenceType string
+
+const (
+	StockReferenceTypeSale          StockReferenceType = "sale"
+	StockReferenceTypePurchaseOrder StockReferenceType = "purchase_order"
+	StockReferenceTypeAdjustment    StockReferenceType = "adjustment"
+	StockReferenceTypeReturn        StockReferenceType = "return"
+)
+
+func (e *StockReferenceType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = StockReferenceType(s)
+	case string:
+		*e = StockReferenceType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for StockReferenceType: %T", src)
+	}
+	return nil
+}
+
+type NullStockReferenceType struct {
+	StockReferenceType StockReferenceType `json:"stock_reference_type"`
+	Valid              bool               `json:"valid"` // Valid is true if StockReferenceType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStockReferenceType) Scan(value interface{}) error {
+	if value == nil {
+		ns.StockReferenceType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.StockReferenceType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStockReferenceType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.StockReferenceType), nil
+}
+
 type Category struct {
 	ID          pgtype.UUID        `db:"id" json:"id"`
 	Name        string             `db:"name" json:"name"`
@@ -452,6 +588,33 @@ type SaleItem struct {
 	Quantity   int32          `db:"quantity" json:"quantity"`
 	UnitPrice  pgtype.Numeric `db:"unit_price" json:"unit_price"`
 	TotalPrice pgtype.Numeric `db:"total_price" json:"total_price"`
+}
+
+type StockAdjustment struct {
+	ID                 pgtype.UUID           `db:"id" json:"id"`
+	StoreID            pgtype.UUID           `db:"store_id" json:"store_id"`
+	ProductID          pgtype.UUID           `db:"product_id" json:"product_id"`
+	VariantID          pgtype.UUID           `db:"variant_id" json:"variant_id"`
+	AdjustmentQuantity int32                 `db:"adjustment_quantity" json:"adjustment_quantity"`
+	PreviousQuantity   int32                 `db:"previous_quantity" json:"previous_quantity"`
+	NewQuantity        int32                 `db:"new_quantity" json:"new_quantity"`
+	Reason             StockAdjustmentReason `db:"reason" json:"reason"`
+	Notes              pgtype.Text           `db:"notes" json:"notes"`
+	AdjustedBy         pgtype.UUID           `db:"adjusted_by" json:"adjusted_by"`
+	CreatedAt          pgtype.Timestamptz    `db:"created_at" json:"created_at"`
+}
+
+type StockMovement struct {
+	ID             pgtype.UUID            `db:"id" json:"id"`
+	StoreID        pgtype.UUID            `db:"store_id" json:"store_id"`
+	ProductID      pgtype.UUID            `db:"product_id" json:"product_id"`
+	VariantID      pgtype.UUID            `db:"variant_id" json:"variant_id"`
+	MovementType   StockMovementType      `db:"movement_type" json:"movement_type"`
+	QuantityChange int32                  `db:"quantity_change" json:"quantity_change"`
+	ReferenceID    pgtype.UUID            `db:"reference_id" json:"reference_id"`
+	ReferenceType  NullStockReferenceType `db:"reference_type" json:"reference_type"`
+	Notes          pgtype.Text            `db:"notes" json:"notes"`
+	CreatedAt      pgtype.Timestamptz     `db:"created_at" json:"created_at"`
 }
 
 type StoreInfo struct {
