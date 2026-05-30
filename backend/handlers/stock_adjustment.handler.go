@@ -15,7 +15,7 @@ import (
 type createStockAdjustmentReq struct {
 	ProductID          string `json:"product_id" binding:"required"`
 	VariantID          string `json:"variant_id"`
-	AdjustmentQuantity int32  `json:"adjustment_quantity" binding:"required"`
+	AdjustmentQuantity int32  `json:"adjustment_quantity"`
 	Reason             string `json:"reason" binding:"required"`
 	Notes              string `json:"notes"`
 }

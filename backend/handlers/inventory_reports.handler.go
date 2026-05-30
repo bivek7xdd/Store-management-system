@@ -114,8 +114,8 @@ func GetExpiringProductsReport(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, "Expiring products report fetched successfully", gin.H{
-		"items":                expiring,
+		"items":                 expiring,
 		"total_capital_at_risk": totalCapitalAtRisk,
-		"count":                len(expiring),
+		"count":                 len(expiring),
 	})
 }

@@ -654,7 +654,7 @@ func TestCreateStockAdjustment_InvalidRequest(t *testing.T) {
 			name:         "Missing adjustment_quantity",
 			body:         `{"product_id":"` + uuid.NewString() + `","reason":"correction"}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "invalid request body",
+			expectedMsg:  "adjustment quantity cannot be zero",
 		},
 		{
 			name:         "Missing reason",
