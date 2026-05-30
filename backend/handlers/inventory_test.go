@@ -609,6 +609,293 @@ func TestSearchProducts_SpecialCharacters(t *testing.T) {
 }
 
 // ====================================================================
+// Stock Adjustment Tests
+// ====================================================================
+func setupStockAdjustmentRouter(storeID pgtype.UUID) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Set("store_id", storeID)
+		c.Set("user_id", storeID)
+		c.Next()
+	})
+
+	r.POST("/stock-adjustments", CreateStockAdjustment)
+	r.GET("/stock-adjustments", ListStockAdjustments)
+	r.GET("/stock-adjustments/product/:id", GetStockAdjustmentsByProduct)
+
+	return r
+}
+
+func TestCreateStockAdjustment_InvalidRequest(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	tests := []struct {
+		name         string
+		body         string
+		expectedCode int
+		expectedMsg  string
+	}{
+		{
+			name:         "Empty body",
+			body:         `{}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request body",
+		},
+		{
+			name:         "Missing product_id",
+			body:         `{"adjustment_quantity":10,"reason":"correction"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request body",
+		},
+		{
+			name:         "Missing adjustment_quantity",
+			body:         `{"product_id":"` + uuid.NewString() + `","reason":"correction"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request body",
+		},
+		{
+			name:         "Missing reason",
+			body:         `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":10}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request body",
+		},
+		{
+			name:         "Zero adjustment quantity",
+			body:         `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":0,"reason":"correction"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Adjustment quantity cannot be zero",
+		},
+		{
+			name:         "Invalid reason",
+			body:         `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":10,"reason":"invalid"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid reason",
+		},
+		{
+			name:         "Invalid product_id format",
+			body:         `{"product_id":"not-a-uuid","adjustment_quantity":10,"reason":"correction"}`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid product ID",
+		},
+		{
+			name:         "Malformed JSON",
+			body:         `{invalid`,
+			expectedCode: http.StatusBadRequest,
+			expectedMsg:  "Invalid request body",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/stock-adjustments", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedCode, w.Code, "Body: %s", w.Body.String())
+			assert.Contains(t, w.Body.String(), tt.expectedMsg)
+		})
+	}
+}
+
+func TestCreateStockAdjustment_NonExistentProduct(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	body := `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":10,"reason":"correction"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/stock-adjustments", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Contains(t, w.Body.String(), "product not found")
+}
+
+func TestListStockAdjustments_PaginationParams(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	tests := []struct {
+		name     string
+		queryStr string
+		expectOK bool
+	}{
+		{"Default pagination", "", true},
+		{"Custom limit and offset", "?limit=10&offset=0", true},
+		{"Negative limit", "?limit=-1&offset=0", true},
+		{"Very large limit", "?limit=9999&offset=0", true},
+		{"Negative offset", "?limit=10&offset=-5", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", "/stock-adjustments"+tt.queryStr, nil)
+			router.ServeHTTP(w, req)
+
+			if tt.expectOK {
+				assert.NotEqual(t, http.StatusInternalServerError, w.Code,
+					"Pagination should not cause server error. Body: %s", w.Body.String())
+			}
+		})
+	}
+}
+
+func TestGetStockAdjustmentsByProduct_InvalidID(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-adjustments/product/not-a-uuid", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid product ID")
+}
+
+// ====================================================================
+// Stock Movement Tests
+// ====================================================================
+func setupStockMovementRouter(storeID pgtype.UUID) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Set("store_id", storeID)
+		c.Set("user_id", storeID)
+		c.Next()
+	})
+
+	r.GET("/stock-movements", ListStockMovements)
+	r.GET("/stock-movements/product/:id", GetStockMovementsByProduct)
+	r.GET("/stock-movements/product/:id/summary", GetStockMovementSummary)
+
+	return r
+}
+
+func TestListStockMovements_PaginationParams(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockMovementRouter(storeID)
+
+	tests := []struct {
+		name     string
+		queryStr string
+		expectOK bool
+	}{
+		{"Default pagination", "", true},
+		{"Custom limit and offset", "?limit=10&offset=0", true},
+		{"Negative limit", "?limit=-1&offset=0", true},
+		{"Very large limit", "?limit=9999&offset=0", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", "/stock-movements"+tt.queryStr, nil)
+			router.ServeHTTP(w, req)
+
+			if tt.expectOK {
+				assert.NotEqual(t, http.StatusInternalServerError, w.Code,
+					"Pagination should not cause server error. Body: %s", w.Body.String())
+			}
+		})
+	}
+}
+
+func TestGetStockMovementsByProduct_InvalidID(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockMovementRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-movements/product/not-a-uuid", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid product ID")
+}
+
+func TestGetStockMovementSummary_InvalidID(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockMovementRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-movements/product/not-a-uuid/summary", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid product ID")
+}
+
+// ====================================================================
+// Inventory Report Tests
+// ====================================================================
+func setupInventoryReportRouter(storeID pgtype.UUID) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Set("store_id", storeID)
+		c.Set("user_id", storeID)
+		c.Next()
+	})
+
+	r.GET("/inventory-reports/valuation", GetInventoryValuation)
+	r.GET("/inventory-reports/low-stock", GetLowStockReport)
+	r.GET("/inventory-reports/expiring", GetExpiringProductsReport)
+
+	return r
+}
+
+func TestGetInventoryValuation_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupInventoryReportRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/inventory-reports/valuation", nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+func TestGetLowStockReport_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupInventoryReportRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/inventory-reports/low-stock", nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+func TestGetExpiringProductsReport_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupInventoryReportRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/inventory-reports/expiring", nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+// ====================================================================
 // Test helper: ensure JWT_SECRET is set for tests needing auth
 // ====================================================================
 func init() {

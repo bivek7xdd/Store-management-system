@@ -65,12 +65,10 @@ func createTestUser(t *testing.T, email, password string) (db.StoreOwner, db.Sto
 	var discount pgtype.Numeric
 	require.NoError(t, discount.Scan("10.00"))
 	store, err := utils.Queries.CreateStoreInfo(ctx, db.CreateStoreInfoParams{
-		Name:                      "Test Store",
-		Address:                   "123 Test St",
-		CurrencyCode:              "USD",
-		OwnerID:                   user.ID,
-		LoyaltyProgressTarget:     5,
-		LoyaltyDiscountPercentage: discount,
+		Name:         "Test Store",
+		Address:      "123 Test St",
+		CurrencyCode: "USD",
+		OwnerID:      user.ID,
 	})
 	require.NoError(t, err)
 
