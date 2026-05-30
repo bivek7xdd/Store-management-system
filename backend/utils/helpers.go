@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -82,6 +83,27 @@ func GetStoreID(c *gin.Context) (pgtype.UUID, bool) {
 	}
 	uuid, ok := val.(pgtype.UUID)
 	return uuid, ok
+}
+
+// Pagination holds parsed limit and offset values
+type Pagination struct {
+	Limit  int
+	Offset int
+}
+
+// ParsePagination extracts and validates limit/offset query parameters
+func ParsePagination(c *gin.Context) Pagination {
+	limitStr := c.DefaultQuery("limit", "50")
+	offsetStr := c.DefaultQuery("offset", "0")
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return Pagination{Limit: limit, Offset: offset}
 }
 
 // GetDateRange returns start and end dates for a given range type

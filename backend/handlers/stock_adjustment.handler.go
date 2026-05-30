@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	db "storemanagement/db/sqlc"
@@ -25,23 +23,35 @@ type createStockAdjustmentReq struct {
 func CreateStockAdjustment(c *gin.Context) {
 	storeID, ok := utils.GetStoreID(c)
 	if !ok {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, "store not found", nil)
 		return
 	}
 
-	var userID pgtype.UUID
-	if uid, exists := c.Get("user_id"); exists {
-		userID, _ = uid.(pgtype.UUID)
+	uid, exists := c.Get("user_id")
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "user not authenticated", nil)
+		return
+	}
+	userID, ok := uid.(pgtype.UUID)
+	if !ok || !userID.Valid {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "invalid user id", nil)
+		return
 	}
 
 	var req createStockAdjustmentReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request body", err)
 		return
 	}
 
 	if req.AdjustmentQuantity == 0 {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Adjustment quantity cannot be zero", nil)
+		utils.ErrorResponse(c, http.StatusBadRequest, "adjustment quantity cannot be zero", nil)
+		return
+	}
+
+	const maxAdjustmentQuantity int32 = 100000
+	if req.AdjustmentQuantity < -maxAdjustmentQuantity || req.AdjustmentQuantity > maxAdjustmentQuantity {
+		utils.ErrorResponse(c, http.StatusBadRequest, "adjustment quantity exceeds allowed range", nil)
 		return
 	}
 
@@ -50,7 +60,7 @@ func CreateStockAdjustment(c *gin.Context) {
 		"theft": true, "correction": true, "return": true, "other": true,
 	}
 	if !validReasons[req.Reason] {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid reason", nil)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid reason", nil)
 		return
 	}
 
@@ -59,13 +69,17 @@ func CreateStockAdjustment(c *gin.Context) {
 
 	productUUID, err := utils.ParseUUID(req.ProductID)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid product ID", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid product id", err)
 		return
 	}
 
-	variantUUID, err := utils.ParseUUID(req.VariantID)
-	if err != nil {
-		variantUUID = pgtype.UUID{}
+	var variantUUID pgtype.UUID
+	if req.VariantID != "" {
+		variantUUID, err = utils.ParseUUID(req.VariantID)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "invalid variant id", err)
+			return
+		}
 	}
 
 	product, err := utils.Queries.GetProduct(ctx, db.GetProductParams{
@@ -73,7 +87,7 @@ func CreateStockAdjustment(c *gin.Context) {
 		StoreID: storeID,
 	})
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "Product not found", err)
+		utils.ErrorResponse(c, http.StatusNotFound, "product not found", err)
 		return
 	}
 
@@ -81,97 +95,97 @@ func CreateStockAdjustment(c *gin.Context) {
 	newQuantity := previousQuantity + req.AdjustmentQuantity
 
 	if newQuantity < 0 {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Adjustment would result in negative stock", nil)
+		utils.ErrorResponse(c, http.StatusBadRequest, "adjustment would result in negative stock", nil)
 		return
 	}
 
-	adjustment, err := utils.Queries.CreateStockAdjustment(ctx, db.CreateStockAdjustmentParams{
-		StoreID:            storeID,
-		ProductID:          productUUID,
-		VariantID:          variantUUID,
-		AdjustmentQuantity: req.AdjustmentQuantity,
-		PreviousQuantity:   previousQuantity,
-		NewQuantity:        newQuantity,
-		Reason:             db.StockAdjustmentReason(req.Reason),
-		Notes:              utils.OptionalText(req.Notes),
-		AdjustedBy:         userID,
+	var adjustment db.StockAdjustment
+	err = utils.Store.ExecTx(ctx, func(q *db.Queries) error {
+		var err error
+
+		adjustment, err = q.CreateStockAdjustment(ctx, db.CreateStockAdjustmentParams{
+			StoreID:            storeID,
+			ProductID:          productUUID,
+			VariantID:          variantUUID,
+			AdjustmentQuantity: req.AdjustmentQuantity,
+			PreviousQuantity:   previousQuantity,
+			NewQuantity:        newQuantity,
+			Reason:             db.StockAdjustmentReason(req.Reason),
+			Notes:              utils.OptionalText(req.Notes),
+			AdjustedBy:         userID,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = q.UpdateProduct(ctx, db.UpdateProductParams{
+			ID:                productUUID,
+			StockQuantity:     newQuantity,
+			StoreID:           storeID,
+			Name:              product.Name,
+			Barcode:           product.Barcode,
+			Price:             product.Price,
+			CostPrice:         product.CostPrice,
+			MarketPrice:       product.MarketPrice,
+			LowStockThreshold: product.LowStockThreshold,
+			ExpiresAt:         product.ExpiresAt,
+			Status:            product.Status,
+			CategoryID:        product.CategoryID,
+			SupplierID:        product.SupplierID,
+			ImageUrl:          product.ImageUrl,
+			IsTracked:         product.IsTracked,
+			DamagedQuantity:   product.DamagedQuantity,
+			WarrantyDays:      product.WarrantyDays,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = q.CreateStockMovement(ctx, db.CreateStockMovementParams{
+			StoreID:        storeID,
+			ProductID:      productUUID,
+			VariantID:      variantUUID,
+			MovementType:   db.StockMovementTypeAdjustment,
+			QuantityChange: req.AdjustmentQuantity,
+			ReferenceID:    adjustment.ID,
+			ReferenceType:  db.NullStockReferenceType{StockReferenceType: db.StockReferenceTypeAdjustment, Valid: true},
+			Notes:          utils.OptionalText(req.Notes),
+		})
+		if err != nil {
+			return err
+		}
+
+		q.CheckAndNotifyLowStock(ctx, storeID, product)
+
+		return nil
 	})
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create adjustment", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to create adjustment", err)
 		return
 	}
 
-	_, err = utils.Queries.UpdateProduct(ctx, db.UpdateProductParams{
-		ID:                productUUID,
-		StockQuantity:     newQuantity,
-		StoreID:           storeID,
-		Name:              product.Name,
-		Barcode:           product.Barcode,
-		Price:             product.Price,
-		CostPrice:         product.CostPrice,
-		MarketPrice:       product.MarketPrice,
-		LowStockThreshold: product.LowStockThreshold,
-		ExpiresAt:         product.ExpiresAt,
-		Status:            product.Status,
-		CategoryID:        product.CategoryID,
-		SupplierID:        product.SupplierID,
-		ImageUrl:          product.ImageUrl,
-		IsTracked:         product.IsTracked,
-		DamagedQuantity:   product.DamagedQuantity,
-		WarrantyDays:      product.WarrantyDays,
-	})
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update stock", err)
-		return
-	}
-
-	_, err = utils.Queries.CreateStockMovement(ctx, db.CreateStockMovementParams{
-		StoreID:        storeID,
-		ProductID:      productUUID,
-		VariantID:      variantUUID,
-		MovementType:   db.StockMovementTypeAdjustment,
-		QuantityChange: req.AdjustmentQuantity,
-		ReferenceID:    adjustment.ID,
-		ReferenceType:  db.NullStockReferenceType{StockReferenceType: db.StockReferenceTypeAdjustment, Valid: true},
-		Notes:          utils.OptionalText(req.Notes),
-	})
-	if err != nil {
-		log.Printf("Warning: failed to create stock movement record: %v", err)
-	}
-
-	utils.Queries.CheckAndNotifyLowStock(ctx, storeID, product)
-
-	utils.SuccessResponse(c, "Stock adjustment created successfully", adjustment)
+	utils.SuccessResponse(c, "stock adjustment created successfully", adjustment)
 }
 
 func ListStockAdjustments(c *gin.Context) {
 	storeID, ok := utils.GetStoreID(c)
 	if !ok {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, "store not found", nil)
 		return
 	}
 
-	limitStr := c.DefaultQuery("limit", "50")
-	offsetStr := c.DefaultQuery("offset", "0")
-	limit, _ := strconv.Atoi(limitStr)
-	offset, _ := strconv.Atoi(offsetStr)
-	if limit <= 0 || limit > 100 {
-		limit = 50
-	}
-	if offset < 0 {
-		offset = 0
-	}
+	pg := utils.ParsePagination(c)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	adjustments, err := utils.Queries.ListStockAdjustments(ctx, db.ListStockAdjustmentsParams{
 		StoreID: storeID,
-		Limit:   int32(limit),
-		Offset:  int32(offset),
+		Limit:   int32(pg.Limit),
+		Offset:  int32(pg.Offset),
 	})
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch adjustments", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch adjustments", err)
 		return
 	}
 
@@ -179,32 +193,23 @@ func ListStockAdjustments(c *gin.Context) {
 		adjustments = []db.ListStockAdjustmentsRow{}
 	}
 
-	utils.SuccessResponse(c, "Stock adjustments fetched successfully", adjustments)
+	utils.SuccessResponse(c, "stock adjustments fetched successfully", adjustments)
 }
 
 func GetStockAdjustmentsByProduct(c *gin.Context) {
 	storeID, ok := utils.GetStoreID(c)
 	if !ok {
-		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		utils.ErrorResponse(c, http.StatusUnauthorized, "store not found", nil)
 		return
 	}
 
 	productID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid product ID", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid product id", err)
 		return
 	}
 
-	limitStr := c.DefaultQuery("limit", "50")
-	offsetStr := c.DefaultQuery("offset", "0")
-	limit, _ := strconv.Atoi(limitStr)
-	offset, _ := strconv.Atoi(offsetStr)
-	if limit <= 0 || limit > 100 {
-		limit = 50
-	}
-	if offset < 0 {
-		offset = 0
-	}
+	pg := utils.ParsePagination(c)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
@@ -212,11 +217,11 @@ func GetStockAdjustmentsByProduct(c *gin.Context) {
 	adjustments, err := utils.Queries.GetStockAdjustmentsByProduct(ctx, db.GetStockAdjustmentsByProductParams{
 		StoreID:   storeID,
 		ProductID: productID,
-		Limit:     int32(limit),
-		Offset:    int32(offset),
+		Limit:     int32(pg.Limit),
+		Offset:    int32(pg.Offset),
 	})
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch adjustments", err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch adjustments", err)
 		return
 	}
 
@@ -224,5 +229,5 @@ func GetStockAdjustmentsByProduct(c *gin.Context) {
 		adjustments = []db.GetStockAdjustmentsByProductRow{}
 	}
 
-	utils.SuccessResponse(c, "Stock adjustments fetched successfully", adjustments)
+	utils.SuccessResponse(c, "stock adjustments fetched successfully", adjustments)
 }
