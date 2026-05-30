@@ -642,49 +642,49 @@ func TestCreateStockAdjustment_InvalidRequest(t *testing.T) {
 			name:         "Empty body",
 			body:         `{}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid request body",
+			expectedMsg:  "invalid request body",
 		},
 		{
 			name:         "Missing product_id",
 			body:         `{"adjustment_quantity":10,"reason":"correction"}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid request body",
+			expectedMsg:  "invalid request body",
 		},
 		{
 			name:         "Missing adjustment_quantity",
 			body:         `{"product_id":"` + uuid.NewString() + `","reason":"correction"}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid request body",
+			expectedMsg:  "invalid request body",
 		},
 		{
 			name:         "Missing reason",
 			body:         `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":10}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid request body",
+			expectedMsg:  "invalid request body",
 		},
 		{
 			name:         "Zero adjustment quantity",
 			body:         `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":0,"reason":"correction"}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Adjustment quantity cannot be zero",
+			expectedMsg:  "adjustment quantity cannot be zero",
 		},
 		{
 			name:         "Invalid reason",
 			body:         `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":10,"reason":"invalid"}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid reason",
+			expectedMsg:  "invalid reason",
 		},
 		{
 			name:         "Invalid product_id format",
 			body:         `{"product_id":"not-a-uuid","adjustment_quantity":10,"reason":"correction"}`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid product ID",
+			expectedMsg:  "invalid product id",
 		},
 		{
 			name:         "Malformed JSON",
 			body:         `{invalid`,
 			expectedCode: http.StatusBadRequest,
-			expectedMsg:  "Invalid request body",
+			expectedMsg:  "invalid request body",
 		},
 	}
 
@@ -754,7 +754,7 @@ func TestGetStockAdjustmentsByProduct_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Invalid product ID")
+	assert.Contains(t, w.Body.String(), "invalid product id")
 }
 
 // ====================================================================
@@ -815,7 +815,7 @@ func TestGetStockMovementsByProduct_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Invalid product ID")
+	assert.Contains(t, w.Body.String(), "invalid product id")
 }
 
 func TestGetStockMovementSummary_InvalidID(t *testing.T) {
@@ -827,7 +827,105 @@ func TestGetStockMovementSummary_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Invalid product ID")
+	assert.Contains(t, w.Body.String(), "invalid product id")
+}
+
+// ====================================================================
+// Stock Adjustment Response Format Tests
+// ====================================================================
+func TestCreateStockAdjustment_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	body := `{"product_id":"` + uuid.NewString() + `","adjustment_quantity":10,"reason":"correction"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/stock-adjustments", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+func TestListStockAdjustments_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-adjustments", nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+func TestGetStockAdjustmentsByProduct_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockAdjustmentRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-adjustments/product/"+uuid.NewString(), nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+// ====================================================================
+// Stock Movement Response Format Tests
+// ====================================================================
+func TestListStockMovements_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockMovementRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-movements", nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+func TestGetStockMovementsByProduct_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockMovementRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-movements/product/"+uuid.NewString(), nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
+}
+
+func TestGetStockMovementSummary_ResponseFormat(t *testing.T) {
+	storeID := getTestStoreID(t)
+	router := setupStockMovementRouter(storeID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/stock-movements/product/"+uuid.NewString()+"/summary", nil)
+	router.ServeHTTP(w, req)
+
+	var resp utils.Response
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err, "Response should be valid JSON. Got: %s", w.Body.String())
+
+	assert.NotEmpty(t, resp.Message)
 }
 
 // ====================================================================
