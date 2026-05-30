@@ -9,18 +9,35 @@ CREATE TYPE stock_adjustment_reason AS ENUM (
     'other'
 );
 
+-- Stock movement type enum
+CREATE TYPE stock_movement_type AS ENUM (
+    'sale',
+    'purchase',
+    'adjustment',
+    'return',
+    'transfer'
+);
+
+-- Stock reference type enum
+CREATE TYPE stock_reference_type AS ENUM (
+    'sale',
+    'purchase_order',
+    'adjustment',
+    'return'
+);
+
 -- Stock adjustments table (audit trail for manual adjustments)
 CREATE TABLE IF NOT EXISTS stock_adjustments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     store_id UUID NOT NULL REFERENCES store_info(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id),
-    variant_id UUID, -- optional, for variant-level adjustments
+    variant_id UUID REFERENCES product_variants(id), -- optional, for variant-level adjustments
     adjustment_quantity INT NOT NULL, -- positive = add stock, negative = remove stock
     previous_quantity INT NOT NULL,
     new_quantity INT NOT NULL,
     reason stock_adjustment_reason NOT NULL DEFAULT 'correction',
     notes TEXT,
-    adjusted_by UUID, -- user who made the adjustment
+    adjusted_by UUID REFERENCES store_owner(id), -- user who made the adjustment
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -29,11 +46,11 @@ CREATE TABLE IF NOT EXISTS stock_movements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     store_id UUID NOT NULL REFERENCES store_info(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id),
-    variant_id UUID, -- optional
-    movement_type VARCHAR(20) NOT NULL, -- 'sale', 'purchase', 'adjustment', 'return', 'transfer'
+    variant_id UUID REFERENCES product_variants(id), -- optional
+    movement_type stock_movement_type NOT NULL,
     quantity_change INT NOT NULL, -- positive = inbound, negative = outbound
     reference_id UUID, -- sale_id, purchase_order_id, adjustment_id, etc.
-    reference_type VARCHAR(50), -- 'sale', 'purchase_order', 'adjustment', 'return'
+    reference_type stock_reference_type,
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
