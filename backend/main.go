@@ -195,6 +195,15 @@ func main() {
 		reportRoutes.GET("/net-profit", handlers.GetNetProfit)
 	}
 
+	// Inventory report routes
+	inventoryReportRoutes := router.Group("/api/inventory-reports")
+	inventoryReportRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
+	{
+		inventoryReportRoutes.GET("/valuation", handlers.GetInventoryValuation)
+		inventoryReportRoutes.GET("/low-stock", handlers.GetLowStockReport)
+		inventoryReportRoutes.GET("/expiring", handlers.GetExpiringProductsReport)
+	}
+
 	// Notification routes
 	notificationRoutes := router.Group("/api/notifications")
 	notificationRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
