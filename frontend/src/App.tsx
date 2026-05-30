@@ -28,6 +28,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CategoryDetails from "./pages/CategoryDetails";
 import SupplierDetails from "./pages/SupplierDetails";
 import MarketDiscovery from "./pages/MarketDiscovery";
+import FindSuppliers from "./pages/FindSuppliers";
 import Customers from "./pages/Customers";
 
 import LandingPage from "./pages/LandingPage";
@@ -215,6 +216,13 @@ const App = () => {
                         <ProtectedRoute>
                           <Layout>
                             <ErrorBoundary><MarketDiscovery /></ErrorBoundary>
+                          </Layout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/find-suppliers" element={
+                        <ProtectedRoute>
+                          <Layout>
+                            <ErrorBoundary><FindSuppliers /></ErrorBoundary>
                           </Layout>
                         </ProtectedRoute>
                       } />

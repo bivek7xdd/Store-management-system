@@ -12,7 +12,11 @@ import (
 )
 
 func CreatePurchaseOrder(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	var req struct {
 		OrderDate           string `json:"order_date"`
@@ -104,7 +108,11 @@ func CreatePurchaseOrder(c *gin.Context) {
 }
 
 func ListPurchaseOrders(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -123,7 +131,11 @@ func ListPurchaseOrders(c *gin.Context) {
 }
 
 func GetPurchaseOrder(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	orderID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)
@@ -146,7 +158,11 @@ func GetPurchaseOrder(c *gin.Context) {
 }
 
 func UpdatePurchaseOrder(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	orderID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)
@@ -266,7 +282,11 @@ func UpdatePurchaseOrder(c *gin.Context) {
 }
 
 func UpdatePurchaseOrderStatus(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	orderID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)
@@ -306,7 +326,11 @@ func UpdatePurchaseOrderStatus(c *gin.Context) {
 }
 
 func DeletePurchaseOrder(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	orderID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)
@@ -329,7 +353,11 @@ func DeletePurchaseOrder(c *gin.Context) {
 }
 
 func GetSupplierPurchaseOrders(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	supplierID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)
@@ -369,7 +397,11 @@ type supplierPaymentInput struct {
 }
 
 func ReceivePurchaseOrder(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	orderID, err := utils.ParseUUID(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid ID", err)

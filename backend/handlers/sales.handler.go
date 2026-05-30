@@ -39,7 +39,11 @@ type createSaleReq struct {
 
 func CreateSale(c *gin.Context) {
 	var req createSaleReq
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request body", err)
@@ -211,7 +215,11 @@ func CreateSale(c *gin.Context) {
 }
 
 func ListSales(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
@@ -230,7 +238,11 @@ func ListSales(c *gin.Context) {
 }
 
 func GetSaleDetails(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	saleIDParam := c.Param("id")
 
 	saleUUID, err := uuid.Parse(saleIDParam)

@@ -16,21 +16,17 @@ INSERT INTO store_info (
   name,
   address,
   currency_code,
-  owner_id,
-  loyalty_progress_target,
-  loyalty_discount_percentage
+  owner_id
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4
 ) RETURNING id, name, address, currency_code, owner_id, loyalty_progress_target, loyalty_discount_percentage, created_at, updated_at
 `
 
 type CreateStoreInfoParams struct {
-	Name                      string         `db:"name" json:"name"`
-	Address                   string         `db:"address" json:"address"`
-	CurrencyCode              string         `db:"currency_code" json:"currency_code"`
-	OwnerID                   pgtype.UUID    `db:"owner_id" json:"owner_id"`
-	LoyaltyProgressTarget     int32          `db:"loyalty_progress_target" json:"loyalty_progress_target"`
-	LoyaltyDiscountPercentage pgtype.Numeric `db:"loyalty_discount_percentage" json:"loyalty_discount_percentage"`
+	Name         string      `db:"name" json:"name"`
+	Address      string      `db:"address" json:"address"`
+	CurrencyCode string      `db:"currency_code" json:"currency_code"`
+	OwnerID      pgtype.UUID `db:"owner_id" json:"owner_id"`
 }
 
 func (q *Queries) CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams) (StoreInfo, error) {
@@ -39,8 +35,6 @@ func (q *Queries) CreateStoreInfo(ctx context.Context, arg CreateStoreInfoParams
 		arg.Address,
 		arg.CurrencyCode,
 		arg.OwnerID,
-		arg.LoyaltyProgressTarget,
-		arg.LoyaltyDiscountPercentage,
 	)
 	var i StoreInfo
 	err := row.Scan(

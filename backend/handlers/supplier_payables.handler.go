@@ -12,7 +12,11 @@ import (
 )
 
 func CreateSupplierPayable(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	var req struct {
 		SupplierID  string  `json:"supplier_id" binding:"required"`
@@ -73,7 +77,11 @@ func CreateSupplierPayable(c *gin.Context) {
 }
 
 func ListSupplierPayables(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	status := c.DefaultQuery("status", "")
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
@@ -97,7 +105,11 @@ func ListSupplierPayables(c *gin.Context) {
 }
 
 func GetSupplierPayable(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	id := c.Param("id")
 
 	uuid, err := utils.ParseUUID(id)
@@ -135,7 +147,11 @@ func GetSupplierPayable(c *gin.Context) {
 }
 
 func UpdateSupplierPayable(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	id := c.Param("id")
 
 	uuid, err := utils.ParseUUID(id)
@@ -187,7 +203,11 @@ func UpdateSupplierPayable(c *gin.Context) {
 }
 
 func DeleteSupplierPayable(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	id := c.Param("id")
 
 	uuid, err := utils.ParseUUID(id)
@@ -213,7 +233,11 @@ func DeleteSupplierPayable(c *gin.Context) {
 }
 
 func RecordSupplierPayment(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	payableID := c.Param("id")
 
 	uuid, err := utils.ParseUUID(payableID)
@@ -285,7 +309,11 @@ func RecordSupplierPayment(c *gin.Context) {
 }
 
 func GetSupplierPayableSummary(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()

@@ -76,9 +76,9 @@ func sendEmailWithResend(to, otp string) error {
 	payload := map[string]interface{}{
 		"from":    fromEmail,
 		"to":      []string{to},
-		"subject": "Your StoreHub Password Reset Code",
-		"html":    fmt.Sprintf("<h2>Password Reset Code</h2><p>Your OTP code is: <strong>%s</strong></p><p>This code expires in 10 minutes.</p>", otp),
-		"text":    fmt.Sprintf("Your StoreHub password reset code is: %s. This code expires in 10 minutes.", otp),
+		"subject": "Your Store Management Verification Code",
+		"html":    fmt.Sprintf("<h2>Verification Code</h2><p>Your code is: <strong>%s</strong></p><p>This code expires in 10 minutes.</p>", otp),
+		"text":    fmt.Sprintf("Your verification code is: %s. This code expires in 10 minutes.", otp),
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -121,10 +121,10 @@ func sendEmailWithGmail(to, otp string) error {
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
 
-	subject := "Subject: Your StoreHub Password Reset Code\n"
+	subject := "Subject: Your Store Management Verification Code\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body := fmt.Sprintf(`<h2>Password Reset Code</h2>
-<p>Your OTP code is: <strong>%s</strong></p>
+	body := fmt.Sprintf(`<h2>Verification Code</h2>
+<p>Your code is: <strong>%s</strong></p>
 <p>This code expires in 10 minutes.</p>
 <p>If you didn't request this, please ignore this email.</p>`, otp)
 	message := []byte(subject + mime + body)
@@ -141,10 +141,10 @@ func sendEmailWithGmail(to, otp string) error {
 // sendEmailWithSendGrid sends OTP using SendGrid API
 func sendEmailWithSendGrid(to, otp string) error {
 	from := mail.NewEmail("Store Management", "bivekshrestha239@gmail.com")
-	subject := "Your OTP Verification Code"
+	subject := "Your Store Management Verification Code"
 	toEmail := mail.NewEmail("", to)
-	plainTextContent := fmt.Sprintf("Your OTP code is: %s", otp)
-	htmlContent := fmt.Sprintf("<strong>Your OTP code is: %s</strong>", otp)
+	plainTextContent := fmt.Sprintf("Your verification code is: %s. Expires in 10 minutes.", otp)
+	htmlContent := fmt.Sprintf("<strong>Your verification code is: %s</strong><p>Expires in 10 minutes.</p>", otp)
 	message := mail.NewSingleEmail(from, subject, toEmail, plainTextContent, htmlContent)
 	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 

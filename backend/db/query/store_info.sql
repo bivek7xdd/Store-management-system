@@ -3,11 +3,9 @@ INSERT INTO store_info (
   name,
   address,
   currency_code,
-  owner_id,
-  loyalty_progress_target,
-  loyalty_discount_percentage
+  owner_id
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4
 ) RETURNING *;
 
 -- name: GetStoreInfo :one

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	db "storemanagement/db/sqlc"
 	"storemanagement/redis"
@@ -16,6 +17,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// SafeStoreOwner is a user-facing representation of StoreOwner without sensitive fields.
+type SafeStoreOwner struct {
+	ID             pgtype.UUID `json:"id"`
+	Name           string      `json:"name"`
+	Email          string      `json:"email"`
+	Emailverified  bool        `json:"emailverified"`
+	Phone          string      `json:"phone"`
+	Role           string      `json:"role"`
+	ProfilePicture string      `json:"profile_picture"`
+}
+
+func toSafeUser(u db.StoreOwner) SafeStoreOwner {
+	return SafeStoreOwner{
+		ID:             u.ID,
+		Name:           u.Name,
+		Email:          u.Email,
+		Emailverified:  u.Emailverified,
+		Phone:          u.Phone,
+		Role:           u.Role,
+		ProfilePicture: u.ProfilePicture,
+	}
+}
 
 /*
 * * * ---------------------------------------------------- Handler for user registration * * * ----------------------------------------
@@ -73,7 +97,6 @@ func RegisterUserHandler(c *gin.Context) {
 
 	// Bind and validate the request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Printf("Validation error: %v\n", err)
 		// Handle validation errors
 		if errs, ok := err.(validator.ValidationErrors); ok {
 			utils.ErrorResponse(c, http.StatusBadRequest, "Invalid email/fields required", errs)
@@ -169,29 +192,35 @@ func RegisterUserHandler(c *gin.Context) {
 	// 3. Store OTP — prefer Redis (auto-expiring), fall back to Postgres.
 	if redis.IsRedisAvailable() {
 		if redisErr := redis.StoreOTP(context.Background(), createdUser.Email, "email_verification", otp); redisErr != nil {
-			fmt.Printf("[Redis] StoreOTP failed, falling back to Postgres: %v\n", redisErr)
-			utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+			log.Printf("[Redis] StoreOTP failed, falling back to Postgres: %v", redisErr)
+			if _, dbErr := utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
 				UserEmail: createdUser.Email,
 				Otp:       otp,
 				Purpose:   "email_verification",
-			})
+			}); dbErr != nil {
+				utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to store verification code", dbErr)
+				return
+			}
 		}
 	} else {
-		utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
+		if _, dbErr := utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
 			UserEmail: createdUser.Email,
 			Otp:       otp,
 			Purpose:   "email_verification",
-		})
+		}); dbErr != nil {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to store verification code", dbErr)
+			return
+		}
 	}
 
 	// 4. Send OTP email asynchronously.
 	go func(email, code string) {
 		if emailErr := utils.SendOTPEmail(email, code); emailErr != nil {
-			fmt.Printf("Failed to send OTP email: %v\n", emailErr)
+			log.Printf("Failed to send OTP email: %v", emailErr)
 		}
 	}(createdUser.Email, otp)
 
-	utils.SuccessResponse(c, "User and Store created successfully", createdUser)
+	utils.SuccessResponse(c, "User and Store created successfully", toSafeUser(createdUser))
 }
 
 type LoginStoreOwnerParams struct {
@@ -401,7 +430,7 @@ func VerifyOTP(c *gin.Context) {
 			return
 		}
 		if delErr := utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID); delErr != nil {
-			fmt.Printf("Warning: failed to delete used OTP: %v\n", delErr)
+			log.Printf("Warning: failed to delete used OTP: %v", delErr)
 		}
 	}
 
@@ -451,7 +480,7 @@ func ForgotPasswordHandler(c *gin.Context) {
 	// Store OTP — prefer Redis (auto-expiring), fall back to Postgres.
 	if redis.IsRedisAvailable() {
 		if redisErr := redis.StoreOTP(context.Background(), user.Email, "password_reset", otp); redisErr != nil {
-			fmt.Printf("[Redis] StoreOTP failed, falling back to Postgres: %v\n", redisErr)
+			log.Printf("[Redis] StoreOTP failed, falling back to Postgres: %v", redisErr)
 			_, dbErr := utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
 				UserEmail: user.Email,
 				Otp:       otp,
@@ -477,7 +506,7 @@ func ForgotPasswordHandler(c *gin.Context) {
 	// Send OTP email asynchronously.
 	go func(email, code string) {
 		if emailErr := utils.SendOTPEmail(email, code); emailErr != nil {
-			fmt.Printf("Failed to send OTP email: %v\n", emailErr)
+			log.Printf("Failed to send OTP email: %v", emailErr)
 		}
 	}(user.Email, otp)
 
@@ -509,8 +538,8 @@ func ResetPasswordHandler(c *gin.Context) {
 	}
 
 	// Validate password strength
-	if len(req.Password) < 8 {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Password must be at least 8 characters", nil)
+	if errMsg := validatePassword(req.Password); errMsg != "" {
+		utils.ErrorResponse(c, http.StatusBadRequest, errMsg, nil)
 		return
 	}
 
@@ -531,7 +560,7 @@ func ResetPasswordHandler(c *gin.Context) {
 			return
 		}
 		if delErr := utils.Queries.DeleteOTPToken(context.Background(), otpRecord.ID); delErr != nil {
-			fmt.Printf("Warning: failed to delete used OTP: %v\n", delErr)
+			log.Printf("Warning: failed to delete used OTP: %v", delErr)
 		}
 	}
 
@@ -600,7 +629,7 @@ func UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Profile updated successfully", updatedUser)
+	utils.SuccessResponse(c, "Profile updated successfully", toSafeUser(updatedUser))
 }
 
 type UpdatePasswordParams struct {

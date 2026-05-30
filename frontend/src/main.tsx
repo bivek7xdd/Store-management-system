@@ -11,8 +11,8 @@ import { db } from "./db/db";
 syncService.init();
 
 // Verify Data persistence
-db.products.count().then(c => console.log(`[DB Check] Products in DB: ${c}`));
-db.sales.count().then(c => console.log(`[DB Check] Sales in DB: ${c}`));
+db.products.count();
+db.sales.count();
 
 // Enhanced service worker registration for both dev and production
 const updateSW = registerSW({

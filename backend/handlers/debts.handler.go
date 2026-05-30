@@ -23,7 +23,11 @@ type createDebtReq struct {
 }
 
 func CreateDebt(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	var req createDebtReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -73,7 +77,11 @@ func CreateDebt(c *gin.Context) {
 }
 
 func GetDebts(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
@@ -94,7 +102,11 @@ func GetDebts(c *gin.Context) {
 
 func DeleteDebt(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	debtUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -128,7 +140,11 @@ type updateDebtReq struct {
 
 func UpdateDebt(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	debtUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -216,7 +232,11 @@ type sendReminderReq struct {
 
 func SendDebtReminder(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	debtUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -302,7 +322,11 @@ type recordPaymentReq struct {
 
 func RecordDebtPayment(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	debtUUID, err := uuid.Parse(idParam)
 	if err != nil {

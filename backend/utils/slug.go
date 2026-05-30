@@ -6,14 +6,9 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // GenerateSlug creates a URL-friendly slug from a string
 func GenerateSlug(input string) string {

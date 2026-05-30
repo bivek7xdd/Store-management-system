@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"storemanagement/redis"
 	"strings"
 	"time"
@@ -87,6 +88,12 @@ func RateLimitMiddleware(limit int, window time.Duration) gin.HandlerFunc {
 			return
 		}
 
+		// In development, allow 10x more requests for easier testing
+		effectiveLimit := limit
+		if os.Getenv("ENV") != "production" {
+			effectiveLimit = limit * 10
+		}
+
 		// Create a unique key per IP and route path
 		key := fmt.Sprintf("rate_limit:%s:%s", c.ClientIP(), c.FullPath())
 
@@ -103,7 +110,7 @@ func RateLimitMiddleware(limit int, window time.Duration) gin.HandlerFunc {
 			redis.RedisClient.Expire(ctx, key, window)
 		}
 
-		if count > int64(limit) {
+		if count > int64(effectiveLimit) {
 			ErrorResponse(c, http.StatusTooManyRequests, "Too many requests. Please try again later.", nil)
 			c.Abort()
 			return

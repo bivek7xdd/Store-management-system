@@ -26,7 +26,11 @@ import (
 )
 
 func GetReportStats(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	rangeType := c.DefaultQuery("range", "today")
 
 	// ── Redis Cache Lookup ────────────────────────────────────────────────────────
@@ -472,7 +476,11 @@ func GetReportStats(c *gin.Context) {
 }
 
 func ExportSalesReportCSV(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	var body struct {
 		Range string `json:"range"`
@@ -541,7 +549,11 @@ func ExportSalesReportCSV(c *gin.Context) {
 }
 
 func ExportSalesReportPDF(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	var body struct {
 		Range string `json:"range"`
@@ -658,7 +670,11 @@ func ExportSalesReportPDF(c *gin.Context) {
 }
 
 func GetCashFlow(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	rangeType := c.DefaultQuery("range", "month")
 
 	startDate, endDate := utils.GetDateRange(rangeType)
@@ -685,7 +701,11 @@ func GetCashFlow(c *gin.Context) {
 }
 
 func GetBalanceSheetAssets(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -701,7 +721,11 @@ func GetBalanceSheetAssets(c *gin.Context) {
 }
 
 func GetBalanceSheetLiabilities(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -717,7 +741,11 @@ func GetBalanceSheetLiabilities(c *gin.Context) {
 }
 
 func GetNetProfit(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	rangeType := c.DefaultQuery("range", "month")
 
 	startDate, endDate := utils.GetDateRange(rangeType)

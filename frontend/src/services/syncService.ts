@@ -149,7 +149,6 @@ export const syncService = {
     }
 
     if (!navigator.onLine) {
-      console.log('Offline: Skipping sync');
       updateSyncStatus({ syncError: 'Device is offline' });
       return false;
     }
@@ -160,7 +159,6 @@ export const syncService = {
       const unsyncedSales = await db.sales.where('synced').equals(0).toArray();
 
       if (unsyncedSales.length === 0) {
-        console.log('No unsynced sales found');
         updateSyncStatus({
           isSyncing: false,
           lastSyncTime: new Date(),
@@ -168,8 +166,6 @@ export const syncService = {
         });
         return true;
       }
-
-      console.log(`Syncing ${unsyncedSales.length} sales...`);
 
       // Emit initial progress
       syncEvents.emit('syncProgress', {
@@ -182,8 +178,6 @@ export const syncService = {
       const errors: string[] = [];
 
       for (const sale of unsyncedSales) {
-        console.log("Raw sale data from DB:", JSON.stringify(sale, null, 2));  // Log exactly what's retrieved from DB
-
         let payload: any = null;
         try {
           // Emit progress update
@@ -205,15 +199,11 @@ export const syncService = {
             items: sale.items,
           };
 
-          console.log("Transformed sale data payload:", JSON.stringify(payload, null, 2));
-
           // Validate key fields
           if (!payload.customer_id) {
-            console.error("Customer ID missing for sale:", payload);
             throw new Error("Customer identification required for all sales");
           }
 
-          console.log(`Syncing sale ID ${sale.id}...`);
           const response = await api.post('sales/create', payload);
 
           // Update local sale to synced
@@ -224,7 +214,6 @@ export const syncService = {
           }
 
           syncedCount++;
-          console.log(`Sale ID ${sale.id} synced successfully`);
         } catch (error: any) {
           const errorMsg = `Failed to sync sale ${sale.id}: ${error}`;
           console.warn(errorMsg);
@@ -258,7 +247,6 @@ export const syncService = {
       // Implement retry logic
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
         const retryDelay = getRetryDelayForError(error, retryAttempt);
-        console.log(`Retrying sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         updateSyncStatus({
           isSyncing: false,
@@ -284,7 +272,6 @@ export const syncService = {
     }
 
     if (!navigator.onLine) {
-      console.log('Offline: Skipping product sync');
       return false;
     }
 
@@ -293,8 +280,6 @@ export const syncService = {
       const unsyncedProducts = await db.products.where('synced').notEqual(1).toArray();
       
       if (unsyncedProducts.length > 0) {
-        console.log(`Syncing ${unsyncedProducts.length} local products to server...`);
-        
         for (const product of unsyncedProducts) {
           try {
             // Handle deletion (synced = -1)
@@ -358,7 +343,6 @@ export const syncService = {
       }
 
       // Then, download latest products from server
-      console.log('Syncing products from server for offline use...');
       const response = await api.get('products?limit=1000');
       const products = response.data.data || [];
 
@@ -366,11 +350,9 @@ export const syncService = {
         // Mark all server products as synced
         const syncedProducts = products.map((p: any) => ({ ...p, synced: 1 }));
         await db.products.bulkPut(syncedProducts);
-        console.log(`Cached ${products.length} products from server`);
 
         // --- T020: Sync variant cache & purge archived variants ---
         try {
-          console.log('[Sync] Refreshing variant cache via POS catalog...');
           const catalogResp = await api.get('pos/catalog');
           const catalogItems = catalogResp.data?.data || [];
           
@@ -400,7 +382,6 @@ export const syncService = {
                 
               if (toDelete.length > 0) {
                 await db.product_variants.bulkDelete(toDelete);
-                console.log(`[Sync] Purged ${toDelete.length} archived variants for product ${item.id}`);
               }
             } else {
               // If no variants on server, clear local variants for this product
@@ -426,7 +407,6 @@ export const syncService = {
       // Implement retry logic for products too
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
         const retryDelay = getRetryDelayForError(error, retryAttempt);
-        console.log(`Retrying product sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         await delay(retryDelay);
         return syncService.syncProducts(retryAttempt + 1);
@@ -442,7 +422,6 @@ export const syncService = {
     }
 
     if (!navigator.onLine) {
-      console.log('Offline: Skipping category sync');
       return false;
     }
 
@@ -450,11 +429,8 @@ export const syncService = {
       const unsyncedCategories = await db.categories.where('synced').notEqual(1).toArray();
 
       if (unsyncedCategories.length === 0) {
-        console.log('No unsynced categories found');
         return true;
       }
-
-      console.log(`Syncing ${unsyncedCategories.length} categories...`);
 
       let syncedCount = 0;
       const errors: string[] = [];
@@ -502,7 +478,6 @@ export const syncService = {
       }
 
       const success = errors.length === 0;
-      console.log(`Category sync completed: ${syncedCount}/${unsyncedCategories.length} successful`);
       
       await updatePendingCategoriesCount();
       return success;
@@ -512,7 +487,6 @@ export const syncService = {
       // Implement retry logic
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
         const retryDelay = getRetryDelayForError(error, retryAttempt);
-        console.log(`Retrying category sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         await delay(retryDelay);
         return syncService.syncCategories(retryAttempt + 1);
@@ -528,7 +502,6 @@ export const syncService = {
     }
 
     if (!navigator.onLine) {
-      console.log('Offline: Skipping supplier sync');
       return false;
     }
 
@@ -536,11 +509,8 @@ export const syncService = {
       const unsyncedSuppliers = await db.suppliers.where('synced').notEqual(1).toArray();
 
       if (unsyncedSuppliers.length === 0) {
-        console.log('No unsynced suppliers found');
         return true;
       }
-
-      console.log(`Syncing ${unsyncedSuppliers.length} suppliers...`);
 
       let syncedCount = 0;
       const errors: string[] = [];
@@ -590,7 +560,6 @@ export const syncService = {
       }
 
       const success = errors.length === 0;
-      console.log(`Supplier sync completed: ${syncedCount}/${unsyncedSuppliers.length} successful`);
       
       await updatePendingSuppliersCount();
       return success;
@@ -600,7 +569,6 @@ export const syncService = {
       // Implement retry logic
       if (retryAttempt < RETRY_CONFIG.maxRetries) {
         const retryDelay = getRetryDelayForError(error, retryAttempt);
-        console.log(`Retrying supplier sync in ${retryDelay}ms (attempt ${retryAttempt + 1}/${RETRY_CONFIG.maxRetries})`);
 
         await delay(retryDelay);
         return syncService.syncSuppliers(retryAttempt + 1);
@@ -616,7 +584,6 @@ export const syncService = {
     }
 
     if (!navigator.onLine) {
-      console.log('Offline: Skipping returns sync');
       return false;
     }
 
@@ -624,11 +591,8 @@ export const syncService = {
       const unsyncedReturns = await db.pending_returns.where('synced').equals(0).toArray();
 
       if (unsyncedReturns.length === 0) {
-        console.log('No unsynced returns found');
         return true;
       }
-
-      console.log(`Syncing ${unsyncedReturns.length} returns...`);
 
       const payload = {
         returns: unsyncedReturns.map(r => ({
@@ -690,7 +654,6 @@ export const syncService = {
     // Respect cooldown between sync cycles
     const now = Date.now();
     if (now - lastSyncFinishTime < SYNC_COOLDOWN_MS) {
-      console.log('Sync cooldown active, skipping...');
       return false;
     }
 
@@ -714,16 +677,13 @@ export const syncService = {
   init: () => {
     // Update online status
     const handleOnline = () => {
-      console.log('Online detected');
       updateSyncStatus({ isOnline: true, syncError: null });
       if (isAuthenticated()) {
-        console.log('User authenticated, triggering sync...');
         syncService.triggerSync();
       }
     };
 
     const handleOffline = () => {
-      console.log('Offline detected');
       updateSyncStatus({
         isOnline: false,
         isSyncing: false,

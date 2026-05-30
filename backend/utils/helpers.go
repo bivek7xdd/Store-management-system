@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -70,6 +71,17 @@ func RandomBarcode() string {
 		digits[i] = byte('0' + r.Intn(10))
 	}
 	return string(digits)
+}
+
+// GetStoreID safely extracts store_id from gin context.
+// Returns the UUID and true if present and valid, or zero UUID and false otherwise.
+func GetStoreID(c *gin.Context) (pgtype.UUID, bool) {
+	val, exists := c.Get("store_id")
+	if !exists {
+		return pgtype.UUID{}, false
+	}
+	uuid, ok := val.(pgtype.UUID)
+	return uuid, ok
 }
 
 // GetDateRange returns start and end dates for a given range type

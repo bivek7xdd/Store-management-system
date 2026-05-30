@@ -23,7 +23,11 @@ type createCategoryReq struct {
 func CreateCategories(c *gin.Context) {
 	// validate request body
 	var req createCategoryReq
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		log.Printf("error binding json: %v", err)
@@ -59,7 +63,11 @@ func CreateCategories(c *gin.Context) {
 
 func GetAllCategories(c *gin.Context) {
 	// get store id
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	// create context
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
@@ -77,7 +85,11 @@ func GetAllCategories(c *gin.Context) {
 }
 
 func DeleteCategory(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	categoryIdStr := c.Query("category_id")
 	if categoryIdStr == "" {
 		utils.ErrorResponse(c, http.StatusBadRequest, "category_id is required", nil)
@@ -114,7 +126,11 @@ func DeleteCategory(c *gin.Context) {
 }
 
 func GetCategory(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	categoryIdStr := c.Param("id")
 	if categoryIdStr == "" {
 		utils.ErrorResponse(c, http.StatusBadRequest, "category_id is required", nil)
@@ -148,7 +164,11 @@ type updateCategoryReq struct {
 }
 
 func UpdateCategory(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	categoryIdStr := c.Param("id")
 
 	if categoryIdStr == "" {
@@ -186,7 +206,11 @@ func UpdateCategory(c *gin.Context) {
 }
 
 func GetCategoryStats(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	categoryIdStr := c.Param("id")
 
 	if categoryIdStr == "" {
@@ -216,7 +240,11 @@ func GetCategoryStats(c *gin.Context) {
 }
 
 func GetCategoryProducts(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	categoryIdStr := c.Param("id")
 
 	if categoryIdStr == "" {

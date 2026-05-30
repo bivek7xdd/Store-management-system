@@ -12,7 +12,11 @@ import (
 )
 
 func CreateExpense(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	var req struct {
 		Category      string  `json:"category" binding:"required"`
@@ -60,7 +64,11 @@ func CreateExpense(c *gin.Context) {
 }
 
 func ListExpenses(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	rangeType := c.DefaultQuery("range", "month")
 	category := c.DefaultQuery("category", "")
 
@@ -89,7 +97,11 @@ func ListExpenses(c *gin.Context) {
 }
 
 func GetExpense(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	id := c.Param("id")
 
 	uuid, err := utils.ParseUUID(id)
@@ -115,7 +127,11 @@ func GetExpense(c *gin.Context) {
 }
 
 func UpdateExpense(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	id := c.Param("id")
 
 	uuid, err := utils.ParseUUID(id)
@@ -168,7 +184,11 @@ func UpdateExpense(c *gin.Context) {
 }
 
 func DeleteExpense(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	id := c.Param("id")
 
 	uuid, err := utils.ParseUUID(id)
@@ -194,7 +214,11 @@ func DeleteExpense(c *gin.Context) {
 }
 
 func GetExpenseSummary(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	rangeType := c.DefaultQuery("range", "month")
 
 	startDate, endDate := utils.GetDateRange(rangeType)

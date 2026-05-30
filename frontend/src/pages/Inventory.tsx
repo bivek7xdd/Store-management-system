@@ -198,12 +198,9 @@ export default function Inventory() {
   // Create product mutation with optimistic updates
   const createProductMutation = useMutation({
     mutationFn: (data: CreateProductData) => {
-      console.log('[Component] createProductMutation starting...');
       return inventoryService.createProduct(data);
     },
     onMutate: async (newProduct) => {
-      console.log('[Component] createProduct onMutate - doing optimistic update');
-
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["products"] });
 
@@ -227,8 +224,6 @@ export default function Inventory() {
       return { previousProducts };
     },
     onError: (error, newProduct, context) => {
-      console.error('[Component] createProduct onError:', error);
-
       // Rollback to previous state
       if (context?.previousProducts) {
         queryClient.setQueryData(["products"], context.previousProducts);
@@ -240,12 +235,10 @@ export default function Inventory() {
       toast.error("Failed to add product");
     },
     onSuccess: (data) => {
-      console.log('[Component] createProduct onSuccess');
       toast.success("Product added successfully!");
       setAddDialogOpen(false);
     },
     onSettled: () => {
-      console.log('[Component] createProduct onSettled - refetching');
       // Invalidate all product-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.refetchQueries({ queryKey: ["products"] });
@@ -256,15 +249,9 @@ export default function Inventory() {
   // Update product mutation with optimistic updates
   const updateProductMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductData }) => {
-      console.log('[Component] updateProductMutation starting...');
-      console.log('[Component] isOnline:', navigator.onLine);
-      const result = inventoryService.updateProduct(id, data);
-      console.log('[Component] updateProduct returned promise');
-      return result;
+      return inventoryService.updateProduct(id, data);
     },
     onMutate: async ({ id, data }) => {
-      console.log('[Mutation] updateProduct onMutate - doing optimistic update');
-
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["products"] });
 
@@ -283,8 +270,6 @@ export default function Inventory() {
       return { previousProducts };
     },
     onError: (error, variables, context) => {
-      console.error('[Mutation] updateProduct onError:', error);
-
       // Rollback to previous state
       if (context?.previousProducts) {
         queryClient.setQueryData(["products"], context.previousProducts);
@@ -297,14 +282,11 @@ export default function Inventory() {
       toast.error("Failed to update product");
     },
     onSuccess: (data) => {
-      console.log('[Mutation] updateProduct onSuccess', data);
-      console.log('[Mutation] isSubmitting should be false now');
       toast.success(navigator.onLine ? "Product updated successfully!" : "Product saved offline!");
       setAddDialogOpen(false);
       setEditingProduct(null);
     },
     onSettled: () => {
-      console.log('[Mutation] updateProduct onSettled - mutation complete');
       // Refetch to ensure we have latest data
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
@@ -313,12 +295,9 @@ export default function Inventory() {
   // Delete product mutation with optimistic updates
   const deleteProductMutation = useMutation({
     mutationFn: (id: string) => {
-      console.log('[Component] deleteProductMutation starting...');
       return inventoryService.deleteProduct(id);
     },
     onMutate: async (id) => {
-      console.log('[Mutation] deleteProduct onMutate - doing optimistic update');
-
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["products"] });
 
@@ -333,8 +312,6 @@ export default function Inventory() {
       return { previousProducts };
     },
     onError: (error, id, context) => {
-      console.error('[Mutation] deleteProduct onError:', error);
-
       // Rollback to previous state
       if (context?.previousProducts) {
         queryClient.setQueryData(["products"], context.previousProducts);
@@ -343,11 +320,9 @@ export default function Inventory() {
       toast.error("Failed to delete product");
     },
     onSuccess: () => {
-      console.log('[Mutation] deleteProduct onSuccess');
       toast.success("Product deleted successfully!");
     },
     onSettled: () => {
-      console.log('[Mutation] deleteProduct onSettled');
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
@@ -553,7 +528,6 @@ export default function Inventory() {
       }
     } catch (error) {
       // Error is already handled in onError
-      console.log('[Component] Mutation error caught:', error);
     }
   };
 

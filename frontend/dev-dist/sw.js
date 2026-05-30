@@ -67,31 +67,46 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-fe13d735'], (function (workbox) { 'use strict';
+define(['./workbox-64ec82b5'], (function (workbox) { 'use strict';
 
-	self.skipWaiting();
-	workbox.clientsClaim();
-	workbox.registerRoute(/\/offline\.html$/, new workbox.CacheFirst({
-	  "cacheName": "offline-page",
-	  plugins: []
-	}), 'GET');
-	workbox.registerRoute(/^.*\/api\/.*$/, new workbox.NetworkFirst({
-	  "cacheName": "api-cache-dev",
-	  plugins: [new workbox.ExpirationPlugin({
-	    maxEntries: 50,
-	    maxAgeSeconds: 300
-	  }), new workbox.CacheableResponsePlugin({
-	    statuses: [0, 200]
-	  })]
-	}), 'GET');
-	workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.StaleWhileRevalidate({
-	  "cacheName": "google-fonts-cache",
-	  plugins: [new workbox.ExpirationPlugin({
-	    maxEntries: 10,
-	    maxAgeSeconds: 31536000
-	  }), new workbox.CacheableResponsePlugin({
-	    statuses: [0, 200]
-	  })]
-	}), 'GET');
+  self.skipWaiting();
+  workbox.clientsClaim();
+
+  /**
+   * The precacheAndRoute() method efficiently caches and responds to
+   * requests for URLs in the manifest.
+   * See https://goo.gl/S9QRab
+   */
+  workbox.precacheAndRoute([{
+    "url": "/index.html",
+    "revision": "0.fdrt54mlns8"
+  }], {});
+  workbox.cleanupOutdatedCaches();
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
+    allowlist: [/^\/$/],
+    denylist: [/^\/@vite\/.*$/, /^\/@react-refresh$/, /^\/@vite-plugin-pwa\/.*$/, /^\/src\/.*$/, /^\/api\/.*$/, /^\/node_modules\/.*$/, /\.map$/]
+  }));
+  workbox.registerRoute(/\/offline\.html$/, new workbox.CacheFirst({
+    "cacheName": "offline-page",
+    plugins: []
+  }), 'GET');
+  workbox.registerRoute(/^.*\/api\/.*$/, new workbox.NetworkFirst({
+    "cacheName": "api-cache-dev",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 50,
+      maxAgeSeconds: 300
+    }), new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
+    })]
+  }), 'GET');
+  workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.StaleWhileRevalidate({
+    "cacheName": "google-fonts-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 10,
+      maxAgeSeconds: 31536000
+    }), new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
+    })]
+  }), 'GET');
 
 }));

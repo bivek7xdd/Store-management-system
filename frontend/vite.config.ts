@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         // Different navigation fallback strategy for dev vs prod
-        navigateFallback: mode === "development" ? undefined : "/index.html",
+        navigateFallback: "/index.html",
         navigateFallbackDenylist: [
           // Exclude Vite dev server specific routes
           /^\/@vite\/.*$/,
@@ -74,7 +74,7 @@ export default defineConfig(({ mode }) => ({
         ],
         // Only cache in production, or minimal caching in dev
         globPatterns: mode === "development"
-          ? ["offline.html"] // Only cache offline fallback in dev
+          ? ["**/*.{js,css,html}"] // Cache app assets in dev for offline testing
           : ["**/*.{js,css,html,ico,png,svg,woff,woff2}"], // Full caching in prod
         runtimeCaching: [
           // In development, only cache essential resources

@@ -31,7 +31,11 @@ func CreateSuppliers(c *gin.Context) {
 	}
 
 	//get store id
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	//create context
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
@@ -57,7 +61,11 @@ func CreateSuppliers(c *gin.Context) {
 
 func GetAllSuppliers(c *gin.Context) {
 	//get store id
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	//create context
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
@@ -75,7 +83,11 @@ func GetAllSuppliers(c *gin.Context) {
 }
 
 func GetSupplier(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	idStr := c.Param("id")
 
 	supplierUUID, err := uuid.Parse(idStr)
@@ -108,7 +120,11 @@ type updateSupplierReq struct {
 }
 
 func UpdateSupplier(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	idStr := c.Param("id")
 
 	supplierUUID, err := uuid.Parse(idStr)
@@ -160,7 +176,11 @@ func UpdateSupplier(c *gin.Context) {
 }
 
 func DeleteSupplier(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	idStr := c.Param("id")
 
 	supplierUUID, err := uuid.Parse(idStr)
@@ -187,7 +207,11 @@ func DeleteSupplier(c *gin.Context) {
 }
 
 func GetSupplierStats(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	idStr := c.Param("id")
 
 	supplierUUID, err := uuid.Parse(idStr)
@@ -213,7 +237,11 @@ func GetSupplierStats(c *gin.Context) {
 }
 
 func GetSupplierProducts(c *gin.Context) {
-	storeId := c.MustGet("store_id").(pgtype.UUID)
+	storeId, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	idStr := c.Param("id")
 
 	supplierUUID, err := uuid.Parse(idStr)

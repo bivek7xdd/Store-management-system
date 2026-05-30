@@ -33,14 +33,12 @@ func (store *Store) ExecTx(ctx context.Context, fn func(*Queries) error) error {
 	q := New(tx)
 	err = fn(q)
 	if err != nil {
-		fmt.Printf("Transaction error, rolling back: %v\n", err)
 		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
 		}
 		return err
 	}
 
-	fmt.Println("Transaction successful, committing...")
 	return tx.Commit(ctx)
 }
 

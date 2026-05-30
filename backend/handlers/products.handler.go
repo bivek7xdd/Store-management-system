@@ -45,7 +45,11 @@ type createProductReq struct {
 
 func CreateProduct(c *gin.Context) {
 	var req createProductReq
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("error binding json: %v", err)
@@ -253,7 +257,11 @@ func decodeVariants(variants []db.ProductVariant) []VariantResponse {
 }
 
 func GetProducts(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	limitStr := c.DefaultQuery("limit", "50")
 	offsetStr := c.DefaultQuery("offset", "0")
@@ -310,7 +318,11 @@ func GetProducts(c *gin.Context) {
 
 func GetProduct(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	productUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -363,7 +375,11 @@ type updateProductReq struct {
 
 func UpdateProduct(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	productUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -486,7 +502,11 @@ func UpdateProduct(c *gin.Context) {
 	if req.IsTracked != nil {
 		// If trying to enable tracking, check the limit
 		if *req.IsTracked && !existingProduct.IsTracked.Bool {
-			storeID := c.MustGet("store_id").(pgtype.UUID)
+			storeID, ok := utils.GetStoreID(c)
+			if !ok {
+				utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+				return
+			}
 			trackedProducts, err := utils.Queries.ListTrackedProducts(ctx, storeID)
 			if err == nil && len(trackedProducts) >= 6 {
 				utils.ErrorResponse(c, http.StatusBadRequest, "Tracking limit reached. Max 6 products allowed.", fmt.Errorf("tracking limit reached"))
@@ -589,7 +609,11 @@ func UpdateProduct(c *gin.Context) {
 
 func DeleteProduct(c *gin.Context) {
 	idParam := c.Param("id")
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	productUUID, err := uuid.Parse(idParam)
 	if err != nil {
@@ -614,7 +638,11 @@ func DeleteProduct(c *gin.Context) {
 }
 
 func SearchProducts(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	query := c.Query("q")
 
 	limitStr := c.DefaultQuery("limit", "50")
@@ -649,7 +677,11 @@ func SearchProducts(c *gin.Context) {
 }
 
 func GetTrackedProducts(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
@@ -677,7 +709,11 @@ type POSCatalogItem struct {
 }
 
 func GetPOSCatalog(c *gin.Context) {
-	storeID := c.MustGet("store_id").(pgtype.UUID)
+	storeID, ok := utils.GetStoreID(c)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Store not found", nil)
+		return
+	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 

@@ -161,7 +161,6 @@ export default function MarketDiscovery() {
         const errorHandler = (err: GeolocationPositionError, isHighAccuracy: boolean) => {
             // If high accuracy failed, try low accuracy
             if (isHighAccuracy) {
-                console.log("High accuracy location failed, trying low accuracy...");
                 navigator.geolocation.getCurrentPosition(
                     successHandler,
                     (retryErr) => errorHandler(retryErr, false),
@@ -344,7 +343,6 @@ export default function MarketDiscovery() {
                 }
             }
         } catch (error) {
-            console.log("Route fetching failed:", error);
         }
 
         setLoadingRoute(false);
@@ -515,11 +513,8 @@ export default function MarketDiscovery() {
      */
     const testAPICapabilities = useCallback(async () => {
         if (!GEOAPIFY_API_KEY) {
-            console.log("❌ No API key configured");
             return;
         }
-
-        console.log("🔍 Testing API capabilities...");
 
         // Test basic geocoding
         try {
@@ -529,14 +524,8 @@ export default function MarketDiscovery() {
                 apiKey: GEOAPIFY_API_KEY,
             });
 
-            const response = await fetch(`https://api.geoapify.com/v1/geocode/search?${testParams.toString()}`);
-            if (response.ok) {
-                console.log("✅ Geocoding API: Working");
-            } else {
-                console.log("❌ Geocoding API: Failed", response.status);
-            }
+            await fetch(`https://api.geoapify.com/v1/geocode/search?${testParams.toString()}`);
         } catch (error) {
-            console.log("❌ Geocoding API: Network error");
         }
 
         // Test Places API v2
@@ -548,17 +537,8 @@ export default function MarketDiscovery() {
                 apiKey: GEOAPIFY_API_KEY,
             });
 
-            const response = await fetch(`https://api.geoapify.com/v2/places?${placesParams.toString()}`);
-            if (response.ok) {
-                console.log("✅ Places API v2: Working");
-            } else {
-                console.log("❌ Places API v2: Failed", response.status);
-                if (response.status === 403) {
-                    console.log("💡 Places API v2 requires a paid plan or specific API key permissions");
-                }
-            }
+            await fetch(`https://api.geoapify.com/v2/places?${placesParams.toString()}`);
         } catch (error) {
-            console.log("❌ Places API v2: Network error");
         }
 
         // Test Routing API
@@ -569,14 +549,8 @@ export default function MarketDiscovery() {
                 apiKey: GEOAPIFY_API_KEY,
             });
 
-            const response = await fetch(`https://api.geoapify.com/v1/routing?${routeParams.toString()}`);
-            if (response.ok) {
-                console.log("✅ Routing API: Working");
-            } else {
-                console.log("❌ Routing API: Failed", response.status);
-            }
+            await fetch(`https://api.geoapify.com/v1/routing?${routeParams.toString()}`);
         } catch (error) {
-            console.log("❌ Routing API: Network error");
         }
     }, [GEOAPIFY_API_KEY]);
 
@@ -603,24 +577,15 @@ export default function MarketDiscovery() {
                 apiKey: GEOAPIFY_API_KEY,
             });
 
-            console.log("Trying Places API v2 with URL:", `https://api.geoapify.com/v2/places?${params.toString()}`);
-
             const response = await fetch(`https://api.geoapify.com/v2/places?${params.toString()}`);
 
             if (response.ok) {
                 const data = await response.json();
                 if (data.features && data.features.length > 0) {
-                    console.log("✅ Places API v2 success:", data.features.length, "results");
                     results.push(...data.features);
-                } else {
-                    console.log("⚠️ Places API v2 returned no results");
                 }
-            } else {
-                // Silently fail or log briefly to avoid cluttering console for user
-                console.log("Places API v2 fallback needed (Status " + response.status + ")");
             }
         } catch (error) {
-            console.log("Places API v2 network error");
         }
 
         return results;
@@ -659,7 +624,6 @@ export default function MarketDiscovery() {
         // Instead, skip the Places API strategy and rely on the Text Search (Strategy 2).
         // This ensures "Beverages" or other unknown terms don't get irrelevant "Shopping Mall" results.
         if (categories.length === 0) {
-            console.log("No specific category match for Places API, skipping to Text Search for better relevance.");
             return [];
         }
 
@@ -672,9 +636,6 @@ export default function MarketDiscovery() {
             const placesResults = await tryPlacesAPIv2();
             if (placesResults.length > 0) {
                 results.push(...placesResults);
-                console.log("Using Places API v2 results:", placesResults.length);
-            } else {
-                console.log("Places API v2 failed, using geocoding fallback");
             }
 
             // STRATEGY 2: Use geocoding search with business-focused terms
@@ -704,11 +665,9 @@ export default function MarketDiscovery() {
                         }
                     }
                 } catch (error) {
-                    console.log(`Business search failed for "${searchTerm}":`, error);
                 }
             }
         } catch (error) {
-            console.log("Business search failed:", error);
         }
 
         return results;
@@ -757,7 +716,6 @@ export default function MarketDiscovery() {
                     }
                 }
             } catch (error) {
-                console.log(`Expanded search failed for "${searchText}":`, error);
             }
         }
 
