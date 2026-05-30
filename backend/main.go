@@ -133,6 +133,24 @@ func main() {
 		productRoutes.DELETE("/:id", handlers.DeleteProduct)
 	}
 
+	// Stock adjustment routes
+	stockAdjustmentRoutes := router.Group("/api/stock-adjustments")
+	stockAdjustmentRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
+	{
+		stockAdjustmentRoutes.POST("", handlers.CreateStockAdjustment)
+		stockAdjustmentRoutes.GET("", handlers.ListStockAdjustments)
+		stockAdjustmentRoutes.GET("/product/:id", handlers.GetStockAdjustmentsByProduct)
+	}
+
+	// Stock movement routes
+	stockMovementRoutes := router.Group("/api/stock-movements")
+	stockMovementRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
+	{
+		stockMovementRoutes.GET("", handlers.ListStockMovements)
+		stockMovementRoutes.GET("/product/:id/summary", handlers.GetStockMovementSummary)
+		stockMovementRoutes.GET("/product/:id", handlers.GetStockMovementsByProduct)
+	}
+
 	// Sales routes
 	salesRoutes := router.Group("/api/sales")
 	salesRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
