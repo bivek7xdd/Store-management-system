@@ -18,7 +18,8 @@ SELECT sa.*, p.name as product_name
 FROM stock_adjustments sa
 JOIN products p ON sa.product_id = p.id
 WHERE sa.store_id = $1 AND sa.product_id = $2
-ORDER BY sa.created_at DESC;
+ORDER BY sa.created_at DESC
+LIMIT $3 OFFSET $4;
 
 -- name: CreateStockMovement :one
 INSERT INTO stock_movements (
@@ -40,15 +41,16 @@ SELECT sm.*, p.name as product_name
 FROM stock_movements sm
 JOIN products p ON sm.product_id = p.id
 WHERE sm.store_id = $1 AND sm.product_id = $2
-ORDER BY sm.created_at DESC;
+ORDER BY sm.created_at DESC
+LIMIT $3 OFFSET $4;
 
 -- name: GetStockMovementSummary :one
 SELECT
     product_id,
     p.name as product_name,
-    SUM(CASE WHEN quantity_change > 0 THEN quantity_change ELSE 0 END)::INT as total_inbound,
-    SUM(CASE WHEN quantity_change < 0 THEN ABS(quantity_change) ELSE 0 END)::INT as total_outbound,
-    COUNT(*) as movement_count
+    COALESCE(SUM(CASE WHEN quantity_change > 0 THEN quantity_change ELSE 0 END), 0)::INT as total_inbound,
+    COALESCE(SUM(CASE WHEN quantity_change < 0 THEN ABS(quantity_change) ELSE 0 END), 0)::INT as total_outbound,
+    COUNT(*)::INT as movement_count
 FROM stock_movements sm
 JOIN products p ON sm.product_id = p.id
 WHERE sm.store_id = $1 AND sm.product_id = $2

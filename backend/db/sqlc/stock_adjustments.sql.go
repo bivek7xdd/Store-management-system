@@ -112,11 +112,14 @@ FROM stock_adjustments sa
 JOIN products p ON sa.product_id = p.id
 WHERE sa.store_id = $1 AND sa.product_id = $2
 ORDER BY sa.created_at DESC
+LIMIT $3 OFFSET $4
 `
 
 type GetStockAdjustmentsByProductParams struct {
 	StoreID   pgtype.UUID `db:"store_id" json:"store_id"`
 	ProductID pgtype.UUID `db:"product_id" json:"product_id"`
+	Limit     int32       `db:"limit" json:"limit"`
+	Offset    int32       `db:"offset" json:"offset"`
 }
 
 type GetStockAdjustmentsByProductRow struct {
@@ -135,7 +138,12 @@ type GetStockAdjustmentsByProductRow struct {
 }
 
 func (q *Queries) GetStockAdjustmentsByProduct(ctx context.Context, arg GetStockAdjustmentsByProductParams) ([]GetStockAdjustmentsByProductRow, error) {
-	rows, err := q.db.Query(ctx, getStockAdjustmentsByProduct, arg.StoreID, arg.ProductID)
+	rows, err := q.db.Query(ctx, getStockAdjustmentsByProduct,
+		arg.StoreID,
+		arg.ProductID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -171,9 +179,9 @@ const getStockMovementSummary = `-- name: GetStockMovementSummary :one
 SELECT
     product_id,
     p.name as product_name,
-    SUM(CASE WHEN quantity_change > 0 THEN quantity_change ELSE 0 END)::INT as total_inbound,
-    SUM(CASE WHEN quantity_change < 0 THEN ABS(quantity_change) ELSE 0 END)::INT as total_outbound,
-    COUNT(*) as movement_count
+    COALESCE(SUM(CASE WHEN quantity_change > 0 THEN quantity_change ELSE 0 END), 0)::INT as total_inbound,
+    COALESCE(SUM(CASE WHEN quantity_change < 0 THEN ABS(quantity_change) ELSE 0 END), 0)::INT as total_outbound,
+    COUNT(*)::INT as movement_count
 FROM stock_movements sm
 JOIN products p ON sm.product_id = p.id
 WHERE sm.store_id = $1 AND sm.product_id = $2
@@ -190,7 +198,7 @@ type GetStockMovementSummaryRow struct {
 	ProductName   string      `db:"product_name" json:"product_name"`
 	TotalInbound  int32       `db:"total_inbound" json:"total_inbound"`
 	TotalOutbound int32       `db:"total_outbound" json:"total_outbound"`
-	MovementCount int64       `db:"movement_count" json:"movement_count"`
+	MovementCount int32       `db:"movement_count" json:"movement_count"`
 }
 
 func (q *Queries) GetStockMovementSummary(ctx context.Context, arg GetStockMovementSummaryParams) (GetStockMovementSummaryRow, error) {
@@ -212,11 +220,14 @@ FROM stock_movements sm
 JOIN products p ON sm.product_id = p.id
 WHERE sm.store_id = $1 AND sm.product_id = $2
 ORDER BY sm.created_at DESC
+LIMIT $3 OFFSET $4
 `
 
 type GetStockMovementsByProductParams struct {
 	StoreID   pgtype.UUID `db:"store_id" json:"store_id"`
 	ProductID pgtype.UUID `db:"product_id" json:"product_id"`
+	Limit     int32       `db:"limit" json:"limit"`
+	Offset    int32       `db:"offset" json:"offset"`
 }
 
 type GetStockMovementsByProductRow struct {
@@ -234,7 +245,12 @@ type GetStockMovementsByProductRow struct {
 }
 
 func (q *Queries) GetStockMovementsByProduct(ctx context.Context, arg GetStockMovementsByProductParams) ([]GetStockMovementsByProductRow, error) {
-	rows, err := q.db.Query(ctx, getStockMovementsByProduct, arg.StoreID, arg.ProductID)
+	rows, err := q.db.Query(ctx, getStockMovementsByProduct,
+		arg.StoreID,
+		arg.ProductID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

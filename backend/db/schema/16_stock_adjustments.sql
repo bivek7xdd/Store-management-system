@@ -58,10 +58,12 @@ CREATE TABLE IF NOT EXISTS stock_movements (
 -- Indexes
 CREATE INDEX idx_stock_adjustments_store_id ON stock_adjustments(store_id);
 CREATE INDEX idx_stock_adjustments_product_id ON stock_adjustments(product_id);
+CREATE INDEX idx_stock_adjustments_store_product ON stock_adjustments(store_id, product_id);
 CREATE INDEX idx_stock_adjustments_created_at ON stock_adjustments(created_at DESC);
 
 CREATE INDEX idx_stock_movements_store_id ON stock_movements(store_id);
 CREATE INDEX idx_stock_movements_product_id ON stock_movements(product_id);
+CREATE INDEX idx_stock_movements_store_product ON stock_movements(store_id, product_id);
 CREATE INDEX idx_stock_movements_movement_type ON stock_movements(movement_type);
 CREATE INDEX idx_stock_movements_created_at ON stock_movements(created_at DESC);
 CREATE INDEX idx_stock_movements_reference ON stock_movements(reference_type, reference_id);
