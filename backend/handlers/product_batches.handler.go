@@ -45,14 +45,17 @@ func ListProductBatches(c *gin.Context) {
 		return
 	}
 
-	batches, err := utils.Queries.ListProductBatches(ctx, productID)
+	batches, err := utils.Queries.GetBatchesByProductWithStore(ctx, db.GetBatchesByProductWithStoreParams{
+		ProductID: productID,
+		StoreID:   storeID,
+	})
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch batches", err)
 		return
 	}
 
 	if batches == nil {
-		batches = []db.ListProductBatchesRow{}
+		batches = []db.GetBatchesByProductWithStoreRow{}
 	}
 
 	utils.SuccessResponse(c, "batches fetched successfully", batches)
@@ -97,17 +100,21 @@ func CreateProductBatch(c *gin.Context) {
 	var manufacturingDate pgtype.Date
 	if req.ManufacturingDate != "" {
 		t, err := time.Parse("2006-01-02", req.ManufacturingDate)
-		if err == nil {
-			manufacturingDate = pgtype.Date{Time: t, Valid: true}
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "invalid manufacturing date format, use YYYY-MM-DD", err)
+			return
 		}
+		manufacturingDate = pgtype.Date{Time: t, Valid: true}
 	}
 
 	var expiryDate pgtype.Date
 	if req.ExpiryDate != "" {
 		t, err := time.Parse("2006-01-02", req.ExpiryDate)
-		if err == nil {
-			expiryDate = pgtype.Date{Time: t, Valid: true}
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "invalid expiry date format, use YYYY-MM-DD", err)
+			return
 		}
+		expiryDate = pgtype.Date{Time: t, Valid: true}
 	}
 
 	batch, err := utils.Queries.CreateProductBatch(ctx, db.CreateProductBatchParams{
@@ -151,6 +158,11 @@ func UpdateProductBatch(c *gin.Context) {
 		return
 	}
 
+	if req.Quantity < 0 {
+		utils.ErrorResponse(c, http.StatusBadRequest, "quantity cannot be negative", nil)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -166,17 +178,21 @@ func UpdateProductBatch(c *gin.Context) {
 	var manufacturingDate pgtype.Date
 	if req.ManufacturingDate != "" {
 		t, err := time.Parse("2006-01-02", req.ManufacturingDate)
-		if err == nil {
-			manufacturingDate = pgtype.Date{Time: t, Valid: true}
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "invalid manufacturing date format, use YYYY-MM-DD", err)
+			return
 		}
+		manufacturingDate = pgtype.Date{Time: t, Valid: true}
 	}
 
 	var expiryDate pgtype.Date
 	if req.ExpiryDate != "" {
 		t, err := time.Parse("2006-01-02", req.ExpiryDate)
-		if err == nil {
-			expiryDate = pgtype.Date{Time: t, Valid: true}
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusBadRequest, "invalid expiry date format, use YYYY-MM-DD", err)
+			return
 		}
+		expiryDate = pgtype.Date{Time: t, Valid: true}
 	}
 
 	batch, err := utils.Queries.UpdateProductBatch(ctx, db.UpdateProductBatchParams{
