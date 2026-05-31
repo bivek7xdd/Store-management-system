@@ -72,6 +72,26 @@ export interface CreateStockAdjustmentData {
     notes?: string;
 }
 
+export interface ProductBatch {
+    id: string;
+    product_id: string;
+    batch_number: string;
+    manufacturing_date?: string;
+    expiry_date?: string;
+    quantity: number;
+    notes?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateProductBatchData {
+    batch_number: string;
+    manufacturing_date?: string;
+    expiry_date?: string;
+    quantity: number;
+    notes?: string;
+}
+
 const isOnline = () => navigator.onLine;
 
 const stockAdjustmentCache: StockAdjustment[] = [];
@@ -830,5 +850,30 @@ export const inventoryService = {
             total_out: productMovements.filter(m => m.movement_type === 'out').reduce((sum, m) => sum + Math.abs(m.quantity_change), 0),
             net_change: productMovements.reduce((sum, m) => sum + m.quantity_change, 0)
         };
+    },
+
+    // Product Batches
+    listProductBatches: async (productId: string) => {
+        try {
+            const response = await api.get(`products/${productId}/batches`);
+            return response.data.data || [];
+        } catch (error) {
+            console.warn('[Inventory] Failed to fetch batches', error);
+            return [];
+        }
+    },
+
+    createProductBatch: async (productId: string, data: CreateProductBatchData) => {
+        const response = await api.post(`products/${productId}/batches`, data);
+        return response.data.data;
+    },
+
+    updateProductBatch: async (productId: string, batchId: string, data: CreateProductBatchData) => {
+        const response = await api.put(`products/${productId}/batches/${batchId}`, data);
+        return response.data.data;
+    },
+
+    deleteProductBatch: async (productId: string, batchId: string) => {
+        await api.delete(`products/${productId}/batches/${batchId}`);
     },
 };
