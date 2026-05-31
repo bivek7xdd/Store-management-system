@@ -1,4 +1,4 @@
-h1:l94aSgLCXtyLalB6ZnrLOsFDVQ3h+ENT1NaJ/cden5E=
+h1:f2tMsP2+tiNuGUo35kcYh0m+Ve1MEY2aWL5j5aHYTbw=
 20260412042618_init_schema.sql h1:20D0suekCKCFwTIu2Wsembx/0KBcUEo8vkPwHI6s7Lc=
 20260420015519_add_payments_and_loyalty.sql h1:1DbuxUz4UzRIaPKeST6Snu+NQMG22FuLmxCDjMmPauI=
 20260420015912.sql h1:Hjk4ba8rqA0uYDfhI8b54TkcgyDBuYgnUKqOWX1sZok=
@@ -11,3 +11,5 @@ h1:l94aSgLCXtyLalB6ZnrLOsFDVQ3h+ENT1NaJ/cden5E=
 20260515000003_supplier_payables.sql h1:Yoe9cKxXbu3vTrT/Gj5MJnAr9GmLLzXTShxQeRafDUA=
 20260515000004_supplier_payments.sql h1:CTGlgHN2NUMYI2auGgcUDUC7GFjr4qhhwrbw7EyHSrQ=
 20260527000001_create_purchase_orders.sql h1:IhWU+zQervBUkOlLXHO0L8tkmnit4xlndjZF2/kNmBk=
+20260531000001_create_stock_adjustments.sql h1:r1h+TE5YfDuUGGLUAmmvKqGvh5WxLq9ajnkOe5ns1d4=
+20260531000002_create_product_batches.sql h1:4UijL+cLwApL3G7YYgabxFbiCr6vQ34PMR4PMT4EMjE=
