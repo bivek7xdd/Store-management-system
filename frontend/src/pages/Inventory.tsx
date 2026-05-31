@@ -1096,8 +1096,13 @@ export default function Inventory() {
                                                         className="h-6 w-6 text-[#DA291C]"
                                                         onClick={async () => {
                                                             if (editingProduct) {
-                                                                await inventoryService.deleteProductBatch(editingProduct.id, batch.id);
-                                                                setBatches(batches.filter(b => b.id !== batch.id));
+                                                                try {
+                                                                    await inventoryService.deleteProductBatch(editingProduct.id, batch.id);
+                                                                    setBatches(batches.filter(b => b.id !== batch.id));
+                                                                    toast.success("Batch deleted successfully");
+                                                                } catch (error) {
+                                                                    toast.error("Failed to delete batch");
+                                                                }
                                                             }
                                                         }}
                                                     >
@@ -1199,23 +1204,29 @@ export default function Inventory() {
                           >
                               Cancel
                           </Button>
-                          <Button
-                              type="button"
-                              onClick={async () => {
-                                  if (!batchForm.batch_number || !editingProduct) return;
-                                  
-                                  if (editingBatch) {
-                                      await inventoryService.updateProductBatch(editingProduct.id, editingBatch.id, batchForm);
-                                  } else {
-                                      await inventoryService.createProductBatch(editingProduct.id, batchForm);
-                                  }
-                                  
-                                  const updatedBatches = await inventoryService.listProductBatches(editingProduct.id);
-                                  setBatches(updatedBatches);
-                                  setBatchDialogOpen(false);
-                              }}
-                              className="bg-[#DA291C] hover:bg-[#B01E0A] text-white"
-                          >
+                           <Button
+                               type="button"
+                               onClick={async () => {
+                                   if (!batchForm.batch_number || !editingProduct) return;
+                                   
+                                   try {
+                                       if (editingBatch) {
+                                           await inventoryService.updateProductBatch(editingProduct.id, editingBatch.id, batchForm);
+                                           toast.success("Batch updated successfully");
+                                       } else {
+                                           await inventoryService.createProductBatch(editingProduct.id, batchForm);
+                                           toast.success("Batch added successfully");
+                                       }
+                                       
+                                       const updatedBatches = await inventoryService.listProductBatches(editingProduct.id);
+                                       setBatches(updatedBatches);
+                                       setBatchDialogOpen(false);
+                                   } catch (error) {
+                                       toast.error("Failed to save batch");
+                                   }
+                               }}
+                               className="bg-[#DA291C] hover:bg-[#B01E0A] text-white"
+                           >
                               {editingBatch ? "Update" : "Add"} Batch
                           </Button>
                       </DialogFooter>
