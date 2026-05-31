@@ -145,7 +145,7 @@ export function StockAdjustmentDialog({ open, onOpenChange, products }: StockAdj
                                                         setProductId(p.id);
                                                         setProductPopoverOpen(false);
                                                     }}
-                                                    className="text-white data-[selected]:bg-[#1A1A1A]"
+                                                    className="text-white hover:bg-[#1A1A1A] hover:text-white data-[selected]:bg-[#1A1A1A] data-[selected]:text-white"
                                                 >
                                                     <Check
                                                         className={`mr-2 h-4 w-4 ${
@@ -171,7 +171,7 @@ export function StockAdjustmentDialog({ open, onOpenChange, products }: StockAdj
                             type="number"
                             value={adjustmentQuantity}
                             onChange={(e) => setAdjustmentQuantity(e.target.value)}
-                            placeholder="+10 to add, -5 to remove"
+                            placeholder="10 to add, -5 to remove"
                             className="bg-[#111111] border-[#1A1A1A] text-white"
                         />
                         {formErrors.adjustment_quantity && (
