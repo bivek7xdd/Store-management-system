@@ -51,6 +51,7 @@ import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDia
 import { StockAdjustmentTable } from "@/components/inventory/StockAdjustmentTable";
 import { StockMovementTable } from "@/components/inventory/StockMovementTable";
 import { ReceiveStockDialog } from "@/components/inventory/ReceiveStockDialog";
+import { AllBatchesTable } from "@/components/inventory/AllBatchesTable";
 import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
@@ -199,12 +200,21 @@ const [receiveStockOpen, setReceiveStockOpen] = useState(false);
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
+  // Debounced search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch products with search and filter awareness
   const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
-    queryKey: ["products", searchTerm, categoryFilter, stockFilter],
+    queryKey: ["products", debouncedSearchTerm, categoryFilter, stockFilter],
     queryFn: () => {
-      if (searchTerm && searchTerm.length >= 2) {
-        return inventoryService.searchProducts(searchTerm, 100);
+      if (debouncedSearchTerm && debouncedSearchTerm.length >= 2) {
+        return inventoryService.searchProducts(debouncedSearchTerm, 100);
       }
       return inventoryService.getProducts(200); // Fetch a larger batch for local management
     },
@@ -1396,6 +1406,9 @@ const [receiveStockOpen, setReceiveStockOpen] = useState(false);
           <TabsTrigger value="products" className="data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">
             Products
           </TabsTrigger>
+          <TabsTrigger value="batches" className="data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">
+            Batches
+          </TabsTrigger>
           <TabsTrigger value="adjustments" className="data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">
             Adjustments
           </TabsTrigger>
@@ -1497,6 +1510,10 @@ const [receiveStockOpen, setReceiveStockOpen] = useState(false);
             </Button>
           </div>
           <StockAdjustmentTable refreshKey={adjustmentRefreshKey} />
+        </TabsContent>
+
+        <TabsContent value="batches">
+          <AllBatchesTable />
         </TabsContent>
 
         <TabsContent value="movements">
