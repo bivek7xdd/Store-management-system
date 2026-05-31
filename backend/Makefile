@@ -91,4 +91,7 @@ atlas-gen:
 server:
 	CompileDaemon -command="./storemanagement"
 
-.PHONY: createdb dropdb createdevdb dropdevdb migrateup migratedown createdbtest dropdbtest migratetestup migratetestdown sqlc test server atlas-diff atlas-apply atlas-status atlas-inspect atlas-validate atlas-test-apply atlas-test-status atlas-test-inspect atlas-test-validate atlas-gen
+seed:
+	go run cmd/seed/main.go
+
+.PHONY: createdb dropdb createdevdb dropdevdb migrateup migratedown createdbtest dropdbtest migratetestup migratetestdown sqlc test server seed atlas-diff atlas-apply atlas-status atlas-inspect atlas-validate atlas-test-apply atlas-test-status atlas-test-inspect atlas-test-validate atlas-gen
