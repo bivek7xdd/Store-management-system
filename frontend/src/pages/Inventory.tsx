@@ -54,7 +54,7 @@ import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loade
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { inventoryService, CreateProductData, UpdateProductData } from "@/services/inventory";
+import { inventoryService, CreateProductData, UpdateProductData, ProductBatch, CreateProductBatchData } from "@/services/inventory";
 import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Product, Category, OfflineStatus } from "@/types";
@@ -133,6 +133,13 @@ export default function Inventory() {
   const [activeTab, setActiveTab] = useState("products");
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentRefreshKey, setAdjustmentRefreshKey] = useState(0);
+  const [batches, setBatches] = useState<ProductBatch[]>([]);
+  const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
+  const [batchDialogOpen, setBatchDialogOpen] = useState(false);
+  const [batchForm, setBatchForm] = useState<CreateProductBatchData>({
+    batch_number: "",
+    quantity: 0,
+  });
   const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -179,6 +186,12 @@ export default function Inventory() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, categoryFilter, stockFilter]);
+
+  useEffect(() => {
+    if (editingProduct && addDialogOpen) {
+      inventoryService.listProductBatches(editingProduct.id).then(setBatches);
+    }
+  }, [editingProduct, addDialogOpen]);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -1012,6 +1025,96 @@ export default function Inventory() {
                   </div>
                 </div>
 
+                {/* Batches Section */}
+                {editingProduct && (
+                    <div className="space-y-4 pt-4 border-t border-[#1A1A1A]">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Batches</label>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setEditingBatch(null);
+                                    setBatchForm({ batch_number: "", quantity: 0 });
+                                    setBatchDialogOpen(true);
+                                }}
+                                className="h-7 text-[10px] border-[#1A1A1A] text-[#888888]"
+                            >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Add Batch
+                            </Button>
+                        </div>
+                        
+                        {batches.length > 0 ? (
+                            <div className="border border-[#1A1A1A] rounded-[2px] overflow-hidden">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="border-b border-[#1A1A1A] hover:bg-transparent">
+                                            <TableHead className="text-[10px] text-[#888888] uppercase">Batch #</TableHead>
+                                            <TableHead className="text-[10px] text-[#888888] uppercase">Mfg Date</TableHead>
+                                            <TableHead className="text-[10px] text-[#888888] uppercase">Expiry</TableHead>
+                                            <TableHead className="text-[10px] text-[#888888] uppercase text-right">Qty</TableHead>
+                                            <TableHead className="text-[10px] text-[#888888] uppercase text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {batches.map((batch) => (
+                                            <TableRow key={batch.id} className="border-b border-[#1A1A1A]">
+                                                <TableCell className="text-[11px] text-white">{batch.batch_number}</TableCell>
+                                                <TableCell className="text-[11px] text-[#888888]">
+                                                    {batch.manufacturing_date || "—"}
+                                                </TableCell>
+                                                <TableCell className="text-[11px] text-[#888888]">
+                                                    {batch.expiry_date || "—"}
+                                                </TableCell>
+                                                <TableCell className="text-[11px] text-white text-right">{batch.quantity}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6"
+                                                        onClick={() => {
+                                                            setEditingBatch(batch);
+                                                            setBatchForm({
+                                                                batch_number: batch.batch_number,
+                                                                manufacturing_date: batch.manufacturing_date,
+                                                                expiry_date: batch.expiry_date,
+                                                                quantity: batch.quantity,
+                                                                notes: batch.notes,
+                                                            });
+                                                            setBatchDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <Pencil className="h-3 w-3" />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-[#DA291C]"
+                                                        onClick={async () => {
+                                                            if (editingProduct) {
+                                                                await inventoryService.deleteProductBatch(editingProduct.id, batch.id);
+                                                                setBatches(batches.filter(b => b.id !== batch.id));
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        ) : (
+                            <p className="text-[11px] text-[#555555]">No batches added yet.</p>
+                        )}
+                    </div>
+                )}
+
                 {/* Submit */}
                 <div className="px-6 py-4 border-t border-[#1A1A1A]">
                   <button
@@ -1029,6 +1132,95 @@ export default function Inventory() {
                   </button>
                 </div>
               </form>
+
+              {/* Batch Dialog */}
+              <Dialog open={batchDialogOpen} onOpenChange={setBatchDialogOpen}>
+                  <DialogContent className="max-w-md bg-[#0A0A0A] border border-[#1A1A1A]">
+                      <DialogHeader>
+                          <DialogTitle className="text-white">
+                              {editingBatch ? "Edit Batch" : "Add Batch"}
+                          </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                          <div className="space-y-2">
+                              <Label className="text-[#888888]">Batch Number *</Label>
+                              <Input
+                                  value={batchForm.batch_number}
+                                  onChange={(e) => setBatchForm({ ...batchForm, batch_number: e.target.value })}
+                                  placeholder="e.g., BATCH-001"
+                                  className="bg-[#111111] border-[#1A1A1A] text-white"
+                              />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-2">
+                                  <Label className="text-[#888888]">Mfg Date</Label>
+                                  <Input
+                                      type="date"
+                                      value={batchForm.manufacturing_date || ""}
+                                      onChange={(e) => setBatchForm({ ...batchForm, manufacturing_date: e.target.value })}
+                                      className="bg-[#111111] border-[#1A1A1A] text-white"
+                                  />
+                              </div>
+                              <div className="space-y-2">
+                                  <Label className="text-[#888888]">Expiry Date</Label>
+                                  <Input
+                                      type="date"
+                                      value={batchForm.expiry_date || ""}
+                                      onChange={(e) => setBatchForm({ ...batchForm, expiry_date: e.target.value })}
+                                      className="bg-[#111111] border-[#1A1A1A] text-white"
+                                  />
+                              </div>
+                          </div>
+                          <div className="space-y-2">
+                              <Label className="text-[#888888]">Quantity *</Label>
+                              <Input
+                                  type="number"
+                                  value={batchForm.quantity}
+                                  onChange={(e) => setBatchForm({ ...batchForm, quantity: parseInt(e.target.value) || 0 })}
+                                  className="bg-[#111111] border-[#1A1A1A] text-white"
+                              />
+                          </div>
+                          <div className="space-y-2">
+                              <Label className="text-[#888888]">Notes</Label>
+                              <Input
+                                  value={batchForm.notes || ""}
+                                  onChange={(e) => setBatchForm({ ...batchForm, notes: e.target.value })}
+                                  placeholder="Optional notes..."
+                                  className="bg-[#111111] border-[#1A1A1A] text-white"
+                              />
+                          </div>
+                      </div>
+                      <DialogFooter>
+                          <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setBatchDialogOpen(false)}
+                              className="border-[#1A1A1A] text-[#888888]"
+                          >
+                              Cancel
+                          </Button>
+                          <Button
+                              type="button"
+                              onClick={async () => {
+                                  if (!batchForm.batch_number || !editingProduct) return;
+                                  
+                                  if (editingBatch) {
+                                      await inventoryService.updateProductBatch(editingProduct.id, editingBatch.id, batchForm);
+                                  } else {
+                                      await inventoryService.createProductBatch(editingProduct.id, batchForm);
+                                  }
+                                  
+                                  const updatedBatches = await inventoryService.listProductBatches(editingProduct.id);
+                                  setBatches(updatedBatches);
+                                  setBatchDialogOpen(false);
+                              }}
+                              className="bg-[#DA291C] hover:bg-[#B01E0A] text-white"
+                          >
+                              {editingBatch ? "Update" : "Add"} Batch
+                          </Button>
+                      </DialogFooter>
+                  </DialogContent>
+              </Dialog>
             </DialogContent>
           </Dialog>
 
