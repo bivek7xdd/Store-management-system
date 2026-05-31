@@ -66,12 +66,16 @@ export interface StockMovement {
 
 export interface CreateStockAdjustmentData {
     product_id: string;
+    variant_id?: string;
     adjustment_quantity: number;
     reason: string;
     notes?: string;
 }
 
 const isOnline = () => navigator.onLine;
+
+const stockAdjustmentCache: StockAdjustment[] = [];
+const stockMovementCache: StockMovement[] = [];
 
 export const inventoryService = {
     // Categories
@@ -726,34 +730,105 @@ export const inventoryService = {
     },
 
     // Stock Adjustments
-    createStockAdjustment: async (data: CreateStockAdjustmentData) => {
-        const response = await api.post('stock-adjustments', data);
-        return response.data.data;
+    createStockAdjustment: async (data: CreateStockAdjustmentData): Promise<StockAdjustment> => {
+        if (isOnline()) {
+            try {
+                const response = await api.post('stock-adjustments', data);
+                const adjustment = response.data.data;
+                stockAdjustmentCache.unshift(adjustment);
+                if (stockAdjustmentCache.length > 200) stockAdjustmentCache.pop();
+                return adjustment;
+            } catch (error) {
+                console.warn('[Inventory] Failed to create stock adjustment on server', error);
+                throw error;
+            }
+        }
+        throw new Error('Cannot create stock adjustment offline');
     },
 
-    listStockAdjustments: async (limit = 50, offset = 0) => {
-        const response = await api.get(`stock-adjustments?limit=${limit}&offset=${offset}`);
-        return response.data.data || [];
+    listStockAdjustments: async (limit = 50, offset = 0): Promise<StockAdjustment[]> => {
+        if (isOnline()) {
+            try {
+                const response = await api.get(`stock-adjustments?limit=${limit}&offset=${offset}`);
+                const adjustments = response.data.data || [];
+                if (offset === 0) {
+                    stockAdjustmentCache.length = 0;
+                    stockAdjustmentCache.push(...adjustments);
+                }
+                return adjustments;
+            } catch (error) {
+                console.warn('[Inventory] Fetching stock adjustments failed, falling back to cache', error);
+                return stockAdjustmentCache.slice(offset, offset + limit);
+            }
+        }
+        return stockAdjustmentCache.slice(offset, offset + limit);
     },
 
-    getStockAdjustmentsByProduct: async (productId: string, limit = 50, offset = 0) => {
-        const response = await api.get(`stock-adjustments/product/${productId}?limit=${limit}&offset=${offset}`);
-        return response.data.data || [];
+    getStockAdjustmentsByProduct: async (productId: string, limit = 50, offset = 0): Promise<StockAdjustment[]> => {
+        if (isOnline()) {
+            try {
+                const response = await api.get(`stock-adjustments/product/${productId}?limit=${limit}&offset=${offset}`);
+                return response.data.data || [];
+            } catch (error) {
+                console.warn('[Inventory] Fetching stock adjustments by product failed, falling back to cache', error);
+                return stockAdjustmentCache.filter(a => a.product_id === productId).slice(offset, offset + limit);
+            }
+        }
+        return stockAdjustmentCache.filter(a => a.product_id === productId).slice(offset, offset + limit);
     },
 
     // Stock Movements
-    listStockMovements: async (limit = 50, offset = 0) => {
-        const response = await api.get(`stock-movements?limit=${limit}&offset=${offset}`);
-        return response.data.data || [];
+    listStockMovements: async (limit = 50, offset = 0): Promise<StockMovement[]> => {
+        if (isOnline()) {
+            try {
+                const response = await api.get(`stock-movements?limit=${limit}&offset=${offset}`);
+                const movements = response.data.data || [];
+                if (offset === 0) {
+                    stockMovementCache.length = 0;
+                    stockMovementCache.push(...movements);
+                }
+                return movements;
+            } catch (error) {
+                console.warn('[Inventory] Fetching stock movements failed, falling back to cache', error);
+                return stockMovementCache.slice(offset, offset + limit);
+            }
+        }
+        return stockMovementCache.slice(offset, offset + limit);
     },
 
-    getStockMovementsByProduct: async (productId: string, limit = 50, offset = 0) => {
-        const response = await api.get(`stock-movements/product/${productId}?limit=${limit}&offset=${offset}`);
-        return response.data.data || [];
+    getStockMovementsByProduct: async (productId: string, limit = 50, offset = 0): Promise<StockMovement[]> => {
+        if (isOnline()) {
+            try {
+                const response = await api.get(`stock-movements/product/${productId}?limit=${limit}&offset=${offset}`);
+                return response.data.data || [];
+            } catch (error) {
+                console.warn('[Inventory] Fetching stock movements by product failed, falling back to cache', error);
+                return stockMovementCache.filter(m => m.product_id === productId).slice(offset, offset + limit);
+            }
+        }
+        return stockMovementCache.filter(m => m.product_id === productId).slice(offset, offset + limit);
     },
 
-    getStockMovementSummary: async (productId: string) => {
-        const response = await api.get(`stock-movements/product/${productId}/summary`);
-        return response.data.data;
+    getStockMovementSummary: async (productId: string): Promise<{ total_in: number; total_out: number; net_change: number }> => {
+        if (isOnline()) {
+            try {
+                const response = await api.get(`stock-movements/product/${productId}/summary`);
+                return response.data.data;
+            } catch (error) {
+                console.warn('[Inventory] Fetching stock movement summary failed', error);
+                const productMovements = stockMovementCache.filter(m => m.product_id === productId);
+                return {
+                    total_in: productMovements.filter(m => m.movement_type === 'in').reduce((sum, m) => sum + m.quantity_change, 0),
+                    total_out: productMovements.filter(m => m.movement_type === 'out').reduce((sum, m) => sum + Math.abs(m.quantity_change), 0),
+                    net_change: productMovements.reduce((sum, m) => sum + m.quantity_change, 0)
+                };
+            }
+        }
+        const productMovements = stockMovementCache.filter(m => m.product_id === productId);
+        return {
+            total_in: productMovements.filter(m => m.movement_type === 'in').reduce((sum, m) => sum + m.quantity_change, 0),
+            total_out: productMovements.filter(m => m.movement_type === 'out').reduce((sum, m) => sum + Math.abs(m.quantity_change), 0),
+            net_change: productMovements.reduce((sum, m) => sum + m.quantity_change, 0)
+        };
     },
 };
