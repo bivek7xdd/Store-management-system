@@ -86,7 +86,7 @@ const Login = () => {
 
         <div className="absolute top-12 left-14 z-20 flex items-center gap-3">
           <Store className="w-7 h-7 text-white" />
-          <span className="text-[14px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+          <span className="text-[14px] font-medium tracking-[1px] text-white uppercase">Store sync</span>
         </div>
 
         <div className="absolute bottom-20 left-14 z-20 max-w-lg" ref={heroRef}>
@@ -106,7 +106,7 @@ const Login = () => {
         {/* Mobile Logo */}
         <div className="absolute top-8 left-6 md:left-10 lg:hidden flex items-center gap-3">
           <Store className="w-6 h-6 text-white" />
-          <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+          <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">Store sync</span>
         </div>
 
         <div className="w-full max-w-sm" ref={formRef}>

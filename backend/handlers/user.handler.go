@@ -206,7 +206,7 @@ func RegisterUserHandler(c *gin.Context) {
 		if _, dbErr := utils.Queries.CreateOTPToken(context.Background(), db.CreateOTPTokenParams{
 			UserEmail: createdUser.Email,
 			Otp:       otp,
-			Purpose:   "email_verification",
+			Purpose:   "emailverification",
 		}); dbErr != nil {
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to store verification code", dbErr)
 			return

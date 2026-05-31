@@ -76,7 +76,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     .c{text-align:center}.b{font-weight:bold}.row{display:flex;justify-content:space-between;font-size:11px;margin:4px 0}
     .div{border-top:1px dashed #000;margin:8px 0}.ddiv{border-top:2px solid #000;margin:8px 0}
     .gt{font-size:14px;font-weight:bold;padding:6px 0}</style></head><body>
-    <div class="c"><div class="b" style="font-size:18px">STOREHUB</div>
+    <div class="c"><div class="b" style="font-size:18px">STORE SYNC</div>
     <div style="font-size:11px">Kathmandu, Nepal • VAT/PAN: 123456789</div></div>
     <div class="ddiv"></div>
     <div class="row"><span>Receipt #:</span><span>${String(sale.id).slice(0, 8).toUpperCase()}</span></div>
@@ -132,7 +132,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
     .gt{font-size:20px;font-weight:bold;padding:16px 0;border-top:2px solid #e5e7eb;margin-top:8px;color:#DA291C}
     .footer{text-align:center;padding:24px 30px;background:#f9fafb;border-top:1px solid #e5e7eb}
     @media print{body{background:white;padding:0}.wrap{box-shadow:none;max-width:100%}}</style></head><body>
-    <div class="wrap"><div class="hdr"><div class="hdr-title">STOREHUB</div>
+    <div class="wrap"><div class="hdr"><div class="hdr-title">STORE SYNC</div>
     <div class="hdr-sub">Kathmandu, Nepal • VAT/PAN: 123456789</div></div>
     <div class="body"><div class="meta">
     <div class="meta-item"><div class="meta-label">Receipt No.</div><div class="meta-value">#${String(sale.id).slice(0, 8).toUpperCase()}</div></div>
@@ -159,7 +159,7 @@ const SaleHistoryItem = ({ sale }: { sale: Sale }) => {
       </div>
     ` : ""}
     </div></div><div class="footer"><div style="font-size:16px;font-weight:600;margin-bottom:4px">Thank you for your purchase!</div>
-    <div style="font-size:13px;color:#6b7280">Goods once sold cannot be returned. Powered by StoreHub</div></div></div>
+    <div style="font-size:13px;color:#6b7280">Goods once sold cannot be returned. Powered by Store sync</div></div></div>
     </body><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}</script></html>`;
     printWindow.document.write(html);
     printWindow.document.close();

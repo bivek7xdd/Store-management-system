@@ -150,7 +150,7 @@ const PersonalDetailsStep: React.FC<PersonalDetailsStepProps> = ({
       {/* Additional Info */}
       <div className="mt-8 p-4 border border-[#303030] rounded-[2px] bg-[#181818]">
         <p className="text-[12px] text-center text-[#8F8F8F] uppercase tracking-[1px]">
-          Your information is secure and will only be used to create your StoreHub account.
+          Your information is secure and will only be used to create your Store sync account.
         </p>
       </div>
     </div>

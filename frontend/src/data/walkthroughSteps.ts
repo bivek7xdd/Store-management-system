@@ -10,9 +10,9 @@ export const walkthroughSteps: WalkthroughStep[] = [
     {
         target: "body",
         placement: "center",
-        title: "Welcome to StoreHub",
+        title: "Welcome to Store sync",
         content:
-            "Let us show you around! This quick tour will walk you through the core features of StoreHub.",
+            "Let us show you around! This quick tour will walk you through the core features of Store sync.",
         disableBeacon: true,
         page: "/",
     },

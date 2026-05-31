@@ -152,7 +152,7 @@ const ResetPassword = () => {
         {/* Logo top left */}
         <div className="absolute top-12 left-14 z-20 flex items-center gap-3">
           <Store className="w-7 h-7 text-white" />
-          <span className="text-[14px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+          <span className="text-[14px] font-medium tracking-[1px] text-white uppercase">Store sync</span>
         </div>
 
         {/* Hero content centered */}
@@ -183,7 +183,7 @@ const ResetPassword = () => {
         {/* Mobile logo */}
         <div className="absolute top-8 left-6 md:left-10 lg:hidden flex items-center gap-3">
           <Store className="w-6 h-6 text-white" />
-          <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+          <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">Store sync</span>
         </div>
 
         <div ref={formRef} className="w-full max-w-[400px] mt-12 lg:mt-0">

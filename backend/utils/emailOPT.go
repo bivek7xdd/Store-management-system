@@ -161,6 +161,3 @@ func sendEmailWithSendGrid(to, otp string) error {
 
 	return nil
 }
-
-//TODO: need add function to delete the table row of the verified users
-//TODO: need to add a limit for user to generate too much OTPs

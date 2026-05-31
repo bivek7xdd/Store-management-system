@@ -162,7 +162,7 @@ const OTP = () => {
 
                 {/* Bottom brand */}
                 <div className="absolute bottom-12 left-14 z-20">
-                    <span className="text-[12px] font-medium tracking-[1.5px] text-[#8F8F8F] uppercase">StoreHub</span>
+                    <span className="text-[12px] font-medium tracking-[1.5px] text-[#8F8F8F] uppercase">Store sync</span>
                 </div>
 
                 {/* Subtle corner lines */}
@@ -178,7 +178,7 @@ const OTP = () => {
                 {/* Mobile Logo */}
                 <div className="absolute top-8 left-6 md:left-10 lg:hidden flex items-center gap-3">
                     <Shield className="w-5 h-5 text-[#DA291C]" />
-                    <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">StoreHub</span>
+                    <span className="text-[13px] font-medium tracking-[1px] text-white uppercase">Store sync</span>
                 </div>
 
                 <div ref={formRef} className="w-full max-w-[400px] mt-12 lg:mt-0">

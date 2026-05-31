@@ -143,7 +143,7 @@ function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 lg:px-16 py-6">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <Link to="/" className="text-xl font-bold tracking-tighter text-foreground">
-          StoreHub
+                Store sync
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -214,7 +214,7 @@ function DashboardPreview() {
           <div className="w-6 h-6 bg-accent text-[#0A0A0A] flex items-center justify-center text-[10px] font-bold">
             SH
           </div>
-          <span className="font-semibold text-xs">StoreHub</span>
+          <span className="font-semibold text-xs">Store sync</span>
         </div>
         <div className="space-y-0.5">
           {sidebarItems.map((item) => (
@@ -519,7 +519,7 @@ export default function LandingPage() {
     {
       name: "Ravi Kumar",
       role: "Boutique Owner",
-      text: "StoreHub changed my life. I used to spend hours on spreadsheets; now everything is automated.",
+      text: "Store sync changed my life. I used to spend hours on spreadsheets; now everything is automated.",
     },
     {
       name: "Sita Rai",
@@ -869,7 +869,7 @@ export default function LandingPage() {
               {...fadeInUp}
               className="mt-6 md:mt-8 text-[#737373] text-base md:text-lg max-w-xl mx-auto leading-relaxed"
             >
-              Join thousands of growing retail brands using StoreHub to automate
+              Join thousands of growing retail brands using Store sync to automate
               their success.
             </motion.p>
             <motion.div
@@ -892,7 +892,7 @@ export default function LandingPage() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-4 lg:mb-0">
               <span className="text-xl font-bold tracking-tighter">
-                StoreHub
+          Store sync
               </span>
               <p className="mt-3 text-sm text-[#737373] leading-relaxed max-w-xs">
                 Intelligent inventory and retail management for modern businesses.
@@ -968,7 +968,7 @@ export default function LandingPage() {
 
           <div className="pt-8 border-t border-[#262626] flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-[#737373] font-mono">
-              &copy; 2026 StoreHub Inc. All rights reserved.
+              &copy; 2026 Store sync Inc. All rights reserved.
             </p>
             <p className="text-xs text-[#737373] font-mono">
               Designed with type. Built with purpose.

@@ -170,7 +170,7 @@ export default function Layout({ children }: LayoutProps) {
               exit={{ opacity: 0 }}
               className="flex flex-col min-w-0"
             >
-              <h1 className="text-[14px] font-medium tracking-[0.5px] text-white truncate">StoreHub</h1>
+              <h1 className="text-[14px] font-medium tracking-[0.5px] text-white truncate">Store sync</h1>
               <p className="text-[11px] text-[#555555] tracking-[0.5px] truncate">Management System</p>
             </motion.div>
           )}
@@ -329,7 +329,7 @@ export default function Layout({ children }: LayoutProps) {
       )}>
         <div className="flex items-center gap-3">
           <Store className="w-5 h-5 text-[#DA291C]" />
-          <h1 className="text-[14px] font-medium tracking-[0.5px] text-white">StoreHub</h1>
+          <h1 className="text-[14px] font-medium tracking-[0.5px] text-white">Store sync</h1>
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />

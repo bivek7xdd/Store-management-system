@@ -60,7 +60,7 @@ export function SaleDetailsDialog({ open, onOpenChange, saleId }: SaleDetailsDia
                         {/* Store Info & Date */}
                         <div className="flex justify-between pb-4 border-b border-gray-100">
                             <div>
-                                <h3 className="font-bold text-lg">StoreHub</h3>
+                                <h3 className="font-bold text-lg">Store sync</h3>
                                 <p className="text-sm text-gray-500">Kathmandu, Nepal</p>
                                 <p className="text-sm text-gray-500">VAT/PAN: 123456789</p>
                             </div>
@@ -133,7 +133,7 @@ export function SaleDetailsDialog({ open, onOpenChange, saleId }: SaleDetailsDia
                         {/* Footer */}
                         <div className="text-center pt-8 pb-4 text-xs text-gray-400">
                             <p>Thank you for your business!</p>
-                            <p>Powered by StoreHub</p>
+                            <p>Powered by Store sync</p>
                         </div>
                     </div>
                 ) : (

@@ -190,7 +190,7 @@ export default function Dashboard() {
       {!loading && !error && stats && stats.inventory.total_products === 0 && stats.sales.count === 0 && (
         <motion.div variants={fadeUp} className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-12 text-center">
           <LayoutDashboard className="w-10 h-10 text-[#303030] mx-auto mb-4" />
-          <h3 className="text-[16px] font-medium text-white mb-2">Welcome to StoreHub</h3>
+          <h3 className="text-[16px] font-medium text-white mb-2">Welcome to Store sync</h3>
           <p className="text-[13px] text-[#8F8F8F] mb-6 max-w-sm mx-auto leading-relaxed">
             Your business command center is ready. Add products and start recording sales.
           </p>
