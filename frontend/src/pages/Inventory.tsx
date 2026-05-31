@@ -50,6 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
 import { StockAdjustmentTable } from "@/components/inventory/StockAdjustmentTable";
 import { StockMovementTable } from "@/components/inventory/StockMovementTable";
+import { ReceiveStockDialog } from "@/components/inventory/ReceiveStockDialog";
 import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
@@ -134,6 +135,7 @@ const [activeTab, setActiveTab] = useState("products");
 const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
 const [adjustmentRefreshKey, setAdjustmentRefreshKey] = useState(0);
 const [batchesToSave, setBatchesToSave] = useState<CreateProductBatchData[]>([]);
+const [receiveStockOpen, setReceiveStockOpen] = useState(false);
   const [batches, setBatches] = useState<ProductBatch[]>([]);
   const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
@@ -777,6 +779,15 @@ const [batchesToSave, setBatchesToSave] = useState<CreateProductBatchData[]>([])
               )}
             </Tooltip>
           </TooltipProvider>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setReceiveStockOpen(true)}
+            className="rounded-[2px] border-[#303030] bg-[#111111] text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] text-[11px] uppercase tracking-[1px]"
+          >
+            <Package className="mr-2 h-4 w-4" />
+            Receive Stock
+          </Button>
           <Dialog open={addDialogOpen} onOpenChange={handleDialogChange}>
             <TooltipProvider>
               <Tooltip>
@@ -1511,6 +1522,12 @@ const [batchesToSave, setBatchesToSave] = useState<CreateProductBatchData[]>([])
         open={searchScannerOpen}
         onOpenChange={setSearchScannerOpen}
         onScanSuccess={handleSearchScanSuccess}
+      />
+
+      {/* Receive Stock Dialog */}
+      <ReceiveStockDialog
+        open={receiveStockOpen}
+        onOpenChange={setReceiveStockOpen}
       />
 
       {/* Delete Confirmation Dialog */}
