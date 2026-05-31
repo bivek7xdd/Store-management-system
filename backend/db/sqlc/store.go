@@ -107,7 +107,7 @@ func (store *Store) CreateSaleTx(ctx context.Context, arg CreateSaleTxParams) (C
 				QuantityChange: -item.Quantity, // Negative because stock is decreasing
 				ReferenceID:    result.Sale.ID,
 				ReferenceType:  NullStockReferenceType{StockReferenceType: StockReferenceTypeSale, Valid: true},
-				Notes:          pgtype.Text{String: fmt.Sprintf("Sale %s", result.Sale.ID.String()), Valid: true},
+				Notes:          pgtype.Text{String: fmt.Sprintf("Sold %d units", item.Quantity), Valid: true},
 			})
 			if err != nil {
 				// Log but don't fail sale for movement tracking
