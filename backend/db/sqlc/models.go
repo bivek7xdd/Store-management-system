@@ -509,6 +509,18 @@ type Product struct {
 	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
+type ProductBatch struct {
+	ID                pgtype.UUID        `db:"id" json:"id"`
+	ProductID         pgtype.UUID        `db:"product_id" json:"product_id"`
+	BatchNumber       string             `db:"batch_number" json:"batch_number"`
+	ManufacturingDate pgtype.Date        `db:"manufacturing_date" json:"manufacturing_date"`
+	ExpiryDate        pgtype.Date        `db:"expiry_date" json:"expiry_date"`
+	Quantity          int32              `db:"quantity" json:"quantity"`
+	Notes             pgtype.Text        `db:"notes" json:"notes"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
 type ProductVariant struct {
 	ID                pgtype.UUID        `db:"id" json:"id"`
 	ProductID         pgtype.UUID        `db:"product_id" json:"product_id"`

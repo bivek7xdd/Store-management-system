@@ -23,6 +23,7 @@ type Querier interface {
 	CreateOTPToken(ctx context.Context, arg CreateOTPTokenParams) (OtpToken, error)
 	CreatePaymentRecord(ctx context.Context, arg CreatePaymentRecordParams) (PaymentRecord, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateProductBatch(ctx context.Context, arg CreateProductBatchParams) (ProductBatch, error)
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	CreatePurchaseOrder(ctx context.Context, arg CreatePurchaseOrderParams) (PurchaseOrder, error)
 	CreatePurchaseOrderItem(ctx context.Context, arg CreatePurchaseOrderItemParams) (PurchaseOrderItem, error)
@@ -45,6 +46,7 @@ type Querier interface {
 	DeleteOldNotifications(ctx context.Context, storeID pgtype.UUID) error
 	DeletePOItemsByOrder(ctx context.Context, purchaseOrderID pgtype.UUID) error
 	DeleteProduct(ctx context.Context, arg DeleteProductParams) error
+	DeleteProductBatch(ctx context.Context, arg DeleteProductBatchParams) error
 	DeleteProductVariant(ctx context.Context, id pgtype.UUID) error
 	DeletePurchaseOrder(ctx context.Context, arg DeletePurchaseOrderParams) error
 	DeleteStoreInfo(ctx context.Context, arg DeleteStoreInfoParams) error
@@ -58,6 +60,7 @@ type Querier interface {
 	GetAllSuppliers(ctx context.Context, storeID pgtype.UUID) ([]GetAllSuppliersRow, error)
 	GetBalanceSheetAssets(ctx context.Context, storeID pgtype.UUID) (GetBalanceSheetAssetsRow, error)
 	GetBalanceSheetLiabilities(ctx context.Context, storeID pgtype.UUID) (pgtype.Numeric, error)
+	GetBatchesByProductWithStore(ctx context.Context, arg GetBatchesByProductWithStoreParams) ([]GetBatchesByProductWithStoreRow, error)
 	GetCashFlowDaily(ctx context.Context, arg GetCashFlowDailyParams) ([]GetCashFlowDailyRow, error)
 	GetCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
 	GetCategory(ctx context.Context, arg GetCategoryParams) (Category, error)
@@ -76,6 +79,8 @@ type Querier interface {
 	GetExpense(ctx context.Context, arg GetExpenseParams) (Expense, error)
 	GetExpenseSummary(ctx context.Context, arg GetExpenseSummaryParams) (GetExpenseSummaryRow, error)
 	GetExpenseTotalsByCategory(ctx context.Context, arg GetExpenseTotalsByCategoryParams) ([]GetExpenseTotalsByCategoryRow, error)
+	GetExpiredBatches(ctx context.Context, storeID pgtype.UUID) ([]GetExpiredBatchesRow, error)
+	GetExpiringBatches(ctx context.Context, arg GetExpiringBatchesParams) ([]GetExpiringBatchesRow, error)
 	GetExpiringProductsReport(ctx context.Context, storeID pgtype.UUID) ([]GetExpiringProductsReportRow, error)
 	GetHourlyTransactionHeatmap(ctx context.Context, storeID pgtype.UUID) ([]GetHourlyTransactionHeatmapRow, error)
 	GetInactiveProducts(ctx context.Context, arg GetInactiveProductsParams) ([]GetInactiveProductsRow, error)
@@ -94,6 +99,7 @@ type Querier interface {
 	GetPOSCatalog(ctx context.Context, storeID pgtype.UUID) ([]GetPOSCatalogRow, error)
 	GetPaymentTotalsByStore(ctx context.Context, storeID pgtype.UUID) ([]GetPaymentTotalsByStoreRow, error)
 	GetProduct(ctx context.Context, arg GetProductParams) (Product, error)
+	GetProductBatch(ctx context.Context, arg GetProductBatchParams) (GetProductBatchRow, error)
 	GetProductPairFrequency(ctx context.Context, storeID pgtype.UUID) ([]GetProductPairFrequencyRow, error)
 	GetProductVariant(ctx context.Context, arg GetProductVariantParams) (ProductVariant, error)
 	GetProductVelocity(ctx context.Context, storeID pgtype.UUID) ([]GetProductVelocityRow, error)
@@ -134,10 +140,12 @@ type Querier interface {
 	GetVariantByBarcodeOrSKU(ctx context.Context, barcode pgtype.Text) (ProductVariant, error)
 	GetVariantBySKU(ctx context.Context, sku string) (ProductVariant, error)
 	IncrementCustomerPurchaseCount(ctx context.Context, arg IncrementCustomerPurchaseCountParams) error
+	ListBatchesByStore(ctx context.Context, arg ListBatchesByStoreParams) ([]ListBatchesByStoreRow, error)
 	ListCustomers(ctx context.Context, storeID pgtype.UUID) ([]Customer, error)
 	ListExpenses(ctx context.Context, arg ListExpensesParams) ([]Expense, error)
 	ListPaymentsByPayable(ctx context.Context, arg ListPaymentsByPayableParams) ([]SupplierPayment, error)
 	ListPaymentsBySale(ctx context.Context, saleID pgtype.UUID) ([]PaymentRecord, error)
+	ListProductBatches(ctx context.Context, productID pgtype.UUID) ([]ListProductBatchesRow, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListProductsByCategory(ctx context.Context, arg ListProductsByCategoryParams) ([]Product, error)
 	ListProductsBySupplier(ctx context.Context, arg ListProductsBySupplierParams) ([]Product, error)
@@ -160,6 +168,7 @@ type Querier interface {
 	ReturnVariantStock(ctx context.Context, arg ReturnVariantStockParams) (ProductVariant, error)
 	SearchCustomers(ctx context.Context, arg SearchCustomersParams) ([]Customer, error)
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
+	UpdateBatchQuantity(ctx context.Context, arg UpdateBatchQuantityParams) (ProductBatch, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (Customer, error)
 	UpdateCustomerLoyalty(ctx context.Context, arg UpdateCustomerLoyaltyParams) error
@@ -170,6 +179,7 @@ type Querier interface {
 	UpdatePasswordByEmail(ctx context.Context, arg UpdatePasswordByEmailParams) error
 	UpdatePayableAfterPayment(ctx context.Context, arg UpdatePayableAfterPaymentParams) (SupplierPayable, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateProductBatch(ctx context.Context, arg UpdateProductBatchParams) (ProductBatch, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (Product, error)
 	UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error)
 	UpdatePurchaseOrder(ctx context.Context, arg UpdatePurchaseOrderParams) (PurchaseOrder, error)
