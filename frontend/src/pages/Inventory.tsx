@@ -1549,6 +1549,8 @@ interface ProductCardProps {
 function ProductTableRow({ product, handleEditClick, handleDeleteClick, offlineStatus, forceExpand }: ProductCardProps) {
   const [localVariants, setLocalVariants] = useState<ProductVariant[]>(product.variants || []);
   const [expanded, setExpanded] = useState(false);
+  const [batchCount, setBatchCount] = useState(0);
+  const [expiringBatchCount, setExpiringBatchCount] = useState(0);
 
   useEffect(() => {
     if (forceExpand !== undefined) {
@@ -1566,6 +1568,20 @@ function ProductTableRow({ product, handleEditClick, handleDeleteClick, offlineS
       setLocalVariants(product.variants);
     }
   }, [product.id, product.variants]);
+
+  // Fetch batch count for this product
+  useEffect(() => {
+    inventoryService.listProductBatches(product.id).then(batches => {
+      setBatchCount(batches.length);
+      // Count batches expiring within 30 days
+      const expiring = batches.filter((b: any) => {
+        if (!b.expiry_date) return false;
+        const daysUntil = Math.floor((new Date(b.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        return daysUntil <= 30 && daysUntil > 0;
+      }).length;
+      setExpiringBatchCount(expiring);
+    });
+  }, [product.id]);
 
   const displayVariants = localVariants;
   const stockQuantity = product.stock_quantity;
@@ -1606,6 +1622,16 @@ function ProductTableRow({ product, handleEditClick, handleDeleteClick, offlineS
                 {hasVariants && (
                   <span className="text-[10px] px-1.5 py-0.5 bg-[#DA291C]/10 text-[#DA291C] border border-[#DA291C]/20 rounded-[2px] font-bold uppercase tracking-wider">
                     {displayVariants.length} VAR
+                  </span>
+                )}
+                {batchCount > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-[2px] font-bold uppercase tracking-wider ${
+                    expiringBatchCount > 0 
+                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                      : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                  }`}>
+                    {batchCount} B{batchCount === 1 ? 'ATCH' : 'ATCHES'}
+                    {expiringBatchCount > 0 && ` (${expiringBatchCount} EXP)`}
                   </span>
                 )}
               </div>
