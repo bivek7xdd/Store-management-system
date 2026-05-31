@@ -133,6 +133,16 @@ func main() {
 		productRoutes.DELETE("/:id", handlers.DeleteProduct)
 	}
 
+	// Product batch routes
+	batchRoutes := router.Group("/api/products/:id/batches")
+	batchRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
+	{
+		batchRoutes.GET("", handlers.ListProductBatches)
+		batchRoutes.POST("", handlers.CreateProductBatch)
+		batchRoutes.PUT("/:batchId", handlers.UpdateProductBatch)
+		batchRoutes.DELETE("/:batchId", handlers.DeleteProductBatch)
+	}
+
 	// Stock adjustment routes
 	stockAdjustmentRoutes := router.Group("/api/stock-adjustments")
 	stockAdjustmentRoutes.Use(utils.JWTMiddleware(), utils.RateLimitMiddleware(120, time.Minute))
