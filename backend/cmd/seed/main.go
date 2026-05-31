@@ -1,14 +1,15 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -17,41 +18,58 @@ func main() {
 		log.Fatal("DB_URL_SUPABASE environment variable not set")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
+	// Database connection
 
-	conn, err := pgx.Connect(ctx, connStr)
+	// Convert Supabase connection string to standard format
+	// Add statement_cache_mode=disable to prevent prepared statement issues
+	if len(connStr) > 0 {
+		connStr += "&statement_cache_mode=disable"
+	}
+	
+	conn, err := sql.Open("pgx", connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
-	defer conn.Close(ctx)
+	defer conn.Close()
+	
+	// Test connection
+	if err := conn.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
 
 	fmt.Println("🌱 Seeding demo data...")
 
 	// Check if demo user already exists
 	var existingOwnerID string
-	err = conn.QueryRow(ctx, "SELECT id FROM store_owner WHERE email = 'demo@demo.com'").Scan(&existingOwnerID)
+	err = conn.QueryRow("SELECT id FROM store_owner WHERE email = 'demo@demo.com'").Scan(&existingOwnerID)
 	if err == nil {
-		fmt.Println("✓ Demo user already exists, skipping...")
-		return
+		// Delete existing demo data and related records
+		fmt.Println("Demo user exists, updating password...")
+		_, _ = conn.Exec("DELETE FROM store_owner WHERE email = 'demo@demo.com'")
 	}
 
 	// Demo Store Owner ID
 	ownerID := uuid.New()
 	storeID := uuid.New()
 
+	// Hash password with bcrypt
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("demo123"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("Failed to hash password: %v", err)
+	}
+
 	// 1. Create Demo User (store_owner table)
-	_, err = conn.Exec(ctx, `
+	_, err = conn.Exec(`
 		INSERT INTO store_owner (id, name, email, password, phone, role, emailverified)
-		VALUES ($1, 'Demo User', 'demo@demo.com', 'demo123', '+9779841234567', 'owner', true)
-	`, ownerID)
+		VALUES ($1, 'Demo User', 'demo@demo.com', $2, '+9779841234567', 'owner', true)
+	`, ownerID, string(hashedPassword))
 	if err != nil {
 		log.Fatalf("Failed to create user: %v", err)
 	}
 	fmt.Println("✓ Demo user created (demo@demo.com)")
 
 	// 2. Create Store (store_info table)
-	_, err = conn.Exec(ctx, `
+	_, err = conn.Exec(`
 		INSERT INTO store_info (id, name, address, owner_id)
 		VALUES ($1, 'Demo Store', 'Kathmandu, Nepal', $2)
 	`, storeID, ownerID)
@@ -76,7 +94,7 @@ func main() {
 	for _, cat := range categories {
 		catID := uuid.New()
 		categoryIDs[cat.name] = catID.String()
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO categories (id, store_id, name, description)
 			VALUES ($1, $2, $3, $4)
 		`, catID, storeID, cat.name, cat.description)
@@ -102,7 +120,7 @@ func main() {
 	for i, sup := range suppliers {
 		supID := uuid.New()
 		supplierIDs[i] = supID.String()
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO suppliers (id, store_id, name, phone_number, email, address)
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, supID, storeID, sup.name, sup.phone, sup.email, sup.addr)
@@ -145,7 +163,7 @@ func main() {
 			supID = supplierIDs[prod.supplier]
 		}
 
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO products (id, store_id, category_id, supplier_id, name, barcode, price, cost_price, stock_quantity, warranty_days, status)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active')
 		`, prodID, storeID, catID, supID, prod.name, prod.barcode, prod.price, prod.costPrice, prod.stock, prod.warranty)
@@ -171,7 +189,7 @@ func main() {
 	for i, cust := range customers {
 		custID := uuid.New()
 		customerIDs[i] = custID.String()
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO customers (id, store_id, name, phone)
 			VALUES ($1, $2, $3, $4)
 		`, custID, storeID, cust.name, cust.phone)
@@ -188,7 +206,7 @@ func main() {
 		mfgDate := time.Now().AddDate(0, -6, 0)
 		expiryDate := time.Now().AddDate(0, 6, 0)
 
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO product_batches (id, product_id, batch_number, manufacturing_date, expiry_date, quantity)
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, batchID, productIDs[prodIdx], fmt.Sprintf("BATCH-%03d", i+1), mfgDate, expiryDate, 50)
@@ -202,7 +220,7 @@ func main() {
 	for i := 0; i < 3; i++ {
 		adjID := uuid.New()
 		prodIdx := i % len(productIDs)
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO stock_adjustments (id, store_id, product_id, adjustment_quantity, previous_quantity, new_quantity, reason, notes)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		`, adjID, storeID, productIDs[prodIdx], 10, 50, 60, "physical_count", "Monthly stock count adjustment")
@@ -222,7 +240,7 @@ func main() {
 			movType = "purchase"
 			qtyChange = 50
 		}
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO stock_movements (id, store_id, product_id, movement_type, quantity_change, notes)
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, movID, storeID, productIDs[prodIdx], movType, qtyChange, fmt.Sprintf("Sample %s movement", movType))
@@ -236,7 +254,7 @@ func main() {
 	for i := 0; i < 3; i++ {
 		debtID := uuid.New()
 		custIdx := i % len(customerIDs)
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO debts (id, store_id, customer_id, amount_owed, amount_paid, due_date, status, notes)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		`, debtID, storeID, customerIDs[custIdx], 5000, 2000, time.Now().AddDate(0, 0, 30), "partial", "Credit sale pending payment")
@@ -259,7 +277,7 @@ func main() {
 
 	for _, exp := range expenses {
 		expID := uuid.New()
-		_, err = conn.Exec(ctx, `
+		_, err = conn.Exec(`
 			INSERT INTO expenses (id, store_id, category, description, amount, expense_date)
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, expID, storeID, exp.category, exp.desc, exp.amount, time.Now().AddDate(0, 0, -7))
