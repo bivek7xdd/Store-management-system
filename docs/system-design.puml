@@ -1,0 +1,51 @@
+@startuml System Design
+
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam roundCorner 8
+
+title Store Management System - Brief Architecture
+
+actor "Users" as users
+
+package "Frontend" as frontend #E8F5E9 {
+    [React PWA]
+}
+
+package "Backend" as backend #E3F2FD {
+    [Go API Server]
+    [JWT Auth]
+    [Rate Limiter]
+}
+
+package "Database" as db #FFF3E0 {
+    [PostgreSQL]
+    [Redis Cache]
+}
+
+cloud "External" as ext #F3E5F5 {
+    [Twilio SMS]
+    [Google Maps]
+}
+
+users --> [React PWA]
+[React PWA] --> [Go API Server] : HTTP/REST
+[Go API Server] --> [PostgreSQL] : Query
+[Go API Server] --> [Redis Cache] : Cache
+[Go API Server] --> [Twilio SMS] : OTP
+[Go API Server] --> [Google Maps] : Discovery
+
+note right of [React PWA]
+  - Products, Sales, Reports
+  - Offline support
+  - PWA installable
+end note
+
+note bottom of [Go API Server]
+  - 50+ REST endpoints
+  - JWT authentication
+  - Rate limiting
+end note
+
+@enduml
