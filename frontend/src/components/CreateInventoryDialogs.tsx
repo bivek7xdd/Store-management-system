@@ -224,7 +224,7 @@ export function SupplierDialog({ supplier, onSuccess, children }: SupplierDialog
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px]">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0A0A0A] border-[#1A1A1A] rounded-[2px]">
                 <DialogHeader>
                     <DialogTitle className="text-[16px] font-bold text-white uppercase tracking-[1px]">{isEdit ? "Edit Supplier" : "Add Supplier"}</DialogTitle>
                     <DialogDescription className="text-[11px] text-[#555555] uppercase tracking-[0.5px]">
