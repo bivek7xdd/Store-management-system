@@ -35,6 +35,42 @@ export interface DiscoveredSupplier {
     longitude: number;
 }
 
+export interface StockAdjustment {
+    id: string;
+    store_id: string;
+    product_id: string;
+    variant_id?: string;
+    adjustment_quantity: number;
+    previous_quantity: number;
+    new_quantity: number;
+    reason: string;
+    notes?: string;
+    adjusted_by?: string;
+    created_at: string;
+    product_name?: string;
+}
+
+export interface StockMovement {
+    id: string;
+    store_id: string;
+    product_id: string;
+    variant_id?: string;
+    movement_type: string;
+    quantity_change: number;
+    reference_id?: string;
+    reference_type?: string;
+    notes?: string;
+    created_at: string;
+    product_name?: string;
+}
+
+export interface CreateStockAdjustmentData {
+    product_id: string;
+    adjustment_quantity: number;
+    reason: string;
+    notes?: string;
+}
+
 const isOnline = () => navigator.onLine;
 
 export const inventoryService = {
@@ -687,5 +723,37 @@ export const inventoryService = {
         }));
 
         return enriched;
+    },
+
+    // Stock Adjustments
+    createStockAdjustment: async (data: CreateStockAdjustmentData) => {
+        const response = await api.post('stock-adjustments', data);
+        return response.data.data;
+    },
+
+    listStockAdjustments: async (limit = 50, offset = 0) => {
+        const response = await api.get(`stock-adjustments?limit=${limit}&offset=${offset}`);
+        return response.data.data || [];
+    },
+
+    getStockAdjustmentsByProduct: async (productId: string, limit = 50, offset = 0) => {
+        const response = await api.get(`stock-adjustments/product/${productId}?limit=${limit}&offset=${offset}`);
+        return response.data.data || [];
+    },
+
+    // Stock Movements
+    listStockMovements: async (limit = 50, offset = 0) => {
+        const response = await api.get(`stock-movements?limit=${limit}&offset=${offset}`);
+        return response.data.data || [];
+    },
+
+    getStockMovementsByProduct: async (productId: string, limit = 50, offset = 0) => {
+        const response = await api.get(`stock-movements/product/${productId}?limit=${limit}&offset=${offset}`);
+        return response.data.data || [];
+    },
+
+    getStockMovementSummary: async (productId: string) => {
+        const response = await api.get(`stock-movements/product/${productId}/summary`);
+        return response.data.data;
     },
 };
