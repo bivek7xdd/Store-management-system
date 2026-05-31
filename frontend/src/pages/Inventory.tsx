@@ -130,9 +130,10 @@ export default function Inventory() {
   const [combinations, setCombinations] = useState<Partial<ProductVariant>[]>([]);
   const [productName, setProductName] = useState("");
   const [expandAll, setExpandAll] = useState(false);
-  const [activeTab, setActiveTab] = useState("products");
-  const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
-  const [adjustmentRefreshKey, setAdjustmentRefreshKey] = useState(0);
+const [activeTab, setActiveTab] = useState("products");
+const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
+const [adjustmentRefreshKey, setAdjustmentRefreshKey] = useState(0);
+const [batchesToSave, setBatchesToSave] = useState<CreateProductBatchData[]>([]);
   const [batches, setBatches] = useState<ProductBatch[]>([]);
   const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
@@ -215,53 +216,31 @@ export default function Inventory() {
     enabled: isAuthenticated && !authLoading,
   });
 
-  // Create product mutation with optimistic updates
+  // Create product mutation
   const createProductMutation = useMutation({
     mutationFn: (data: CreateProductData) => {
       return inventoryService.createProduct(data);
     },
-    onMutate: async (newProduct) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["products"] });
-
-      // Snapshot the previous value
-      const previousProducts = queryClient.getQueryData(["products"]);
-
-      // Optimistically update to the new value
-      const optimisticProduct = {
-        id: `temp-${Date.now()}`,
-        ...newProduct,
-        store_id: 'temp',
-        stock_quantity: newProduct.stock_quantity,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as unknown as Product;
-
-      queryClient.setQueryData(["products"], (old: Product[] = []) => {
-        return [...old, optimisticProduct];
-      });
-
-      return { previousProducts };
-    },
-    onError: (error, newProduct, context) => {
-      // Rollback to previous state
-      if (context?.previousProducts) {
-        queryClient.setQueryData(["products"], context.previousProducts);
-      }
-
-      // Reset UI state
-      setAddDialogOpen(false);
-
+    onError: (error) => {
       toast.error("Failed to add product");
     },
-    onSuccess: (data) => {
-      toast.success("Product added successfully!");
+    onSuccess: async (data) => {
+      // Save any batches that were added during creation
+      if (batchesToSave.length > 0 && data?.id) {
+        for (const batch of batchesToSave) {
+          try {
+            await inventoryService.createProductBatch(data.id, batch);
+          } catch (err) {
+            console.error("Failed to save batch:", err);
+          }
+        }
+        toast.success("Product and batches added successfully!");
+      } else {
+        toast.success("Product added successfully!");
+      }
+      setBatchesToSave([]);
       setAddDialogOpen(false);
-    },
-    onSettled: () => {
-      // Invalidate all product-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.refetchQueries({ queryKey: ["products"] });
     },
   });
 
@@ -468,6 +447,7 @@ export default function Inventory() {
       setHasVariants(false);
       setDimensions([]);
       setCombinations([]);
+      setBatchesToSave([]);
     } else if (editingProduct) {
       setBarcodeValue(getTextValue(editingProduct.barcode));
       setProductName(editingProduct.name);
@@ -1026,27 +1006,28 @@ export default function Inventory() {
                 </div>
 
                 {/* Batches Section */}
-                {editingProduct && (
-                    <div className="space-y-4 pt-4 border-t border-[#1A1A1A]">
-                        <div className="flex items-center justify-between">
-                            <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Batches</label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    setEditingBatch(null);
-                                    setBatchForm({ batch_number: "", quantity: 0 });
-                                    setBatchDialogOpen(true);
-                                }}
-                                className="h-7 text-[10px] border-[#1A1A1A] text-[#888888]"
-                            >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add Batch
-                            </Button>
-                        </div>
+                <div className="space-y-4 pt-4 border-t border-[#1A1A1A]">
+                    <div className="flex items-center justify-between">
+                        <label className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Batches (optional)</label>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setEditingBatch(null);
+                                setBatchForm({ batch_number: "", quantity: 0 });
+                                setBatchDialogOpen(true);
+                            }}
+                            className="h-7 text-[10px] border-[#1A1A1A] text-[#888888]"
+                        >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Batch
+                        </Button>
+                    </div>
                         
-                        {batches.length > 0 ? (
+                        {(() => {
+                            const displayBatches = editingProduct ? batches : batchesToSave;
+                            return displayBatches.length > 0 ? (
                             <div className="border border-[#1A1A1A] rounded-[2px] overflow-hidden">
                                 <Table>
                                     <TableHeader>
@@ -1059,8 +1040,8 @@ export default function Inventory() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {batches.map((batch) => (
-                                            <TableRow key={batch.id} className="border-b border-[#1A1A1A]">
+                                        {displayBatches.map((batch: any, index: number) => (
+                                            <TableRow key={batch.id || index} className="border-b border-[#1A1A1A]">
                                                 <TableCell className="text-[11px] text-white">{batch.batch_number}</TableCell>
                                                 <TableCell className="text-[11px] text-[#888888]">
                                                     {batch.manufacturing_date || "—"}
@@ -1103,6 +1084,8 @@ export default function Inventory() {
                                                                 } catch (error) {
                                                                     toast.error("Failed to delete batch");
                                                                 }
+                                                            } else {
+                                                                setBatchesToSave(batchesToSave.filter((_, i) => i !== index));
                                                             }
                                                         }}
                                                     >
@@ -1114,11 +1097,11 @@ export default function Inventory() {
                                     </TableBody>
                                 </Table>
                             </div>
-                        ) : (
-                            <p className="text-[11px] text-[#555555]">No batches added yet.</p>
-                        )}
+                            ) : (
+                                <p className="text-[11px] text-[#555555]">No batches added yet.</p>
+                            );
+                        })()}
                     </div>
-                )}
 
                 {/* Submit */}
                 <div className="px-6 py-4 border-t border-[#1A1A1A]">
@@ -1207,19 +1190,37 @@ export default function Inventory() {
                            <Button
                                type="button"
                                onClick={async () => {
-                                   if (!batchForm.batch_number || !editingProduct) return;
+                                   if (!batchForm.batch_number) return;
                                    
                                    try {
-                                       if (editingBatch) {
-                                           await inventoryService.updateProductBatch(editingProduct.id, editingBatch.id, batchForm);
-                                           toast.success("Batch updated successfully");
+                                       if (editingProduct) {
+                                           // Editing existing product - save directly to API
+                                           if (editingBatch) {
+                                               await inventoryService.updateProductBatch(editingProduct.id, editingBatch.id, batchForm);
+                                               toast.success("Batch updated successfully");
+                                           } else {
+                                               await inventoryService.createProductBatch(editingProduct.id, batchForm);
+                                               toast.success("Batch added successfully");
+                                           }
+                                           
+                                           const updatedBatches = await inventoryService.listProductBatches(editingProduct.id);
+                                           setBatches(updatedBatches);
                                        } else {
-                                           await inventoryService.createProductBatch(editingProduct.id, batchForm);
-                                           toast.success("Batch added successfully");
+                                           // Creating new product - add to batchesToSave
+                                           if (editingBatch) {
+                                               // Update existing batch in the list
+                                               const index = batchesToSave.findIndex(b => b.batch_number === editingBatch.batch_number);
+                                               if (index >= 0) {
+                                                   const updated = [...batchesToSave];
+                                                   updated[index] = batchForm;
+                                                   setBatchesToSave(updated);
+                                               }
+                                           } else {
+                                               // Add new batch to list
+                                               setBatchesToSave([...batchesToSave, batchForm]);
+                                           }
+                                           toast.success("Batch added to product");
                                        }
-                                       
-                                       const updatedBatches = await inventoryService.listProductBatches(editingProduct.id);
-                                       setBatches(updatedBatches);
                                        setBatchDialogOpen(false);
                                    } catch (error) {
                                        toast.error("Failed to save batch");
