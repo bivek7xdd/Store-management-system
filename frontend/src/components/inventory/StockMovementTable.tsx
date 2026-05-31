@@ -20,6 +20,12 @@ import { Loader2, Package } from "lucide-react";
 import { inventoryService, StockMovement } from "@/services/inventory";
 import { format } from "date-fns";
 
+const getTextValue = (value: { String?: string; Valid?: boolean } | string | undefined): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object' && 'Valid' in value && value.Valid) return value.String || '';
+    return '';
+};
+
 const MOVEMENT_TYPES = [
     { value: "all", label: "All Types" },
     { value: "sale", label: "Sale" },
@@ -103,7 +109,7 @@ export function StockMovementTable() {
                                     {format(new Date(mov.created_at), "MMM d, yyyy")}
                                 </TableCell>
                                 <TableCell className="text-[12px] text-white font-medium">
-                                    {mov.product_name}
+                                    {getTextValue(mov.product_name)}
                                 </TableCell>
                                 <TableCell>
                                     <Badge
@@ -124,10 +130,10 @@ export function StockMovementTable() {
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-[12px] text-[#888888]">
-                                    {mov.reference_type ? `${mov.reference_type}` : "—"}
+                                    {getTextValue(mov.reference_type) || "—"}
                                 </TableCell>
                                 <TableCell className="text-[12px] text-[#888888] max-w-[150px] truncate">
-                                    {mov.notes || "—"}
+                                    {getTextValue(mov.notes) || "—"}
                                 </TableCell>
                             </TableRow>
                         ))}

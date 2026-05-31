@@ -12,6 +12,12 @@ import { Loader2, Package } from "lucide-react";
 import { inventoryService, StockAdjustment } from "@/services/inventory";
 import { format } from "date-fns";
 
+const getTextValue = (value: { String?: string; Valid?: boolean } | string | undefined): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object' && 'Valid' in value && value.Valid) return value.String || '';
+    return '';
+};
+
 interface StockAdjustmentTableProps {
     refreshKey?: number;
 }
@@ -73,7 +79,7 @@ export function StockAdjustmentTable({ refreshKey }: StockAdjustmentTableProps) 
                                 {format(new Date(adj.created_at), "MMM d, yyyy")}
                             </TableCell>
                             <TableCell className="text-[12px] text-white font-medium">
-                                {adj.product_name}
+                                {getTextValue(adj.product_name)}
                             </TableCell>
                             <TableCell>
                                 <span
@@ -96,11 +102,11 @@ export function StockAdjustmentTable({ refreshKey }: StockAdjustmentTableProps) 
                                     variant="secondary"
                                     className="bg-[#1A1A1A] text-[#CCCCCC] text-[10px] uppercase"
                                 >
-                                    {REASON_LABELS[adj.reason] || adj.reason}
+                                    {REASON_LABELS[getTextValue(adj.reason)] || getTextValue(adj.reason)}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-[12px] text-[#888888] max-w-[150px] truncate">
-                                {adj.notes || "—"}
+                                {getTextValue(adj.notes) || "—"}
                             </TableCell>
                         </TableRow>
                     ))}
