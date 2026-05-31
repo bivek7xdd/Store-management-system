@@ -1,16 +1,27 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { inventoryService } from "@/services/inventory";
+import { inventoryService, DiscoveredSupplier } from "@/services/inventory";
 import { syncService } from "@/services/syncService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Plus, Truck, ChevronRight, Phone, Mail, MoreHorizontal, Pencil, Trash2, WifiOff, Package, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Truck, ChevronRight, Phone, Mail, MoreHorizontal, Pencil, Trash2, WifiOff, Package, AlertTriangle, Loader2, Search, MapPin, Star, ExternalLink, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SupplierDialog } from "@/components/CreateInventoryDialogs";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { OfflineStatus } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 
 import {
     DropdownMenu,
@@ -34,6 +45,12 @@ export default function Suppliers() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [supplierToDelete, setSupplierToDelete] = useState<string | null>(null);
     const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(syncService.getStatus());
+    const [findDialogOpen, setFindDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchLocation, setSearchLocation] = useState("Nepal");
+    const [searching, setSearching] = useState(false);
+    const [discoveredSuppliers, setDiscoveredSuppliers] = useState<DiscoveredSupplier[]>([]);
+    const [hasSearched, setHasSearched] = useState(false);
 
     // Initialize sync service and listen for status changes
     useEffect(() => {
@@ -67,6 +84,40 @@ export default function Suppliers() {
             console.error(error);
             toast.error("Failed to delete supplier");
         }
+    };
+
+    const handleSearchSuppliers = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) {
+            toast.error("Please enter a search term");
+            return;
+        }
+
+        setSearching(true);
+        setHasSearched(true);
+        setDiscoveredSuppliers([]);
+
+        try {
+            const results = await inventoryService.findSuppliers(searchQuery, searchLocation || "Nepal");
+            setDiscoveredSuppliers(results);
+            if (results.length === 0) {
+                toast.info("No suppliers found. Try different keywords.");
+            } else {
+                toast.success(`Found ${results.length} suppliers!`);
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Failed to search suppliers");
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleUseSupplier = (supplier: DiscoveredSupplier) => {
+        window.dispatchEvent(new CustomEvent("prefill-supplier", { detail: supplier }));
+        setFindDialogOpen(false);
+        setHasSearched(false);
+        setDiscoveredSuppliers([]);
+        setSearchQuery("");
     };
 
     if (isLoading || authLoading) {
@@ -127,6 +178,14 @@ export default function Suppliers() {
                         syncError={offlineStatus.syncError}
                         lastSyncTime={offlineStatus.lastSyncTime}
                     />
+                    <Button
+                        variant="outline"
+                        onClick={() => setFindDialogOpen(true)}
+                        className="h-9 px-4 rounded-[2px] border-[#303030] bg-[#111111] text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] text-[11px] uppercase tracking-[1px]"
+                    >
+                        <Search className="h-3.5 w-3.5 mr-2" />
+                        Find Suppliers
+                    </Button>
                     <SupplierDialog onSuccess={() => queryClient.invalidateQueries({ queryKey: ["suppliers"] })}>
                         <Button className="h-9 px-4 rounded-[2px] bg-white text-black text-[11px] font-bold uppercase tracking-[1px] hover:bg-[#EEEEEE] transition-colors">
                             <Plus className="h-3.5 w-3.5 mr-2" />
@@ -302,6 +361,136 @@ export default function Suppliers() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Find Suppliers Dialog */}
+            <Dialog open={findDialogOpen} onOpenChange={(open) => {
+                setFindDialogOpen(open);
+                if (!open) {
+                    setHasSearched(false);
+                    setDiscoveredSuppliers([]);
+                    setSearchQuery("");
+                }
+            }}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0A0A0A] border border-[#1A1A1A]">
+                    <DialogHeader>
+                        <DialogTitle className="text-white flex items-center gap-2">
+                            <Search className="h-5 w-5 text-[#DA291C]" />
+                            Find Wholesale Suppliers
+                        </DialogTitle>
+                        <DialogDescription className="text-[#888888]">
+                            Discover suppliers near you using our discovery tool.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {/* Search Form */}
+                    <form onSubmit={handleSearchSuppliers} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-[#888888] text-[11px] uppercase tracking-[1px] font-bold">Product or Category</Label>
+                                <Input
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="e.g., shirt, electronics, groceries"
+                                    required
+                                    className="bg-[#111111] border-[#1A1A1A] text-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[#888888] text-[11px] uppercase tracking-[1px] font-bold">Location</Label>
+                                <Input
+                                    value={searchLocation}
+                                    onChange={(e) => setSearchLocation(e.target.value)}
+                                    placeholder="City, Country"
+                                    className="bg-[#111111] border-[#1A1A1A] text-white"
+                                />
+                            </div>
+                        </div>
+                        <Button
+                            type="submit"
+                            disabled={searching}
+                            className="bg-[#DA291C] hover:bg-[#B01E0A] text-white"
+                        >
+                            <Search className="h-4 w-4 mr-2" />
+                            {searching ? "Searching..." : "Search Suppliers"}
+                        </Button>
+                    </form>
+
+                    {/* Results */}
+                    {searching && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4 space-y-3">
+                                    <Skeleton className="h-5 w-3/4 bg-[#1A1A1A]" />
+                                    <Skeleton className="h-4 w-full bg-[#1A1A1A]" />
+                                    <Skeleton className="h-4 w-1/2 bg-[#1A1A1A]" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!searching && discoveredSuppliers.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            {discoveredSuppliers.map((supplier, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] p-4 hover:border-[#DA291C]/40 transition-all cursor-pointer"
+                                    onClick={() => handleUseSupplier(supplier)}
+                                >
+                                    <div className="flex items-start justify-between mb-2">
+                                        <h3 className="font-semibold text-[13px] text-white line-clamp-2">{supplier.name}</h3>
+                                        <Building2 className="h-4 w-4 text-[#DA291C] shrink-0 ml-2" />
+                                    </div>
+                                    {supplier.category && (
+                                        <Badge className="text-[10px] bg-[#DA291C]/10 text-[#DA291C] border-[#DA291C]/20 mb-2">
+                                            {supplier.category}
+                                        </Badge>
+                                    )}
+                                    {supplier.rating > 0 && (
+                                        <div className="flex items-center gap-1 mb-2">
+                                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                            <span className="text-[12px] text-white">{supplier.rating}</span>
+                                            <span className="text-[11px] text-[#888888]">({supplier.reviews})</span>
+                                        </div>
+                                    )}
+                                    <div className="space-y-1 text-[11px] text-[#888888]">
+                                        {supplier.address && (
+                                            <div className="flex items-center gap-1">
+                                                <MapPin className="h-3 w-3" />
+                                                <span className="line-clamp-1">{supplier.address}</span>
+                                            </div>
+                                        )}
+                                        {supplier.phone && (
+                                            <div className="flex items-center gap-1">
+                                                <Phone className="h-3 w-3" />
+                                                <span>{supplier.phone}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        className="w-full mt-3 bg-[#DA291C] hover:bg-[#B01E0A] text-white text-[10px] uppercase"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleUseSupplier(supplier);
+                                        }}
+                                    >
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        Use This Supplier
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!searching && hasSearched && discoveredSuppliers.length === 0 && (
+                        <div className="text-center py-8">
+                            <Search className="h-12 w-12 mx-auto text-[#303030] mb-4" />
+                            <p className="text-white font-medium mb-2">No Suppliers Found</p>
+                            <p className="text-[#888888] text-[12px]">Try different search keywords or change the location</p>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
