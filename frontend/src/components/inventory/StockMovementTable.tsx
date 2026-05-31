@@ -114,9 +114,9 @@ export function StockMovementTable() {
                                 <TableCell>
                                     <Badge
                                         variant="secondary"
-                                        className={`text-[10px] uppercase ${TYPE_COLORS[mov.movement_type] || "bg-[#1A1A1A] text-[#888888]"}`}
+                                        className={`text-[10px] uppercase ${TYPE_COLORS[getTextValue(mov.movement_type)] || "bg-[#1A1A1A] text-[#888888]"}`}
                                     >
-                                        {mov.movement_type}
+                                        {getTextValue(mov.movement_type)}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
