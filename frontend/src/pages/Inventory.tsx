@@ -46,6 +46,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StockAdjustmentDialog } from "@/components/inventory/StockAdjustmentDialog";
+import { StockAdjustmentTable } from "@/components/inventory/StockAdjustmentTable";
+import { StockMovementTable } from "@/components/inventory/StockMovementTable";
 import { Search, Plus, AlertTriangle, Calendar, Download, Upload, Package, Loader2, Pencil, Trash2, Scan, WifiOff, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
@@ -126,6 +130,9 @@ export default function Inventory() {
   const [combinations, setCombinations] = useState<Partial<ProductVariant>[]>([]);
   const [productName, setProductName] = useState("");
   const [expandAll, setExpandAll] = useState(false);
+  const [activeTab, setActiveTab] = useState("products");
+  const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
+  const [adjustmentRefreshKey, setAdjustmentRefreshKey] = useState(0);
   const ITEMS_PER_PAGE = 12;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1168,86 +1175,125 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Products Table */}
-      <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden" data-tour="inventory-grid">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b border-[#1A1A1A] hover:bg-transparent">
-                <TableHead className="w-[40px] text-[#666666]">
-                  <button
-                    className="h-6 w-6 flex items-center justify-center text-[#666666] hover:text-white"
-                    onClick={() => setExpandAll(!expandAll)}
-                    title={expandAll ? "Collapse All" : "Expand All"}
-                  >
-                    {expandAll ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </button>
-                </TableHead>
-                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Product</TableHead>
-                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Status</TableHead>
-                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Stock</TableHead>
-                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Price</TableHead>
-                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Barcode</TableHead>
-                <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedProducts.map((product: Product) => (
-                <ProductTableRow
-                  key={product.id}
-                  product={product}
-                  handleEditClick={handleEditClick}
-                  handleDeleteClick={handleDeleteClick}
-                  offlineStatus={offlineStatus}
-                  forceExpand={expandAll}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="bg-[#111111] border border-[#1A1A1A] p-1">
+          <TabsTrigger value="products" className="data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">
+            Products
+          </TabsTrigger>
+          <TabsTrigger value="adjustments" className="data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">
+            Adjustments
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="data-[state=active]:bg-[#DA291C] data-[state=active]:text-white">
+            Movements
+          </TabsTrigger>
+        </TabsList>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-1">
-          <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">
-            Page {currentPage} of {totalPages}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="h-8 px-3 rounded-[2px] border border-[#1A1A1A] text-[11px] text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors uppercase tracking-[1px]"
-            >Prev</button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="h-8 px-3 rounded-[2px] border border-[#1A1A1A] text-[11px] text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors uppercase tracking-[1px]"
-            >Next</button>
+        <TabsContent value="products" className="space-y-4">
+          <div className="bg-[#111111] border border-[#1A1A1A] rounded-[2px] overflow-hidden" data-tour="inventory-grid">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-[#1A1A1A] hover:bg-transparent">
+                    <TableHead className="w-[40px] text-[#666666]">
+                      <button
+                        className="h-6 w-6 flex items-center justify-center text-[#666666] hover:text-white"
+                        onClick={() => setExpandAll(!expandAll)}
+                        title={expandAll ? "Collapse All" : "Expand All"}
+                      >
+                        {expandAll ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Product</TableHead>
+                    <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Status</TableHead>
+                    <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Stock</TableHead>
+                    <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Price</TableHead>
+                    <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold">Barcode</TableHead>
+                    <TableHead className="text-[11px] text-[#888888] uppercase tracking-[1px] font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedProducts.map((product: Product) => (
+                    <ProductTableRow
+                      key={product.id}
+                      product={product}
+                      handleEditClick={handleEditClick}
+                      handleDeleteClick={handleDeleteClick}
+                      offlineStatus={offlineStatus}
+                      forceExpand={expandAll}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
-      )}
 
-      {filteredProducts.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 border border-dashed border-[#1A1A1A] rounded-[2px]">
-          <Package className="h-8 w-8 text-[#303030] mb-4" />
-          <p className="text-[14px] font-medium text-white mb-1">
-            {productsList.length === 0 ? "No products yet" : "No results found"}
-          </p>
-          <p className="text-[12px] text-[#888888] text-center max-w-xs">
-            {productsList.length === 0
-              ? "Start building your inventory by adding your first product."
-              : "No products match your current filters."}
-          </p>
-          {(searchTerm || categoryFilter !== "all" || stockFilter !== "all") && (
-            <button
-              onClick={() => { setSearchTerm(""); setCategoryFilter("all"); setStockFilter("all"); }}
-              className="mt-4 text-[11px] text-[#DA291C] uppercase tracking-[1px] hover:underline"
-            >
-              Reset Filters
-            </button>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[11px] text-[#888888] uppercase tracking-[1px]">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 px-3 rounded-[2px] border border-[#1A1A1A] text-[11px] text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors uppercase tracking-[1px]"
+                >Prev</button>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 px-3 rounded-[2px] border border-[#1A1A1A] text-[11px] text-[#888888] hover:text-white hover:bg-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors uppercase tracking-[1px]"
+                >Next</button>
+              </div>
+            </div>
           )}
-        </div>
-      )}
+
+          {filteredProducts.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-24 border border-dashed border-[#1A1A1A] rounded-[2px]">
+              <Package className="h-8 w-8 text-[#303030] mb-4" />
+              <p className="text-[14px] font-medium text-white mb-1">
+                {productsList.length === 0 ? "No products yet" : "No results found"}
+              </p>
+              <p className="text-[12px] text-[#888888] text-center max-w-xs">
+                {productsList.length === 0
+                  ? "Start building your inventory by adding your first product."
+                  : "No products match your current filters."}
+              </p>
+              {(searchTerm || categoryFilter !== "all" || stockFilter !== "all") && (
+                <button
+                  onClick={() => { setSearchTerm(""); setCategoryFilter("all"); setStockFilter("all"); }}
+                  className="mt-4 text-[11px] text-[#DA291C] uppercase tracking-[1px] hover:underline"
+                >
+                  Reset Filters
+                </button>
+              )}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="adjustments" className="space-y-4">
+          <div className="flex justify-end">
+            <Button
+              onClick={() => setAdjustmentDialogOpen(true)}
+              className="bg-[#DA291C] hover:bg-[#B01E0A] text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Adjustment
+            </Button>
+          </div>
+          <StockAdjustmentTable refreshKey={adjustmentRefreshKey} />
+        </TabsContent>
+
+        <TabsContent value="movements">
+          <StockMovementTable />
+        </TabsContent>
+      </Tabs>
+
+      <StockAdjustmentDialog
+        open={adjustmentDialogOpen}
+        onOpenChange={setAdjustmentDialogOpen}
+        products={productsList}
+      />
 
       {/* Barcode Scanner for Form */}
       <BarcodeScanner
