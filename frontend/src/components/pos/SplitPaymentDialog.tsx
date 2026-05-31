@@ -95,8 +95,8 @@ export const SplitPaymentDialog: React.FC<SplitPaymentDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border border-[#1A1A1A] rounded-[2px] bg-[#0A0A0A] shadow-2xl">
-        <DialogHeader className="p-8 border-b border-[#1A1A1A]">
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] flex flex-col p-0 overflow-hidden border border-[#1A1A1A] rounded-[2px] bg-[#0A0A0A] shadow-2xl">
+        <DialogHeader className="p-8 border-b border-[#1A1A1A] shrink-0">
           <div className="flex items-center gap-3 mb-6">
             <div className="h-8 w-8 rounded-[2px] bg-[#DA291C]/10 flex items-center justify-center">
               <Calculator className="h-4 w-4 text-[#DA291C]" />
@@ -154,7 +154,7 @@ export const SplitPaymentDialog: React.FC<SplitPaymentDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {/* Active Payments */}
           <div className="space-y-4">
             <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#555555] mb-2">Payment Archive</p>
@@ -267,7 +267,7 @@ export const SplitPaymentDialog: React.FC<SplitPaymentDialogProps> = ({
           )}
         </div>
 
-        <DialogFooter className="p-8 bg-[#0F0F0F] border-t border-[#1A1A1A] flex flex-col sm:flex-row items-center gap-6">
+        <DialogFooter className="p-8 bg-[#0F0F0F] border-t border-[#1A1A1A] flex flex-col sm:flex-row items-center gap-6 shrink-0">
           <div className="flex-1 text-left w-full sm:w-auto">
             <p className="text-[#555555] text-[10px] uppercase tracking-[1.5px] font-bold">Sum Collected</p>
             <p className="text-[24px] font-bold text-white tracking-tight">रू {totalPaid.toLocaleString()}</p>
