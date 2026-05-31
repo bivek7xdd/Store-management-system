@@ -10,13 +10,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, CreateStockAdjustmentData } from "@/services/inventory";
@@ -44,6 +55,7 @@ export function StockAdjustmentDialog({ open, onOpenChange, products }: StockAdj
     const [reason, setReason] = useState("");
     const [notes, setNotes] = useState("");
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [productPopoverOpen, setProductPopoverOpen] = useState(false);
 
     const queryClient = useQueryClient();
 
@@ -92,6 +104,8 @@ export function StockAdjustmentDialog({ open, onOpenChange, products }: StockAdj
         });
     };
 
+    const selectedProduct = products.find((p) => p.id === productId);
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md bg-[#0A0A0A] border border-[#1A1A1A]">
@@ -105,18 +119,47 @@ export function StockAdjustmentDialog({ open, onOpenChange, products }: StockAdj
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label className="text-[#888888]">Product *</Label>
-                        <Select value={productId} onValueChange={setProductId}>
-                            <SelectTrigger className="bg-[#111111] border-[#1A1A1A] text-white">
-                                <SelectValue placeholder="Select product" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#111111] border-[#1A1A1A]">
-                                {products.map((p) => (
-                                    <SelectItem key={p.id} value={p.id} className="text-white">
-                                        {p.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Popover open={productPopoverOpen} onOpenChange={setProductPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={productPopoverOpen}
+                                    className="w-full justify-between bg-[#111111] border-[#1A1A1A] text-white hover:bg-[#111111] hover:text-white"
+                                >
+                                    {selectedProduct ? selectedProduct.name : "Select product..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#111111] border-[#1A1A1A]">
+                                <Command>
+                                    <CommandInput placeholder="Search products..." className="text-white" />
+                                    <CommandList>
+                                        <CommandEmpty>No product found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {products.map((p) => (
+                                                <CommandItem
+                                                    key={p.id}
+                                                    value={p.name}
+                                                    onSelect={() => {
+                                                        setProductId(p.id);
+                                                        setProductPopoverOpen(false);
+                                                    }}
+                                                    className="text-white data-[selected]:bg-[#1A1A1A]"
+                                                >
+                                                    <Check
+                                                        className={`mr-2 h-4 w-4 ${
+                                                            productId === p.id ? "opacity-100" : "opacity-0"
+                                                        }`}
+                                                    />
+                                                    {p.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                         {formErrors.product_id && (
                             <p className="text-[11px] text-[#DA291C]">{formErrors.product_id}</p>
                         )}
@@ -157,7 +200,7 @@ export function StockAdjustmentDialog({ open, onOpenChange, products }: StockAdj
 
                     <div className="space-y-2">
                         <Label className="text-[#888888]">Notes (optional)</Label>
-                        <Input
+                        <Textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="Additional notes..."
