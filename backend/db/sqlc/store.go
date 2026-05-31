@@ -99,6 +99,21 @@ func (store *Store) CreateSaleTx(ctx context.Context, arg CreateSaleTxParams) (C
 				return err
 			}
 
+			// Create Stock Movement Record
+			_, err = q.CreateStockMovement(ctx, CreateStockMovementParams{
+				StoreID:        arg.CreateSaleParams.StoreID,
+				ProductID:      item.ProductID,
+				MovementType:   StockMovementTypeSale,
+				QuantityChange: -item.Quantity, // Negative because stock is decreasing
+				ReferenceID:    result.Sale.ID,
+				ReferenceType:  NullStockReferenceType{StockReferenceType: StockReferenceTypeSale, Valid: true},
+				Notes:          pgtype.Text{String: fmt.Sprintf("Sale %s", result.Sale.ID.String()), Valid: true},
+			})
+			if err != nil {
+				// Log but don't fail sale for movement tracking
+				fmt.Printf("Warning: failed to create stock movement: %v\n", err)
+			}
+
 			// 3. Check for low stock and create notification
 			q.CheckAndNotifyLowStock(ctx, arg.CreateSaleParams.StoreID, product)
 		}
