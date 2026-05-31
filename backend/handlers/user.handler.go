@@ -703,6 +703,14 @@ func UpdateStoreHandler(c *gin.Context) {
 		return
 	}
 
+	// Get owner_id from user context
+	userID, _ := c.Get("user_id")
+	ownerUUID, ok := userID.(pgtype.UUID)
+	if !ok {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Invalid user ID format", nil)
+		return
+	}
+
 	var req UpdateStoreParams
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid request", err)
@@ -720,6 +728,7 @@ func UpdateStoreHandler(c *gin.Context) {
 
 	arg := db.UpdateStoreInfoParams{
 		ID:           storeUUID,
+		OwnerID:      ownerUUID,
 		Name:         pgtype.Text{String: req.Name, Valid: req.Name != ""},
 		Address:      pgtype.Text{String: req.Address, Valid: req.Address != ""},
 		CurrencyCode: pgtype.Text{String: req.CurrencyCode, Valid: req.CurrencyCode != ""},
